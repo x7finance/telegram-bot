@@ -15,10 +15,7 @@ from data import url, text, times
 
 load_dotenv()
 
-sentry_sdk.init(
-    dsn=os.getenv("SENTRY_DSN"),
-    traces_sample_rate=1.0
-)
+sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
 
 
 async def auto_replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -46,9 +43,7 @@ async def auto_replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if keyword in target_message:
             if "text" in response:
-                await update.message.reply_text(
-                    text=response["text"], parse_mode=response["mode"]
-                )
+                await update.message.reply_text(text=response["text"], parse_mode=response["mode"])
             elif "sticker" in response:
                 await update.message.reply_sticker(sticker=response["sticker"])
 
@@ -89,9 +84,7 @@ async def send_endorsement_message(context: ContextTypes.DEFAULT_TYPE) -> None:
     job = context.job
     photo_url = f"{url.pioneers}{api.get_random_pioneer_number()}.png"
     caption_text = f"*X7 Finance Xchange Pairs*\n\n{text.endorse}"
-    keyboard_markup = InlineKeyboardMarkup(
-        [[InlineKeyboardButton(text="Xchange Alerts", url=f"{url.tg_alerts}")]]
-    )
+    keyboard_markup = InlineKeyboardMarkup([[InlineKeyboardButton(text="Xchange Alerts", url=f"{url.tg_alerts}")]])
     await context.bot.send_photo(
         chat_id=job.chat_id,
         photo=photo_url,
@@ -105,9 +98,7 @@ async def send_referral_message(context: ContextTypes.DEFAULT_TYPE) -> None:
     job = context.job
     photo_url = f"{url.pioneers}{api.get_random_pioneer_number()}.png"
     caption_text = f"*X7 Finance Referral Scheme*\n\n{text.referral}"
-    keyboard_markup = InlineKeyboardMarkup(
-        [[InlineKeyboardButton(text="Application", url=f"{url.referral}")]]
-    )
+    keyboard_markup = InlineKeyboardMarkup([[InlineKeyboardButton(text="Application", url=f"{url.referral}")]])
     await context.bot.send_photo(
         chat_id=job.chat_id,
         photo=photo_url,
@@ -143,7 +134,15 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler([f"{times.countdown_command}"], commands.countdown))
     application.add_handler(CommandHandler(["deployer", "devs"], commands.deployer))
     application.add_handler(CommandHandler(["discount", "dsc", "dac"], commands.discount))
-    application.add_handler(CommandHandler(["docs", "documents", ], commands.docs))
+    application.add_handler(
+        CommandHandler(
+            [
+                "docs",
+                "documents",
+            ],
+            commands.docs,
+        )
+    )
     application.add_handler(CommandHandler("draw", commands.draw))
     application.add_handler(CommandHandler(["ebb", "buybacks"], commands.ebb))
     application.add_handler(CommandHandler(["ecosystem", "tokens"], commands.ecosystem))
