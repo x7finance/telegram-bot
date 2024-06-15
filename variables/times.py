@@ -28,4 +28,4 @@ def BURN_AMOUNT():
     time = random.choice(amounts)
     return time
 
-BURN_INCREMENT = 5
+BURN_INCREMENT = 25

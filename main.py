@@ -190,7 +190,7 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
 
             if total_click_count % times.BURN_INCREMENT == 0:
-                burn_message = await api.burn_x7r(times.BURN_AMOUNT())
+                burn_message = await api.burn_x7r(times.BURN_AMOUNT(), "eth")
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
                     text=
