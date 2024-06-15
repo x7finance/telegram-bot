@@ -1736,7 +1736,7 @@ async def loans_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         loan_terms = loans.LOANS(chain)[loan_type]
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
-            caption=f"{loan_terms.name} ({chain.upper()})\n\n{loan_terms.generate_terms(chain)}\n\n",
+            caption=f"{loan_terms.title} ({chain.upper()})\n{loan_terms.generate_terms(chain)}\n\n",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
             [
