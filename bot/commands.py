@@ -2161,7 +2161,7 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for chain in chains.CHAINS:
         chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
         chain_name = chains.CHAINS[chain].name
-        contract = chain_web3.web3.eth.contract(
+        contract = chain_web3.eth.contract(
             address=chain_web3.to_checksum_address(ca.FACTORY(chain)),
             abi=chainscan.get_abi(ca.FACTORY(chain), chain),
         )

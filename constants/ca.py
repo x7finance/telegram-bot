@@ -172,7 +172,7 @@ def TIME_LOCK(chain):
         return "0x7000F4Cddca46FB77196466C3833Be4E89ab810C"
     
 def TREASURY_SPLITTER(chain):
-    if chain == "base":
+    if chain == "base" or chain == "eth":
         return "0x7000706E2727686eDF46cA0E42690F87b9de1999"
     else:
         return "0x70006B785AA87821331a974C3d5af81CdE5BB999"
