@@ -1376,7 +1376,7 @@ async def leaderboard(update: Update, context: CallbackContext):
             f"Total clicks: *{click_counts_total}*\n"
             f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
             f"Fastest Click:\n{fastest_time} seconds\nby {api.escape_markdown(fastest_user)}\n\n"
-            f"{streak_user} clicked the button last and is on a *{streak_value}* click streak!",
+            f"{api.escape_markdown(streak_user)} clicked the button last and is on a *{streak_value}* click streak!",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
