@@ -825,7 +825,6 @@ async def burn_x7r(amount, chain):
             'gasPrice': gas_price,
             'gas': gas,
             'nonce': nonce,
-            'chainId': chain_id,
         }
 
         signed_transaction = w3.eth.account.sign_transaction(transaction, sender_private_key)
