@@ -122,7 +122,7 @@ def ECO_SPLITTER(chain):
 
 def FACTORY(chain):
     if chain == "base":
-        return "0x7de800467aFcE442019884f51A4A1B9143a34fAc"
+        return "0x8B76C05676D205563ffC1cbd11c0A6e3d83929c5"
     else:
         return "0x7de800467aFcE442019884f51A4A1B9143a34fAc"
 
