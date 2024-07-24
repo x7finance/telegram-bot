@@ -84,7 +84,7 @@ CHAINS = {
         ca.WETH
     ),
     "base": ChainInfo(
-        False,
+        True,
         "Base",
         "Basescan",
         "8453",
