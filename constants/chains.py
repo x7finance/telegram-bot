@@ -27,8 +27,7 @@ class ChainInfo:
         com_multi: str,
         dev_multi: str,
         dao_multi: str,
-        pairs: list,
-        paired_token: str
+        pairs: list
     ):
         self.live = live
         self.name = name
@@ -50,7 +49,6 @@ class ChainInfo:
         self.dev_multi = dev_multi
         self.dao_multi = dao_multi
         self.pairs = pairs
-        self.paired_token = paired_token
 
 
 CHAINS = {
@@ -80,8 +78,7 @@ CHAINS = {
         ca.X7102_PAIR_ETH,
         ca.X7103_PAIR_ETH,
         ca.X7104_PAIR_ETH,
-        ca.X7105_PAIR_ETH],
-        ca.WETH
+        ca.X7105_PAIR_ETH]
     ),
     "base": ChainInfo(
         True,
@@ -109,8 +106,7 @@ CHAINS = {
         ca.X7102_PAIR_BASE,
         ca.X7103_PAIR_BASE,
         ca.X7104_PAIR_BASE,
-        ca.X7105_PAIR_BASE],
-        ca.CBETH
+        ca.X7105_PAIR_BASE]
     ),
     "bsc": ChainInfo(
         True,
@@ -138,8 +134,7 @@ CHAINS = {
         ca.X7102_PAIR_BSC,
         ca.X7103_PAIR_BSC,
         ca.X7104_PAIR_BSC,
-        ca.X7105_PAIR_BSC],
-        ca.WBNB
+        ca.X7105_PAIR_BSC]
     ),
     "arb": ChainInfo(
         True,
@@ -167,9 +162,7 @@ CHAINS = {
         ca.X7102_PAIR_ARB,
         ca.X7103_PAIR_ARB,
         ca.X7104_PAIR_ARB,
-        ca.X7105_PAIR_ARB,],
-        ca.AWETH
-        
+        ca.X7105_PAIR_ARB,]
     ),
     "op": ChainInfo(
         True,
@@ -197,8 +190,7 @@ CHAINS = {
         ca.X7102_PAIR_OP,
         ca.X7103_PAIR_OP,
         ca.X7104_PAIR_OP,
-        ca.X7105_PAIR_OP],
-        ca.OWETH
+        ca.X7105_PAIR_OP]
     ),
     "poly": ChainInfo(
         True,
@@ -226,8 +218,7 @@ CHAINS = {
         ca.X7102_PAIR_POLY,
         ca.X7103_PAIR_POLY,
         ca.X7104_PAIR_POLY,
-        ca.X7105_PAIR_POLY],
-        ca.WMATIC
+        ca.X7105_PAIR_POLY]
     )
 }
 

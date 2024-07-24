@@ -39,7 +39,7 @@ async def alert(event, chain):
     chain_info = chains.CHAINS.get(chain)
     if chain_info:
         logo = chain_info.logo
-        paired_token = chain_info.paired_token
+        paired_token = ca.WETH(chain)
         dext = chain_info.dext
         chain_name = chain_info.name
         chain_id = chain_info.id
