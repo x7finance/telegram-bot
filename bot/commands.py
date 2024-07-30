@@ -953,14 +953,20 @@ async def ebb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         price, _ = dextools.get_price(address, chain)
 
     if token == "x7dao":
-        auxiliary = contract.functions.auxiliaryShare().call() / 10
+        try:
+            auxiliary = contract.functions.auxiliaryShare().call() / 10
+        except Exception:
+            auxiliary = "N/A"
         auxiliary_text = f"Auxiliary Share: {auxiliary}%"
         split_text += "\n" + auxiliary_text
 
     if token == "x7100":
         token = "x7101-x7105"
         address = ca.X7100(chain)
-        auxiliary = contract.functions.lendingPoolShare().call() / 10
+        try:
+            auxiliary = contract.functions.lendingPoolShare().call() / 10
+        except Exception:
+            auxiliary = "N/A"
         auxiliary_text = f"Lending Pool Share: {auxiliary}%"
         split_text += "\n" + auxiliary_text
 
