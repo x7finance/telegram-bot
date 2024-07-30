@@ -327,8 +327,6 @@ if __name__ == "__main__":
 
     ## ADMIN ##
     application.add_handler(CommandHandler("clickme", click_me))
-    application.add_handler(CommandHandler("add", admin.add))
-    application.add_handler(CommandHandler("delete", admin.delete))
     application.add_handler(CommandHandler("everyone", admin.everyone))
     application.add_handler(CommandHandler("reset", admin.reset))
     application.add_handler(CommandHandler("wen", admin.wen))
