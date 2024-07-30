@@ -4189,149 +4189,56 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if context.args:
-        if len(context.args) > 1:
-            last_word = context.args[-1].lower()
-            if last_word in chains.CHAINS:
-                chain = last_word
-            else:
-                search = " ".join(context.args).lower()
-                chain = chains.default_chain(update.effective_chat.id)
-        else:
-            search = " ".join(context.args).lower()
-            chain = chains.default_chain(update.effective_chat.id) 
-    else:
+    if " ".join(context.args).lower() == "":
         await update.message.reply_text("Please provide token address to search")   
         return   
-        
-    token_info = db.token_get(search, chain)
-    for token_instance in token_info:
-        message = await update.message.reply_text("Getting Xchange Pair Price Info, Please wait...")
-        await context.bot.send_chat_action(update.effective_chat.id, "typing")
-        dext = chains.CHAINS[token_instance['chain'].lower()].dext
-        
-        liq_data = dextools.get_liquidity(token_instance['pair'], token_instance['chain'].lower())
-        liq = liq_data["total"]
-        if liq == "0":
-            liq = "N/A"
-        info = dextools.get_token_info(token_instance['ca'], token_instance['chain'].lower())
-        holders = info["holders"]
-        mcap = info["mcap"]
-        price, price_change = dextools.get_price(token_instance['ca'], token_instance['chain'].lower())
-        if price:
-            price = f"${price}"
-        else:
-            price = "N/A"
-        volume = dextools.get_volume(token_instance['pair'], token_instance['chain'].lower())
-        im1 = Image.open((random.choice(media.BLACKHOLE)))
-        try:
-            image = token_instance['image_url']
-            img = Image.open(requests.get(image, stream=True).raw)
-            img = img.resize((200, 200), Image.ANTIALIAS)
-            result = img.convert("RGBA")
-            result.save(r"media/tokenlogo.png")
-            im2 = Image.open(r"media/tokenlogo.png")
-        except Exception:
-            if token_instance['chain'].lower() in chains.CHAINS:
-                im2 = Image.open(chains.CHAINS[token_instance['chain'].lower()].logo)
-        im1.paste(im2, (720, 20), im2)
-        i1 = ImageDraw.Draw(im1)
-        i1.text(
-            (0, 0),
-                f"  Xchange Pair Info\n\n💰 {search.upper()}\n\n"
-                f"💰 Chain: {token_instance['chain'].upper()}\n"
-                f"💰 Price: {price}\n"
-                f"💎 Market Cap: {mcap}\n"
-                f"📊 24 Hour Volume: {volume}\n"
-                f"💦 Liquidity: {liq}\n"
-                f"👪 Holders: {holders}\n\n"
-                f"{price_change}\n\n\n"
-                f'  UTC: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")}',
-            font = ImageFont.truetype(media.FONT, 24),
-            fill=(255, 255, 255),
-        )
-        img_path = os.path.join("media", "blackhole.png")
-        im1.save(img_path)
-        await message.delete()
-        await update.message.reply_photo(
-            photo=open(r"media/blackhole.png", "rb"),
-            caption=
-                f"*Xchange Pair Info\n\n{search.upper()}*\n"
-                f"`{token_instance['ca']}`\n\n"
-                f"⛓️ Chain: {token_instance['chain'].upper()}\n"
-                f"💰 Price: {price}\n"
-                f"💎 Market Cap: {mcap}\n"
-                f"📊 24 Hour Volume: {volume}\n"
-                f"💦 Liquidity: {liq}\n"
-                f"👪 Holders: {holders}\n\n"
-                f"{price_change}\n\n"
-                f"{api.get_quote()}",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
+    token = coingecko.search(" ".join(context.args).lower())
+    if token['coins'] == []:
+        await update.message.reply_text(
+            f"{search.upper()} Not found",
+            parse_mode="Markdown")
+        return
+    id = token["coins"][0]["id"]
+    symbol = token["coins"][0]["symbol"]
+    thumb = token["coins"][0]["large"]
+    token_price = coingecko.get_price(id)
+    img = Image.open(requests.get(thumb, stream=True).raw)
+    result = img.convert("RGBA")
+    result.save(r"media/tokenlogo.png")
+    im1 = Image.open((random.choice(media.BLACKHOLE)))
+    im2 = Image.open(r"media/tokenlogo.png")
+    im1.paste(im2, (680, 20), im2)
+    i1 = ImageDraw.Draw(im1)
+    i1.text(
+        (28, 36),
+            f"{id.capitalize()} ({symbol}) price\n\n"
+            f'Price: ${token_price["price"]}\n'
+            f'24 Hour Change: {token_price["change"]}%\n'
+            f'Market Cap: {token_price["mcap"]}\n'
+            f'24hr Volume: {token_price["volume"]}\n\n\n\n\n\n\n'
+            f'UTC: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")}',
+        font = ImageFont.truetype(media.FONT, 28),
+        fill=(255, 255, 255),
+    )
+    im1.save(r"media/blackhole.png", quality=95)
+    await update.message.reply_photo(
+        photo=open(r"media/blackhole.png", "rb"),
+        caption=
+            f"*{id.capitalize()} ({symbol}) price*\n\n"
+            f'Price: ${token_price["price"]}\n'
+            f'24 Hour Change: {token_price["change"]}%\n'
+            f'Market Cap: {token_price["mcap"]}\n'
+            f'Volume: {token_price["volume"]}\n\n'
+            f"{api.get_quote()}",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
                 [
-                    [
-                        InlineKeyboardButton(
-                            text="Chart", url=f"{urls.dex_tools(dext)}{token_instance['pair']}"
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="Buy",
-                            url=f"{urls.XCHANGE}/#/swap?outputCurrency={token_instance['ca']}",
-                        )
-                    ],
-                ]
-            ),
-        )
-        return  
-    else:
-        token = coingecko.search(search)
-        if token['coins'] == []:
-            await update.message.reply_text(
-                f"{search.upper()} Not found",
-                parse_mode="Markdown")
-            return
-        id = token["coins"][0]["id"]
-        symbol = token["coins"][0]["symbol"]
-        thumb = token["coins"][0]["large"]
-        token_price = coingecko.get_price(id)
-        img = Image.open(requests.get(thumb, stream=True).raw)
-        result = img.convert("RGBA")
-        result.save(r"media/tokenlogo.png")
-        im1 = Image.open((random.choice(media.BLACKHOLE)))
-        im2 = Image.open(r"media/tokenlogo.png")
-        im1.paste(im2, (680, 20), im2)
-        i1 = ImageDraw.Draw(im1)
-        i1.text(
-            (28, 36),
-                f"{id.capitalize()} ({symbol}) price\n\n"
-                f'Price: ${token_price["price"]}\n'
-                f'24 Hour Change: {token_price["change"]}%\n'
-                f'Market Cap: {token_price["mcap"]}\n'
-                f'24hr Volume: {token_price["volume"]}\n\n\n\n\n\n\n'
-                f'UTC: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")}',
-            font = ImageFont.truetype(media.FONT, 28),
-            fill=(255, 255, 255),
-        )
-        im1.save(r"media/blackhole.png", quality=95)
-        await update.message.reply_photo(
-            photo=open(r"media/blackhole.png", "rb"),
-            caption=
-                f"*{id.capitalize()} ({symbol}) price*\n\n"
-                f'Price: ${token_price["price"]}\n'
-                f'24 Hour Change: {token_price["change"]}%\n'
-                f'Market Cap: {token_price["mcap"]}\n'
-                f'Volume: {token_price["volume"]}\n\n'
-                f"{api.get_quote()}",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="Chart",
-                            url=f"https://www.coingecko.com/en/coins/{id}",
-                        )
-                    ],
-                ]
-            ),
-        )
+                    InlineKeyboardButton(
+                        text="Chart",
+                        url=f"https://www.coingecko.com/en/coins/{id}",
+                    )
+                ],
+            ]
+        ),
+    )

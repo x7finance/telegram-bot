@@ -1,5 +1,3 @@
-# DB
-
 import mysql.connector
 import os
 
@@ -17,7 +15,6 @@ def create_db_connection():
 def close_db_connection(db_connection, cursor):
     cursor.close()
     db_connection.close()
-
 
 
 def clicks_check_is_fastest(time_to_check):
@@ -238,30 +235,3 @@ def token_add(ticker, pair, ca, chain, image_url):
         db_connection.rollback()
     finally:
         close_db_connection(db_connection, cursor)
-
-
-def token_delete(ticker, chain):
-    try:
-        db_connection = create_db_connection()
-        cursor = db_connection.cursor()
-        delete_query = "DELETE FROM tokens WHERE ticker = %s AND chain = %s"
-        cursor.execute(delete_query, (ticker, chain))
-        db_connection.commit()
-        return f"Entry {ticker} for chain {chain} deleted successfully."
-    
-    except Exception as e:
-        db_connection.rollback()
-        return f"Error deleting {ticker} for chain {chain}: {e}"
-    finally:
-        cursor.close()
-        close_db_connection(db_connection, cursor)
-
-
-def token_get(ticker, chain):
-    db_connection = create_db_connection()
-    cursor = db_connection.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tokens WHERE ticker = %s AND chain = %s", (ticker.lower(), chain))
-    matching_data = cursor.fetchall()
-    close_db_connection(db_connection, cursor)
-
-    return matching_data

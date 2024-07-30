@@ -160,11 +160,7 @@ async def alert(event, chain):
                     ]
                 ),
             )
-
-    if image_url is None:
-        image_url = "N/A"
-    db.token_add(token_symbol, event["args"]["pair"], token_address, chain, image_url)
-                
+        
 
 async def main():
     while True:
