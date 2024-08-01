@@ -1053,50 +1053,51 @@ async def faq(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [
             InlineKeyboardButton(
                 text="Airdrop Questions",
-                url="https://www.x7finance.org/docs/faq/airdrop",
+                url=f"{urls.XCHANGE}docs/faq/airdrop",
             ),
             InlineKeyboardButton(
                 text="Constellation Tokens",
-                url="https://www.x7finance.org/docs/faq/constellations",
+                url=f"{urls.XCHANGE}docs/faq/constellations",
             ),
         ],
         [
             InlineKeyboardButton(
                 text="Developer Questions",
-                url="https://www.x7finance.org/docs/faq/devs",
+                url=f"{urls.XCHANGE}docs/faq/devs",
             ),
             InlineKeyboardButton(
                 text="General Questions",
-                url="https://www.x7finance.org/docs/faq/general",
+                url=f"{urls.XCHANGE}docs/faq/general",
             ),
         ],
         [
             InlineKeyboardButton(
                 text="Governance Questions",
-                url="https://www.x7finance.org/docs/faq/governance",
+                url=f"{urls.XCHANGE}docs/faq/governance",
             ),
             InlineKeyboardButton(
                 text="Investor Questions",
-                url="https://www.x7finance.org/faq/investors",
+                url=f"{urls.XCHANGE}faq/investors",
             ),
         ],
         [
             InlineKeyboardButton(
                 text="Liquidity Lending Questions",
-                url="https://www.x7finance.org/docs/faq/liquiditylending",
+                url=f"{urls.XCHANGE}docs/faq/liquiditylending",
             ),
             InlineKeyboardButton(
-                text="NFT Questions", url="https://www.x7finance.org/faq/nfts"
+                text="NFT Questions",
+                url=f"{urls.XCHANGE}faq/nfts"
             ),
         ],
         [
             InlineKeyboardButton(
                 text="Snapshot.org Questions",
-                url="https://www.x7finance.org/docs/faq/daosnapshot",
+                url=f"{urls.XCHANGE}docs/faq/daosnapshot",
             ),
             InlineKeyboardButton(
                 text="Xchange Questions",
-                url="https://www.x7finance.org/faq/xchange",
+                url=f"{urls.XCHANGE}faq/xchange",
             ),
         ],
     ]
@@ -1383,17 +1384,7 @@ async def leaderboard(update: Update, context: CallbackContext):
             f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
             f"Fastest Click:\n{fastest_time} seconds\nby {api.escape_markdown(fastest_user)}\n\n"
             f"{api.escape_markdown(streak_user)} clicked the button last and is on a *{streak_value}* click streak!",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="Full Leaderboard",
-                        url=f"{urls.XCHANGE}community/leaderboard",
-                    )
-                ],
-            ]
-        ),
+        parse_mode="Markdown"
     )
     
 
@@ -2188,7 +2179,7 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="Xchange Pairs Dashboard",
-                        url="https://www.x7finance.org/dashboard",
+                        url=f"{urls.XCHANGE}dashboard/pairs",
                     )
                 ],
             ]

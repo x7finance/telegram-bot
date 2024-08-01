@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw, ImageFont
 import requests, random
 
 from constants import ca, urls, chains
-from hooks import api, db
+from hooks import api
 import media
 
 defined = api.Defined()
@@ -28,8 +28,7 @@ async def log_loop(chain, poll_interval):
             await asyncio.sleep(poll_interval)
 
         except Exception as e:
-            print(f"Error occurred on chain {chain}: {e}")
-            print(f"Restarting the loop for chain {chain}...")
+            print(f"Error occurred on chain {chain}: {e}. Restarting")
             break
 
     await log_loop(chain, poll_interval)
@@ -108,12 +107,13 @@ async def alert(event, chain):
     if liq == "0":
         liq = "Unavailable"
 
-    im1 = Image.open((random.choice(media.BLACKHOLE)))
+    im1 = Image.open((random.choice(media.BLACKHOLE))).convert("RGBA")
     try:
         image_url = defined.get_token_image(token_address, chain)
-        im2 = Image.open(requests.get(image_url, stream=True).raw)
+        im2 = Image.open(requests.get(image_url, stream=True).raw).convert("RGBA")
     except:
-        im2 = Image.open(logo)
+        im2 = Image.open(logo).convert("RGBA")
+    
     im1.paste(im2, (700, 20), im2)
     i1 = ImageDraw.Draw(im1)
     i1.text(

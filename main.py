@@ -160,33 +160,13 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     photo=photo,
                     chat_id=update.effective_chat.id,
                     caption=message_text,
-                    parse_mode="Markdown",
-                    reply_markup=InlineKeyboardMarkup(
-                        [
-                            [
-                                InlineKeyboardButton(
-                                    text="Full Leaderboard",
-                                    url=f"{urls.XCHANGE}community/leaderboard",
-                                )
-                            ],
-                        ]
-                    ),
+                    parse_mode="Markdown"
                 )
             else:
                 clicked = await context.bot.send_message(
                     chat_id=update.effective_chat.id,
                     text=message_text,
-                    parse_mode="Markdown",
-                    reply_markup=InlineKeyboardMarkup(
-                        [
-                            [
-                                InlineKeyboardButton(
-                                    text="Full Leaderboard",
-                                    url=f"{urls.XCHANGE}community/leaderboard",
-                                )
-                            ],
-                        ]
-                    ),
+                    parse_mode="Markdown"
                 )
 
             if total_click_count % times.BURN_INCREMENT == 0:
