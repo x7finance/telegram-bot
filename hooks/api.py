@@ -797,11 +797,12 @@ async def burn_x7r(amount, chain):
             chain_id = chains.CHAINS[chain].id
             w3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
             chain_scan_url = chains.CHAINS[chain].scan_tx
+
         sender_address = os.getenv("BURN_WALLET")
         recipient_address = ca.DEAD
         token_contract_address = ca.X7R(chain)
         sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
-        decimals = 18  
+        decimals = 18
         amount_to_send_wei = amount * (10 ** decimals)
 
         token_transfer_data = (
@@ -816,7 +817,7 @@ async def burn_x7r(amount, chain):
             'to': token_contract_address,
             'data': token_transfer_data,
         })
-        gas_price = w3.to_wei(w3.eth.gas_price / 1e9 , 'gwei')
+        gas_price = w3.to_wei(w3.eth.gas_price / 1e9, 'gwei')
 
         transaction = {
             'from': sender_address,
@@ -825,6 +826,7 @@ async def burn_x7r(amount, chain):
             'gasPrice': gas_price,
             'gas': gas,
             'nonce': nonce,
+            'chainId': chain_id
         }
 
         signed_transaction = w3.eth.account.sign_transaction(transaction, sender_private_key)
@@ -832,7 +834,6 @@ async def burn_x7r(amount, chain):
         return f"{amount} X7R Burnt\n\n{chain_scan_url}{tx_hash.hex()}"
     except Exception as e:
         return f'Error burning X7R: {e}'
-
 
 def datetime_to_timestamp(datetime_str):
     try:
