@@ -317,7 +317,7 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text="Xchange Alerts", url="https://t.me/x7_alerts"
             ),
             InlineKeyboardButton(
-                text="DAO Proposers Chat", url=f"{urls.TG_DAO}",
+                text="DAO Chat", url=f"{urls.TG_DAO}",
             ),
         ],
     ]
@@ -674,7 +674,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     formatted_contract_names = '\n'.join(contract_names)
     keyboard = InlineKeyboardMarkup(
             [[InlineKeyboardButton(text="Vote Here",url=urls.SNAPSHOT,)],
-            [InlineKeyboardButton(text="DAO Proposers Chat",url=urls.TG_DAO,)],])
+            [InlineKeyboardButton(text="DAO Chat",url=urls.TG_DAO,)],])
     if not input_contract:
         snapshot = api.get_snapshot()
         proposal = snapshot["data"]["proposals"][0]
@@ -690,7 +690,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 url=f"{urls.SNAPSHOT}/proposal/{proposal['id']}")
             ],
             [InlineKeyboardButton(
-                    text="DAO Proposers Chat",
+                    text="DAO Chat",
                     url=f"{urls.TG_DAO}")
             ]
             ])
@@ -703,7 +703,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 url=f"{urls.SNAPSHOT}")
             ],
             [InlineKeyboardButton(
-                text="DAO Proposers Chat",
+                text="DAO Chat",
                 url=f"{urls.TG_DAO}")
             ]
             ])
