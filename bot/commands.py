@@ -499,10 +499,15 @@ async def contracts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
         chain = chains.default_chain(update.effective_chat.id)
+    if chain in chains.CHAINS:
+        chain_name = chains.CHAINS[chain].name
+    else:
+        await update.message.reply_text(text.CHAIN_ERROR)
+        return
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"*X7 Finance Contract Addresses for all chains*\n\n"
+            f"*X7 Finance Contract Addresses ({chain_name})*\nUse `/ca [chain-name]` for other chains\n\n"
             f"*X7R - Rewards Token *\n`{ca.X7R(chain)}`\n\n"
             f"*X7DAO - Governance Token*\n`{ca.X7DAO(chain)}`\n\n"
             f"For advanced trading and arbitrage opportunities see `/constellations`\n\n"
