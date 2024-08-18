@@ -62,15 +62,6 @@ async def alerts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def alumni(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Alumni*\n\n{text.ALUMNI}",
-        parse_mode="Markdown",
-    )
-
-
 async def announcements(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
@@ -1314,15 +1305,15 @@ async def joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
     eth_duration = datetime.now() - times.X7M105
     eth_years, eth_months, eth_weeks, eth_days = api.get_duration_years(eth_duration)
-    await update.message.reply_text(
-        "*X7 Finance Launch Info*\n\n"
-        "X7 Finance is prepearing to launch on Base! Check the launch list link below to see the live steps!\n\n"
-        f"{text.BASE_LAUNCH}\n\n"
-        f'ETH Launch\n{times.X7M105.strftime("%A %B %d %Y %I:%M %p")} UTC\n'
-        f"{eth_years} years, {eth_months} months, {eth_weeks} weeks, and {eth_days} days ago\n\n",
+    await update.message.reply_photo(
+        photo=api.get_random_pioneer(),
+        caption=
+            "*X7 Finance Launch Info*\n\n"
+            "X7 Finance is prepearing to launch on Base! Check the link below to see the live steps!\n\n"
+            f'ETH Launch\n{times.X7M105.strftime("%A %B %d %Y %I:%M %p")} UTC\n'
+            f"{eth_years} years, {eth_months} months, {eth_weeks} weeks, and {eth_days} days ago\n\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [

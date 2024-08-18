@@ -22,58 +22,6 @@ ABOUT = (
 )
 
 
-AIRDROP = (
-    "*X7 Finance Airdrop Information*\n\nThe rollout of the Ecosystem Contracts on BNB Smart Chain, Polygon "
-    "(MATIC), Arbitrum, and Optimism has begun.\n\n"
-    "We will go live with Xchange, borrowing, lending, revenue "
-    "splitting, and profit splitting on other chains as soon as we can in concert with the full release on "
-    "Ethereum.\n\nThe tokens however will not go live until we have built up a sufficient amount of initial "
-    "liquidity for the tokens on any particular chain.\n\nWhen the tokens do go live all X7 token holders on "
-    "Ethereum will be airdropped vested tokens and/or be given an opportunity to take a cash payout for their "
-    "share of tokens. We will set prices and payouts to ensure that there will be no incentive to exit an "
-    "Ethereum X7 Token position in order to gain an 'early' L1 or L2 ecosystem X7 token position. On the "
-    "contrary, the more tokens held on Ethereum, the greater the reward will be when the tokens and ecosystem "
-    "are released on other chains.\n\nThese airdrop snapshots will occur just prior to the token launch"
-)
-
-
-ALUMNI = (
-    "@Callmelandlord - The Godfather of the X7 Finance community, the OG, the creator - OG Community Signer\n\n"
-    "@Zaratustra  - Defi extraordinaire and protocol prophet - OG Community Signer\n\n"
-    "@KBCrypto11  - ChatGPT King - OG Community Signer\n\n"
-    "@WoxieX - Creator of the OG dashboard -  x7community.space"
-)
-
-BASE_LAUNCH = ("✔️ Launch default Xchange infrastructure on org\n"
-                    "✔️ Launch X7D minting on 5 launched chains\n"
-                    "⏳ Get to 100 followers on Farcaster\n"
-                    "✔️ Deploy X7 Token Burner contract\n"
-                    "✔️ Deploy Ecosystem Splitter contract\n"
-                    "✔️ Deploy Treasury Splitter contract\n"
-                    "✔️ Deploy Lending Pool Reserve contract\n"
-                    "✔️ Deploy Xchange Factory contract\n"
-                    "✔️ Move launch liquidity\n"
-                    "⏭️ Deploy Liquidity Hub\n"
-                    "⏭️ Deploy Discount Authorities\n"
-                    "⏭️ Deploy Profit Share Splitter\n"
-                    "⏭️ Deploy Xchange Discount Authority\n"
-                    "⏭️ Deploy Xchange Router\n"
-                    "⏭️ Deploy Lending Pool\n"
-                    "⏭️ Deploy Loans Contracts\n"
-                    "⏳ Update Litepaper and Whitepaper\n"
-                    "⏭️ Utility NFT's\n"
-                    "⏳ Deploy default pairs contracts on 6 chains\n"
-                    "⏭️ Enable lending pool\n"
-                    "⏭️ Enable decentralized RPC provider on Xchange\n"
-                    "⏭️ Enable decentralized trading on Xchange\n"
-                    "⏳ Release Loan Origination Form\n"
-                    "⏭️ Enable X7D Minting\n"
-                    "⏳ Harden airdrop strategy\n"
-                    "⏳ Secure launch marketing partners\n"
-                    "⏭️ Schedule Official Launch Date\n"
-                    "⏭️ Open source the Xchange code")
-
-
 CHAIN_ERROR = (
     f'Chain not recognised, Please use on of the following abbreviations:\n\n{chains.short_names()}\n\n')
 
@@ -90,18 +38,6 @@ CONTRIBUTE = (
     "tech@x7finance.org\n"
     "https://t.me/Cryptod0c\n"
     "https://t.me/MikeMurpher"  
-)
-
-
-DELAY = (
-    "To ensure our code is trusted and that the release is flawless, X7's "
-    "Leveraged DEX trading will not begin until we have published third party "
-    "security audits. In the meantime, our Stochastic Topological Offensive "
-    "Penetration, Probing, and Exploitation Researcher, STOPPER, has been "
-    "executing millions of transactions on our private test network to ensure "
-    "no edge case is missed.\n\n"
-    "`A delayed game is eventually good, a bad game is bad forever.\n\n"
-    "- Shigeru Miyamoto`"
 )
 
 
@@ -148,26 +84,6 @@ ECOSYSTEM = (
     "just as they would underwrite treasury bills and other stable assets. Holders of X7D will be able to "
     "mint a time-based interest-bearing NFT. X7D is always exchangeable with the chain native token at a 1-to-1 ratio.\n"
     "The X7 Finance protocol will only permit minting of new X7 Deposit tokens when on-chain reserves permit."
-)
-
-
-ENDORSE = (
-    "*XChange Pairs*\n\nThe X7 Dev team or the community team will not endorse any particular token or launch on Xchange.\n\n"
-    "Xchange is a permissionless swap protocol. We encourage DeFi participants to exercise the same level of "
-    "caution they always should when evaluating a swap opportunity.\n\nFor new token alerts see XChange Alerts channel below"
-    "\n\n"
-    "Trust No one, trust code. Long Live Defi"
-)
-
-
-VOLUME = (
-    "*Driving XChange Volume*\n\nOur focus is crystal clear: we're all about boosting trading volume on Xchange. Why? Because trading drives growth and growth drives rewards.\n\n"
-    "*0.1% Back to the Ecosystem*\n\n"
-    f"With every trade made on Xchange, '0.1%' flows back to the ecosystem. That's the power of X7 Finance.\n\n"
-    "*Create Your Own Liquidity Pools*\n\n"
-    "Create liquidity pools now to further fuel the ecosystem. Best performers? Those with low fees and proven high volume.\n\n"
-    "*Achieve Volume with Just $1000*\n\n"
-    f"Did you know? You can achieve trading volume with as little as $500 in ETH and $500 in the paired token. Your contribution matters!\n\n{urls.XCHANGE}liquidity'"
 )
 
 def WELCOME(user, chain):
@@ -619,25 +535,3 @@ X_REPLIES = [
     "Repost to resonate with the world!",
     "Craft reposts that leave a lasting impact!",
 ]
-
-voting = (
-    "*Proposals and Voting*\n\nVoting will occur in multiple phases, each of which has either a minimum or maximum"
-    " time phase duration.\n\n*Phase 1: Quorum-seeking*\nX7DAO token holders will be able to stake their tokens as "
-    "X7sDAO, a non-transferable staked version of X7DAO.\n\nA quorum is reached when more than 50% of circulating "
-    "X7DAO has been staked as X7sDAO.\n\nOnce a quorum is reached and a minimum quorum-seeking time period has "
-    "passed, the X7sDAO tokens are temporarily locked (and no more X7DAO tokens may be staked until the next Quorum"
-    " seeking period) and the governance process moves to the next phase\n\n*Phase 2: Proposal creation*\nA "
-    "proposal is created by running a transaction on the governance contract which specifies a specific transaction"
-    " on a specific contract (e.g. setFeeNumerator(0) on the X7R token contract).\n\nProposals are ordered, and any"
-    " proposals that are passed/adopted must be run in the order that they were created.\n\nProposals can be made "
-    "by X7sDAO stakes of 500,000 tokens or more. Additionally, holders of Magister tokens may make proposals. "
-    "Proposals may require a refundable proposal fee to prevent process griefing.\n\n*Phase 3: Proposal voting*\n"
-    "Each proposal may be voted on once by each address. The voter may specify the weight of their vote between 0 "
-    "and the total amount of X7sDAO they have staked.\n\nProposals pass by a majority vote of the quorum of X7sDAO "
-    "tokens.\n\nA parallel voting process will occur with Magister tokens, where each Magister token carries one "
-    "vote.\n\nIf a majority of magister token holders vote against a proposal, the proposal must reach an X7sDAO "
-    "vote of 75% of the quorum of X7sDAO tokens.\n\n*Phase 4: Proposal adoption*\nDuring this phase, proposals that"
-    " have passed will be enqueued for execution. This step ensures proper ordering and is a guard against various "
-    "forms of process griefing.\n\n*Phase 5: Proposal execution*\nAfter proposal adoption, all passed proposals "
-    "must be executed before a new Quorum Seeking phase may commence."
-)
