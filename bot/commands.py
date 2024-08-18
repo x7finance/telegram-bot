@@ -5,7 +5,6 @@ import os, pytz, random, re, requests, textwrap, time, wikipediaapi
 from datetime import datetime, timedelta, timezone
 from gtts import gTTS
 
-from translate import Translator
 from PIL import Image, ImageDraw, ImageFont
 from web3 import Web3
 
@@ -3116,35 +3115,6 @@ async def today(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
     )
 
-
-async def translate_german(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    translator = Translator(from_lang="english", to_lang="german")
-    phrase = " ".join(context.args).lower()
-    if phrase == "":
-        await update.message.reply_text("Please follow the command with the sentence you wish to translate")
-    else:
-        translation = translator.translate(phrase)
-        await update.message.reply_text(translation)
-
-
-async def translate_japanese(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    translator = Translator(from_lang="english", to_lang="japanese")
-    phrase = " ".join(context.args).lower()
-    if phrase == "":
-        await update.message.reply_text("Please follow the command with the sentence you wish to translate")
-    else:
-        translation = translator.translate(phrase)
-        await update.message.reply_text(translation)
-
-
-async def translate_russian(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    translator = Translator(from_lang="english", to_lang="russian")
-    phrase = " ".join(context.args).lower()
-    if phrase == "":
-        await update.message.reply_text("Please follow the command with the sentence you wish to translate")
-    else:
-        translation = translator.translate(phrase)
-        await update.message.reply_text(translation)
 
 
 async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
