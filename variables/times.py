@@ -16,7 +16,7 @@ BUTTON_TIME = None
 # COUNTDOWN
 COUNTDOWN_TIME = datetime(2023, 9, 7, 12, 00, 00)
 COUNTDOWN_TITLE = "Xchange launch"
-COUNTDOWN_TITLE = "https://app.x7.finance"
+COUNTDOWN_DESC = "https://app.x7.finance"
 
 # LAUNCH DATES
 X7M105 = datetime(2022, 8, 13, 13, 10, 17)

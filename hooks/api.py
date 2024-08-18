@@ -985,18 +985,6 @@ def get_unlock_time(chain_web3, contract, token_pair, now):
         return remaining_time_str, unlock_datetime_str
 
 
-def get_quote():
-    response = requests.get("https://type.fit/api/quotes")
-    data = response.json()
-    quote = random.choice(data)
-    quote_text = quote["text"]
-    quote_author = quote["author"]
-    if quote_author.endswith(", type.fit"):
-        quote_author = quote_author[:-10].strip()
-
-    return f'`"{quote_text}"\n\n-{quote_author}`'
-
-
 def get_random_pioneer():
     number = f"{random.randint(1, 4480)}".zfill(4)
     return f"{urls.PIONEERS}{number}.png"

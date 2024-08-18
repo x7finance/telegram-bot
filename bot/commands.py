@@ -44,8 +44,7 @@ async def admins(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=(
             "*X7 Finance Telegram Admins*\n\n"
             "Community Team:\n" + "\n".join(community_team) +
-            "\n\nOGs:\n" + "\n".join(og) +
-            f"\n\n{api.get_quote()}"
+            "\n\nOGs:\n" + "\n".join(og)
         ),
         parse_mode="Markdown",
     )
@@ -68,8 +67,7 @@ async def alumni(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"*X7 Finance Alumni*\n\n{text.ALUMNI}\n\n"
-            f"{api.get_quote()}",
+            f"*X7 Finance Alumni*\n\n{text.ALUMNI}",
         parse_mode="Markdown",
     )
 
@@ -131,8 +129,7 @@ async def ath(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f'*X7R*\n'
             f'{x7r_ath}\n\n'
             f'*X7DAO*\n'
-            f'{x7dao_ath}\n\n'
-            f"{api.get_quote()}",
+            f'{x7dao_ath}',
         parse_mode="Markdown"
     )
 
@@ -146,8 +143,7 @@ async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=api.get_random_pioneer(),
         caption=
             f"*Latest Blocks*\n\n"
-            f"{blocks_text}\n\n"
-            f"{api.get_quote()}",
+            f"{blocks_text}",
         parse_mode="Markdown"
     )
 
@@ -180,8 +176,7 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
             photo=api.get_random_pioneer(),
             caption=
                 f"*X7 Finance Loan Rates*\n\n"
-                "Follow the /borrow command with an amount and chain\n\n"
-                f"{api.get_quote()}",
+                "Follow the /borrow command with an amount and chain",
             parse_mode="Markdown"
             )
         return
@@ -217,9 +212,7 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     caption=
         f"*X7 Finance Loan Rates ({chain_name})*\n\n"
         f"Borrowing {amount} {chain_native.upper()} (${borrow_usd:,.0f}) will cost:\n\n"
-        f"{loan_info}"
-
-        f"{api.get_quote()}",
+        f"{loan_info}",
     parse_mode="Markdown"
     )
 
@@ -246,8 +239,7 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"\n\nX7R Tokens Burned ({chain_name})\nUse `/burn [chain-name]` for other chains\n\n"
             f'{"{:0,.0f}".format(float(burn))} / {native:,.3f} {chain_native.upper()} (${"{:0,.0f}".format(float(burn_dollar))})\n'
-            f"{percent}% of Supply\n\n"
-            f"{api.get_quote()}",
+            f"{percent}% of Supply",
         parse_mode="markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -277,8 +269,7 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=api.get_random_pioneer(),
         caption=
             f"*X7 Finance Buy Links ({chain_name})*\nUse `/buy [chain-name]` for other chains\n"
-            f"Use `/constellations` for constellations\n\n"
-            f"{api.get_quote()}",
+            f"Use `/constellations` for constellations",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -301,20 +292,20 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
         [
             InlineKeyboardButton(
-                text="Announcements", url="https://t.me/X7announcements"
+                text="Announcements", url=f"{urls.TG_ANNOUNCEMENTS}"
             ),
         ],
         [
             InlineKeyboardButton(
-                text="Multichain Community", url="https://t.me/X7m105portal"
+                text="Multichain Community", url=f"{urls.TG_MAIN}"
             ),
             InlineKeyboardButton(
-                text="Base Community", url="https://t.me/X7portal"
+                text="Base Community", url=f"{urls.TG_BASE}"
             ), 
         ],
         [
             InlineKeyboardButton(
-                text="Xchange Alerts", url="https://t.me/x7_alerts"
+                text="Xchange Alerts", url=f"{urls.TG_ALERTS}"
             ),
             InlineKeyboardButton(
                 text="DAO Chat", url=f"{urls.TG_DAO}",
@@ -345,8 +336,7 @@ async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         photo=api.get_random_pioneer(),
         caption=
             f"*X7 Finance Chart Links* ({chain_name})\nUse `/chart [chain-name]` for other chains\n"
-            f"Use `/constellations` for constellations\n\n"
-            f"{api.get_quote()}",
+            f"Use `/constellations` for constellations",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -379,8 +369,7 @@ async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"*X7 Finance Input Checker*\n\n"
             f"First:\n{first}\n\n"
             f"Second:\n{second}\n\n"
-            f"{reply}\n\n"
-            f"{api.get_quote()}",
+            f"{reply}",
         parse_mode="Markdown")
 
 
@@ -406,8 +395,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
             caption=
                 f"*X7 Finance Market Cap (ETH) Comparison*\n\n"
                 f"Please enter X7 token first followed by token to compare\n\n"
-                f"ie. `/compare x7r uni`\n\n"
-                f"{api.get_quote()}",
+                f"ie. `/compare x7r uni`",
             parse_mode="Markdown",
         )
         return
@@ -421,8 +409,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 photo=api.get_random_pioneer(),
                 caption=
                     f"*X7 Finance Market Cap Comparison*\n\n"
-                    f"No Market Cap data found for {token2.upper()}\n\n"
-                    f"{api.get_quote()}",
+                    f"No Market Cap data found for {token2.upper()}",
                 parse_mode="Markdown",
             )
         return
@@ -433,8 +420,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
             photo=api.get_random_pioneer(),
             caption=
                 f"*X7 Finance Market Cap Comparison*\n\n"
-                f"No Market Cap data found for {token2.upper()}\n\n"
-                f"{api.get_quote()}",
+                f"No Market Cap data found for {token2.upper()}",
             parse_mode="Markdown",
         )
         return
@@ -457,8 +443,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f'Token value of {context.args[0].upper()} at {context.args[1].upper()} Market Cap:\n'
             f'${"{:,.2f}".format(token_value)}\n'
             f'{"{:,.0f}%".format(percent)}\n'
-            f'{"{:,.0f}x".format(x)}\n\n'
-            f'{api.get_quote()}',
+            f'{"{:,.0f}x".format(x)}',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -490,8 +475,7 @@ async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f'X7104\n'
             f'`{ca.X7104(chain)}`\n\n'
             f'X7105\n'
-            f'`{ca.X7105(chain)}`\n\n'
-            f'{api.get_quote()}',
+            f'`{ca.X7105(chain)}`',
         parse_mode="Markdown")
 
 
@@ -510,8 +494,7 @@ async def contracts(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"*X7 Finance Contract Addresses ({chain_name})*\nUse `/ca [chain-name]` for other chains\n\n"
             f"*X7R - Rewards Token *\n`{ca.X7R(chain)}`\n\n"
             f"*X7DAO - Governance Token*\n`{ca.X7DAO(chain)}`\n\n"
-            f"For advanced trading and arbitrage opportunities see `/constellations`\n\n"
-            f"{api.get_quote()}",
+            f"For advanced trading and arbitrage opportunities see `/constellations`",
         parse_mode="Markdown",
     )
 
@@ -520,8 +503,7 @@ async def contribute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"{text.CONTRIBUTE}\n\n"
-            f"{api.get_quote()}",
+            f"{text.CONTRIBUTE}",
         parse_mode="Markdown"  
     )
 
@@ -572,8 +554,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
-        caption=f"{caption}"
-            f"{api.get_quote()}",
+        caption=f"{caption}",
         parse_mode="Markdown")
 
 
@@ -638,8 +619,7 @@ async def costs(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{swap_text}\n"
             f"{pair_text}\n"
             f"{split_text}\n"
-            f"{deposit_text}\n\n"
-            f"{api.get_quote()}",
+            f"{deposit_text}",
         parse_mode = "markdown")
 
 
@@ -650,8 +630,7 @@ async def countdown(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
-                f"*X7 Finance Countdown*\n\nNo countdown set, Please check back for more details\n\n"
-                f"{api.get_quote()}",
+                f"*X7 Finance Countdown*\n\nNo countdown set, Please check back for more details",
             parse_mode="Markdown",
         )
         return
@@ -659,7 +638,7 @@ async def countdown(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text=f"*X7 Finance Countdown:*\n\n"
         f'{times.COUNTDOWN_TITLE}\n\n{times.COUNTDOWN_TIME.strftime("%A %B %d %Y %I:%M %p")} UTC\n\n'
         f"{days} days, {hours} hours and {minutes} minutes\n\n"
-        f"{times.COUNTDOWN_DESC}\n\n{api.get_quote()}",
+        f"{times.COUNTDOWN_DESC}",
         parse_mode="Markdown",
     )
 
@@ -823,8 +802,7 @@ async def deployer(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"{days} days, {hours} hours and {minutes} minutes ago:\n\n"
                 f"`{name}`\n\n"
                 f"This command will pull last TX on the X7 Finance deployer wallet."
-                f" To view last on chain use `/on_chain`\n\n"
-                f"{api.get_quote()}",
+                f" To view last on chain use `/on_chain`",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -947,7 +925,7 @@ async def ebb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         liquidity_ratio_target = "N/A"
 
     split_text = (
-        f"Ecosysyem Splitter Share: {distribute}%\n"
+        f"Ecosystem Splitter Share: {distribute}%\n"
         f"Liquidity Share: {liquidity}%\n"
         f"Treasury Share: {treasury}%"
     )
@@ -994,8 +972,7 @@ async def ebb(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{balance_text}\n\n"
             f"{split_text}\n\n"
             f"Liquidity Ratio Target: {liquidity_ratio_target}%\n\n"
-            f"{buy_back_text}\n\n"
-            f"{api.get_quote()}",
+            f"{buy_back_text}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1011,7 +988,7 @@ async def ebb(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def ecosystem(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        f"{text.ECOSYSTEM}" f"\n\n{api.get_quote()}",
+        f"{text.ECOSYSTEM}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1145,8 +1122,7 @@ async def fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"*X7 Finance Xchange Fee Liquidation ({chain_name})*\nUse `/fees [chain-name]` for other chains\n\n"
             f'Last Liquidation: {time} UTC\n{value} {chain_native.upper()} (${"{:0,.0f}".format(dollar)})\n\n'
-            f"{days} days, {hours} hours and {minutes} minutes ago\n\n"
-            f"{api.get_quote()}",
+            f"{days} days, {hours} hours and {minutes} minutes ago",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1192,7 +1168,7 @@ async def fg(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption += f'{fear_values[i][0]} - {fear_values[i][1]} - {fear_values[i][2].strftime("%B %d")}\n'
     caption += "\nNext Update:\n"
     caption += (
-        f"{int(hours[0])} hours and {int(minutes[0])} minutes\n\n{api.get_quote()}"
+        f"{int(hours[0])} hours and {int(minutes[0])} minutes"
     )
     await update.message.reply_photo(
         photo=f"https://alternative.me/crypto/fear-and-greed-index.png?timestamp={int(time.time())}",
@@ -1227,8 +1203,7 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f'Low: {gas_data["result"]["SafeGasPrice"]} Gwei\n'
             f'Average: {gas_data["result"]["ProposeGasPrice"]} Gwei\n'
             f'High: {gas_data["result"]["FastGasPrice"]} Gwei\n\n'
-            f'{swap_text}\n\n'
-            f"{api.get_quote()}",
+            f'{swap_text}',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton(text=f"{chain_name} Gas Tracker", url=chain_url)]]
@@ -1244,8 +1219,7 @@ async def giveaway_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
-                f"X7 Finance Giveaway is now closed\n\nPlease check back for more details"
-                f"\n\n{api.get_quote()}",
+                f"X7 Finance Giveaway is now closed\n\nPlease check back for more details",
             parse_mode="Markdown",
         )
     else:
@@ -1254,8 +1228,7 @@ async def giveaway_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             caption=
                 f"*{giveaway.NAME}*\n\n{giveaway.TEXT}\n\n"
                 f"Ends:\n\n{giveaway.TIME.strftime('%A %B %d %Y %I:%M %p')} UTC\n\n"
-                f"{days} days, {hours} hours and {minutes} minutes\n\n"
-                f"{api.get_quote()}",
+                f"{days} days, {hours} hours and {minutes} minutes",
             parse_mode="Markdown",
             )
 
@@ -1289,8 +1262,7 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"X7R:        {x7r_holders}\n"
             f"X7DAO:  {x7dao_holders}\n"
             f"X7DAO ≥ 500K: {x7dao_proposers}\n"
-            f"X7D:        {x7d_holders}\n\n"
-            f"{api.get_quote()}",
+            f"X7D:        {x7d_holders}",
         parse_mode="Markdown",
     )
 
@@ -1454,8 +1426,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"*X7DAO*\n{x7dao_data} {chain_native.upper()}\n"
                 f"${x7dao_price:,.0f}\n\n"
                 f"*X7100*\n{x7100_data} {chain_native.upper()}\n"
-                f"${x7100_price:,.0f}\n\n"
-                f"{api.get_quote()}",
+                f"${x7100_price:,.0f}",
             parse_mode="Markdown",
         )
         return
@@ -1517,8 +1488,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=api.get_random_pioneer(),
         caption=
             f"*X7 Finance Liquidity ({chain_name})*\nUse `liquidity [token-name] [chain-name]` for other chains\n\n"
-            f"{final_text}\n\n"
-            f"{api.get_quote()}",
+            f"{final_text}",
         parse_mode="Markdown",
     )
     
@@ -1560,8 +1530,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=api.get_random_pioneer(),
         caption=
             f"*X7 Finance Loan Liquidations ({chain_name})*\nfor other chains use `/liquidate [chain-name]`\n\n"
-            f"{output}\n\n"
-            f"{api.get_quote()}",
+            f"{output}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1605,8 +1574,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"*X7 Finance Loan Count*\n"
                     f"Use `/loan [ID] [chain]` for Individual loan details\n\n"
                     f"{loans_text}\n"
-                    f"`Total:`   {total}\n\n"
-                    f"{api.get_quote()}",
+                    f"`Total:`   {total}",
                 parse_mode="Markdown",
             )
             return
@@ -1668,8 +1636,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"*X7 Finance Initial Liquidity Loan - {loan_id} ({chain_name})*\n\n"
                 f"Payment Schedule UTC:\n{schedule_str}\n\n"
                 f"{remaining}"
-                f"{liquidation_status}\n\n"
-                f"{api.get_quote()}",
+                f"{liquidation_status}",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -1720,7 +1687,7 @@ async def loans_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption= 
-                f"{loans.OVERVIEW(chain)}\n\n{api.get_quote()}",
+                f"{loans.OVERVIEW(chain)}",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -1788,8 +1755,7 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"*X7DAO Unlock Date*:\n{x7dao_unlock_datetime_str}\n"
             f"{x7dao_remaining_time_str}\n\n"
             f"*X7D Unlock Date*:\n{x7d_unlock_datetime_str}\n"
-            f"{x7d_remaining_time_str}\n\n"
-            f"{api.get_quote()}",
+            f"{x7d_remaining_time_str}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1828,8 +1794,7 @@ async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"*X7 Finance Magister Holders ({chain_name})*\n"
             f"Use `/magisters [chain-name]` or other chains\n\n"
             f"Holders - {holders}\n\n"
-            f"{address}\n\n"
-            f"{api.get_quote()}",
+            f"{address}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1891,8 +1856,7 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f'`X7104:`         {caps[ca.X7104(chain)]}\n'
             f'`X7105:`         {caps[ca.X7105(chain)]}\n\n'
             f'`Constellations Combined:` ${total_cons:,.0f}\n'
-            f'`Total Market Cap:` ${total_mcap:,.0f}\n\n'
-            f"{api.get_quote()}",
+            f'`Total Market Cap:` ${total_mcap:,.0f}',
         parse_mode="Markdown",
     )
 
@@ -2176,8 +2140,7 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"*X7 Finance Pair Count*\n\n"
             f"{pair_text}\n"
-            f"`TOTAL:`  {total}\n\n"
-            f"{api.get_quote()}",
+            f"`TOTAL:`  {total}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2255,8 +2218,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
                 f"Floor Price: {floor_round} ETH (${'{:0,.0f}'.format(floor_dollar)})\n"
                 f"Pioneer Pool: {pioneer_pool:.3f} ETH (${'{:0,.0f}'.format(total_dollar)})\n"
                 f"Per Pioneer: {each:.3f} ETH (${each_dollar:,.2f})\n\n"
-                f"{recent_tx_text}"
-                f"{api.get_quote()}",
+                f"{recent_tx_text}",
             parse_mode="markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2294,8 +2256,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         photo=image_url,
         caption=
             f"*X7 Pioneer {pioneer_id} NFT Info*\n\n"
-            f"Transfer Lock Status: {status}\n\n"
-            f"{api.get_quote()}",
+            f"Transfer Lock Status: {status}",
         parse_mode="markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2348,8 +2309,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"{pool_text}\n"
                 f'System Owned: ${"{:0,.0f}".format(total_lpool_dollar)}\n'
                 f'External Deposits: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
-                f'Total: ${"{:0,.0f}".format(total_dollar)}\n\n'   
-                f"{api.get_quote()}",
+                f'Total: ${"{:0,.0f}".format(total_dollar)}',
             parse_mode="Markdown",
         )
     else:
@@ -2389,8 +2349,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Total\n"
                 f'{pool} {chain_native.upper()} (${"{:0,.0f}".format(dollar)})\n\n'
                 f'Currently Borrowed\n'
-                f'{used:.2f} {chain_native.upper()} ({percent}%)\n\n'
-                f"{api.get_quote()}",
+                f'{used:.2f} {chain_native.upper()} ({percent}%)\n\n',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2435,8 +2394,7 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{x7r_change}\n\n"
             f"X7DAO\n"
             f"💰 Price: {x7dao_price}\n"
-            f"{x7dao_change}\n\n"
-            f"{api.get_quote()}",
+            f"{x7dao_change}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2454,14 +2412,6 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ],
             ]
         ),
-    )
-
-
-async def quote(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=f"{api.get_quote()}",
-        parse_mode="Markdown",
     )
 
 
@@ -2675,8 +2625,7 @@ async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"*X7 Finance Token Scanner*\n\n{token_name} ({token_symbol}) - {chain.upper()}\n`{token_address}`\n\n{status}\n\n"
-            f"{api.get_quote()}",
+            f"*X7 Finance Token Scanner*\n\n{token_name} ({token_symbol}) - {chain.upper()}\n`{token_address}`\n\n{status}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2716,8 +2665,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"....[continue reading on wiki]({page_py.fullurl})\n\n"
                 f"[Google](https://www.google.com/search?q={keyword})\n"
                 f"[X](https://twitter.com/search?q={keyword}&src=typed_query)\n"
-                f"[Etherscan](https://etherscan.io/search?f=0&q={keyword})\n\n"
-                f"{api.get_quote()}",
+                f"[Etherscan](https://etherscan.io/search?f=0&q={keyword})",
             parse_mode="markdown",
         )
     else:
@@ -2727,8 +2675,7 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Your search: {keyword}\n\nNo description available\n\n"
                 f"[Google](https://www.google.com/search?q={keyword})\n"
                 f"[X](https://twitter.com/search?q={keyword}&src=typed_query)\n"
-                f"[Etherscan](https://etherscan.io/search?f=0&q={keyword})\n\n"
-                f"{api.get_quote()}",
+                f"[Etherscan](https://etherscan.io/search?f=0&q={keyword})",
             parse_mode="markdown",
         )
 
@@ -2762,8 +2709,7 @@ async def signers(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"*X7 Finance Multi-Sig Signers ({chain_name})*\n"
             f"Use `/signers [chain-name]` or other chains\n\n"
-            f"*DAO Signers*\n{dao_address}\n\n*Community Signers*\n{com_address}\n\n"
-            f"{api.get_quote()}",
+            f"*DAO Signers*\n{dao_address}\n\n*Community Signers*\n{com_address}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2897,8 +2843,7 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"*X7 Finance Smart Contracts ({chain_name})*\nUse `/smart [chain-name]` or other chains\n\n"
-            f"{api.get_quote()}",
+            f"*X7 Finance Smart Contracts ({chain_name})*\nUse `/smart [chain-name]` for other chains",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -2944,8 +2889,7 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Ecosystem Splitter\n{eco_eth} {chain_native.upper()} (${'{:0,.0f}'.format(eco_dollar)})\n"
             f"{eco_splitter_text}\n"
             f"Treasury Splitter\n{treasury_eth} {chain_native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
-            f"{treasury_splitter_text}\n"
-            f"{api.get_quote()}",
+            f"{treasury_splitter_text}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2985,8 +2929,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f'Open Issues: {repo_info["open_issues_count"]}\n\n'
             f'Contributors:\n{contributor_info}\n'
             f"Last Updated {timestamp_datetime.strftime('%Y-%m-%d %H:%M:%S')}\n"
-            f"{days} days, {hours} hours and {minutes} minutes ago\n\n"
-            f"{api.get_quote()}",
+            f"{days} days, {hours} hours and {minutes} minutes ago",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3036,8 +2979,7 @@ async def supply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"*X7 Finance Uniswap Supply ({chain_name})*\n\n{caption_text}\n\n"
-            f"{api.get_quote()}",
+            f"*X7 Finance Uniswap Supply ({chain_name})*\n\n{caption_text}",
         parse_mode="Markdown",
     )
 
@@ -3057,8 +2999,7 @@ async def tax_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"*X7 Finance Tax Info ({chain_name})*\n"
             f"Use `/tax [chain-name]` for other chains\n\n"
-            f"{tax_info}\n"
-            f"{api.get_quote()}",
+            f"{tax_info}\n",
         parse_mode="Markdown",
     )
 
@@ -3092,8 +3033,7 @@ async def timestamp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"*X7 Finance Timestamp Conversion*\n\n"
                     f"{stamp}\n{time} UTC\n\n"
                     f"{years} years, {months} months, {days} days, "
-                    f"{hours} hours, {minutes} minutes {time_message}\n\n"
-                    f"{api.get_quote()}",
+                    f"{hours} hours, {minutes} minutes {time_message}",
                 parse_mode="Markdown",
             )
     except Exception:
@@ -3246,8 +3186,7 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f'{x7d_balance} X7D (${"{:0,.0f}".format(x7d_price)})\n'
             f'{"{:0,.0f}".format(x7r_balance)} X7R ({x7r_percent}%) (${"{:0,.0f}".format(x7r_price)})\n'
             f'{"{:0,.0f}".format(x7dao_balance)} X7DAO ({x7dao_percent}%) (${"{:0,.0f}".format(x7dao_price)})\n'
-            f'Total: (${"{:0,.0f}".format(total)})\n\n'
-            f"{api.get_quote()}",
+            f'Total: (${"{:0,.0f}".format(total)})',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3299,7 +3238,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await message.delete()
             await update.message.reply_photo(
                 photo=api.get_random_pioneer(),
-                caption=f'{trending_text}{api.get_quote()}',
+                caption=f'{trending_text}',
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup(
                     [
@@ -3307,12 +3246,6 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             InlineKeyboardButton(
                                 text="X7 Dune Dashboard", url=f"{urls.DUNE}"
                             )
-                        ],
-                        [
-                            InlineKeyboardButton(
-                                text="Trend a token on Xchange Alerts",
-                                url=f"https://t.me/smarttrendbuybot?start",
-                            ),
                         ],
                     ]
                 ),
@@ -3325,8 +3258,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
-                f'{dune.TRENDING_TEXT}Last Updated: {dune.TRENDING_LAST_DATE}\n\n'
-                f'{api.get_quote()}',
+                f'{dune.TRENDING_TEXT}Last Updated: {dune.TRENDING_LAST_DATE}',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -3350,8 +3282,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=api.get_random_pioneer(),
         caption=
             f'*Xchange Trending*\n\n'
-            f'No trending pair information available. please use the link below\n\n'
-            f'{api.get_quote()}',
+            f'No trending pair information available. please use the link below',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3414,8 +3345,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
-                f"*Xchange Trading Volume*\n\n{volume_text}\n\n"
-                f"{api.get_quote()}",
+                f"*Xchange Trading Volume*\n\n{volume_text}",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -3436,8 +3366,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
             photo=api.get_random_pioneer(),
             caption=
                 f'*Xchange Trading Volume*\n\n'
-                f'{dune.VOLUME_TEXT}\n\nLast Updated: {dune.VOLUME_LAST_DATE}\n\n'
-                f'{api.get_quote()}',
+                f'{dune.VOLUME_TEXT}\n\nLast Updated: {dune.VOLUME_LAST_DATE}',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -3455,8 +3384,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=api.get_random_pioneer(),
         caption=
             f'*Xchange Volume*\n\n'
-            f'Unable to refresh Dune data, please use the link below\n\n'
-            f'{api.get_quote()}',
+            f'Unable to refresh Dune data, please use the link below',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3628,8 +3556,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{x7105_balance:,.0f} X7105 {percentages[5]}% (${'{:0,.0f}'.format(x7105_price)})\n"
             f"{x7d_balance:.3f} X7D (${'{:0,.0f}'.format(x7d_price)})\n\n"
             f"{txs} tx's in the last 24 hours\n\n"
-            f"Total X7 Finance token value ${'{:0,.0f}'.format(total)}\n\n"
-            f"{api.get_quote()}",
+            f"Total X7 Finance token value ${'{:0,.0f}'.format(total)}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3682,7 +3609,7 @@ async def word(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         
         definition, audio_url = api.get_word(word)
-        caption = f"*X7 Finance Dictionary*\n\n{word}:\n\n{definition}\n\n{api.get_quote()}"
+        caption = f"*X7 Finance Dictionary*\n\n{word}:\n\n{definition}"
         keyboard_markup = None
         
         if audio_url:
@@ -3746,8 +3673,7 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Holders: {holders}\n\n"
             f'System Owned:\n{lpool_rounded} X7D (${"{:0,.0f}".format(lpool_dollar)})\n\n'
             f'External Deposits:\n{lpool_reserve_rounded} X7D (${"{:0,.0f}".format(lpool_reserve_dollar)})\n\n'
-            f'Total Supply:\n{supply} X7D (${"{:0,.0f}".format(dollar)})\n\n'
-            f"{api.get_quote()}",
+            f'Total Supply:\n{supply} X7D (${"{:0,.0f}".format(dollar)})',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3815,8 +3741,7 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"👪 Holders: {holders}\n"
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7DAO(chain)}`\n\n"
-            f"{api.get_quote()}",
+            f"Contract Address:\n`{ca.X7DAO(chain)}`",
     parse_mode="Markdown",
     reply_markup=InlineKeyboardMarkup(
         [
@@ -3875,8 +3800,7 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"👪 Holders: {holders}\n"
             f"🔝 ATH: {ath}\n"
             f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7R(chain)}`\n\n"
-            f"{api.get_quote()}",
+            f"Contract Address:\n`{ca.X7R(chain)}`",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3935,8 +3859,7 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"👪 Holders: {holders}\n"
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7101(chain)}`\n\n"
-            f"{api.get_quote()}",
+            f"Contract Address:\n`{ca.X7101(chain)}`",
     parse_mode="Markdown",
     reply_markup=InlineKeyboardMarkup(
         [
@@ -3994,8 +3917,7 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"👪 Holders: {holders}\n"
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7102(chain)}`\n\n"
-            f"{api.get_quote()}",
+            f"Contract Address:\n`{ca.X7102(chain)}`",
     parse_mode="Markdown",
     reply_markup=InlineKeyboardMarkup(
         [
@@ -4053,8 +3975,7 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"👪 Holders: {holders}\n"
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7103(chain)}`\n\n"
-            f"{api.get_quote()}",
+            f"Contract Address:\n`{ca.X7103(chain)}`",
     parse_mode="Markdown",
     reply_markup=InlineKeyboardMarkup(
         [
@@ -4112,8 +4033,7 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"👪 Holders: {holders}\n"
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7104(chain)}`\n\n"
-            f"{api.get_quote()}",
+            f"Contract Address:\n`{ca.X7104(chain)}`",
     parse_mode="Markdown",
     reply_markup=InlineKeyboardMarkup(
         [
@@ -4171,8 +4091,7 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"👪 Holders: {holders}\n"
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7105(chain)}`\n\n"
-            f"{api.get_quote()}",
+            f"Contract Address:\n`{ca.X7105(chain)}`",
     parse_mode="Markdown",
     reply_markup=InlineKeyboardMarkup(
         [
@@ -4224,8 +4143,7 @@ async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f'Price: ${token_price["price"]}\n'
             f'24 Hour Change: {token_price["change"]}%\n'
             f'Market Cap: {token_price["mcap"]}\n'
-            f'Volume: {token_price["volume"]}\n\n'
-            f"{api.get_quote()}",
+            f'Volume: {token_price["volume"]}',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
