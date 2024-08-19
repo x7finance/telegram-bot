@@ -1825,7 +1825,7 @@ async def me(update: Update, context: CallbackContext):
         text=message,
         parse_mode="Markdown",
     )
-    
+
 
 async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
@@ -1943,15 +1943,15 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
         [
             InlineKeyboardButton(text="Mint Here", url=f"{urls.XCHANGE}dashboard/marketplace"),
-            InlineKeyboardButton(text="OS - Ecosystem Maxi", url=f"{urls.OS_LINK("eco")}{chain_os}"),
+            InlineKeyboardButton(text="OS - Ecosystem Maxi", url=f"{urls.OS_LINK('eco')}{chain_os}"),
         ],
         [
-            InlineKeyboardButton(text="OS - Liquidity Maxi", url=f"{urls.OS_LINK("liq")}{chain_os}"),
-            InlineKeyboardButton(text="OS - DEX Maxi", url=f"{urls.OS_LINK("dex")}{chain_os}"),
+            InlineKeyboardButton(text="OS - Liquidity Maxi", url=f"{urls.OS_LINK('liq')}{chain_os}"),
+            InlineKeyboardButton(text="OS - DEX Maxi", url=f"{urls.OS_LINK('dex')}{chain_os}"),
         ],
         [
-            InlineKeyboardButton(text="OS - Borrowing Maxi", url=f"{urls.OS_LINK("borrow")}{chain_os}"),
-            InlineKeyboardButton(text="OS - Magister", url=f"{urls.OS_LINK("magister")}{chain_os}"),
+            InlineKeyboardButton(text="OS - Borrowing Maxi", url=f"{urls.OS_LINK('borrow')}{chain_os}"),
+            InlineKeyboardButton(text="OS - Magister", url=f"{urls.OS_LINK('magister')}{chain_os}"),
         ],
     ]
 
