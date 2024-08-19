@@ -210,7 +210,7 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_native = chains.CHAINS[chain].token
         chain_name = chains.CHAINS[chain].name
@@ -247,7 +247,7 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_id = chains.CHAINS[chain].id
@@ -314,7 +314,7 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         dext = chains.CHAINS[chain].dext
@@ -366,7 +366,7 @@ async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     token_names = {
         "x7r": {"contract": ca.X7R(chain), "image": media.X7R_LOGO},
@@ -451,7 +451,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
@@ -472,7 +472,7 @@ async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def contracts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
     else:
@@ -504,7 +504,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
         amount = context.args[0]
         amount = amount.replace(',', '')
         token = context.args[1]
-        chain = chains.default_chain(update.effective_chat.id) if len(context.args) < 3 else context.args[2]
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id) if len(context.args) < 3 else context.args[2]
 
         if not amount.isdigit():
             await context.bot.send_message(update.effective_chat.id, "Please provide a valid amount")
@@ -571,7 +571,7 @@ async def countdown(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     buttons = []
     input_contract = " ".join(context.args).lower()
     contract_names = list(dao.CONTRACT_MAPPINGS(chain))
@@ -676,7 +676,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def deployer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_tx = chains.CHAINS[chain].scan_tx
@@ -750,7 +750,7 @@ async def deployer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def discount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     await update.message.reply_text(
         f"*X7 Finance Discount*\n\n{text.DISCOUNT}",
         parse_mode="Markdown",
@@ -801,7 +801,7 @@ async def ebb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = context.args[1].lower()
     if len(context.args) == 1:
         token = context.args[0].lower()
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
@@ -1019,7 +1019,7 @@ async def faq(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
         chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
@@ -1118,7 +1118,7 @@ async def fg(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.GAS_CHAINS:
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
         chain_name = chains.CHAINS[chain].name
@@ -1174,7 +1174,7 @@ async def giveaway_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
     else:
@@ -1333,7 +1333,7 @@ async def links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower() 
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
 
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
@@ -1434,7 +1434,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_url = chains.CHAINS[chain].scan_address
@@ -1533,7 +1533,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_address_url = chains.CHAINS[chain].scan_address
@@ -1614,7 +1614,7 @@ async def loans_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         loan_type = ""
         chain = ""
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_scan = chains.CHAINS[chain].scan_address
     else:
@@ -1664,7 +1664,7 @@ async def loans_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
 
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
@@ -1711,7 +1711,7 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_url = chains.CHAINS[chain].scan_token
@@ -1750,7 +1750,7 @@ async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
     else:
@@ -1824,19 +1824,8 @@ async def me(update: Update, context: CallbackContext):
     await update.message.reply_text(
         text=message,
         parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="Full Leaderboard",
-                        url=f"{urls.XCHANGE}community/leaderboard",
-                    )
-                ],
-            ]
-        ),
     )
     
-
 
 async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
@@ -1892,7 +1881,7 @@ async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_os = chains.CHAINS[chain].opensea
@@ -1953,16 +1942,16 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     buttons = [
         [
-            InlineKeyboardButton(text="Mint Here", url=f"{urls.XCHANGE}/dashboard/marketplace"),
-            InlineKeyboardButton(text="OS - Ecosystem Maxi", url=f"{urls.OS_ECO}{chain_os}"),
+            InlineKeyboardButton(text="Mint Here", url=f"{urls.XCHANGE}dashboard/marketplace"),
+            InlineKeyboardButton(text="OS - Ecosystem Maxi", url=f"{urls.OS_LINK("eco")}{chain_os}"),
         ],
         [
-            InlineKeyboardButton(text="OS - Liquidity Maxi", url=f"{urls.OS_LIQ}{chain_os}"),
-            InlineKeyboardButton(text="OS - DEX Maxi", url=f"{urls.OS_DEX}{chain_os}"),
+            InlineKeyboardButton(text="OS - Liquidity Maxi", url=f"{urls.OS_LINK("liq")}{chain_os}"),
+            InlineKeyboardButton(text="OS - DEX Maxi", url=f"{urls.OS_LINK("dex")}{chain_os}"),
         ],
         [
-            InlineKeyboardButton(text="OS - Borrowing Maxi", url=f"{urls.OS_BORROW}{chain_os}"),
-            InlineKeyboardButton(text="OS - Magister", url=f"{urls.OS_MAGISTER}{chain_os}"),
+            InlineKeyboardButton(text="OS - Borrowing Maxi", url=f"{urls.OS_LINK("borrow")}{chain_os}"),
+            InlineKeyboardButton(text="OS - Magister", url=f"{urls.OS_LINK("magister")}{chain_os}"),
         ],
     ]
 
@@ -2311,7 +2300,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_dext = chains.CHAINS[chain].dext
     else:
@@ -2339,13 +2328,13 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="X7R Chart - Rewards Token",
-                        url=f"{urls.dex_tools(chain_dext)}{ca.X7R(chain)}",
+                        url=f"{urls.DEX_TOOLS(chain_dext)}{ca.X7R(chain)}",
                     )
                 ],
                 [
                     InlineKeyboardButton(
                         text="X7DAO Chart - Governance Token",
-                        url=f"{urls.dex_tools(chain_dext)}{ca.X7DAO(chain)}",
+                        url=f"{urls.DEX_TOOLS(chain_dext)}{ca.X7DAO(chain)}",
                     )
                 ],
             ]
@@ -2618,60 +2607,11 @@ async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-async def signers(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower()
-    if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
-    if chain in chains.CHAINS:
-        chain_name = chains.CHAINS[chain].name
-        chain_url = chains.CHAINS[chain].scan_address
-        com_wallet = chains.CHAINS[chain].com_multi
-        dao_wallet = chains.CHAINS[chain].dao_multi
-    else:
-        await update.message.reply_text(text.CHAIN_ERROR)
-        return
-    try:
-        dao_response = api.get_signers(dao_wallet)
-        dao_list = dao_response["owners"]
-        dao_address = "\n\n".join(map(lambda x: f"`{x}`", dao_list))
-    except Exception:
-        dao_address = "N/A"
-    try:
-        com_response = api.get_signers(com_wallet)
-        com_list = com_response["owners"]
-        com_address = "\n\n".join(map(lambda x: f"`{x}`", com_list))
-    except Exception:
-        com_address = "N/A"
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Multi-Sig Signers ({chain_name})*\n"
-            f"Use `/signers [chain-name]` or other chains\n\n"
-            f"*DAO Signers*\n{dao_address}\n\n*Community Signers*\n{com_address}",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="X7 DAO Multi-Sig",
-                        url=f"{chain_url}{dao_wallet}",
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        text="X7 Community Multi-Sig",
-                        url=f"{chain_url}{com_wallet}",
-                    )
-                ],
-            ]
-        ),
-    )
-
 
 async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_url = chains.CHAINS[chain].scan_address
@@ -2688,18 +2628,22 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     ],
     [
         InlineKeyboardButton(
-            text="X7100 Liquidity Hub", url=f"{chain_url}{ca.X7100_LIQ_HUB(chain)}"
+            text="X7100 Liquidity Hub",
+            url=f"{chain_url}{ca.X7100_LIQ_HUB(chain)}"
         ),
         InlineKeyboardButton(
-            text="X7R Liquidity Hub", url=f"{chain_url}{ca.X7R_LIQ_HUB(chain)}"
+            text="X7R Liquidity Hub",
+            url=f"{chain_url}{ca.X7R_LIQ_HUB(chain)}"
         ),
     ],
     [
         InlineKeyboardButton(
-            text="X7DAO Liquidity Hub", url=f"{chain_url}{ca.X7DAO_LIQ_HUB(chain)}"
+            text="X7DAO Liquidity Hub",
+            url=f"{chain_url}{ca.X7DAO_LIQ_HUB(chain)}"
         ),
         InlineKeyboardButton(
-            text="X7 Token Burner", url=f"{chain_url}{ca.BURNER(chain)}"
+            text="X7 Token Burner",
+            url=f"{chain_url}{ca.BURNER(chain)}"
         ),
     ],
     [
@@ -2718,7 +2662,8 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             url=f"{chain_url}{ca.X7DAO_DISCOUNT(chain)}",
         ),
         InlineKeyboardButton(
-            text="X7 Token Time Lock", url=f"{chain_url}{ca.TIME_LOCK(chain)}"
+            text="X7 Token Time Lock",
+            url=f"{chain_url}{ca.TIME_LOCK(chain)}"
         ),
     ],
     [
@@ -2733,16 +2678,6 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     ],
     [
         InlineKeyboardButton(
-            text="X7 Profit Share Splitter",
-            url=f"{chain_url}{ca.PROFIT_SHARING(chain)}",
-        ),
-        InlineKeyboardButton(
-            text="X7 Lending Pool Reserve",
-            url=f"{chain_url}{ca.LPOOL_RESERVE(chain)}",
-        ),
-    ],
-    [
-        InlineKeyboardButton(
             text="X7 Xchange Discount Authority",
             url=f"{chain_url}{ca.XCHANGE_DISCOUNT(chain)}",
         ),
@@ -2753,27 +2688,33 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     ],
     [
         InlineKeyboardButton(
-            text="X7 Xchange Router", url=f"{chain_url}{ca.ROUTER(chain)}"
-        ),
-        InlineKeyboardButton(
             text="X7 Xchange Router with Discounts",
             url=f"{chain_url}{ca.DISCOUNT_ROUTER(chain)}",
         ),
-    ],
-    [
-        InlineKeyboardButton(
-            text="X7 Lending Pool Contract", url=f"{chain_url}{ca.LPOOL(chain)}"
-        ),
-        InlineKeyboardButton(
-            text="X7 Xchange Factory", url=f"{chain_url}{ca.FACTORY(chain)}"
-        ),
-    ],
-    [
-        InlineKeyboardButton(
-            text="X7 Xchange Fee Handler", url=f"{chain_url}{ca.FEE_TO(chain)}"
-        ),
         InlineKeyboardButton(
             text="X7 Default Token List", url=f"{chain_url}{ca.DEFAULT_TOKEN_LIST(chain)}"
+        ),
+    ],
+    [
+        InlineKeyboardButton(
+            text="X7 Lending Pool",
+            url=f"{chain_url}{ca.LPOOL(chain)}"
+        ),
+        InlineKeyboardButton(
+            text="X7 Lending Pool Reserve",
+            url=f"{chain_url}{ca.LPOOL_RESERVE(chain)}",
+        ),
+        
+    ],
+    [
+        
+        InlineKeyboardButton(
+            text="X7 Xchange Factory",
+            url=f"{chain_url}{ca.FACTORY(chain)}"
+        ),
+        InlineKeyboardButton(
+            text="X7 Xchange Router",
+            url=f"{chain_url}{ca.ROUTER(chain)}"
         ),
     ],
     ]
@@ -2791,7 +2732,7 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
@@ -2880,7 +2821,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def supply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_pair = chains.CHAINS[chain].pairs
@@ -2925,7 +2866,7 @@ async def supply(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def tax_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
     else:
@@ -3059,7 +3000,7 @@ async def today(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_url = chains.CHAINS[chain].scan_address
@@ -3388,7 +3329,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown")
         return
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_url = chains.CHAINS[chain].scan_address
@@ -3553,7 +3494,7 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_scan = chains.CHAINS[chain].scan_token
@@ -3607,7 +3548,7 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_dext = chains.CHAINS[chain].dext
@@ -3655,7 +3596,7 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7DAO(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.dex_tools(chain_dext)}{chain_pair}")],
+            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
             [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7DAO(chain))}")],
         ]
     ),
@@ -3666,7 +3607,7 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_dext = chains.CHAINS[chain].dext
@@ -3714,7 +3655,7 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7R(chain)}")],
-                [InlineKeyboardButton(text="Chart", url=f"{urls.dex_tools(chain_dext)}{chain_pair}")],
+                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
                 [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7R(chain))}")],
             ]
         ),
@@ -3725,7 +3666,7 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_dext = chains.CHAINS[chain].dext
@@ -3773,7 +3714,7 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7101(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.dex_tools(chain_dext)}{chain_pair}")],
+            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
             [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7101(chain))}")],
         ]
     ),
@@ -3784,7 +3725,7 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_dext = chains.CHAINS[chain].dext
@@ -3831,7 +3772,7 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7102(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.dex_tools(chain_dext)}{chain_pair}")],
+            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
             [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7102(chain))}")],
         ]
     ),
@@ -3842,7 +3783,7 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_dext = chains.CHAINS[chain].dext
@@ -3889,7 +3830,7 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7103(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.dex_tools(chain_dext)}{chain_pair}")],
+            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
             [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7103(chain))}")],
         ]
     ),
@@ -3900,7 +3841,7 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_dext = chains.CHAINS[chain].dext
@@ -3947,7 +3888,7 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7104(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.dex_tools(chain_dext)}{chain_pair}")],
+            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
             [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7104(chain))}")],
         ]
     ),
@@ -3958,7 +3899,7 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     chain = " ".join(context.args).lower()
     if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_dext = chains.CHAINS[chain].dext
@@ -4005,7 +3946,7 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7105(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.dex_tools(chain_dext)}{chain_pair}")],
+            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
             [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7105(chain))}")],
         ]
     ),

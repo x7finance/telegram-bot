@@ -154,7 +154,7 @@ async def alert(event, chain):
                         [
                             InlineKeyboardButton(
                                 text="Chart",
-                                url=f"{urls.dex_tools(dext)}{event['args']['pair']}",
+                                url=f"{urls.DEX_TOOLS(dext)}{event['args']['pair']}",
                             )
                         ],
                     ]

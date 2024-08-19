@@ -6,7 +6,7 @@ from constants import chains, urls
 
 ABOUT = (
     "*X7 Finance - Home of Xchange*\n\n"
-    f"X7 Finance is an ecosystem of innovative smart contracts on:\n\n{chains.full_names()}\n\nAt the centre of the ecosystem is the X7 Finance"
+    f"X7 Finance is an ecosystem of innovative smart contracts on:\n\n{chains.FULL_NAMES()}\n\nAt the centre of the ecosystem is the X7 Finance"
     ' Lending Pool, a pool that provides those with visionary ideas access to Initial Liquidity Loans "ILL".\n\n'
     "At its core, Initial Liquidity Loans will provide anyone with a good idea the ability to raise 10-1000X "
     "the amount of capital in their wallet to launch projects on Xchange.\n\n"
@@ -23,7 +23,7 @@ ABOUT = (
 
 
 CHAIN_ERROR = (
-    f'Chain not recognised, Please use on of the following abbreviations:\n\n{chains.short_names()}\n\n')
+    f'Chain not recognised, Please use on of the following abbreviations:\n\n{chains.SHORT_NAMES()}\n\n')
 
 
 CONTRIBUTE = (
@@ -88,7 +88,7 @@ ECOSYSTEM = (
 
 def WELCOME(user, chain):
     if not chain:
-        chain = f"\n\n{chains.full_names()}"
+        chain = f"\n\n{chains.FULL_NAMES()}"
     return (f"Welcome {api.escape_markdown(user)} to X7 Finance\n\nHome of Xchange - A censorship resistant DEX offering initial loaned liquidity on {chain}"
             f"\n\n"
             "Verify as human and check out the links to get started!")
