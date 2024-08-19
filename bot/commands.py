@@ -548,71 +548,6 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown")
 
 
-async def costs(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower()
-    if chain == "":
-        chain = chains.default_chain(update.effective_chat.id)
-    if chain in chains.CHAINS:
-        await context.bot.send_chat_action(update.effective_chat.id, "typing")
-        chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
-        native = chains.CHAINS[chain].token
-    else:
-        await update.message.reply_text(text.CHAIN_ERROR)
-        return
-    
-    gas_price = chain_web3.eth.gas_price / 10**9
-    eth_price = chainscan.get_native_price(chain)
-
-    swap_cost_in_eth = gas_price * tax.SWAP_GAS
-    swap_cost_in_dollars = (swap_cost_in_eth / 10**9)* eth_price
-    swap_text = f"Swap: {swap_cost_in_eth / 10**9:.4f} {native.upper()} (${swap_cost_in_dollars:.2f})"
-    
-    try:
-        pair_data = "0xc9c65396" + ca.WETH[2:].lower().rjust(64, '0') + ca.DEAD[2:].lower().rjust(64, '0')
-        pair_gas_estimate = chain_web3.eth.estimate_gas({
-            'from': chain_web3.to_checksum_address(ca.DEPLOYER),
-            'to': chain_web3.to_checksum_address(ca.FACTORY(chain)),
-            'data': pair_data,})
-        pair_cost_in_eth = gas_price * pair_gas_estimate
-        pair_cost_in_dollars = (pair_cost_in_eth / 10**9)* eth_price
-        pair_text = f"Create Pair: {pair_cost_in_eth / 10**9:.2f} {native.upper()} (${pair_cost_in_dollars:.2f})"
-    except Exception:
-        pair_text = "Create Pair: N/A"
-
-    try:
-        split_gas = chain_web3.eth.estimate_gas({
-            'from': chain_web3.to_checksum_address(ca.DEPLOYER),
-            'to': chain_web3.to_checksum_address(ca.TREASURY_SPLITTER(chain)),
-            'data': "0x11ec9d34"})
-        split_eth = gas_price * split_gas
-        split_dollars = (split_eth / 10**9)* eth_price
-        split_text = f"Splitter Push: {split_eth / 10**9:.4f} {native.upper()} (${split_dollars:.2f})"
-    except Exception:
-        split_text = "Splitter Push: N/A"
-
-    try:
-        deposit_data = "0xf6326fb3"
-        deposit_gas = chain_web3.eth.estimate_gas({
-            'from': chain_web3.to_checksum_address(ca.DEPLOYER),
-            'to': chain_web3.to_checksum_address(ca.LPOOL_RESERVE(chain)),
-            'data': deposit_data,})
-        deposit_eth = gas_price * deposit_gas
-        deposit_dollars = (deposit_eth / 10**9)* eth_price
-        deposit_text = f"Mint X7D: {deposit_eth / 10**9:.4f} {native.upper()} (${deposit_dollars:.2f})"
-    except Exception:
-        deposit_text = "Mint X7D: N/A"
-
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*Live Xchange Costs ({chain.upper()})*\nUse `/costs [chain-name]` for other chains\n\n"
-            f"{swap_text}\n"
-            f"{pair_text}\n"
-            f"{split_text}\n"
-            f"{deposit_text}",
-        parse_mode = "markdown")
-
-
 async def countdown(update: Update, context: ContextTypes.DEFAULT_TYPE):
     duration = times.COUNTDOWN_TIME - datetime.now()
     days, hours, minutes = api.get_duration_days(duration)
@@ -736,7 +671,6 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     ),
                     parse_mode="Markdown"
                 )
-
 
 
 async def deployer(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1087,50 +1021,64 @@ async def fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if chain == "":
         chain = chains.default_chain(update.effective_chat.id)
     if chain in chains.CHAINS:
-        chain_name = chains.CHAINS[chain].name
-        chain_url = chains.CHAINS[chain].scan_address
-        chain_native = chains.CHAINS[chain].token
-        chain_tx = chains.CHAINS[chain].scan_tx
+        await context.bot.send_chat_action(update.effective_chat.id, "typing")
+        chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
+        native = chains.CHAINS[chain].token
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
         return
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    now = datetime.now()
-    tx = chainscan.get_tx(ca.FEE_TO(chain), chain)
-    filter = [d for d in tx["result"] if d["to"] in f"{ca.ECO_SPLITTER(chain)}".lower() and d.get("functionName", "") != "pushAll()"]
-    value_raw = int(filter[0]["value"]) / 10**18
-    hash = filter[0]["hash"]
-    value = round(value_raw, 3) 
-    dollar = float(value) * float(chainscan.get_native_price(chain))
-    time = datetime.fromtimestamp(int(filter[0]["timeStamp"]))
-    duration = now - time
-    days = duration.days
-    hours, remainder = divmod(duration.seconds, 3600)
-    minutes = (remainder % 3600) // 60
+    
+    gas_price = chain_web3.eth.gas_price / 10**9
+    eth_price = chainscan.get_native_price(chain)
+
+    swap_cost_in_eth = gas_price * tax.SWAP_GAS
+    swap_cost_in_dollars = (swap_cost_in_eth / 10**9)* eth_price
+    swap_text = f"Swap: {swap_cost_in_eth / 10**9:.4f} {native.upper()} (${swap_cost_in_dollars:.2f})"
+    
+    try:
+        pair_data = "0xc9c65396" + ca.WETH(chain)[2:].lower().rjust(64, '0') + ca.X7R(chain)[2:].lower().rjust(64, '0')
+        pair_gas_estimate = chain_web3.eth.estimate_gas({
+            'from': chain_web3.to_checksum_address(ca.DEPLOYER),
+            'to': chain_web3.to_checksum_address(ca.FACTORY(chain)),
+            'data': pair_data,})
+        pair_cost_in_eth = gas_price * pair_gas_estimate
+        pair_cost_in_dollars = (pair_cost_in_eth / 10**9)* eth_price
+        pair_text = f"Create Pair: {pair_cost_in_eth / 10**9:.2f} {native.upper()} (${pair_cost_in_dollars:.2f})"
+    except Exception:
+        pair_text = "Create Pair: N/A"
+
+    try:
+        split_gas = chain_web3.eth.estimate_gas({
+            'from': chain_web3.to_checksum_address(ca.DEPLOYER),
+            'to': chain_web3.to_checksum_address(ca.TREASURY_SPLITTER(chain)),
+            'data': "0x11ec9d34"})
+        split_eth = gas_price * split_gas
+        split_dollars = (split_eth / 10**9)* eth_price
+        split_text = f"Splitter Push: {split_eth / 10**9:.4f} {native.upper()} (${split_dollars:.2f})"
+    except Exception:
+        split_text = "Splitter Push: N/A"
+
+    try:
+        deposit_data = "0xf6326fb3"
+        deposit_gas = chain_web3.eth.estimate_gas({
+            'from': chain_web3.to_checksum_address(ca.DEPLOYER),
+            'to': chain_web3.to_checksum_address(ca.LPOOL_RESERVE(chain)),
+            'data': deposit_data,})
+        deposit_eth = gas_price * deposit_gas
+        deposit_dollars = (deposit_eth / 10**9)* eth_price
+        deposit_text = f"Mint X7D: {deposit_eth / 10**9:.4f} {native.upper()} (${deposit_dollars:.2f})"
+    except Exception:
+        deposit_text = "Mint X7D: N/A"
+
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"*X7 Finance Xchange Fee Liquidation ({chain_name})*\nUse `/fees [chain-name]` for other chains\n\n"
-            f'Last Liquidation: {time} UTC\n{value} {chain_native.upper()} (${"{:0,.0f}".format(dollar)})\n\n'
-            f"{days} days, {hours} hours and {minutes} minutes ago",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="Last Liquidation TX",
-                        url=f"{chain_tx}{hash}",
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        text="Liquidation Management Wallet",
-                        url=f"{chain_url}0x7000e84af80f817010cf1a9c0d5f8df2a5da60dd",
-                    )
-                ],
-            ]
-        ),
-    )
+            f"*Live Xchange Costs ({chain.upper()})*\nUse `/costs [chain-name]` for other chains\n\n"
+            f"{swap_text}\n"
+            f"{pair_text}\n"
+            f"{split_text}\n"
+            f"{deposit_text}",
+        parse_mode = "markdown")
 
 
 async def fg(update: Update, context: ContextTypes.DEFAULT_TYPE):
