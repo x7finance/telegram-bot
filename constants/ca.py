@@ -198,9 +198,9 @@ def X7R_DISCOUNT(chain):
     
 def X7R_LIQ_HUB(chain):
     if chain == "base":
-        return "0x30312f0846cE4267f14b5d226233221672488BD2"
+        return "0xDD53194e7Ea18402513b823fa5BE47be83352173"
     else:
-        return "0x30312f0846cE4267f14b5d226233221672488BD2"
+        return "0xDD53194e7Ea18402513b823fa5BE47be83352173"
 
 def XCHANGE_DISCOUNT(chain):
     if chain == "base":
