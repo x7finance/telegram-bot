@@ -7,7 +7,6 @@ from datetime import datetime
 from bot import admin, auto, commands, welcome
 from hooks import api, db
 from variables import times
-from constants import urls
 
 
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
@@ -235,7 +234,6 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler(["docs", "documents"], commands.docs,))
     application.add_handler(CommandHandler(["ebb", "buybacks", "hub", "hubs"], commands.ebb))
     application.add_handler(CommandHandler(["ecosystem", "tokens"], commands.ecosystem))
-    application.add_handler(CommandHandler("fact", commands.fact))
     application.add_handler(CommandHandler("factory", commands.factory))
     application.add_handler(CommandHandler("faq", commands.faq))
     application.add_handler(CommandHandler(["fee", "fees", "costs"], commands.fees))
@@ -243,8 +241,6 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("gas", commands.gas))
     application.add_handler(CommandHandler("giveaway", commands.giveaway_command))
     application.add_handler(CommandHandler("holders", commands.holders))
-    application.add_handler(CommandHandler("image", commands.image))
-    application.add_handler(CommandHandler("joke", commands.joke))
     application.add_handler(CommandHandler("launch", commands.launch))
     application.add_handler(CommandHandler("leaderboard", commands.leaderboard))
     application.add_handler(CommandHandler(["links", "socials", "dune", "github", "reddit"], commands.links))
@@ -265,17 +261,13 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler(["pool", "lpool", "lendingpool"], commands.pool))
     application.add_handler(CommandHandler(["price", "prices"], commands.price))
     application.add_handler(CommandHandler("router", commands.router))
-    application.add_handler(CommandHandler("say", commands.say))
     application.add_handler(CommandHandler("scan", commands.scan))
-    application.add_handler(CommandHandler("search", commands.search))
     application.add_handler(CommandHandler("smart", commands.smart))
     application.add_handler(CommandHandler(["split", "splitters", "splitter"], commands.splitters_command))
-    application.add_handler(CommandHandler("stats", commands.stats))
     application.add_handler(CommandHandler("supply", commands.supply))
     application.add_handler(CommandHandler(["tax", "slippage"], commands.tax_command))
     application.add_handler(CommandHandler("timestamp", commands.timestamp_command))
     application.add_handler(CommandHandler(["time", "clock"], commands.time_command))
-    application.add_handler(CommandHandler("today", commands.today))
     application.add_handler(CommandHandler("treasury", commands.treasury))
     application.add_handler(CommandHandler(["trending", "trend"], commands.trending))
     application.add_handler(CommandHandler("twitter", commands.twitter))
@@ -285,7 +277,6 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("warpcast", commands.warpcast_command))
     application.add_handler(CommandHandler("wallet", commands.wallet))
     application.add_handler(CommandHandler(["website", "site"], commands.website))
-    application.add_handler(CommandHandler("word", commands.word))
     application.add_handler(CommandHandler(["whitepaper", "wp", "wpquote"], commands.wp))
     application.add_handler(CommandHandler("x7r", commands.x7r))
     application.add_handler(CommandHandler("x7d", commands.x7d))

@@ -918,11 +918,6 @@ def get_duration_days(duration):
     return days, hours, minutes
 
 
-def get_fact():
-    response = requests.get("https://uselessfacts.jsph.pl/api/v2/facts/random")
-    quote = response.json()
-    return quote["text"]
-
 
 def get_nft_data(nft, chain):
     try:
@@ -998,12 +993,6 @@ def get_scan(token: str, chain: str) -> dict:
     return response.json()["result"]
 
 
-def get_signers(wallet):
-    url = f"https://safe-transaction-mainnet.safe.global/api/v1/safes/{wallet}/"
-    response = requests.get(url)
-    return response.json()
-
-
 def get_snapshot():
     url = "https://hub.snapshot.org/graphql"
     query = {
@@ -1013,35 +1002,3 @@ def get_snapshot():
     }
     response = requests.get(url, query)
     return response.json()
-
-
-def get_today():
-    now = datetime.now()
-    url = f"http://history.muffinlabs.com/date/{now.month}/{now.day}"
-    response = requests.get(url)
-    return response.json()
-
-
-def get_word(word):
-    url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
-    response = requests.get(url)
-    data = response.json()
-
-    definition = None
-    audio_url = None
-
-    if data and isinstance(data, list):
-        meanings = data[0].get("meanings", [])
-        if meanings:
-            for meaning in meanings:
-                definitions = meaning.get("definitions", [])
-                if definitions:
-                    definition = definitions[0].get("definition")
-                    break
-
-        phonetics = data[0].get("phonetics", [])
-        if phonetics:
-            first_phonetic = phonetics[0]
-            audio_url = first_phonetic.get("audio")
-
-    return definition, audio_url

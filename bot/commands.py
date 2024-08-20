@@ -1,9 +1,8 @@
 from telegram import *
 from telegram.ext import *
 
-import os, pytz, random, re, requests, textwrap, time, wikipediaapi
+import os, pytz, random, re, requests, time
 from datetime import datetime, timedelta, timezone
-from gtts import gTTS
 
 from PIL import Image, ImageDraw, ImageFont
 from web3 import Web3
@@ -922,16 +921,6 @@ async def ecosystem(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def fact(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*Fact!*\n\n"
-            f"{api.get_fact()}",
-        parse_mode="Markdown",
-    )
-
-
 async def factory(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
     for chain in chains.CHAINS:
@@ -1203,53 +1192,6 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"X7D:        {x7d_holders}",
         parse_mode="Markdown",
     )
-
-
-async def image(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_chat_action(update.effective_chat.id, "upload_photo")
-    text = " ".join(context.args)
-    if text == "":
-        await update.message.reply_text("Please follow the command with desired message for the image")
-    elif len(text) > 500:
-        await update.message.reply_text("Message too long, please use under 500 characters")
-    else:
-        
-        img = Image.open((random.choice(media.BLACKHOLE)))
-        i1 = ImageDraw.Draw(img)
-        wrapper = textwrap.TextWrapper(width=50)
-        word_list = wrapper.wrap(text=text)
-        caption_new = ""
-
-        for ii in word_list:
-            caption_new = caption_new + ii + "\n"
-        i1.text((50, img.size[1] / 8), caption_new, font=ImageFont.truetype(media.FONT, 28), fill=(255, 255, 255))
-        img.save(r"media/blackhole.png")
-        i1.text(
-            (50, 460),
-            f"{update.message.from_user.username}\n"
-            f'UTC: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")}',
-            font = ImageFont.truetype(media.FONT, 28),
-            fill = (255, 255, 255),
-        )
-        img.save(r"media/blackhole.png")
-        await update.message.reply_photo(photo=open(r"media/blackhole.png", "rb"))
-
-
-async def joke(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    joke_response = requests.get("https://v2.jokeapi.dev/joke/Any?safe-mode")
-    joke = joke_response.json()
-    if joke["type"] == "single":
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=f'`{joke["joke"]}`',
-            parse_mode="Markdown",
-        )
-    else:
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=f'{joke["setup"]}\n\n{joke["delivery"]}',
-            parse_mode="Markdown",
-        )
 
 
 async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2365,16 +2307,6 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def say(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("Please provide some words to convert to speech.")
-        return
-    await context.bot.delete_message(update.effective_chat.id, update.message.id)
-    voice_note = gTTS(" ".join(context.args), lang='en', slow=False)
-    voice_note.save("media/voicenote.mp3")
-    await context.bot.send_audio(chat_id=update.effective_chat.id, audio=open("media/voicenote.mp3", "rb"))
-
-
 async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) == 0:
         await update.message.reply_text(
@@ -2575,41 +2507,6 @@ async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def search(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    wiki = wikipediaapi.Wikipedia("en")
-    keyword = " ".join(context.args)
-    page_py = wiki.page(keyword)
-    if keyword == "":
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption="Please follow the command with your search",
-        )
-    if page_py.exists():
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"Your search: {page_py.title}\n\n"
-                f"{(page_py.summary[0:800])}"
-                f"....[continue reading on wiki]({page_py.fullurl})\n\n"
-                f"[Google](https://www.google.com/search?q={keyword})\n"
-                f"[X](https://twitter.com/search?q={keyword}&src=typed_query)\n"
-                f"[Etherscan](https://etherscan.io/search?f=0&q={keyword})",
-            parse_mode="markdown",
-        )
-    else:
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"Your search: {keyword}\n\nNo description available\n\n"
-                f"[Google](https://www.google.com/search?q={keyword})\n"
-                f"[X](https://twitter.com/search?q={keyword}&src=typed_query)\n"
-                f"[Etherscan](https://etherscan.io/search?f=0&q={keyword})",
-            parse_mode="markdown",
-        )
-
-
-
 async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     chain = " ".join(context.args).lower()
     if chain == "":
@@ -2781,45 +2678,6 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    github_url = f'https://api.github.com/repos/x7finance/telegram-bot'
-    headers = {'Authorization': f'token {os.getenv("GITHUB_PAT")}'}
-    response = requests.get(github_url, headers=headers)
-    repo_info = response.json()
-    update_time_raw = repo_info["pushed_at"]
-    timestamp_datetime = datetime.fromisoformat(update_time_raw).astimezone(timezone.utc)
-    current_datetime = datetime.now(timezone.utc)
-    time_difference = (current_datetime - timestamp_datetime).total_seconds()
-    days, seconds = divmod(int(time_difference), 86400)
-    hours, seconds = divmod(seconds, 3600)
-    minutes, seconds = divmod(seconds, 60)
-    contriburots_url = f'https://api.github.com/repos/x7finance/telegram-bot/contributors'
-    contributors_response = requests.get(contriburots_url, headers=headers)
-    contributors = contributors_response.json()
-    contributor_info = ''
-    for contributor in contributors:
-        contributor_info += f'{contributor["login"]}, Contributions: {contributor["contributions"]}\n'
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f'*X7 Finance Telegram Bot Stats*\n\n'
-            f'Language: {repo_info["language"]}\n'
-            f'Stars: {repo_info["stargazers_count"]}\n'
-            f'Watchers: {repo_info["watchers_count"]}\n'
-            f'Forks: {repo_info["forks_count"]}\n'
-            f'Open Issues: {repo_info["open_issues_count"]}\n\n'
-            f'Contributors:\n{contributor_info}\n'
-            f"Last Updated {timestamp_datetime.strftime('%Y-%m-%d %H:%M:%S')}\n"
-            f"{days} days, {hours} hours and {minutes} minutes ago",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton(text="GitHub", url=f"https://github.com/x7finance/telegram-bot")],
-            ]
-        ),
-    )
-
-
 async def supply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
@@ -2986,17 +2844,6 @@ async def time_command(update: Update, context: CallbackContext):
         await update.message.reply_text(
             "use `/time HH:MMPM or HHAM TZ`", parse_mode="Markdown"
         )
-
-
-async def today(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    data = api.get_today()
-    today = random.choice(data["data"]["Events"])
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=f'On this day in {today["year"]}:\n\n{today["text"]}',
-        parse_mode="Markdown",
-    )
-
 
 
 async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -3450,33 +3297,6 @@ async def wei(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"{eth} ETH is equal to \n" f"`{wei}` wei", parse_mode="Markdown"
         )
-
-
-async def word(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        word = " ".join(context.args).lower()
-        if word == "":
-            await update.message.reply_text(
-                f"Please use /word followed by the word you want to search")
-            return
-        
-        definition, audio_url = api.get_word(word)
-        caption = f"*X7 Finance Dictionary*\n\n{word}:\n\n{definition}"
-        keyboard_markup = None
-        
-        if audio_url:
-            keyboard_markup = InlineKeyboardMarkup(
-                [[InlineKeyboardButton(text="Pronunciation", url=f"{audio_url}")]]
-            )
-        
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=caption,
-            parse_mode="Markdown",
-            reply_markup=keyboard_markup,
-        )
-    except Exception:
-        await update.message.reply_text("Word not found")
 
 
 async def wp(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -3962,7 +3782,7 @@ async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
     token = coingecko.search(" ".join(context.args).lower())
     if token['coins'] == []:
         await update.message.reply_text(
-            f"{search.upper()} Not found",
+            f'{" ".join(context.args).upper()} Not found',
             parse_mode="Markdown")
         return
     id = token["coins"][0]["id"]
