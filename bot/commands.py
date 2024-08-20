@@ -2059,6 +2059,8 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
             abi=chainscan.get_abi(ca.FACTORY(chain), chain),
         )
         amount = contract.functions.allPairsLength().call()
+        if chain == "eth":
+            amount += 141
         pair_text += f"`{chain_name}:`   {amount}\n"
         total += amount
     await message.delete()
