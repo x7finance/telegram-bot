@@ -257,8 +257,11 @@ def COM_MULTI(chain):
 
 # PAIRS
 
-def X7R_PAIR(chain):
-    return "0x6139240a5907e4ce74673257c320ea366c521aea"
+def X7R_PAIR(chain, dex = None):
+    if dex == "uniswap":
+        return "0x6139240a5907e4ce74673257c320ea366c521aea"
+    if dex == "xchange":
+        return "0x8e0d035787e7083d4292536005dd6a69682e4f64"
 
 def X7DAO_PAIR(chain):
     return "0x75311ee016c82e7770e4aca73a0d142f96ddb969"

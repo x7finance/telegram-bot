@@ -1,16 +1,17 @@
 # TOKENS
 
 from constants import ca
+from typing import Union
 
 
 class TokensInfo:
     def __init__(
         self,
         ca: str,
-        pair: str
+        pairs: Union[str, list]
     ):
         self.ca = ca
-        self.pair = pair
+        self.pairs = pairs
 
 
 def TOKENS(chain):
@@ -44,7 +45,8 @@ def TOKENS(chain):
     "X7R": {
         "eth": TokensInfo(
             ca.X7R(chain),
-            ca.X7R_PAIR(chain)
+            [ca.X7R_PAIR(chain, "uniswap"),
+            ca.X7R_PAIR(chain, "xchange")]
         ),
         "arb": TokensInfo(
             ca.X7R(chain),

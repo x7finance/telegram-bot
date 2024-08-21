@@ -1,6 +1,5 @@
-# API
-
 import random, requests, os, time, json
+from typing import Union
 from farcaster import Warpcast
 from datetime import datetime, timedelta
 from pycoingecko import CoinGeckoAPI
@@ -292,7 +291,7 @@ class Dextools:
     def get_dex(self, pair, chain):
         if chain in chains.CHAINS:
             chain_info = chains.CHAINS[chain]
-        endpoint = f'pool/{chain_info.dext}/{pair.lower()}'
+        endpoint = f'pool/{chain_info.dext}/{pair}'
 
         response = requests.get(self.url + endpoint, headers=self.headers)
         data = response.json()
@@ -350,7 +349,7 @@ class Dextools:
     def get_token_info(self, pair, chain):
         if chain in chains.CHAINS:
             chain_info = chains.CHAINS[chain]
-        endpoint = f"token/{chain_info.dext}/{pair.lower()}/info"
+        endpoint = f"token/{chain_info.dext}/{pair}/info"
         response = requests.get(self.url + endpoint, headers=self.headers)
 
         if response.status_code == 200:
@@ -414,99 +413,93 @@ class Dextools:
             }
 
 
-    def get_liquidity(self, pair, chain):
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
-        endpoint = f'pool/{chain_info.dext}/{pair.lower()}/liquidity'
+    def get_liquidity(self, pair: Union[str, list[str]], chain: str):
+        if chain not in chains.CHAINS:
+            return {"total": "0", "token": "0", "eth": "0"}
 
-        response = requests.get(self.url + endpoint, headers=self.headers)
+        chain_info = chains.CHAINS[chain]
 
-        if response.status_code == 200:
-            try:
-                data = response.json()
+        pairs = [pair] if isinstance(pair, str) else pair
 
-                total = data['data']['liquidity']
-                token = data['data']['reserves']['mainToken']
-                eth = data['data']['reserves']['sideToken']
-                return {"total": f"${'{:,.0f}'.format(total)}",
-                        "token": f"{'{:,.0f}'.format(token)}",
-                        "eth": f"{'{:,.2f}'.format(eth)}"}
-
-            except Exception:
-                return {"total": "0",
-                        "token": "0",
-                        "eth:": "0"
-                }
-        else:
-            return {"total": "0",
-                    "token": "0",
-                    "eth:": "0"
-            }
-        
-    
-    def get_multiple_liquidity(self, pairs, chain):
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
-        
         liquidity_data = {}
         total_liquidity = 0
         total_token = 0
         total_eth = 0
 
-        for pair in pairs:
-            endpoint = f'pool/{chain_info.dext}/{pair.lower()}/liquidity'
-            response = requests.get(self.url + endpoint, headers=self.headers)
-            
-            liquidity_data[pair] = {
-                "total": "$0",
+        for p in pairs:
+            if isinstance(p, str):
+                endpoint = f'pool/{chain_info.dext}/{p}/liquidity'
+                response = requests.get(self.url + endpoint, headers=self.headers)
+
+                liquidity_data[p] = {
+                    "total": "$0",
+                    "token": "0",
+                    "eth": "0.00"
+                }
+
+                if response.status_code == 200:
+                    try:
+                        data = response.json()
+                        total = data['data']['liquidity']
+                        token = data['data']['reserves']['mainToken']
+                        eth = data['data']['reserves']['sideToken']
+
+                        liquidity_data[p] = {
+                            "total": f"${'{:,.0f}'.format(total)}",
+                            "token": f"{'{:,.0f}'.format(token)}",
+                            "eth": f"{'{:,.2f}'.format(eth)}"
+                        }
+
+                        total_liquidity += total
+                        total_token += token
+                        total_eth += eth
+                    except Exception:
+                        liquidity_data[p] = {
+                            "total": "$0",
+                            "token": "0",
+                            "eth": "0.00"
+                        }
+
+        if isinstance(pair, list):
+            liquidity_data = {
+                "total": f"${'{:,.0f}'.format(total_liquidity)}",
+                "token": f"{'{:,.0f}'.format(total_token)}",
+                "eth": f"{'{:,.2f}'.format(total_eth)}"
+            }
+            return liquidity_data
+        else:
+            return liquidity_data.get(pair, {
+                "total": "0",
                 "token": "0",
                 "eth": "0.00"
-            }
-
-            if response.status_code == 200:
-                data = response.json()
-                try:
-                    liquidity = data['data']['liquidity']
-                    token = data['data']['reserves']['mainToken']
-                    eth = data['data']['reserves']['sideToken']
-
-                    liquidity_data[pair] = {
-                        "total": f"${'{:,.0f}'.format(liquidity)}",
-                        "token": f"{'{:,.0f}'.format(token)}",
-                        "eth": f"{'{:,.2f}'.format(eth)}"
-                    }
-
-                    total_liquidity += liquidity
-                    total_token += token
-                    total_eth += eth
-                except Exception:
-                    total_liquidity = 0
-                    total_token = 0
-                    total_eth = 0
-
-        liquidity_data["total"] = {
-            "total": f"${'{:,.0f}'.format(total_liquidity)}",
-            "token": f"{'{:,.0f}'.format(total_token)}",
-            "eth": f"{'{:,.2f}'.format(total_eth)}"
-        }
-
-        return liquidity_data
+            })
 
 
     def get_volume(self, pair, chain):
         if chain in chains.CHAINS:
             chain_info = chains.CHAINS[chain]
-        endpoint = f"pool/{chain_info.dext}/{pair.lower()}/price"
 
-        response = requests.get(self.url + endpoint, headers=self.headers)
-        if response.status_code == 200:
-            data = response.json()
-            try:
-                return f'${"{:,.0f}".format(float(data["data"]["volume24h"]))}'
-            except Exception:
-                return "N/A"
+        if isinstance(pair, str):
+            pairs = [pair]
         else:
-            return "N/A"
+            pairs = pair
+
+        total_volume = 0.0
+
+        for p in pairs:
+            endpoint = f"pool/{chain_info.dext}/{p}/price"
+            response = requests.get(self.url + endpoint, headers=self.headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                try:
+                    volume = float(data["data"]["volume24h"])
+                    total_volume += volume
+                except (KeyError, ValueError):
+                    continue
+
+        return f'${"{:,.0f}".format(total_volume)}' if total_volume > 0 else "N/A"
+
 
 
 class CoinGecko:

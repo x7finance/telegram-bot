@@ -1280,98 +1280,70 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_native = chains.CHAINS[chain].token
-        pairs = chains.CHAINS[chain].pairs
-    else:
-        await update.message.reply_text(text.CHAIN_ERROR)
-        return
-    message = await update.message.reply_text("Getting Liquidity data, Please wait...")
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
+        chain_url = chains.CHAINS[chain].scan_address
 
-    ## REMOVE AT LAYER2 LAUNCH
-    if chain in chains.INITIAL_LIQ:
-        native_price = chainscan.get_native_price(chain)
-        x7r_data = chainscan.get_native_balance(ca.X7R_LIQ_LOCK, chain)
-        x7r_price = float(native_price) * float(x7r_data)
-        x7dao_data = chainscan.get_native_balance(ca.X7R_LIQ_LOCK, chain)
-        x7dao_price = float(native_price) * float(x7dao_data)
-        x7100_data = chainscan.get_native_balance(ca.X7100_LIQ_LOCK, chain)
-        x7100_price = float(native_price) * float(x7100_data)
+        x7r_pairs = tokens.TOKENS(chain)["X7R"][chain].pairs
+        x7dao_pairs = tokens.TOKENS(chain)["X7DAO"][chain].pairs
+
+        if isinstance(x7r_pairs, str):
+            x7r_pairs = [x7r_pairs]
+        if isinstance(x7dao_pairs, str):
+            x7dao_pairs = [x7dao_pairs]
+
+        message = await update.message.reply_text("Getting Liquidity data, Please wait...")
+        await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
+        x7r_liquidity_data = dextools.get_liquidity(x7r_pairs, chain)
+        x7dao_liquidity_data = dextools.get_liquidity(x7dao_pairs, chain)
+
+        x7r_text = (
+            f"*X7R*\n"
+            f"{x7r_liquidity_data.get('token', 'N/A')} X7R\n"
+            f"{x7r_liquidity_data.get('eth', 'N/A')} {chain_native.upper()}\n"
+            f"{x7r_liquidity_data.get('total', 'N/A')}"
+        )
+
+        x7dao_text = (
+            f"*X7DAO*\n"
+            f"{x7dao_liquidity_data.get('token', 'N/A')} X7DAO\n"
+            f"{x7dao_liquidity_data.get('eth', 'N/A')} {chain_native.upper()}\n"
+            f"{x7dao_liquidity_data.get('total', 'N/A')}"
+        )
+
+        buttons = []
+        for pair in x7r_pairs:
+            buttons.append([InlineKeyboardButton(
+                text=f"X7R {pair}",
+                url=f"{chain_url}{pair}"
+            )])
+
+        for pair in x7dao_pairs:
+            buttons.append([InlineKeyboardButton(
+                text=f"X7DAO {pair}",
+                url=f"{chain_url}{pair}"
+            )])
+
+        keyboard = InlineKeyboardMarkup(buttons)
+
+        final_text = (
+            f"{x7r_text}\n\n"
+            f"{x7dao_text}\n\n"
+        )
+
         await message.delete()
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
-            caption=
-                f"*X7 Finance Initital Liquidity ({chain_name})*\nUse `liquidity [chain-name]` for other chains\n\n"
-                f"*X7R*\n{x7r_data} {chain_native.upper()}\n"
-                f"${x7r_price:,.0f}\n\n"
-                f"*X7DAO*\n{x7dao_data} {chain_native.upper()}\n"
-                f"${x7dao_price:,.0f}\n\n"
-                f"*X7100*\n{x7100_data} {chain_native.upper()}\n"
-                f"${x7100_price:,.0f}",
+            caption=(
+                f"*X7 Finance Liquidity ({chain_name})*\n"
+                f"Use `liquidity [chain-name]` for other chains\n\n"
+                f"{final_text}"
+            ),
             parse_mode="Markdown",
+            reply_markup=keyboard
         )
-        return
-        ##
+    else:
+        await update.message.reply_text(text.CHAIN_ERROR)
 
-    liquidity_data = dextools.get_multiple_liquidity(pairs, chain)
-    x7r_data = liquidity_data.get(pairs[0], {})
-    if x7r_data:
-        x7r_text = (
-            f"*X7R*\n"
-            f"{x7r_data['token']} X7R\n"
-            f"{x7r_data['eth']} {chain_native.upper()}\n"
-            f"{x7r_data['total']}"
-        )
-
-    x7dao_data = liquidity_data.get(pairs[1], {})
-    if x7dao_data:
-        x7dao_text = (
-            f"*X7DAO*\n"
-            f"{x7dao_data['token']} X7DAO\n"
-            f"{x7dao_data['eth']} {chain_native.upper()}\n"
-            f"{x7dao_data['total']}"
-        )
-
-    x7100_liquidity = 0
-    x7100_token = 0
-    x7100_eth = 0
-
-    for pair in pairs[2:7]:
-        x7100_data = liquidity_data.get(pair, {})
-        if x7100_data:
-            x7100_liquidity += float(x7100_data['total'].replace('$', '').replace(',', ''))
-            x7100_token += float(x7100_data['token'].replace('$', '').replace(',', ''))
-            x7100_eth += float(x7100_data['eth'].replace('$', '').replace(',', ''))
-
-    x7100_text = (
-        f"*X7100*\n"
-        f"{'{:,.0f}'.format(x7100_token)} X7100\n"
-        f"{'{:,.2f}'.format(x7100_eth)} {chain_native.upper()}\n"
-        f"${'{:,.0f}'.format(x7100_liquidity)}"
-    )
-
-    total_liquidity = liquidity_data.get("total", {})
-    total_text = (
-        f"*Total*\n"
-        f"{total_liquidity.get('eth', '')} {chain_native.upper()}\n"
-        f"{total_liquidity.get('total', '')}"
-    )
-
-    final_text = (
-        f"{x7r_text}\n\n"
-        f"{x7dao_text}\n\n"
-        f"{x7100_text}\n\n"
-        f"{total_text}"
-    )
-
-    await message.delete()
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Liquidity ({chain_name})*\nUse `liquidity [token-name] [chain-name]` for other chains\n\n"
-            f"{final_text}",
-        parse_mode="Markdown",
-    )
-    
 
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
@@ -3376,7 +3348,7 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
-        chain_pair = tokens.TOKENS(chain)["X7DAO"][chain].pair
+        chain_pair = tokens.TOKENS(chain)["X7DAO"][chain].pairs
         chain_id = chains.CHAINS[chain].id
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
@@ -3435,7 +3407,7 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
-        chain_pair = tokens.TOKENS(chain)["X7R"][chain].pair
+        chain_pair = tokens.TOKENS(chain)["X7R"][chain].pairs
         chain_id = chains.CHAINS[chain].id
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
@@ -3477,7 +3449,7 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7R(chain)}")],
-                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
+                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{ca.X7R(chain)}")],
                 [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7R(chain))}")],
             ]
         ),
@@ -3494,7 +3466,7 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
-        chain_pair = tokens.TOKENS(chain)["X7101"][chain].pair
+        chain_pair = tokens.TOKENS(chain)["X7101"][chain].pairs
         chain_id = chains.CHAINS[chain].id
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
@@ -3536,7 +3508,7 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7101(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
+            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{ca.X7101(chain)}")],
             [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7101(chain))}")],
         ]
     ),
@@ -3553,7 +3525,7 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
-        chain_pair = tokens.TOKENS(chain)["X7102"][chain].pair
+        chain_pair = tokens.TOKENS(chain)["X7102"][chain].pairs
         chain_id = chains.CHAINS[chain].id
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
@@ -3594,7 +3566,7 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7102(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
+            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{ca.X7102(chain)}")],
             [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7102(chain))}")],
         ]
     ),
@@ -3611,7 +3583,7 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
-        chain_pair = tokens.TOKENS(chain)["X7103"][chain].pair
+        chain_pair = tokens.TOKENS(chain)["X7103"][chain].pairs
         chain_id = chains.CHAINS[chain].id
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
@@ -3652,7 +3624,7 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7103(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
+            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{ca.X7103(chain)}")],
             [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7103(chain))}")],
         ]
     ),
@@ -3669,7 +3641,7 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
-        chain_pair = tokens.TOKENS(chain)["X7104"][chain].pair
+        chain_pair = tokens.TOKENS(chain)["X7104"][chain].pairs
         chain_id = chains.CHAINS[chain].id
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
@@ -3710,7 +3682,7 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7104(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
+            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{ca.X7104(chain)}")],
             [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7104(chain))}")],
         ]
     ),
@@ -3727,7 +3699,7 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
-        chain_pair = tokens.TOKENS(chain)["X7105"][chain].pair
+        chain_pair = tokens.TOKENS(chain)["X7105"][chain].pairs
         chain_id = chains.CHAINS[chain].id
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
@@ -3768,7 +3740,7 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7105(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
+            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{ca.X7105(chain)}")],
             [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7105(chain))}")],
         ]
     ),

@@ -25,8 +25,7 @@ class ChainInfo:
         api: str,
         key: str,
         com_multi: str,
-        dao_multi: str,
-        pairs: list
+        dao_multi: str
     ):
         self.live = live
         self.name = name
@@ -46,8 +45,6 @@ class ChainInfo:
         self.key = key
         self.com_multi = com_multi
         self.dao_multi = dao_multi
-        self.pairs = pairs
-
 
 CHAINS = {
     "eth": ChainInfo(
@@ -68,14 +65,7 @@ CHAINS = {
         urls.SCAN_API("eth"),
         os.getenv('ETHER'),
         ca.COM_MULTI("eth"),
-        ca.DAO_MULTI("eth"), 
-        [ca.X7R_PAIR("eth"),
-        ca.X7DAO_PAIR("eth"),
-        ca.X7101_PAIR("eth"),
-        ca.X7102_PAIR("eth"),
-        ca.X7103_PAIR("eth"),
-        ca.X7104_PAIR("eth"),
-        ca.X7105_PAIR("eth")]
+        ca.DAO_MULTI("eth")
     ),
     "base": ChainInfo(
         True,
@@ -95,14 +85,7 @@ CHAINS = {
         urls.SCAN_API("base"),
         os.getenv('BASE'),
         ca.COM_MULTI("base"),
-        ca.DAO_MULTI("base"), 
-        [ca.X7R_PAIR("base"),
-        ca.X7DAO_PAIR("base"),
-        ca.X7101_PAIR("base"),
-        ca.X7102_PAIR("base"),
-        ca.X7103_PAIR("base"),
-        ca.X7104_PAIR("base"),
-        ca.X7105_PAIR("base")]
+        ca.DAO_MULTI("base")
     ),
     "bsc": ChainInfo(
         True,
@@ -122,14 +105,7 @@ CHAINS = {
         urls.SCAN_API("bsc"),
         os.getenv('BSC'),
         ca.COM_MULTI("bsc"),
-        ca.DAO_MULTI("bsc"), 
-        [ca.X7R_PAIR("bsc"),
-        ca.X7DAO_PAIR("bsc"),
-        ca.X7101_PAIR("bsc"),
-        ca.X7102_PAIR("bsc"),
-        ca.X7103_PAIR("bsc"),
-        ca.X7104_PAIR("bsc"),
-        ca.X7105_PAIR("bsc")]
+        ca.DAO_MULTI("bsc")
     ),
     "arb": ChainInfo(
         True,
@@ -149,14 +125,7 @@ CHAINS = {
         urls.SCAN_API("arb"),
         os.getenv('ARB'),
         ca.COM_MULTI("arb"),
-        ca.DAO_MULTI("arb"), 
-        [ca.X7R_PAIR("arb"),
-        ca.X7DAO_PAIR("arb"),
-        ca.X7101_PAIR("arb"),
-        ca.X7102_PAIR("arb"),
-        ca.X7103_PAIR("arb"),
-        ca.X7104_PAIR("arb"),
-        ca.X7105_PAIR("arb")]
+        ca.DAO_MULTI("arb")
     ),
     "op": ChainInfo(
         True,
@@ -176,14 +145,7 @@ CHAINS = {
         urls.SCAN_API("op"),
         os.getenv('OP'),
         ca.COM_MULTI("op"),
-        ca.DAO_MULTI("op"), 
-        [ca.X7R_PAIR("op"),
-        ca.X7DAO_PAIR("op"),
-        ca.X7101_PAIR("op"),
-        ca.X7102_PAIR("op"),
-        ca.X7103_PAIR("op"),
-        ca.X7104_PAIR("op"),
-        ca.X7105_PAIR("op")]
+        ca.DAO_MULTI("op")
     ),
     "poly": ChainInfo(
         True,
@@ -203,14 +165,7 @@ CHAINS = {
         urls.SCAN_API("poly"),
         os.getenv('POLY'),
         ca.COM_MULTI("poly"),
-        ca.DAO_MULTI("poly"), 
-        [ca.X7R_PAIR("poly"),
-        ca.X7DAO_PAIR("poly"),
-        ca.X7101_PAIR("poly"),
-        ca.X7102_PAIR("poly"),
-        ca.X7103_PAIR("poly"),
-        ca.X7104_PAIR("poly"),
-        ca.X7105_PAIR("poly")]
+        ca.DAO_MULTI("poly")
     )
 }
 
