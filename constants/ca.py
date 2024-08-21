@@ -121,10 +121,7 @@ def ECO_SPLITTER(chain):
         return "0x70001BA1BA4d85739E7B6A7C646B8aba5ed6c888"
 
 def FACTORY(chain):
-    if chain == "base" or chain == "eth":
-        return "0x8B76C05676D205563ffC1cbd11c0A6e3d83929c5"
-    else:
-        return "0x7de800467aFcE442019884f51A4A1B9143a34fAc"
+    return "0x8B76C05676D205563ffC1cbd11c0A6e3d83929c5"
 
 def LENDING_DISCOUNT(chain):
     if chain == "base":
@@ -152,7 +149,7 @@ def ROUTER(chain):
     if chain == "base":
         return "0xC2defaD879dC426F5747F2A5b067De070928AA50"
     else:
-        return "0x7DE8063E9fB43321d2100e8Ddae5167F56A50060"
+        return "0x6b5422D584943BC8Cd0E10e239d624c6fE90fbB8"
 
 def TIME_LOCK(chain):
     if chain == "base":

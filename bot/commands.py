@@ -791,124 +791,6 @@ async def docs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def ebb(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) == 0 or len(context.args) > 2:
-        await update.message.reply_text("Please follow the command with token liquidity hub name and optional chain")
-        return
-    if len(context.args) == 2:
-        token = context.args[0].lower()
-        chain = context.args[1].lower()
-    if len(context.args) == 1:
-        token = context.args[0].lower()
-        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
-    
-    if chain in chains.CHAINS:
-        chain_name = chains.CHAINS[chain].name
-        chain_url = chains.CHAINS[chain].scan_address
-        chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
-        chain_native = chains.CHAINS[chain].token
-
-    if token in ca.HUBS(chain):
-        hub_address = ca.HUBS(chain)[token]
-    else:
-        await update.message.reply_text("Please follow the command with token liquidity hub name and optional chain")
-        return
-    message = await update.message.reply_text("Getting Liquidity Hub data, Please wait...")
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
-
-    try:
-        (
-            value,
-            dollar,
-            time,
-            days,
-            hours,
-            minutes,
-        ) = chainscan.get_liquidity_hub_data(hub_address, chain)
-
-        buy_back_text = (
-            f'Last Buy Back: {time} UTC\n{value} {chain_native.upper()} (${"{:0,.0f}".format(dollar)})\n'
-            f"{days} days, {hours} hours and {minutes} minutes ago"
-        )
-    except Exception:
-        buy_back_text = f'Last Buy Back: None Found'
-
-    contract = chain_web3.eth.contract(
-        address=chain_web3.to_checksum_address(hub_address), abi=chainscan.get_abi(hub_address, chain)
-    )
-    try:
-        distribute = contract.functions.distributeShare().call() / 10
-        liquidity = contract.functions.liquidityShare().call() / 10
-        treasury = contract.functions.treasuryShare().call() / 10
-        liquidity_ratio_target = contract.functions.liquidityRatioTarget().call()
-    except Exception:
-        distribute = "N/A"
-        liquidity = "N/A"
-        treasury = "N/A"
-        liquidity_ratio_target = "N/A"
-
-    split_text = (
-        f"Ecosystem Splitter Share: {distribute}%\n"
-        f"Liquidity Share: {liquidity}%\n"
-        f"Treasury Share: {treasury}%"
-    )
-
-    if token.upper() in tokens.TOKENS(chain):
-        token_info = tokens.TOKENS(chain)[token.upper()][chain]
-        address = token_info.ca
-        price, _ = dextools.get_price(address, chain)
-
-    if token == "x7dao":
-        try:
-            auxiliary = contract.functions.auxiliaryShare().call() / 10
-        except Exception:
-            auxiliary = "N/A"
-        auxiliary_text = f"Auxiliary Share: {auxiliary}%"
-        split_text += "\n" + auxiliary_text
-
-    if token == "x7100":
-        token = "x7101-x7105"
-        address = ca.X7100(chain)
-        try:
-            auxiliary = contract.functions.lendingPoolShare().call() / 10
-        except Exception:
-            auxiliary = "N/A"
-        auxiliary_text = f"Lending Pool Share: {auxiliary}%"
-        split_text += "\n" + auxiliary_text
-
-    balance = 0
-
-    if isinstance(address, str):
-        balance += chainscan.get_token_balance(hub_address, address, chain)
-        dollar = float(price) * float(balance)
-        balance_text = f"{balance:,.0f} {token.upper()} (${dollar:,.0f})"
-    elif isinstance(address, list):
-        for quint in address:
-            balance += chainscan.get_token_balance(hub_address, quint, chain)
-            balance_text = f"{balance:,.0f} {token.upper()}"
-
-    await message.delete()
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*{token.upper()} Liquidity Hub ({chain_name})*\nUse `ebb [token-name] [chain-name]` for other chains\n\n"
-            f"{balance_text}\n\n"
-            f"{split_text}\n\n"
-            f"Liquidity Ratio Target: {liquidity_ratio_target}%\n\n"
-            f"{buy_back_text}",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text=f"{token.upper()} Liquidity Hub", url=f"{chain_url}{hub_address}"
-                    )
-                ],
-            ]
-        ),
-    )
-
-
 async def ecosystem(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"{text.ECOSYSTEM}",
@@ -1062,7 +944,7 @@ async def fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"*Live Xchange Costs ({chain.upper()})*\nUse `/costs [chain-name]` for other chains\n\n"
+            f"*Live Xchange Fees ({chain.upper()})*\nUse `/fees [chain-name]` for other chains\n\n"
             f"{swap_text}\n"
             f"{pair_text}\n"
             f"{split_text}\n"
@@ -1191,6 +1073,124 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"X7DAO ≥ 500K: {x7dao_proposers}\n"
             f"X7D:        {x7d_holders}",
         parse_mode="Markdown",
+    )
+
+
+async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) == 0 or len(context.args) > 2:
+        await update.message.reply_text("Please follow the command with token liquidity hub name and optional chain")
+        return
+    if len(context.args) == 2:
+        token = context.args[0].lower()
+        chain = context.args[1].lower()
+    if len(context.args) == 1:
+        token = context.args[0].lower()
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
+    
+    if chain in chains.CHAINS:
+        chain_name = chains.CHAINS[chain].name
+        chain_url = chains.CHAINS[chain].scan_address
+        chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
+        chain_native = chains.CHAINS[chain].token
+
+    if token in ca.HUBS(chain):
+        hub_address = ca.HUBS(chain)[token]
+    else:
+        await update.message.reply_text("Please follow the command with token liquidity hub name and optional chain")
+        return
+    message = await update.message.reply_text("Getting Liquidity Hub data, Please wait...")
+    await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
+    try:
+        (
+            value,
+            dollar,
+            time,
+            days,
+            hours,
+            minutes,
+        ) = chainscan.get_liquidity_hub_data(hub_address, chain)
+
+        buy_back_text = (
+            f'Last Buy Back: {time} UTC\n{value} {chain_native.upper()} (${"{:0,.0f}".format(dollar)})\n'
+            f"{days} days, {hours} hours and {minutes} minutes ago"
+        )
+    except Exception:
+        buy_back_text = f'Last Buy Back: None Found'
+
+    contract = chain_web3.eth.contract(
+        address=chain_web3.to_checksum_address(hub_address), abi=chainscan.get_abi(hub_address, chain)
+    )
+    try:
+        distribute = contract.functions.distributeShare().call() / 10
+        liquidity = contract.functions.liquidityShare().call() / 10
+        treasury = contract.functions.treasuryShare().call() / 10
+        liquidity_ratio_target = contract.functions.liquidityRatioTarget().call()
+    except Exception:
+        distribute = "N/A"
+        liquidity = "N/A"
+        treasury = "N/A"
+        liquidity_ratio_target = "N/A"
+
+    split_text = (
+        f"Ecosystem Splitter Share: {distribute}%\n"
+        f"Liquidity Share: {liquidity}%\n"
+        f"Treasury Share: {treasury}%"
+    )
+
+    if token.upper() in tokens.TOKENS(chain):
+        token_info = tokens.TOKENS(chain)[token.upper()][chain]
+        address = token_info.ca
+        price, _ = dextools.get_price(address, chain)
+
+    if token == "x7dao":
+        try:
+            auxiliary = contract.functions.auxiliaryShare().call() / 10
+        except Exception:
+            auxiliary = "N/A"
+        auxiliary_text = f"Auxiliary Share: {auxiliary}%"
+        split_text += "\n" + auxiliary_text
+
+    if token == "x7100":
+        token = "x7101-x7105"
+        address = ca.X7100(chain)
+        try:
+            auxiliary = contract.functions.lendingPoolShare().call() / 10
+        except Exception:
+            auxiliary = "N/A"
+        auxiliary_text = f"Lending Pool Share: {auxiliary}%"
+        split_text += "\n" + auxiliary_text
+
+    balance = 0
+
+    if isinstance(address, str):
+        balance += chainscan.get_token_balance(hub_address, address, chain)
+        dollar = float(price) * float(balance)
+        balance_text = f"{balance:,.0f} {token.upper()} (${dollar:,.0f})"
+    elif isinstance(address, list):
+        for quint in address:
+            balance += chainscan.get_token_balance(hub_address, quint, chain)
+            balance_text = f"{balance:,.0f} {token.upper()}"
+
+    await message.delete()
+    await update.message.reply_photo(
+        photo=api.get_random_pioneer(),
+        caption=
+            f"*{token.upper()} Liquidity Hub ({chain_name})*\nUse `hub [token-name] [chain-name]` for other chains\n\n"
+            f"{balance_text}\n\n"
+            f"{split_text}\n\n"
+            f"Liquidity Ratio Target: {liquidity_ratio_target}%\n\n"
+            f"{buy_back_text}",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        text=f"{token.upper()} Liquidity Hub", url=f"{chain_url}{hub_address}"
+                    )
+                ],
+            ]
+        ),
     )
 
 
