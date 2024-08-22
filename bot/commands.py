@@ -2090,13 +2090,13 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
                     [
                         InlineKeyboardButton(
                             text="Opensea",
-                            url=f"{urls.OS_LINK("pioneer")}",
+                            url=f"{urls.OS_LINK('pioneer')}",
                         )
                     ],
                     [
                         InlineKeyboardButton(
                             text="Pioneer Contract",
-                            url=f"{urls.SCAN_TOKEN("eth")}/{ca.PIONEER}",
+                            url=f"{urls.SCAN_TOKEN('eth')}/{ca.PIONEER}",
                         )
                     ],
                 ]
