@@ -750,6 +750,7 @@ async def discount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
+    address = chains.CHAINS[chain].scan_address
     await update.message.reply_text(
         f"*X7 Finance Discount*\n\n{text.DISCOUNT}",
         parse_mode="Markdown",
@@ -758,7 +759,7 @@ async def discount(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="X7 Lending Discount Contract",
-                        url=f"{urls.ETHER_ADDRESS}{ca.LENDING_DISCOUNT(chain)}#code",
+                        url=f"{address}{ca.LENDING_DISCOUNT(chain)}#code",
                     )
                 ],
             ]
@@ -1152,7 +1153,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         split_text += "\n" + auxiliary_text
 
     if token == "x7100":
-        token = "x7101-x7105"
+        token_str = "x7101-x7105"
         address = ca.X7100(chain)
         try:
             auxiliary = contract.functions.lendingPoolShare().call() / 10
@@ -1160,27 +1161,42 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
             auxiliary = "N/A"
         auxiliary_text = f"Lending Pool Share: {auxiliary}%"
         split_text += "\n" + auxiliary_text
-
+    else:
+        token_str = token
     balance = 0
 
     if isinstance(address, str):
         balance += chainscan.get_token_balance(hub_address, address, chain)
         dollar = float(price) * float(balance)
-        balance_text = f"{balance:,.0f} {token.upper()} (${dollar:,.0f})"
+        balance_text = f"{balance:,.0f} {token_str.upper()} (${dollar:,.0f})"
     elif isinstance(address, list):
         for quint in address:
             balance += chainscan.get_token_balance(hub_address, quint, chain)
-            balance_text = f"{balance:,.0f} {token.upper()}"
-
+        balance_text = f"{balance:,.0f} {token_str.upper()}"
+## TEMP
+    temp_balance = 0
+    if chain == "eth":
+        temp_hub_address = ca.TEMP_LIQ_HUB(token)
+        if isinstance(address, str):
+            temp_balance = chainscan.get_token_balance(temp_hub_address, address, chain)
+            temp_dollar = float(price) * float(temp_balance)
+            temp_balance_text = f"\n{temp_balance:,.0f} {token_str.upper()} (${temp_dollar:,.0f}) - Temp Hub"
+        elif isinstance(address, list):
+            for quint in address:
+                temp_balance += chainscan.get_token_balance(temp_hub_address, quint, chain)
+            temp_balance_text = f"\n{temp_balance:,.0f} {token_str.upper()} - Temp Hub"
+    else:
+        temp_balance_text = ""
+##
     await message.delete()
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
             f"*{token.upper()} Liquidity Hub ({chain_name})*\nUse `hub [token-name] [chain-name]` for other chains\n\n"
-            f"{balance_text}\n\n"
+            f"{balance_text} {temp_balance_text}\n\n"
             f"{split_text}\n\n"
             f"Liquidity Ratio Target: {liquidity_ratio_target}%\n\n"
-            f"{buy_back_text}",
+            f"{buy_back_text}\n\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2074,13 +2090,13 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
                     [
                         InlineKeyboardButton(
                             text="Opensea",
-                            url=f"{urls.OS_PIONEER}",
+                            url=f"{urls.OS_LINK("pioneer")}",
                         )
                     ],
                     [
                         InlineKeyboardButton(
                             text="Pioneer Contract",
-                            url=f"{urls.ETHER_ADDRESS}/{ca.PIONEER}",
+                            url=f"{urls.SCAN_TOKEN("eth")}/{ca.PIONEER}",
                         )
                     ],
                 ]
@@ -2150,8 +2166,8 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             caption=
                 f"*X7 Finance Lending Pool Info *\nUse `/pool [chain-name]` for individual chains\n\n"
                 f"{pool_text}\n"
-                f'System Owned: ${"{:0,.0f}".format(total_lpool_dollar)}\n'
-                f'External Deposits: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
+                f'Lending Pool: ${"{:0,.0f}".format(total_lpool_dollar)}\n'
+                f'Pending Pool Reserve: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
                 f'Total: ${"{:0,.0f}".format(total_dollar)}',
             parse_mode="Markdown",
         )
@@ -2167,7 +2183,6 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         contract = chain_web3.eth.contract(address=chain_web3.to_checksum_address(chain_lpool), abi=chainscan.get_abi(chain_lpool, chain))
-        available = (contract.functions.availableCapital().call() / 10**18)
         native_price = chainscan.get_native_price(chain)
         lpool_reserve = chainscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
         lpool_reserve_dollar = (float(lpool_reserve) * float(native_price))
@@ -2177,22 +2192,18 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         dollar = lpool_reserve_dollar + lpool_dollar
         lpool_reserve = round(float(lpool_reserve), 2)
         lpool = round(float(lpool), 2)
-        used = lpool - available
-        percent = int((used / pool) * 100)
         
         await message.delete()
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
                 f"*X7 Finance Lending Pool Info ({chain_name})*\nUse `/pool [chain-name]` for other chains\n\n"
-                f"System Owned\n"
+                f"Lending Pool:\n"
                 f'{lpool} {chain_native.upper()} (${"{:0,.0f}".format(lpool_dollar)})\n\n'
-                f"External Deposits\n"
+                f"Lending Pool Reserve:\n"
                 f'{lpool_reserve} {chain_native.upper()} (${"{:0,.0f}".format(lpool_reserve_dollar)})\n\n'
                 f"Total\n"
-                f'{pool} {chain_native.upper()} (${"{:0,.0f}".format(dollar)})\n\n'
-                f'Currently Borrowed\n'
-                f'{used:.2f} {chain_native.upper()} ({percent}%)\n\n',
+                f'{pool} {chain_native.upper()} (${"{:0,.0f}".format(dollar)})',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2937,13 +2948,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         InlineKeyboardButton(
                             text="X7 Dune Dashboard", url=f"{urls.DUNE}"
                         )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="Trend a token on Xchange Alerts",
-                            url=f"https://t.me/smarttrendbuybot?start",
-                        ),
-                    ],
+                    ]
                 ]
             ),
             )
@@ -3315,8 +3320,8 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"*X7D ({chain_name}) Info*\n"
             f"For other chains use `/x7d [chain-name]`\n\n"
             f"Holders: {holders}\n\n"
-            f'System Owned:\n{lpool_rounded} X7D (${"{:0,.0f}".format(lpool_dollar)})\n\n'
-            f'External Deposits:\n{lpool_reserve_rounded} X7D (${"{:0,.0f}".format(lpool_reserve_dollar)})\n\n'
+            f'Lending Pool:\n{lpool_rounded} X7D (${"{:0,.0f}".format(lpool_dollar)})\n\n'
+            f'Lending Pool Reserve:\n{lpool_reserve_rounded} X7D (${"{:0,.0f}".format(lpool_reserve_dollar)})\n\n'
             f'Total Supply:\n{supply} X7D (${"{:0,.0f}".format(dollar)})',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(

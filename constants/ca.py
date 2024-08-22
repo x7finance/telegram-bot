@@ -171,9 +171,9 @@ def X7100_DISCOUNT(chain):
     
 def X7100_LIQ_HUB(chain):
     if chain == "base":
-        return "0x27a24a9a1Ee636E0C675964185e1f13545bA8605"
+        return "0x7102407afa5d6581AAb694FEB03fEB0e7Cf69ebb"
     else:
-        return "0x27a24a9a1Ee636E0C675964185e1f13545bA8605"
+        return "0x7102407afa5d6581AAb694FEB03fEB0e7Cf69ebb"
     
 def X7DAO_DISCOUNT(chain):
     if chain == "base":
@@ -183,9 +183,9 @@ def X7DAO_DISCOUNT(chain):
     
 def X7DAO_LIQ_HUB(chain):
     if chain == "base":
-        return "0xB06D584a30225A05583905C599a7A9990FEF062b"
+        return "0x7DA0e45cE7fD8359544Be00a6618215770851ebB"
     else:
-        return "0xB06D584a30225A05583905C599a7A9990FEF062b"
+        return "0x7DA0e45cE7fD8359544Be00a6618215770851ebB"
     
 def X7R_DISCOUNT(chain):
     if chain == "base":
@@ -281,11 +281,14 @@ def X7104_PAIR(chain):
 def X7105_PAIR(chain):
     return "0x6d9d1b6b4d53f090639ae8d9e9c83b796da694ee"
 
+def TEMP_LIQ_HUB(token):
+    if token == "x7r":
+        return "0x734B81d7De2b8D85eb71E5c7548f5f8D220a7782"
+    if token == "x7dao":
+        return "0xB06D584a30225A05583905C599a7A9990FEF062b"
+    if token == "x7100":
+        return "0x27a24a9a1Ee636E0C675964185e1f13545bA8605"
 
-# LIQ LOCKS
-X7R_LIQ_LOCK = "0x7125c4105d728359Cd3073d567f366926f5cA10C"
-X7100_LIQ_LOCK = "0x71009A7eE233Af8fb42EeE5DbE61ea92Ea55b10c"
-X7DAO_LIQ_LOCK = "0x7da0aaD0f0b1Af993Df722567B045105fbbf510C"
 
 # WALLETS
 DEPLOYER = "0x7000a09c425abf5173ff458df1370c25d1c58105"
