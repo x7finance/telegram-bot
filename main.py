@@ -19,17 +19,7 @@ FIRST_USER_CLICKED = False
 
 
 async def test(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    if user_id == int(os.getenv("OWNER_TELEGRAM_CHANNEL_ID")):
-        total_click_count = db.clicks_get_total()
-        burn_message = await api.burn_x7r(times.BURN_AMOUNT(), "eth")
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=
-                f"🔥🔥🔥🔥🔥🔥🔥🔥\n\n"
-                f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
-                f"{burn_message}"
-        )
+    return
 
 sentry_sdk.init(
     dsn = os.getenv("SENTRY_DSN"),
