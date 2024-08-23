@@ -787,7 +787,7 @@ class Opensea:
 async def burn_x7r(amount, chain):
     try:
         if chain in chains.CHAINS:
-            chain_id = chains.CHAINS[chain].id
+            chain_id = int(chains.CHAINS[chain].id)
             w3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
             chain_scan_url = chains.CHAINS[chain].scan_tx
 
