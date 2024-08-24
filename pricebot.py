@@ -127,19 +127,23 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 owner_percent = "❓ Tokens Held By Owner Unknown"
 
             if "lp_holders" in scan[token_address]:
-                locked_lp_list = [lp for lp in scan[token_address]["lp_holders"]if lp["is_locked"] == 1]
+                locked_lp_list = [lp for lp in scan[token_address]["lp_holders"] if lp["is_locked"] == 1]
                 if locked_lp_list:
                     if locked_lp_list[0]["address"].lower() == "0x000000000000000000000000000000000000dead":
                         lock_word = "🔥 Liquidity Burnt"
                     else:
                         lock_word = "✅️ Liquidity Locked"
-                    lp_with_locked_detail = [lp for lp in locked_lp_list if "locked_detail" in lp]
+                    lp_with_locked_detail = [lp for lp in locked_lp_list if "locked_detail" in lp and lp["locked_detail"]]
                     if lp_with_locked_detail:
-                        percent = float(locked_lp_list[0]['percent'])
-                        lock = (
-                            f"{lock_word} - {locked_lp_list[0]['tag']} - {percent * 100:.2f}%\n"
-                            f"⏰ Unlock - {locked_lp_list[0]['locked_detail'][0]['end_time'][:10]}"
-                        )
+                        percent = float(lp_with_locked_detail[0]['percent'])
+                        try:
+                            end_time = lp_with_locked_detail[0]['locked_detail'][0]['end_time'][:10]
+                            lock = (
+                                f"{lock_word} - {lp_with_locked_detail[0]['tag']} - {percent * 100:.2f}%\n"
+                                f"⏰ Unlock - {end_time}"
+                            )
+                        except Exception:
+                            lock = "❓ Liquidity Lock Unknown"
                     else:
                         percent = float(locked_lp_list[0]['percent'])
                         if percent == 0:
@@ -174,9 +178,9 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
         dex_tools = urls.DEX_TOOLS(chain)
         try:
             if chainscan.get_verified(token_address, chain):
-                verified = "Contract Verified"
+                verified = "✅️ Contract Verified"
             else:
-                verified = "Contract Unverified"
+                verified = "❌ Contract Unverified"
         except Exception:
             verified = "❓ Contract Verification - Unknown"
         status = f"{verified}\n{renounced}\n{tax}\n{sellable}\n{mint}\n{honey_pot}\n{blacklist}\n{owner_percent}\n{top_percent}\n{lock}"

@@ -298,13 +298,13 @@ if __name__ == "__main__":
     application.add_handler(CallbackQueryHandler(button_function))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies))
 
-    job_queue.run_once(
-        button_send,
-        times.FIRST_BUTTON_TIME,
-        chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
-        name="Click Me",
-    )
+    #job_queue.run_once(
+    #    button_send,
+    #    times.FIRST_BUTTON_TIME,
+    #    chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
+    #    name="Click Me",
+    #)
 
     ## RUN ##
-    scanners()
+    #scanners()
     application.run_polling(allowed_updates=Update.ALL_TYPES)
