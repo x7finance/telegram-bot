@@ -201,3 +201,5 @@ def TOKENS(chain):
         ),
     },
 }
+
+BLUE_CHIPS = ["btc", "bitcoin", "ethereum", "eth", "bnb", "sol", "solana", "dot", "link", "uni", "matic", "ada", "cardano", "xrp", "ripple", "avax", "tron", "uni", "uniswap"]

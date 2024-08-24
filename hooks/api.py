@@ -727,6 +727,41 @@ class Defined:
             return "${:,.0f}".format(float(current_value))
         except Exception as e:
                 return "N/A"
+        
+    def search(self, address, chain=None):
+        if chain is not None:
+            if chain in chains.CHAINS:
+                chain_info = chains.CHAINS[chain]
+            search_query = f"""query {{
+                filterTokens(phrase:"{address}", rankings: {{attribute:liquidity}} limit:1, filters: {{network:[{chain_info.id}]}}) {{
+                    results{{
+                    token {{
+                        address
+                    }}
+                }}
+                }}
+            }}"""
+        else:
+            search_query = f"""query {{
+                filterTokens(phrase:"{address}", rankings: {{attribute:liquidity}} limit:1) {{
+                    results{{
+                    token {{
+                        address
+                    }}
+                }}
+                }}
+            }}"""
+        
+        response = requests.post(self.url, headers=self.headers, json={"query": search_query})
+        data = response.json()
+        if response.status_code == 200:
+            data = response.json()
+            token_info = data.get('data', {}).get('filterTokens', {}).get('results', [{}])[0].get('token', {})
+            if token_info:
+                return token_info.get('address')
+            return None
+        else:
+            return None
 
 
 class WarpcastApi:
@@ -836,6 +871,11 @@ def datetime_to_timestamp(datetime_str):
     except ValueError:
         return "Invalid datetime format. Please use YYYY-MM-DD HH:MM."
 
+def is_eth(address):
+    if address.startswith("0x") and len(address) == 42:
+        return True
+    else:
+        return False
 
 def timestamp_to_datetime(timestamp):
     try:
