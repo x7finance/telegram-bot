@@ -6,7 +6,7 @@ from web3 import Web3
 from PIL import Image, ImageDraw, ImageFont
 import requests, random
 
-from constants import ca, urls, chains
+from constants import abis, ca, urls, chains
 from hooks import api
 import media
 
@@ -17,7 +17,7 @@ chainscan = api.ChainScan()
 
 async def log_loop(chain, poll_interval):
     web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
-    factory = web3.eth.contract(address=ca.FACTORY(chain), abi=chainscan.get_abi(ca.FACTORY(chain), chain))
+    factory = web3.eth.contract(address=ca.FACTORY(chain), abi=abis.read("factory"))
     pair_filter = factory.events.PairCreated.create_filter(fromBlock="latest")
 
     while True:
@@ -59,11 +59,14 @@ async def alert(event, chain):
         token_address = event["args"]["token0"]
         token_name = token_0_name
         token_symbol = token_0_symbol
-    
-    if chainscan.get_verified(token_address, chain):
-        verified = "Contract Verified"
-    else:
-        verified = "Contract Unverified"
+    try:
+        if chainscan.get_verified(token_address, chain):
+            verified = "Contract Verified"
+        else:
+            verified = "Contract Unverified"
+    except Exception:
+        verified = "Contract Verification Unknown"
+
     status = ""
     renounced = ""
     tax = ""

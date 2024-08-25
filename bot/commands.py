@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from PIL import Image, ImageDraw, ImageFont
 from web3 import Web3
 
-from constants import ca, chains, dao, loans, nfts, splitters, tax, text, tokens, urls  
+from constants import abis, ca, chains, dao, loans, nfts, splitters, tax, text, tokens, urls  
 from hooks import api, db, dune 
 import pricebot
 import media
@@ -127,7 +127,10 @@ async def ath(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     when = round(time.time())
-    blocks = {chain: chainscan.get_block(chain, when) for chain in chains.CHAINS}
+    try:
+        blocks = {chain: chainscan.get_block(chain, when) for chain in chains.CHAINS}
+    except Exception:
+        blocks = 0
     blocks_text = "\n".join([f"{block_type.upper()}: `{block}`" for block_type, block in blocks.items()])
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
@@ -1412,7 +1415,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     contract = chain_web3.eth.contract(
-        address=chain_web3.to_checksum_address(chain_lpool), abi=chainscan.get_abi(chain_lpool, chain)
+        address=chain_web3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool")
     )
     num_loans = contract.functions.nextLoanID().call()
     liquidatable_loans = 0
@@ -1463,7 +1466,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
                 contract = chain_web3.eth.contract(
                     address=chain_web3.to_checksum_address(chain_lpool),
-                    abi=chainscan.get_abi(chain_lpool, chain),
+                    abi=abis.read("lendingpool"),
                     )
             
                 amount = contract.functions.nextLoanID().call() - 1
@@ -1512,7 +1515,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     price = chainscan.get_native_price(chain)
-    contract = chain_web3.eth.contract(address=chain_web3.to_checksum_address(chain_lpool), abi=chainscan.get_abi(chain_lpool, chain))
+    contract = chain_web3.eth.contract(address=chain_web3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool"))
     liquidation_status = ""
     try:
         liquidation = contract.functions.canLiquidate(int(loan_id)).call()
@@ -2019,7 +2022,7 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_name = chains.CHAINS[chain].name
         contract = chain_web3.eth.contract(
             address=chain_web3.to_checksum_address(ca.FACTORY(chain)),
-            abi=chainscan.get_abi(ca.FACTORY(chain), chain),
+            abi=abis.read("factory"),
         )
         amount = contract.functions.allPairsLength().call()
         if chain == "eth":
@@ -2182,10 +2185,15 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             native = chains.CHAINS[chain].token.lower()
             chain_name = chains.CHAINS[chain].name
             chain_lpool = ca.LPOOL(chain)
-            price = chainscan.get_native_price(chain)
-            lpool_reserve = chainscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
+            try:
+                price = chainscan.get_native_price(chain)
+                lpool_reserve = chainscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
+                lpool = chainscan.get_native_balance(chain_lpool, chain)
+            except Exception:
+                price = 0
+                lpool_reserve = 0
+                lpool = 0
             lpool_reserve_dollar = (float(lpool_reserve) * float(price))
-            lpool = chainscan.get_native_balance(chain_lpool, chain)
             lpool_dollar = (float(lpool) * float(price))
             pool = round(float(lpool_reserve) + float(lpool), 2)
             dollar = lpool_reserve_dollar + lpool_dollar
@@ -2209,13 +2217,11 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chain_name = chains.CHAINS[chain].name
             chain_url = chains.CHAINS[chain].scan_address
             chain_native = chains.CHAINS[chain].token
-            chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
             chain_lpool = ca.LPOOL(chain)
         else:
             await update.message.reply_text(text.CHAIN_ERROR)
             return
 
-        contract = chain_web3.eth.contract(address=chain_web3.to_checksum_address(chain_lpool), abi=chainscan.get_abi(chain_lpool, chain))
         native_price = chainscan.get_native_price(chain)
         lpool_reserve = chainscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
         lpool_reserve_dollar = (float(lpool_reserve) * float(native_price))

@@ -50,7 +50,7 @@ def LOANS(chain):
     "ill001": LoanTerm(
         ca.ILL001(chain),
         "X7 Initial Liquidity Loan (001) - X7ILL001",
-        "Simple Loan",
+        "Simple Loan ILL001",
         f"{2500 / 100}% of borrowed capital, payable within the transaction for adding initial liquidity",
         "0%",
         "4x",
@@ -62,7 +62,7 @@ def LOANS(chain):
     "ill003": LoanTerm(
         ca.ILL003(chain),
         "X7 Initial Liquidity Loan (003) - X7ILL003",
-        "Interest Only Loan",
+        "Interest Only Loan ILL003",
         f"{1500 / 100}% of borrowed capital",
         f"6.25% in premiums due by the end of each quarter of the loan term",
         "6.66x",
@@ -74,28 +74,15 @@ def LOANS(chain):
     "ill004": LoanTerm(
         ca.ILL004(chain),
         "X7 Initial Liquidity Loan (004) - X7ILL004",
-        "Simple Loan",
+        "Simple Loan ILL004",
         f"{200 / 100}% of borrowed capital",
         "0%",
         "50x",
         0.5,
         5,
+        86400,
         2419200,
-        86400,
-    ),
-    "ill005": LoanTerm(
-        ca.ILL001(chain),
-        "X7 Initial Liquidity Loan (005) - X7ILL005",
-        "Fixed Origination Fee",
-        "0.01 ether",
-        "0%",
-        "100x",
-        0.5,
-        1,
-        86400,
-        2419200
-    )
-    
+    ) 
 }
 
 def loans_list(chain):
