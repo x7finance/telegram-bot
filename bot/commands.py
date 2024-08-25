@@ -1310,22 +1310,53 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = await update.message.reply_text("Getting Liquidity data, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-        x7r_liquidity_data = dextools.get_liquidity(x7r_pairs, chain)
-        x7dao_liquidity_data = dextools.get_liquidity(x7dao_pairs, chain)
+        total_x7r_liquidity = 0
+        total_x7dao_liquidity = 0
 
-        x7r_text = (
-            f"*X7R*\n"
-            f"{x7r_liquidity_data.get('token', 'N/A')} X7R\n"
-            f"{x7r_liquidity_data.get('eth', 'N/A')} {chain_native.upper()}\n"
-            f"{x7r_liquidity_data.get('total', 'N/A')}"
-        )
+        x7r_liquidity_data = [dextools.get_liquidity(pair, chain) for pair in x7r_pairs]
+        x7dao_liquidity_data = [dextools.get_liquidity(pair, chain) for pair in x7dao_pairs]
 
-        x7dao_text = (
-            f"*X7DAO*\n"
-            f"{x7dao_liquidity_data.get('token', 'N/A')} X7DAO\n"
-            f"{x7dao_liquidity_data.get('eth', 'N/A')} {chain_native.upper()}\n"
-            f"{x7dao_liquidity_data.get('total', 'N/A')}"
-        )
+        x7r_text = "*X7R*\n"
+        for i, liquidity in enumerate(x7r_liquidity_data):
+            exchange_name = "Uniswap" if i == 0 else "Xchange"
+            token_liquidity = liquidity.get('token', 'N/A')
+            eth_liquidity = liquidity.get('eth', 'N/A')
+            total_liquidity = liquidity.get('total', 'N/A')
+
+            x7r_text += (
+                f"{exchange_name}\n{token_liquidity} X7R\n{eth_liquidity} {chain_native.upper()} \n"
+                f"Total: {total_liquidity}\n\n"
+            )
+
+            if total_liquidity != 'N/A':
+                try:
+                    cleaned_total_liquidity = total_liquidity.replace('$', '').replace(',', '')
+                    total_x7r_liquidity += float(cleaned_total_liquidity)
+                except ValueError:
+                    pass
+
+        x7r_text += f"*Total X7R Liquidity:\n${total_x7r_liquidity:,.2f}*\n"
+
+        x7dao_text = "*X7DAO*\n"
+        for i, liquidity in enumerate(x7dao_liquidity_data):
+            exchange_name = "Uniswap" if i == 0 else "Xchange"
+            token_liquidity = liquidity.get('token', 'N/A')
+            eth_liquidity = liquidity.get('eth', 'N/A')
+            total_liquidity = liquidity.get('total', 'N/A')
+
+            x7dao_text += (
+                f"{exchange_name}\n{token_liquidity} X7DAO\n{eth_liquidity} {chain_native.upper()} \n"
+                f"Total: {total_liquidity}\n\n"
+            )
+
+            if total_liquidity != 'N/A':
+                try:
+                    cleaned_total_liquidity = total_liquidity.replace('$', '').replace(',', '')
+                    total_x7dao_liquidity += float(cleaned_total_liquidity)
+                except ValueError:
+                    pass
+
+        x7dao_text += f"*Total X7DAO Liquidity:\n${total_x7dao_liquidity:,.2f}*\n\n"
 
         buttons = []
         
@@ -1346,8 +1377,8 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = InlineKeyboardMarkup(buttons)
 
         final_text = (
-            f"{x7r_text}\n\n"
-            f"{x7dao_text}\n\n"
+            f"{x7r_text}\n"
+            f"{x7dao_text}\n"
         )
 
         await message.delete()
