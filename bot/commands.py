@@ -2833,12 +2833,6 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         text="X7 Dune Dashboard", url=f"{urls.DUNE}"
                     )
                 ],
-                [
-                    InlineKeyboardButton(
-                        text="Trend a token on Xchange Alerts",
-                        url=f"https://t.me/smarttrendbuybot?start",
-                    ),
-                ],
             ]
         ),
         )
