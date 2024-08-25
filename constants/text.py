@@ -94,6 +94,22 @@ def WELCOME(user, chain):
             "Verify as human and check out the links to get started!")
 
 
+LOANS =(
+    "*X7 Finance Loan Terms*\n\n"
+    "Loan terms are defined by standalone smart contracts that provide the following:\n\n"
+    "1. Loan origination fee\n"
+    "2. Loan retention premium fee schedule\n"
+    "3. Principal repayment condition/maximum loan duration\n"
+    "4. Liquidation conditions and Reward\n"
+    "5. Loan duration\n\n"
+    "The lending process delegates the loan terms to standalone smart contracts (see whitepaper below for "
+    "more details). These loan terms contracts must be deployed, and then “added” or “removed” from the "
+    "Lending Pool as “available” loan terms for new loans. The DAO will be able to add or remove these term "
+    "contracts.\n\nLoan term contracts may be created by any interested third party, enabling a market "
+    "process by which new loan terms may be invented, provided they implement the proper interface."
+)
+
+
 QUOTES = [
     "Ethos\n\nX7’s founding team believes that capital should be available to those with great ideas and that the "
     "unflinching reliability of code and distributed consensus can provide capital while eliminating significant "

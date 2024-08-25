@@ -1,13 +1,13 @@
 from telegram import *
 from telegram.ext import *
 
-import os, pytz, random, re, requests, time
+import math, os, pytz, random, re, requests, time
 from datetime import datetime, timedelta, timezone
 
 from PIL import Image, ImageDraw, ImageFont
 from web3 import Web3
 
-from constants import abis, ca, chains, dao, loans, nfts, splitters, tax, text, tokens, urls  
+from constants import abis, ca, chains, dao, nfts, splitters, tax, text, tokens, urls  
 from hooks import api, db, dune 
 import pricebot
 import media
@@ -185,28 +185,67 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     loan_info = ""
     native_price = chainscan.get_native_price(chain)
     borrow_usd = native_price * float(amount)
-    for loan_key, loan_term in loans.LOANS(chain).items():
-        loan_contract = chain_web3.eth.contract(
-            address=chain_web3.to_checksum_address(loan_term.ca), abi=chainscan.get_abi(loan_term.ca, chain)
+    lending_pool = chain_web3.eth.contract(
+            address=chain_web3.to_checksum_address(ca.LPOOL(chain)), abi=abis.read("lendingpool")
         )
-        loan_data = loan_contract.functions.getQuote(int(amount_in_wei)).call()
-        origination_fee, total_premium = [value / 10**18 for value in loan_data[1:]]
-        origination_dollar, total_premium_dollar = [value * native_price for value in [origination_fee, total_premium]]
-        
-        loan_info += (
-            f"*{loan_term.name}*\n"
-            f"Origination Fee: {origination_fee} {chain_native.upper()} (${origination_dollar:,.0f})\n"
-            f"Premium Fees: {total_premium} {chain_native.upper()} (${total_premium_dollar:,.0f})\n"
-            f"Total Cost: {total_premium + origination_fee} {chain_native.upper()} (${origination_dollar + total_premium_dollar:,.0f})\n\n"
-        )
+    active_terms_count = lending_pool.functions.countOfActiveLoanTerms().call()
+    active_loan_addresses = []
+
+    for i in range(active_terms_count):
+        loan_address = lending_pool.functions.activeLoanTerms(i).call()
+        active_loan_addresses.append(loan_address)
+
+    if not active_loan_addresses:
+        loan_info = "N/A\n\n"
+    else:
+        for loan_term in active_loan_addresses:
+            loan_contract = chain_web3.eth.contract(
+                address=chain_web3.to_checksum_address(loan_term), abi=chainscan.get_abi(loan_term, chain)
+            )
+            
+            loan_name = loan_contract.functions.name().call()
+            loan_data = loan_contract.functions.getQuote(int(amount_in_wei)).call()
+            
+            min_loan = loan_contract.functions.minimumLoanAmount().call()
+            max_loan = loan_contract.functions.maximumLoanAmount().call()
+            min_loan_duration = loan_contract.functions.minimumLoanLengthSeconds().call()
+            max_loan_duration = loan_contract.functions.maximumLoanLengthSeconds().call()
+            
+            premium_periods = loan_contract.functions.numberOfPremiumPeriods().call()
+            origination_fee, total_premium = [value / 10**18 for value in loan_data[1:]]
+            origination_dollar, total_premium_dollar = [value * native_price for value in [origination_fee, total_premium]]
+            
+            loan_info += (
+                f"*{loan_name}*\n"
+                f"Origination Fee: {origination_fee} {chain_native.upper()} (${origination_dollar:,.0f})\n"
+            )
+
+            if premium_periods > 0:
+                per_period_premium = total_premium / premium_periods
+                per_period_premium_dollar = total_premium_dollar / premium_periods
+
+                loan_info += f"Premium Fees: {total_premium} {chain_native.upper()} (${total_premium_dollar:,.0f}) over {premium_periods} payments:\n"
+                for period in range(1, premium_periods + 1):
+                    loan_info += f"  - Payment {period}: {per_period_premium:.4f} {chain_native.upper()} (${per_period_premium_dollar:,.2f})\n"
+            else:
+                loan_info += f"Premium Fees: {total_premium} {chain_native.upper()} (${total_premium_dollar:,.0f})\n"
+
+            loan_info += (
+                f"Total Cost: {total_premium + origination_fee} {chain_native.upper()} (${origination_dollar + total_premium_dollar:,.0f})\n"
+                f"Min Loan: {min_loan / 10 ** 18} {chain_native.upper()}\n"
+                f"Max Loan: {max_loan / 10 ** 18} {chain_native.upper()}\n"
+                f"Min Loan Duration: {math.floor(min_loan_duration / 84600)} days\n"
+                f"Max Loan Duration: {math.floor(max_loan_duration / 84600)} days \n\n"
+            )
+
     await message.delete()
-    await update.message.reply_photo(
-    photo=api.get_random_pioneer(),
-    caption=
+    await update.message.reply_text(
         f"*X7 Finance Loan Rates ({chain_name})*\n\n"
         f"Borrowing {amount} {chain_native.upper()} (${borrow_usd:,.0f}) will cost:\n\n"
-        f"{loan_info}",
-    parse_mode="Markdown"
+        f"{loan_info}"
+        f"Principal Repayment Condition:\nPrincipal must be returned by the end of the loan term.\n\n"
+        f"Liquidation conditions:\nFailure to pay a premium payment by its due date or repay the principal by the end of the loan term will make the loan eligible for liquidation.",
+        parse_mode="Markdown"
     )
 
 
@@ -1572,61 +1611,21 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def loans_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) > 1:
-        loan_type = context.args[0].lower()
-        chain = context.args[1].lower()
-    elif len(context.args) == 1:
-        loan_type = " ".join(context.args).lower()
-        chain = ""
-    else:
-        loan_type = ""
-        chain = ""
-    if chain == "":
-        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
-    if chain in chains.CHAINS:
-        chain_scan = chains.CHAINS[chain].scan_address
-    else:
-        await update.message.reply_text(text.CHAIN_ERROR)
-        return
-
-    if loan_type == "":
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption= 
-                f"{loans.OVERVIEW(chain)}",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="X7 Finance Whitepaper", url=f"{urls.WP_LINK}"
-                        )
-                    ],
-                ]
-            ),
-        )
-        return
-
-    if loan_type in loans.LOANS(chain):
-        loan_terms = loans.LOANS(chain)[loan_type]
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=f"{loan_terms.title} ({chain.upper()})\n{loan_terms.generate_terms(chain)}\n\n",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
+    await update.message.reply_photo(
+        photo=api.get_random_pioneer(),
+        caption= 
+            f"{text.LOANS}",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
-                        text=f"{loan_type.upper()} Contract ({chain.upper()})",
-                        url=f"{chain_scan}{loan_terms.ca}"
+                        text="X7 Finance Whitepaper", url=f"{urls.WP_LINK}"
                     )
                 ],
             ]
-        )
-        )
-    else:
-        await update.message.reply_text(f"Loan term not found, please follow command with:\n{loans.loans_list(chain)}")
-
+        ),
+    )
         
 
 async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
