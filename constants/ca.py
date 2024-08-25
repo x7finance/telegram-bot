@@ -212,6 +212,14 @@ def HUBS(chain):
     "x7100": X7100_LIQ_HUB(chain),
 }
 
+def TEMP_HUBS(token):
+    if token == "x7r":
+        return "0x734B81d7De2b8D85eb71E5c7548f5f8D220a7782"
+    if token == "x7dao":
+        return "0xB06D584a30225A05583905C599a7A9990FEF062b"
+    if token == "x7100":
+        return "0x27a24a9a1Ee636E0C675964185e1f13545bA8605"
+
 
 # LOANS
 
@@ -257,11 +265,9 @@ def COM_MULTI(chain):
 
 # PAIRS
 
-def X7R_PAIR(chain, dex = None):
-    if dex == "uniswap":
-        return "0x6139240a5907e4ce74673257c320ea366c521aea"
-    if dex == "xchange":
-        return "0x8e0d035787e7083d4292536005dd6a69682e4f64"
+def X7R_PAIR(chain):
+    return ["0x6139240a5907e4ce74673257c320ea366c521aea",
+            "0x8e0d035787e7083d4292536005dd6a69682e4f64"]
 
 def X7DAO_PAIR(chain):
     return "0x75311ee016c82e7770e4aca73a0d142f96ddb969"
@@ -280,14 +286,6 @@ def X7104_PAIR(chain):
 
 def X7105_PAIR(chain):
     return "0x6d9d1b6b4d53f090639ae8d9e9c83b796da694ee"
-
-def TEMP_LIQ_HUB(token):
-    if token == "x7r":
-        return "0x734B81d7De2b8D85eb71E5c7548f5f8D220a7782"
-    if token == "x7dao":
-        return "0xB06D584a30225A05583905C599a7A9990FEF062b"
-    if token == "x7100":
-        return "0x27a24a9a1Ee636E0C675964185e1f13545bA8605"
 
 
 # WALLETS

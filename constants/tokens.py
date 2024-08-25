@@ -45,8 +45,7 @@ def TOKENS(chain):
     "X7R": {
         "eth": TokensInfo(
             ca.X7R(chain),
-            [ca.X7R_PAIR(chain, "uniswap"),
-            ca.X7R_PAIR(chain, "xchange")]
+            ca.X7R_PAIR(chain)
         ),
         "arb": TokensInfo(
             ca.X7R(chain),

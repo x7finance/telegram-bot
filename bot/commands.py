@@ -1177,7 +1177,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ## TEMP
     temp_balance = 0
     if chain == "eth":
-        temp_hub_address = ca.TEMP_LIQ_HUB(token)
+        temp_hub_address = ca.TEMP_HUBS(token)
         if isinstance(address, str):
             temp_balance = chainscan.get_token_balance(temp_hub_address, address, chain)
             temp_dollar = float(price) * float(temp_balance)
@@ -1328,15 +1328,18 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         buttons = []
-        for pair in x7r_pairs:
+        
+        for i, pair in enumerate(x7r_pairs):
+            exchange_name = "Uniswap" if i == 0 else "Xchange"
             buttons.append([InlineKeyboardButton(
-                text=f"X7R {pair}",
+                text=f"X7R - {exchange_name}",
                 url=f"{chain_url}{pair}"
             )])
 
-        for pair in x7dao_pairs:
+        for i, pair in enumerate(x7dao_pairs):
+            exchange_name = "Uniswap" if i == 0 else "Xchange"
             buttons.append([InlineKeyboardButton(
-                text=f"X7DAO {pair}",
+                text=f"X7DAO - {exchange_name}",
                 url=f"{chain_url}{pair}"
             )])
 
@@ -1601,8 +1604,6 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_name = chains.CHAINS[chain].name
         chain_url = chains.CHAINS[chain].scan_address
         chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
-        x7r_pair = chains.CHAINS[chain].pairs[0]
-        x7dao_pair = chains.CHAINS[chain].pairs[1]
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
         return
@@ -1611,8 +1612,8 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     contract = chain_web3.eth.contract(address=chain_web3.to_checksum_address(ca.TIME_LOCK(chain)), abi=chainscan.get_abi(ca.TIME_LOCK(chain), chain))
     now = datetime.now()
 
-    x7r_remaining_time_str, x7r_unlock_datetime_str = api.get_unlock_time(chain_web3, contract, x7r_pair, now)
-    x7dao_remaining_time_str, x7dao_unlock_datetime_str = api.get_unlock_time(chain_web3, contract, x7dao_pair, now)
+    x7r_remaining_time_str, x7r_unlock_datetime_str = api.get_unlock_time(chain_web3, contract, ca.X7R(chain), now)
+    x7dao_remaining_time_str, x7dao_unlock_datetime_str = api.get_unlock_time(chain_web3, contract, ca.X7DAO(chain), now)
     x7d_remaining_time_str, x7d_unlock_datetime_str = api.get_unlock_time(chain_web3, contract, ca.X7D(chain), now)
 
     await update.message.reply_photo(
@@ -2464,45 +2465,72 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def supply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
+    
     if chain == "":
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
+    
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
-        chain_pair = chains.CHAINS[chain].pairs
+        x7r_pairs = tokens.TOKENS(chain)["X7R"][chain].pairs
+        x7dao_pairs = tokens.TOKENS(chain)["X7DAO"][chain].pairs
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
         return
+
     message = await update.message.reply_text("Getting Supply Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
     token_pairs = {
-        "x7r": (chain_pair[0], ca.X7R(chain)),
-        "x7dao": (chain_pair[1], ca.X7DAO(chain)),
-        "x7101": (chain_pair[2], ca.X7101(chain)),
-        "x7102": (chain_pair[3], ca.X7102(chain)),
-        "x7103": (chain_pair[4], ca.X7103(chain)),
-        "x7104": (chain_pair[5], ca.X7104(chain)),
-        "x7105": (chain_pair[6], ca.X7105(chain)),
+        "x7r": (x7r_pairs, ca.X7R(chain)),
+        "x7dao": (x7dao_pairs, ca.X7DAO(chain)),
     }
-    supply_info = {}
-    for token, (pair, contract) in token_pairs.items():
-        balance = chainscan.get_token_balance(pair, contract, chain)
-        percent = round(balance / ca.SUPPLY * 100, 2)
-        supply_info[token] = {
-            "balance": balance,
-            "percent": percent,
-        }
+
+    supply_info = {
+        "x7r": [],
+        "x7dao": []
+    }
+
+    for token, (pairs, contract) in token_pairs.items():
+        if isinstance(pairs, list):
+            for i, pair in enumerate(pairs):
+                exchange_name = "Uniswap" if i == 0 else "Xchange"
+                balance = chainscan.get_token_balance(pair, contract, chain)
+                percent = round(balance / ca.SUPPLY * 100, 2)
+                supply_info[token].append({
+                    "exchange_name": exchange_name,
+                    "balance": balance,
+                    "percent": percent,
+                })
+        else:
+            balance = chainscan.get_token_balance(pairs, contract, chain)
+            percent = round(balance / ca.SUPPLY * 100, 2)
+            supply_info[token].append({
+                "exchange_name": "Uniswap",
+                "balance": balance,
+                "percent": percent,
+            })
+
     caption_lines = []
-    for token, info in supply_info.items():
-        balance_str = "{:0,.0f}".format(info["balance"])
-        percent_str = f"{info['percent']}%"
-        line = f"{token.upper()}\n{balance_str} {token.upper()}  {percent_str}"
-        caption_lines.append(line)
-    caption_text = "\n\n".join(caption_lines)
+    
+    for token, infos in supply_info.items():
+        if not infos:
+            continue
+        
+        caption_lines.append(f"{token.upper()}")
+        
+        for info in infos:
+            balance_str = "{:0,.0f}".format(info["balance"])
+            percent_str = f"{info['percent']}%"
+            caption_lines.append(f"{balance_str} {token.upper()}  {percent_str} - {info['exchange_name']}")
+
+        caption_lines.append("")
+
+    caption_text = "\n".join(caption_lines).strip()
+
     await message.delete()
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Uniswap Supply ({chain_name})*\n\n{caption_text}",
+        caption=f"*X7 Finance Supply ({chain_name})*\n\n{caption_text}",
         parse_mode="Markdown",
     )
 

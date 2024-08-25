@@ -203,12 +203,10 @@ if __name__ == "__main__":
     application.add_error_handler(error)
     application.add_handler(CommandHandler("test", test))
 
-    ## WELCOME ##
     application.add_handler(ChatMemberHandler(welcome.message, ChatMemberHandler.CHAT_MEMBER))
     application.add_handler(MessageHandler(filters.StatusUpdate._NewChatMembers(Update) | filters.StatusUpdate._LeftChatMember(Update), welcome.delete))
     application.add_handler(CallbackQueryHandler(welcome.button_callback, pattern=r"unmute:.+"))
-    
-    ## COMANDS ##
+
     application.add_handler(CommandHandler("about", commands.about))
     application.add_handler(CommandHandler("admins", commands.admins))
     application.add_handler(CommandHandler("alerts", commands.alerts))
@@ -287,24 +285,20 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler(["x7105", "105"], commands.x7105))
     application.add_handler(CommandHandler("x", commands.x))
 
-
-    ## ADMIN ##
     application.add_handler(CommandHandler("clickme", click_me))
     application.add_handler(CommandHandler("everyone", admin.everyone))
     application.add_handler(CommandHandler("reset", admin.reset))
     application.add_handler(CommandHandler("wen", admin.wen))
 
-    ## AUTO ##
     application.add_handler(CallbackQueryHandler(button_function))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies))
 
-    job_queue.run_once(
-        button_send,
-        times.FIRST_BUTTON_TIME,
-        chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
-        name="Click Me",
-    )
+    #job_queue.run_once(
+    #    button_send,
+    #    times.FIRST_BUTTON_TIME,
+    #    chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
+    #    name="Click Me",
+    #)
 
-    ## RUN ##
-    scanners()
+    #scanners()
     application.run_polling(allowed_updates=Update.ALL_TYPES)
