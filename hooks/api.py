@@ -394,8 +394,8 @@ class Dextools:
         if response.status_code == 200:
             data = response.json()
             if data and "data" in data and data["data"]:
-                name = data["data"].get("name", "N/A")
-                symbol = data["data"].get("symbol", "N/A")
+                name = data["data"].get("name", "Unknown Token")
+                symbol = data["data"].get("symbol", "")
 
                 return {
                     "name": name,
@@ -403,13 +403,13 @@ class Dextools:
                 }
             else:
                 return {
-                    "name": "N/A",
-                    "symbol": "N/A"
+                    "name": "Unknown Token",
+                    "symbol": ""
                 }
         else:
             return {
-                "name": "N/A",
-                "symbol": "N/A"
+                "name": "Unknown Token",
+                "symbol": ""
             }
 
 
