@@ -161,7 +161,7 @@ async def blog(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) ==  2:
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
-        amount= context.args[0]
+        amount = context.args[0]
         amount_in_wei = int(float(amount) * 10 ** 18)
         chain = context.args[1]
     else:
@@ -2207,7 +2207,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"*X7 Finance Lending Pool Info *\nUse `/pool [chain-name]` for individual chains\n\n"
                 f"{pool_text}\n"
                 f'Lending Pool: ${"{:0,.0f}".format(total_lpool_dollar)}\n'
-                f'Pending Pool Reserve: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
+                f'Lending Pool Reserve: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
                 f'Total: ${"{:0,.0f}".format(total_dollar)}',
             parse_mode="Markdown",
         )
