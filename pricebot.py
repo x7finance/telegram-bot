@@ -23,6 +23,9 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             if token:
                 search = token
             else:
+                await update.message.reply_text(
+                    f"No result found",
+                )
                 return
             
     if api.is_eth(search):
@@ -32,6 +35,9 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 if scan:
                     break
             else:
+                await update.message.reply_text(
+                    f"No result found",
+                )
                 return
         else:
             scan = api.get_scan(search, chain)

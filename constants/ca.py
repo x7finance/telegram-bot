@@ -171,9 +171,9 @@ def X7100_DISCOUNT(chain):
     
 def X7100_LIQ_HUB(chain):
     if chain == "base":
-        return "0x7102407afa5d6581AAb694FEB03fEB0e7Cf69ebb"
+        return "0xA4437E62CD7E8E6199a0199deA7E78641f181825"
     else:
-        return "0x7102407afa5d6581AAb694FEB03fEB0e7Cf69ebb"
+        return "0xA4437E62CD7E8E6199a0199deA7E78641f181825"
     
 def X7DAO_DISCOUNT(chain):
     if chain == "base":
