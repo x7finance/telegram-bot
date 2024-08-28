@@ -3617,7 +3617,7 @@ async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chain_name = context.args[-1].lower()
         
             if chain_name in chains.CHAINS:
-                chain = chains.CHAINS[chain_name].name
+                chain = chains.CHAINS[chain_name].name.lower()
             else:
                 search = " ".join(context.args)
                 chain = None

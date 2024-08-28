@@ -183,9 +183,9 @@ def X7DAO_DISCOUNT(chain):
     
 def X7DAO_LIQ_HUB(chain):
     if chain == "base":
-        return "0x7DA0e45cE7fD8359544Be00a6618215770851ebB"
+        return "0x6913Bb5E6b85De1C47f0bc5C8ed3409d3aB14130"
     else:
-        return "0x7DA0e45cE7fD8359544Be00a6618215770851ebB"
+        return "0x6913Bb5E6b85De1C47f0bc5C8ed3409d3aB14130"
     
 def X7R_DISCOUNT(chain):
     if chain == "base":
