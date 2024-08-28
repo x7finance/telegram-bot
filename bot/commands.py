@@ -2485,9 +2485,9 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"*X7 Finance Ecosystem Splitters ({chain_name})*\n"
             f"Use `/splitters [chain-name]` for other chains\n\n"
-            f"Ecosystem Splitter\n{eco_eth} {chain_native.upper()} (${'{:0,.0f}'.format(eco_dollar)})\n"
+            f"Ecosystem Splitter\n{eco_eth:.2f} {chain_native.upper()} (${'{:0,.0f}'.format(eco_dollar)})\n"
             f"{eco_splitter_text}\n"
-            f"Treasury Splitter\n{treasury_eth} {chain_native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
+            f"Treasury Splitter\n{treasury_eth:.2f} {chain_native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
             f"{treasury_splitter_text}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
