@@ -115,13 +115,6 @@ def CONTRACT_MAPPINGS(chain):
         "fundLendingPool\n"
         "setRecoveredTokenRecipient"
         ), ca.LPOOL_RESERVE(chain)),
-    "Loans": (
-        ("setLoanAuthority\n"
-        "setBaseURI\n"
-        "setUseBaseURIOnly\n"
-        "setLoanLengthLimits\n"
-        "setLoanAmountLimits"
-        ), ca.ILL001(chain)),
     "Token Time Lock": (
         ("setWETH\n"
         "setGlobalUnlockTimestamp\n"

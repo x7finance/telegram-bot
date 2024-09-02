@@ -80,50 +80,6 @@ async def announcements(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def ath(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    def get_ath_info(coin):
-        ath, ath_change, date = coingecko.get_ath(coin)
-        ath_change_str = f"{ath_change}"
-        return ath, ath_change_str[:3], date
-    
-    try:
-        x7r_ath, x7r_ath_change, x7r_date = get_ath_info("x7r")
-        x7r_date_object = datetime.fromisoformat(x7r_date.replace("Z", "+00:00"))
-        x7r_readable_date = x7r_date_object.strftime("%Y-%m-%d %H:%M:%S")
-        x7r_mcap = x7r_ath * chainscan.get_x7r_supply("eth")
-        x7r_ath = (
-            f'${x7r_ath} (${"{:0,.0f}".format(x7r_mcap)})\n'
-            f'{x7r_ath_change}%\n'
-            f'{x7r_readable_date}'
-            )
-    except Exception:
-        x7r_ath = "Unavaliable"
-
-    try:
-        x7dao_ath, x7dao_ath_change, x7dao_date = get_ath_info("x7dao")
-        x7dao_date_object = datetime.fromisoformat(x7dao_date.replace("Z", "+00:00"))
-        x7dao_readable_date = x7dao_date_object.strftime("%Y-%m-%d %H:%M:%S")
-        x7dao_mcap = x7dao_ath * ca.SUPPLY
-        x7dao_ath = (
-            f'${x7dao_ath} (${"{:0,.0f}".format(x7dao_mcap)})\n'
-            f'{x7dao_ath_change}%\n'
-            f'{x7dao_readable_date}'
-            )
-    except Exception:
-        x7dao_ath = "Unavaliable"
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption = 
-            f"*X7 Finance ATH Info (ETH)*\n\n"
-            f'*X7R*\n'
-            f'{x7r_ath}\n\n'
-            f'*X7DAO*\n'
-            f'{x7dao_ath}',
-        parse_mode="Markdown"
-    )
-
-
 async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     when = round(time.time())
@@ -254,8 +210,15 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if chain == "":
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
-        chain_native = chains.CHAINS[chain].token
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7R Tokens Burned ({chain_name})*\n\n"
+                f"Tokens not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
+        chain_native = chains.CHAINS[chain].token
         chain_url = chains.CHAINS[chain].scan_token
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
@@ -269,7 +232,7 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"\n\nX7R Tokens Burned ({chain_name})\nUse `/burn [chain-name]` for other chains\n\n"
+            f"*X7R Tokens Burned ({chain_name})*\nUse `/burn [chain-name]` for other chains\n\n"
             f'{"{:0,.0f}".format(float(burn))} / {native:,.3f} {chain_native.upper()} (${"{:0,.0f}".format(float(burn_dollar))})\n'
             f"{percent}% of Supply",
         parse_mode="markdown",
@@ -292,6 +255,13 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7 Finance Buy Links ({chain_name})*\n\n"
+                f"Tokens not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
         chain_id = chains.CHAINS[chain].id
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
@@ -359,6 +329,13 @@ async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7 Finance Chart Links ({chain_name})*\n\n"
+                f"Tokens not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
         dext = chains.CHAINS[chain].dext
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
@@ -367,7 +344,7 @@ async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"*X7 Finance Chart Links* ({chain_name})\nUse `/chart [chain-name]` for other chains\n"
+            f"*X7 Finance Chart Links ({chain_name})*\nUse `/chart [chain-name]` for other chains\n"
             f"Use `/constellations` for constellations",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -494,10 +471,19 @@ async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
+    if chain in chains.CHAINS:
+        chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7 Finance Constellation Addresses ({chain_name})*\n\n"
+                f"Tokens not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f'*X7 Finance Constellation Addresses*\n\n'
+            f'*X7 Finance Constellation Addresses ({chain_name})*\n\n'
             f'X7101\n'
             f'`{ca.X7101(chain)}`\n\n'
             f'X7102:\n'
@@ -517,6 +503,13 @@ async def contracts(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7 Finance Contract Addresses ({chain_name})*\n\n"
+                f"Tokens not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
         return
@@ -716,17 +709,10 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def deployer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower()
-    if chain == "":
-        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
-    if chain in chains.CHAINS:
-        chain_name = chains.CHAINS[chain].name
-        chain_tx = chains.CHAINS[chain].scan_tx
-    else:
-        await update.message.reply_text(text.CHAIN_ERROR)
-        return
+    chain_name = chains.CHAINS["eth"].name
+    chain_tx = chains.CHAINS["eth"].scan_tx
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    tx = chainscan.get_tx(ca.DEPLOYER, chain)
+    tx = chainscan.get_tx(ca.DEPLOYER, "eth")
     time = datetime.fromtimestamp(int(tx["result"][0]["timeStamp"]))
     duration = datetime.now() - time
     days, hours, minutes = api.get_duration_days(duration)
@@ -1092,6 +1078,13 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7 Finance Token Holders ({chain_name})*\n\n"
+                f"Tokens not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
         return
@@ -1133,6 +1126,13 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*{token.upper()} Liquidity Hub ({chain_name})*\n\n"
+                f"Tokens not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
         chain_url = chains.CHAINS[chain].scan_address
         chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
         chain_native = chains.CHAINS[chain].token
@@ -1338,6 +1338,14 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7 Finance Liquidity ({chain_name})*\n\n"
+                f"Tokens not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
+        
         chain_native = chains.CHAINS[chain].token
         chain_url = chains.CHAINS[chain].scan_address
 
@@ -1354,6 +1362,10 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         total_x7r_liquidity = 0
         total_x7dao_liquidity = 0
+        total_x7r_supply = 0
+        total_x7dao_supply = 0
+        total_x7r_eth = 0
+        total_x7dao_eth = 0
 
         x7r_liquidity_data = [dextools.get_liquidity(pair, chain) for pair in x7r_pairs]
         x7dao_liquidity_data = [dextools.get_liquidity(pair, chain) for pair in x7dao_pairs]
@@ -1365,9 +1377,21 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
             eth_liquidity = liquidity.get('eth', 'N/A')
             total_liquidity = liquidity.get('total', 'N/A')
 
+            if token_liquidity != 'N/A':
+                cleaned_token_liquidity = token_liquidity.replace(',', '')
+                token_liquidity_float = float(cleaned_token_liquidity)
+                total_x7r_supply += token_liquidity_float
+                percentage = (token_liquidity_float / ca.SUPPLY) * 100
+            else:
+                percentage = 'N/A'
+
+            if eth_liquidity != 'N/A':
+                cleaned_eth_liquidity = eth_liquidity.replace(',', '')
+                total_x7r_eth += float(cleaned_eth_liquidity)
+
             x7r_text += (
-                f"{exchange_name}\n{token_liquidity} X7R\n{eth_liquidity} {chain_native.upper()} \n"
-                f"Total: {total_liquidity}\n\n"
+                f"{exchange_name}\n{token_liquidity} X7R ({percentage:.2f}%)\n{eth_liquidity} {chain_native.upper()} \n"
+                f"{total_liquidity}\n\n"
             )
 
             if total_liquidity != 'N/A':
@@ -1377,7 +1401,13 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 except ValueError:
                     pass
 
-        x7r_text += f"*Total X7R Liquidity:\n${total_x7r_liquidity:,.2f}*\n"
+        total_x7r_percentage = (total_x7r_supply / ca.SUPPLY) * 100
+
+        x7r_text += (
+            f"Total:\n{total_x7r_supply:,.2f} X7R ({total_x7r_percentage:.2f}%)\n"
+            f"{total_x7r_eth:,.2f} {chain_native.upper()}\n"
+            f"${total_x7r_liquidity:,.2f}\n"
+        )
 
         x7dao_text = "*X7DAO*\n"
         for i, liquidity in enumerate(x7dao_liquidity_data):
@@ -1386,9 +1416,21 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
             eth_liquidity = liquidity.get('eth', 'N/A')
             total_liquidity = liquidity.get('total', 'N/A')
 
+            if token_liquidity != 'N/A':
+                cleaned_token_liquidity = token_liquidity.replace(',', '')
+                token_liquidity_float = float(cleaned_token_liquidity)
+                total_x7dao_supply += token_liquidity_float
+                percentage = (token_liquidity_float / ca.SUPPLY) * 100
+            else:
+                percentage = 'N/A'
+
+            if eth_liquidity != 'N/A':
+                cleaned_eth_liquidity = eth_liquidity.replace(',', '')
+                total_x7dao_eth += float(cleaned_eth_liquidity)
+
             x7dao_text += (
-                f"{exchange_name}\n{token_liquidity} X7DAO\n{eth_liquidity} {chain_native.upper()} \n"
-                f"Total: {total_liquidity}\n\n"
+                f"{exchange_name}\n{token_liquidity} X7DAO ({percentage:.2f}%)\n{eth_liquidity} {chain_native.upper()} \n"
+                f"{total_liquidity}\n\n"
             )
 
             if total_liquidity != 'N/A':
@@ -1398,7 +1440,13 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 except ValueError:
                     pass
 
-        x7dao_text += f"*Total X7DAO Liquidity:\n${total_x7dao_liquidity:,.2f}*\n\n"
+        total_x7dao_percentage = (total_x7dao_supply / ca.SUPPLY) * 100
+
+        x7dao_text += (
+            f"Total:\n{total_x7dao_supply:,.2f} X7DAO ({total_x7dao_percentage:.2f}%)\n"
+            f"{total_x7dao_eth:,.2f} {chain_native.upper()}\n"
+            f"${total_x7dao_liquidity:,.2f}\n"
+        )
 
         buttons = []
         
@@ -1718,6 +1766,13 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7 Finance Market Cap Info ({chain_name})*\n\n"
+                f"Tokens not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
         return
@@ -2267,6 +2322,14 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if chain == "":
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
+        chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7 Finance Token Price Info ({chain_name})*\n\n"
+                f"Tokens not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
         chain_dext = chains.CHAINS[chain].dext
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
@@ -2278,7 +2341,7 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"*X7 Finance Token Price Info ({chain.upper()})*\n"
+            f"*X7 Finance Token Price Info ({chain_name})*\n"
             f"Use `/x7r [chain]` or `/x7dao [chain]` for all other details\n"
             f"Use `/constellations` for constellations\n\n"
             f"X7R\n"
@@ -2499,84 +2562,19 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def supply(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower()
-    
-    if chain == "":
-        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
-    
-    if chain in chains.CHAINS:
-        chain_name = chains.CHAINS[chain].name
-        x7r_pairs = tokens.TOKENS(chain)["X7R"][chain].pairs
-        x7dao_pairs = tokens.TOKENS(chain)["X7DAO"][chain].pairs
-    else:
-        await update.message.reply_text(text.CHAIN_ERROR)
-        return
-
-    message = await update.message.reply_text("Getting Supply Info, Please wait...")
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
-
-    token_pairs = {
-        "x7r": (x7r_pairs, ca.X7R(chain)),
-        "x7dao": (x7dao_pairs, ca.X7DAO(chain)),
-    }
-
-    supply_info = {
-        "x7r": [],
-        "x7dao": []
-    }
-
-    for token, (pairs, contract) in token_pairs.items():
-        if isinstance(pairs, list):
-            for i, pair in enumerate(pairs):
-                exchange_name = "Uniswap" if i == 0 else "Xchange"
-                balance = chainscan.get_token_balance(pair, contract, chain)
-                percent = round(balance / ca.SUPPLY * 100, 2)
-                supply_info[token].append({
-                    "exchange_name": exchange_name,
-                    "balance": balance,
-                    "percent": percent,
-                })
-        else:
-            balance = chainscan.get_token_balance(pairs, contract, chain)
-            percent = round(balance / ca.SUPPLY * 100, 2)
-            supply_info[token].append({
-                "exchange_name": "Uniswap",
-                "balance": balance,
-                "percent": percent,
-            })
-
-    caption_lines = []
-    
-    for token, infos in supply_info.items():
-        if not infos:
-            continue
-        
-        caption_lines.append(f"{token.upper()}")
-        
-        for info in infos:
-            balance_str = "{:0,.0f}".format(info["balance"])
-            percent_str = f"{info['percent']}%"
-            caption_lines.append(f"{balance_str} {token.upper()}  {percent_str} - {info['exchange_name']}")
-
-        caption_lines.append("")
-
-    caption_text = "\n".join(caption_lines).strip()
-
-    await message.delete()
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=f"*X7 Finance Supply ({chain_name})*\n\n{caption_text}",
-        parse_mode="Markdown",
-    )
-
-
 async def tax_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7 Finance Tax Info ({chain_name})*\n\n"
+                f"Tokens not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
         return
@@ -3155,6 +3153,13 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7D Info ({chain_name})*\n\n"
+                f"Token not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
         chain_scan = chains.CHAINS[chain].scan_token
         chain_lpool = ca.LPOOL(chain)
     else:
@@ -3209,6 +3214,13 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7DAO Info ({chain_name})*\n\n"
+                f"Token not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
@@ -3241,7 +3253,7 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"X7DAO Info ({chain_name})\n\n"
+            f"*X7DAO Info ({chain_name})*\n\n"
             f"💰 Price: {price}\n"
             f'💎 Market Cap:  {market_cap}\n'
             f"📊 24 Hour Volume: {volume}\n"
@@ -3268,6 +3280,13 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7R Info ({chain_name})*\n\n"
+                f"Token not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
@@ -3300,7 +3319,7 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"X7R Info ({chain_name})\n\n"
+            f"*X7R Info ({chain_name})*\n\n"
             f"💰 Price: {price}\n"
             f'💎 Market Cap:  {market_cap}\n'
             f"📊 24 Hour Volume: {volume}\n"
@@ -3327,6 +3346,13 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7101 Info ({chain_name})*\n\n"
+                f"Token not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
@@ -3359,7 +3385,7 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"X7101 Info ({chain_name})\n\n"
+            f"*X7101 Info ({chain_name})*\n\n"
             f"💰 Price: {price}\n"
             f'💎 Market Cap:  {market_cap}\n'
             f"📊 24 Hour Volume: {volume}\n"
@@ -3386,6 +3412,13 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7102 Info ({chain_name})*\n\n"
+                f"Token not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
@@ -3417,7 +3450,7 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"X7102 Info ({chain_name})\n\n"
+            f"*X7102 Info ({chain_name})*\n\n"
             f"💰 Price: {price}\n"
             f'💎 Market Cap:  {market_cap}\n'
             f"📊 24 Hour Volume: {volume}\n"
@@ -3444,6 +3477,13 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7103 Info ({chain_name})*\n\n"
+                f"Token not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
@@ -3475,7 +3515,7 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"X7103 Info ({chain_name})\n\n"
+            f"*X7103 Info ({chain_name})*\n\n"
             f"💰 Price: {price}\n"
             f'💎 Market Cap:  {market_cap}\n'
             f"📊 24 Hour Volume: {volume}\n"
@@ -3502,6 +3542,13 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7104 Info ({chain_name})*\n\n"
+                f"Token not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
@@ -3533,7 +3580,7 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"X7104 Info ({chain_name})\n\n"
+            f"*X7104 Info ({chain_name})*\n\n"
             f"💰 Price: {price}\n"
             f'💎 Market Cap:  {market_cap}\n'
             f"📊 24 Hour Volume: {volume}\n"
@@ -3560,6 +3607,13 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
+        if not chains.CHAINS[chain].trading:
+            await update.message.reply_text(
+                f"*X7105 Info ({chain_name})*\n\n"
+                f"Token not launched yet!",
+                parse_mode="Markdown"
+            )
+            return
         chain_dext = chains.CHAINS[chain].dext
         chain_scan = chains.CHAINS[chain].scan_name
         chain_url = chains.CHAINS[chain].scan_token
@@ -3591,7 +3645,7 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"X7105 Info ({chain_name})\n\n"
+            f"*X7105 Info* ({chain_name})\n\n"
             f"💰 Price: {price}\n"
             f'💎 Market Cap:  {market_cap}\n'
             f"📊 24 Hour Volume: {volume}\n"

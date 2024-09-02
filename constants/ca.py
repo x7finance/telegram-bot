@@ -241,27 +241,6 @@ def ILL004(chain):
     else:
         return "0xF9832C813104a6256771dfBDd3a243D24B7D7941"
 
-def WETH(chain):
-    if chain == "eth":
-        return "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
-    if chain == "bsc":
-        return "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"
-    if chain == "poly":
-        return  "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"
-    if chain == "arb":
-        return "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
-    else:
-        return "0x4200000000000000000000000000000000000006"
-
-
-# MULTI SIGS
-
-def DAO_MULTI(chain): 
-    return "0x7dcb82DecBEb1f41BC9eb00a552B085ba356a256"
-
-def COM_MULTI(chain): 
-    return "0xc8804440275c0B60a081e832bb027DDaAE4A2daa"
-
 
 # PAIRS
 
@@ -270,7 +249,8 @@ def X7R_PAIR(chain):
             "0x8e0d035787e7083d4292536005dd6a69682e4f64"]
 
 def X7DAO_PAIR(chain):
-    return "0x75311ee016c82e7770e4aca73a0d142f96ddb969"
+    return ["0x75311ee016c82e7770e4aca73a0d142f96ddb969",
+            "0xb8de6270640092463988b6860d68ca63dc7cf700"]
 
 def X7101_PAIR(chain):
     return "0x81b786ed4b2f1118e0fa0343ad4760e15448e3e8"
@@ -289,9 +269,29 @@ def X7105_PAIR(chain):
 
 
 # WALLETS
+
+def DAO_MULTI(chain): 
+    return "0x7dcb82DecBEb1f41BC9eb00a552B085ba356a256"
+
+def COM_MULTI(chain): 
+    return "0xc8804440275c0B60a081e832bb027DDaAE4A2daa"
+
 DEPLOYER = "0x7000a09c425abf5173ff458df1370c25d1c58105"
 
+
 # OTHER
+
+def WETH(chain):
+    if chain == "eth":
+        return "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+    if chain == "bsc":
+        return "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"
+    if chain == "poly":
+        return  "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"
+    if chain == "arb":
+        return "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+    else:
+        return "0x4200000000000000000000000000000000000006"
+
 SUPPLY = 100000000
 DEAD = "0x000000000000000000000000000000000000dEaD"
-

@@ -9,6 +9,7 @@ class ChainInfo:
     def __init__(
         self,
         live: bool,
+        trading: bool,
         name: str,
         scan_name: str,
         id: str,
@@ -28,6 +29,7 @@ class ChainInfo:
         dao_multi: str
     ):
         self.live = live
+        self.trading = trading
         self.name = name
         self.scan_name = scan_name
         self.id = id
@@ -49,6 +51,7 @@ class ChainInfo:
 CHAINS = {
     "eth": ChainInfo(
         True,
+        True,
         "ETH",
         "Etherscan",
         "1",
@@ -69,6 +72,7 @@ CHAINS = {
     ),
     "base": ChainInfo(
         True,
+        False,
         "Base",
         "Basescan",
         "8453",
@@ -89,6 +93,7 @@ CHAINS = {
     ),
     "bsc": ChainInfo(
         True,
+        False,
         "BSC",
         "BSCscan",
         "56",
@@ -109,6 +114,7 @@ CHAINS = {
     ),
     "arb": ChainInfo(
         True,
+        False,
         "Arbitrum",
         "Arbiscan",
         "42161",
@@ -129,6 +135,7 @@ CHAINS = {
     ),
     "op": ChainInfo(
         True,
+        False,
         "Optimism",
         "Optimisticscan",
         "10",
@@ -149,6 +156,7 @@ CHAINS = {
     ),
     "poly": ChainInfo(
         True,
+        False,
         "Polygon",
         "Polygonscan",
         "137",
@@ -171,7 +179,6 @@ CHAINS = {
 
 
 GAS_CHAINS = ["eth", "poly", "bsc"]
-INITIAL_LIQ = ["op", "bsc", "arb", "poly"]
 
 
 def DEFAULT_CHAIN(chat_id):
