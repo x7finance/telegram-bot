@@ -3266,7 +3266,7 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=InlineKeyboardMarkup(
         [
             [InlineKeyboardButton(text=chain_scan, url=f"{chain_url}{ca.X7DAO(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{chain_pair}")],
+            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_dext)}{ca.X7DAO(chain)}")],
             [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_id, ca.X7DAO(chain))}")],
         ]
     ),
