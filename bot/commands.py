@@ -2096,7 +2096,7 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="Xchange Pairs Dashboard",
-                        url=f"{urls.XCHANGE}dashboard/pairs",
+                        url=f"{urls.XCHANGE}/liquidity?=all-pools",
                     )
                 ],
             ]
