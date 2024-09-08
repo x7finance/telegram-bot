@@ -1,7 +1,7 @@
 from telegram import *
 from telegram.ext import *
 
-import math, os, pytz, random, re, requests, time
+import asyncio, math, os, pytz, random, re, requests, time
 from datetime import datetime, timedelta, timezone
 
 from PIL import Image, ImageDraw, ImageFont
@@ -2752,16 +2752,22 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+import asyncio
+
 async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         if dune.TRENDING_FLAG == False:
             message = await update.message.reply_text("Getting Xchange Trending, Please wait...")
             await context.bot.send_chat_action(update.effective_chat.id, "typing")
+            
             execution_id = dune.execute_query("2970801", "medium")
-            time.sleep(10)
-
-            response = dune.get_query_results(execution_id)
-            response_data = response.json()
+            for _ in range(4):
+                response = dune.get_query_results(execution_id)
+                response_data = response.json()
+                
+                if response_data.get('is_execution_finished', False):
+                    break 
+                await asyncio.sleep(5)
 
             rows = response_data["result"]["rows"]
             rows = [row for row in rows if row["pair"] != "TOTAL"]
@@ -2778,8 +2784,10 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 for idx, item in enumerate(top_3_last_24hr_amt, start=1):
                     pair = item.get("pair")
                     last_24hr_amt = item.get("last_24hr_amt")
+                    chain = item.get("blockchain")
                     if pair is not None and last_24hr_amt is not None:
-                        trending_text += f'{idx}. {pair}\n24 Hour Volume: ${"{:0,.0f}".format(last_24hr_amt)}\n\n'
+                        trending_text += f'{idx}. {pair} ({chain.upper()}) \n24 Hour Volume: ${"{:0,.0f}".format(last_24hr_amt)}\n\n'
+
             await message.delete()
             await update.message.reply_photo(
                 photo=api.get_random_pioneer(),
@@ -2794,16 +2802,34 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         ],
                     ]
                 ),
-                )
+            )
             dune.TRENDING_TIMESTAMP = datetime.now().timestamp()
             dune.TRENDING_FLAG = True
             dune.TRENDING_TEXT = trending_text
 
         else:
             await update.message.reply_photo(
+                photo=api.get_random_pioneer(),
+                caption=
+                    f'{dune.TRENDING_TEXT}Last Updated: {dune.TRENDING_LAST_DATE}',
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                            )
+                        ]
+                    ]
+                ),
+            )
+    except Exception:
+        await message.delete()
+        await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
-                f'{dune.TRENDING_TEXT}Last Updated: {dune.TRENDING_LAST_DATE}',
+                f'*Xchange Trending*\n\n'
+                f'No trending pair information available. please use the link below',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2811,27 +2837,9 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         InlineKeyboardButton(
                             text="X7 Dune Dashboard", url=f"{urls.DUNE}"
                         )
-                    ]
+                    ],
                 ]
             ),
-            )
-    except Exception:
-        await message.delete()
-        await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f'*Xchange Trending*\n\n'
-            f'No trending pair information available. please use the link below',
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="X7 Dune Dashboard", url=f"{urls.DUNE}"
-                    )
-                ],
-            ]
-        ),
         )
 
 
@@ -2859,9 +2867,13 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         if dune.VOLUME_FLAG == False:
             execution_id = dune.execute_query("2972368", "medium")
-            time.sleep(5)
-            response = dune.get_query_results(execution_id)
-            response_data = response.json()
+            for _ in range(4):
+                response = dune.get_query_results(execution_id)
+                response_data = response.json()
+                
+                if response_data.get('is_execution_finished', False):
+                    break
+                await asyncio.sleep(2)
 
             last_24hr_amt = response_data['result']['rows'][0]['last_24hr_amt']
             last_30d_amt = response_data['result']['rows'][0]['last_30d_amt']
@@ -2873,33 +2885,52 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f'30 Day:    ${"{:0,.0f}".format(last_30d_amt)}\n'
                 f'7 Day:      ${"{:0,.0f}".format(last_7d_amt)}\n'
                 f'24 Hour:  ${"{:0,.0f}".format(last_24hr_amt)}'
-                )
+            )
+
             await message.delete()
             await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"*Xchange Trading Volume*\n\n{volume_text}",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                [
+                photo=api.get_random_pioneer(),
+                caption=
+                    f"*Xchange Trading Volume*\n\n{volume_text}",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup(
                     [
-                        InlineKeyboardButton(
-                            text="X7 Dune Dashboard", url=f"{urls.DUNE}"
-                        )
-                    ],
-                ]
-            ),
+                        [
+                            InlineKeyboardButton(
+                                text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                            )
+                        ],
+                    ]
+                ),
             )
+
             dune.VOLUME_TIMESTAMP = datetime.now().timestamp()
             dune.VOLUME_FLAG = True
             dune.VOLUME_TEXT = volume_text
         else:
             await message.delete()
             await update.message.reply_photo(
+                photo=api.get_random_pioneer(),
+                caption=f'*Xchange Trading Volume*\n\n'
+                        f'{dune.VOLUME_TEXT}\n\nLast Updated: {dune.VOLUME_LAST_DATE}',
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                            )
+                        ],
+                    ]
+                ),
+            )
+    except Exception:
+        await message.delete()
+        await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
-                f'*Xchange Trading Volume*\n\n'
-                f'{dune.VOLUME_TEXT}\n\nLast Updated: {dune.VOLUME_LAST_DATE}',
+                f'*Xchange Volume*\n\n'
+                f'Unable to refresh Dune data, please use the link below',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2910,24 +2941,6 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     ],
                 ]
             ),
-            )
-    except Exception:
-        await message.delete()
-        await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f'*Xchange Volume*\n\n'
-            f'Unable to refresh Dune data, please use the link below',
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="X7 Dune Dashboard", url=f"{urls.DUNE}"
-                    )
-                ],
-            ]
-        ),
         )
 
 
