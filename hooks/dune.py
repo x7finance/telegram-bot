@@ -14,10 +14,10 @@ VOLUME_FLAG = False
 VOLUME_TIMESTAMP = datetime.now().timestamp()
 VOLUME_LAST_DATE = datetime.fromtimestamp(VOLUME_TIMESTAMP).strftime("%Y-%m-%d %H:%M:%S")
 
-TRENDING_TEXT = ""
-TRENDING_FLAG = False
-TRENDING_TIMESTAMP = datetime.now().timestamp()
-TRENDING_LAST_DATE = datetime.fromtimestamp(TRENDING_TIMESTAMP).strftime("%Y-%m-%d %H:%M:%S")
+TRENDING_TEXT = {}
+TRENDING_FLAG = {}
+TRENDING_TIMESTAMP = {}
+TRENDING_LAST_DATE = {}
 
 
 def make_api_url(module, action, identifier):
@@ -43,3 +43,10 @@ def get_query_results(execution_id):
 
 def cancel_query_execution(execution_id):
     return get(make_api_url("execution", "cancel", execution_id), headers=HEADER)
+
+
+def initialize_chain_state(chain_name):
+    TRENDING_TEXT[chain_name] = ""
+    TRENDING_FLAG[chain_name] = False
+    TRENDING_TIMESTAMP[chain_name] = datetime.now().timestamp()
+    TRENDING_LAST_DATE[chain_name] = datetime.fromtimestamp(TRENDING_TIMESTAMP[chain_name]).strftime("%Y-%m-%d %H:%M:%S")

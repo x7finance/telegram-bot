@@ -2770,9 +2770,29 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
         )
 
+    chain = " ".join(context.args).lower()
+
+    if chain == "":
+        chain_name = "All Chains"
+        filter_by_chain = False
+    elif chain in chains.CHAINS:
+        if chain == "eth":
+            chain_name = "ethereum"
+        chain_name = chains.CHAINS[chain].name
+        filter_by_chain = True
+    else:
+        await update.message.reply_text(text.CHAIN_ERROR)
+        return
+
+    if chain_name.upper() not in dune.TRENDING_FLAG:
+        dune.TRENDING_TEXT[chain_name.upper()] = ""
+        dune.TRENDING_FLAG[chain_name.upper()] = False
+        dune.TRENDING_TIMESTAMP[chain_name.upper()] = datetime.now().timestamp()
+        dune.TRENDING_LAST_DATE[chain_name.upper()] = datetime.fromtimestamp(dune.TRENDING_TIMESTAMP[chain_name.upper()]).strftime("%Y-%m-%d %H:%M:%S")
+
     try:
-        if dune.TRENDING_FLAG == False:
-            message = await update.message.reply_text("Getting Xchange Trending, Please wait...")
+        if dune.TRENDING_FLAG[chain_name.upper()] == False:
+            message = await update.message.reply_text(f"Getting Xchange Trending for {chain_name}, Please wait...")
             await context.bot.send_chat_action(update.effective_chat.id, "typing")
             
             execution_id = dune.execute_query("2970801", "medium")
@@ -2794,15 +2814,36 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
 
             rows = response_data["result"]["rows"]
-            rows = [row for row in rows if row["pair"] != "TOTAL"]
+            if filter_by_chain:
+                rows = [row for row in rows if row["pair"] != "TOTAL" and row["blockchain"].lower() == chain]
+            else:
+                rows = [row for row in rows if row["pair"] != "TOTAL"]
+
             valid_rows = [row for row in rows if isinstance(row.get('last_24hr_amt'), (int, float))]
 
             sorted_rows = sorted(valid_rows, key=lambda x: x.get('last_24hr_amt', 0), reverse=True)
             top_3_last_24hr_amt = sorted_rows[:3]
-            trending_text = "*Xchange Trending Pairs*\n\n"
+            trending_text = f"*Xchange Trending Pairs ({chain_name.upper()})*\nUse `/trending [chain-name]` for other chains\n\n"
 
             if not any(item.get("pair") for item in top_3_last_24hr_amt):
-                trending_text += "No trending pair information available. Please use the links below"
+                await message.delete()
+                await update.message.reply_photo(
+                    photo=api.get_random_pioneer(),
+                    caption=
+                        f'*Xchange Trending ({chain_name.upper()})*\nUse `/trending [chain-name]` for other chains\n\n'
+                        f'No trending Data for {chain_name}',
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(
+                        [
+                            [
+                                InlineKeyboardButton(
+                                    text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                                )
+                            ],
+                        ]
+                    ),
+                )
+                return
 
             else:
                 for idx, item in enumerate(top_3_last_24hr_amt, start=1):
@@ -2827,14 +2868,18 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     ]
                 ),
             )
-            dune.TRENDING_TIMESTAMP = datetime.now().timestamp()
-            dune.TRENDING_FLAG = True
-            dune.TRENDING_TEXT = trending_text
+
+            dune.TRENDING_FLAG[chain_name.upper()] = True
+            dune.TRENDING_TEXT[chain_name.upper()] = trending_text
+            dune.TRENDING_TIMESTAMP[chain_name.upper()] = datetime.now().timestamp()
+            dune.TRENDING_LAST_DATE[chain_name.upper()] = datetime.fromtimestamp(
+                dune.TRENDING_TIMESTAMP[chain_name.upper()]
+            ).strftime("%Y-%m-%d %H:%M:%S")
 
         else:
             await update.message.reply_photo(
                 photo=api.get_random_pioneer(),
-                caption=f'{dune.TRENDING_TEXT}Last Updated: {dune.TRENDING_LAST_DATE} (UTC)',
+                caption=f'{dune.TRENDING_TEXT[chain_name.upper()]}Last Updated: {dune.TRENDING_LAST_DATE[chain_name.upper()]}',
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup(
                     [
@@ -2846,7 +2891,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     ]
                 ),
             )
-    except Exception as e:
+    except Exception:
         await error()
 
 
