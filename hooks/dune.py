@@ -11,12 +11,12 @@ BASE_URL = "https://api.dune.com/api/v1/"
 
 VOLUME_TEXT = ""
 VOLUME_FLAG = False
-VOLUME_TIMESTAMP = datetime.utcnow().timestamp()
+VOLUME_TIMESTAMP = datetime.now().timestamp()
 VOLUME_LAST_DATE = datetime.fromtimestamp(VOLUME_TIMESTAMP).strftime("%Y-%m-%d %H:%M:%S")
 
 TRENDING_TEXT = ""
 TRENDING_FLAG = False
-TRENDING_TIMESTAMP = datetime.utcnow().timestamp()
+TRENDING_TIMESTAMP = datetime.now().timestamp()
 TRENDING_LAST_DATE = datetime.fromtimestamp(TRENDING_TIMESTAMP).strftime("%Y-%m-%d %H:%M:%S")
 
 

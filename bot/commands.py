@@ -2752,22 +2752,46 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-import asyncio
-
 async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def error():
+        await message.delete()
+        await update.message.reply_photo(
+            photo=api.get_random_pioneer(),
+            caption=f'*Xchange Trending*\n\nUnable to get Dune data, please use the link below',
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                        )
+                    ],
+                ]
+            ),
+        )
+
     try:
         if dune.TRENDING_FLAG == False:
             message = await update.message.reply_text("Getting Xchange Trending, Please wait...")
             await context.bot.send_chat_action(update.effective_chat.id, "typing")
             
             execution_id = dune.execute_query("2970801", "medium")
-            for _ in range(4):
+            response_data = None
+            for _ in range(10):
                 response = dune.get_query_results(execution_id)
-                response_data = response.json()
-                
+                try:
+                    response_data = response.json()
+                except ValueError:
+                    await error()
+                    return
+
                 if response_data.get('is_execution_finished', False):
                     break 
                 await asyncio.sleep(5)
+
+            if 'result' not in response_data:
+                await error()
+                return
 
             rows = response_data["result"]["rows"]
             rows = [row for row in rows if row["pair"] != "TOTAL"]
@@ -2810,8 +2834,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await update.message.reply_photo(
                 photo=api.get_random_pioneer(),
-                caption=
-                    f'{dune.TRENDING_TEXT}Last Updated: {dune.TRENDING_LAST_DATE}',
+                caption=f'{dune.TRENDING_TEXT}Last Updated: {dune.TRENDING_LAST_DATE} (UTC)',
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup(
                     [
@@ -2823,24 +2846,8 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     ]
                 ),
             )
-    except Exception:
-        await message.delete()
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f'*Xchange Trending*\n\n'
-                f'No trending pair information available. please use the link below',
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="X7 Dune Dashboard", url=f"{urls.DUNE}"
-                        )
-                    ],
-                ]
-            ),
-        )
+    except Exception as e:
+        await error()
 
 
 async def twitter(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2861,24 +2868,56 @@ async def twitter(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+
 async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def error():
+        await message.delete()
+        await update.message.reply_photo(
+            photo=api.get_random_pioneer(),
+            caption=f'*Xchange Volume*\n\nUnable to get Dune data, please use the link below',
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                        )
+                    ],
+                ]
+            ),
+        )
+
     message = await update.message.reply_text("Getting Volume Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
     try:
         if dune.VOLUME_FLAG == False:
             execution_id = dune.execute_query("2972368", "medium")
-            for _ in range(4):
+            response_data = None
+            for _ in range(10):
                 response = dune.get_query_results(execution_id)
-                response_data = response.json()
-                
+                try:
+                    response_data = response.json()
+                except ValueError:
+                    await error()
+                    return
+
                 if response_data.get('is_execution_finished', False):
                     break
                 await asyncio.sleep(2)
 
-            last_24hr_amt = response_data['result']['rows'][0]['last_24hr_amt']
-            last_30d_amt = response_data['result']['rows'][0]['last_30d_amt']
-            last_7d_amt = response_data['result']['rows'][0]['last_7d_amt']
-            lifetime_amt = response_data['result']['rows'][0]['lifetime_amt']
+            if 'result' not in response_data:
+                await error()
+                return
+
+            try:
+                last_24hr_amt = response_data['result']['rows'][0]['last_24hr_amt']
+                last_30d_amt = response_data['result']['rows'][0]['last_30d_amt']
+                last_7d_amt = response_data['result']['rows'][0]['last_7d_amt']
+                lifetime_amt = response_data['result']['rows'][0]['lifetime_amt']
+            except (KeyError, IndexError):
+                await error()
+                return
 
             volume_text = (
                 f'Total:       ${"{:0,.0f}".format(lifetime_amt)}\n'
@@ -2890,8 +2929,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await message.delete()
             await update.message.reply_photo(
                 photo=api.get_random_pioneer(),
-                caption=
-                    f"*Xchange Trading Volume*\n\n{volume_text}",
+                caption=f"*Xchange Trading Volume*\n\n{volume_text}",
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup(
                     [
@@ -2912,7 +2950,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_photo(
                 photo=api.get_random_pioneer(),
                 caption=f'*Xchange Trading Volume*\n\n'
-                        f'{dune.VOLUME_TEXT}\n\nLast Updated: {dune.VOLUME_LAST_DATE}',
+                        f'{dune.VOLUME_TEXT}\n\nLast Updated: {dune.VOLUME_LAST_DATE} (UTC)',
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup(
                     [
@@ -2924,24 +2962,8 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     ]
                 ),
             )
-    except Exception:
-        await message.delete()
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f'*Xchange Volume*\n\n'
-                f'Unable to refresh Dune data, please use the link below',
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="X7 Dune Dashboard", url=f"{urls.DUNE}"
-                        )
-                    ],
-                ]
-            ),
-        )
+    except Exception as e:
+        await error()
 
 
 async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):

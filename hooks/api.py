@@ -887,7 +887,7 @@ def timestamp_to_datetime(timestamp):
 
 
 def format_schedule(schedule1, schedule2, native_token):
-    current_datetime = datetime.utcnow()
+    current_datetime = datetime.now()
     next_payment_datetime = None
     next_payment_value = None
 
