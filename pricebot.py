@@ -132,39 +132,9 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             else:
                 owner_percent = "❓ Tokens Held By Owner Unknown"
 
-            if "lp_holders" in scan[token_address]:
-                locked_lp_list = [lp for lp in scan[token_address]["lp_holders"] if lp["is_locked"] == 1]
-                if locked_lp_list:
-                    if locked_lp_list[0]["address"].lower() == "0x000000000000000000000000000000000000dead":
-                        lock_word = "🔥 Liquidity Burnt"
-                    else:
-                        lock_word = "✅️ Liquidity Locked"
-                    lp_with_locked_detail = [lp for lp in locked_lp_list if "locked_detail" in lp and lp["locked_detail"]]
-                    if lp_with_locked_detail:
-                        percent = float(lp_with_locked_detail[0]['percent'])
-                        try:
-                            end_time = lp_with_locked_detail[0]['locked_detail'][0]['end_time'][:10]
-                            lock = (
-                                f"{lock_word} - {lp_with_locked_detail[0]['tag']} - {percent * 100:.2f}%\n"
-                                f"⏰ Unlock - {end_time}"
-                            )
-                        except Exception:
-                            lock = "❓ Liquidity Lock Unknown"
-                    else:
-                        percent = float(locked_lp_list[0]['percent'])
-                        if percent == 0:
-                            lock_word = "⚠️ Liquidity Locked"
-                        lock = (
-                            f"{lock_word} - {percent * 100:.2f}%"
-                        )
-                else:
-                    lock = "❓ Liquidity Lock Unknown"
-            else:
-                lock = "❓ Liquidity Lock Unknown"
 
             if "dex" in scan[token_address] and scan[token_address]["dex"]:
                 pair = scan[token_address]["dex"][0]["pair"]
-                
             else:
                 pair = defined.get_pair(token_address, chain)
         else:
@@ -176,7 +146,6 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             sellable = "❓ Sellable - Unknown"
             owner_percent = "❓ Tokens Held By Owner - Unknown"
             top_holder = "❓ Top Holder - Unknown"
-            lock  = "❓ Liquidity Lock - Unknown"
             top_percent = "❓ Top Holder - Unknown"
             
 
@@ -189,7 +158,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 verified = "❌ Contract Unverified"
         except Exception:
             verified = "❓ Contract Verification - Unknown"
-        status = f"{verified}\n{renounced}\n{tax}\n{sellable}\n{mint}\n{honey_pot}\n{blacklist}\n{owner_percent}\n{top_percent}\n{lock}"
+        status = f"{verified}\n{renounced}\n{tax}\n{sellable}\n{mint}\n{honey_pot}\n{blacklist}\n{owner_percent}\n{top_percent}"
         info = dextools.get_token_info(search, chain)
         holders = info["holders"]
         mcap = info["mcap"]
