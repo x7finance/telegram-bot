@@ -1162,6 +1162,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         buy_back_text = f'Last Buy Back: None Found'
 
+    eth_price = chainscan.get_native_price(chain)
     contract = chain_web3.eth.contract(
         address=chain_web3.to_checksum_address(hub_address), abi=chainscan.get_abi(hub_address, chain)
     )
@@ -1208,6 +1209,9 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         token_str = token
     balance = 0
 
+    eth_balance = chainscan.get_native_balance(hub_address, chain)
+    eth_dollar = (float(eth_balance) * float(eth_price))
+
     if isinstance(address, str):
         balance += chainscan.get_token_balance(hub_address, address, chain)
         dollar = float(price) * float(balance)
@@ -1236,6 +1240,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=api.get_random_pioneer(),
         caption=
             f"*{token.upper()} Liquidity Hub ({chain_name})*\nUse `hub [token-name] [chain-name]` for other chains\n\n"
+            f"{round(float(eth_balance), 2)} {chain_native.upper()} (${eth_dollar:,.0f})\n"
             f"{balance_text} {temp_balance_text}\n\n"
             f"{split_text}\n\n"
             f"Liquidity Ratio Target: {liquidity_ratio_target}%\n\n"
