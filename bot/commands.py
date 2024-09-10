@@ -1679,7 +1679,7 @@ async def loans_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         ),
     )
-        
+
 
 async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
@@ -1693,25 +1693,34 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
         return
+
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
         
-    contract = chain_web3.eth.contract(address=chain_web3.to_checksum_address(ca.TIME_LOCK(chain)), abi=chainscan.get_abi(ca.TIME_LOCK(chain), chain))
+    contract = chain_web3.eth.contract(
+        address=chain_web3.to_checksum_address(ca.TIME_LOCK(chain)), 
+        abi=chainscan.get_abi(ca.TIME_LOCK(chain), chain)
+    )
     now = datetime.now()
 
-    x7r_remaining_time_str, x7r_unlock_datetime_str = api.get_unlock_time(chain_web3, contract, ca.X7R(chain), now)
-    x7dao_remaining_time_str, x7dao_unlock_datetime_str = api.get_unlock_time(chain_web3, contract, ca.X7DAO(chain), now)
+    x7r_pairs = ca.X7R_PAIR(chain)
+    x7r_uni_remaining_time_str, x7r_uni_unlock_datetime_str = api.get_unlock_time(chain_web3, contract, x7r_pairs[0], now)
+    x7r_xchange_remaining_time_str, x7r_xchange_unlock_datetime_str = api.get_unlock_time(chain_web3, contract, x7r_pairs[1], now)
+    
+    x7dao_pairs = ca.X7DAO_PAIR(chain)
+    x7dao_uni_remaining_time_str, x7dao_uni_unlock_datetime_str = api.get_unlock_time(chain_web3, contract, x7dao_pairs[0], now)
+    x7dao_xchange_remaining_time_str, x7dao_xchange_unlock_datetime_str = api.get_unlock_time(chain_web3, contract, x7dao_pairs[1], now)
+    
     x7d_remaining_time_str, x7d_unlock_datetime_str = api.get_unlock_time(chain_web3, contract, ca.X7D(chain), now)
 
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
             f"*X7 Finance Liquidity Locks* ({chain_name})\nfor other chains use `/locks [chain-name]`\n\n"
-            f"*X7R Unlock Date:*\n{x7r_unlock_datetime_str}\n"
-            f"{x7r_remaining_time_str}\n\n"
-            f"*X7DAO Unlock Date*:\n{x7dao_unlock_datetime_str}\n"
-            f"{x7dao_remaining_time_str}\n\n"
-            f"*X7D Unlock Date*:\n{x7d_unlock_datetime_str}\n"
-            f"{x7d_remaining_time_str}",
+            f"*X7R*\nUniswap - {x7r_uni_unlock_datetime_str}\n{x7r_uni_remaining_time_str}\n\n"
+            f"Xchange - {x7r_xchange_unlock_datetime_str}\n{x7r_xchange_remaining_time_str}\n\n"
+            f"*X7DAO*\nUniswap - {x7dao_uni_unlock_datetime_str}\n{x7dao_uni_remaining_time_str}\n\n"
+            f"Xchange - {x7dao_xchange_unlock_datetime_str}\n{x7dao_xchange_remaining_time_str}\n\n"
+            f"*X7D*\n{x7d_unlock_datetime_str}\n{x7d_remaining_time_str}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
