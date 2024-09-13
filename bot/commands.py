@@ -1127,11 +1127,13 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         liquidity = contract.functions.liquidityShare().call() / 10
         treasury = contract.functions.treasuryShare().call() / 10
         liquidity_ratio_target = contract.functions.liquidityRatioTarget().call()
+        balance_threshold = contract.functions.balanceThreshold().call() / 10 ** 18
     except Exception:
         distribute = "N/A"
         liquidity = "N/A"
         treasury = "N/A"
         liquidity_ratio_target = "N/A"
+        balance_threshold = "N/A"
 
     split_text = (
         f"Ecosystem Splitter Share: {distribute}%\n"
@@ -1199,7 +1201,8 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{round(float(eth_balance), 2)} {chain_native.upper()} (${eth_dollar:,.0f})\n"
             f"{balance_text} {temp_balance_text}\n\n"
             f"{split_text}\n\n"
-            f"Liquidity Ratio Target: {liquidity_ratio_target}%\n\n"
+            f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
+            f"Balance Threshold: {balance_threshold} {chain_native.upper()}\n\n"
             f"{buy_back_text}\n\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
