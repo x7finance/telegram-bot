@@ -144,12 +144,16 @@ def LPOOL_RESERVE(chain):
     else:
         return "0x7Ca54e9Aa3128bF15f764fa0f0f93e72b5267000"
     
-
 def ROUTER(chain):
-    if chain == "base":
-        return "0xC2defaD879dC426F5747F2A5b067De070928AA50"
-    else:
-        return "0x6b5422D584943BC8Cd0E10e239d624c6fE90fbB8"
+    map = {
+        "arb": "0x7C79C9483Ee518783b31C78920f73D0fDeabe246",
+        "bsc": "0x32e9eDEaBd5A8034468497A4782b1a9EB95C4A67",
+        "base": "0xC2defaD879dC426F5747F2A5b067De070928AA50",
+        "eth": "0x6b5422D584943BC8Cd0E10e239d624c6fE90fbB8",
+        "op": "0x2A382e8eB22Ecb02dD67C30243A4D0A01474b042",
+        "poly": "0xA72618ff64468Dff871e980fB657dE3Ca5Ae0aba"
+    }
+    return map.get(chain) 
 
 def TIME_LOCK(chain):
     if chain == "base":
@@ -213,12 +217,12 @@ def HUBS(chain):
 }
 
 def TEMP_HUBS(token):
-    if token == "x7r":
-        return "0x734B81d7De2b8D85eb71E5c7548f5f8D220a7782"
-    if token == "x7dao":
-        return "0xB06D584a30225A05583905C599a7A9990FEF062b"
-    if token == "x7100":
-        return "0x27a24a9a1Ee636E0C675964185e1f13545bA8605"
+    map = {
+        "x7r": "0x734B81d7De2b8D85eb71E5c7548f5f8D220a7782",
+        "x7dao": "0xB06D584a30225A05583905C599a7A9990FEF062b",
+        "x7100": "0x27a24a9a1Ee636E0C675964185e1f13545bA8605",
+    }
+    return map.get(token)
 
 
 # LOANS
@@ -282,16 +286,13 @@ DEPLOYER = "0x7000a09c425abf5173ff458df1370c25d1c58105"
 # OTHER
 
 def WETH(chain):
-    if chain == "eth":
-        return "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
-    if chain == "bsc":
-        return "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c"
-    if chain == "poly":
-        return  "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"
-    if chain == "arb":
-        return "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
-    else:
-        return "0x4200000000000000000000000000000000000006"
+    map = {
+        "arb": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+        "bsc": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+        "eth": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+        "poly": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"
+    }
+    return map.get(chain, "0x4200000000000000000000000000000000000006")
 
 SUPPLY = 100000000
 DEAD = "0x000000000000000000000000000000000000dEaD"
