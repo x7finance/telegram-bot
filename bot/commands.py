@@ -708,72 +708,28 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
 
 
-async def deployer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain_name = chains.CHAINS["eth"].name
-    chain_tx = chains.CHAINS["eth"].scan_tx
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    tx = chainscan.get_tx(ca.DEPLOYER, "eth")
-    time = datetime.fromtimestamp(int(tx["result"][0]["timeStamp"]))
-    duration = datetime.now() - time
-    days, hours, minutes = api.get_duration_days(duration)
-    if (
-        f'{tx["result"][0]["to"]}'.lower()
-        == "0x000000000000000000000000000000000000dead"
-    ):
-        message = bytes.fromhex(tx["result"][0]["input"][2:]).decode("utf-8")
-        await update.message.reply_text(
-            f"*Last On Chain Message:*\n\n{time} UTC\n"
-            f"{days} days, {hours} hours and {minutes} minutes ago:\n\n"
-            f"`{message}`\n",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
+async def onchains(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_photo(
+        photo=api.get_random_pioneer(),
+        caption=
+            "*X7 Finance Onchain Messages*\n\n"
+            'The stealth launch story of X7 Finance was heralded as an '
+            '"incredible way to launch a project in this day and age."\n\n'
+            "The on-chain, decentralized communications from X7's global collective "
+            'of developers to the community provide chronological evidence on how the '
+            'X7 community and ecosystem was born - and how the foundation was built.',
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
                 [
-                    [
-                        InlineKeyboardButton(
-                            text="View on chain",
-                            url=f'{chain_tx}{tx["result"][0]["hash"]}',
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="View all on chains",
-                            url=f"{urls.XCHANGE}docs/onchains",
-                        )
-                    ],
-                ]
-            ),
-        )
-    else:
-        name = tx["result"][0]["functionName"]
-        if name == "":
-            name = f'Transfer to:\n{tx["result"][0]["to"]}'
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"*Deployer Wallet last TX ({chain_name})*\n\n{time} UTC\n"
-                f"{days} days, {hours} hours and {minutes} minutes ago:\n\n"
-                f"`{name}`\n\n"
-                f"This command will pull last TX on the X7 Finance deployer wallet."
-                f" To view last on chain use `/on_chain`",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="View on chain",
-                            url=f'{chain_tx}{tx["result"][0]["hash"]}',
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="View all on chains",
-                            url=f"{urls.XCHANGE}docs/onchains",
-                        )
-                    ],
-                ]
-            ),
-        )
-
+                    InlineKeyboardButton(
+                        text="View all on chain messages",
+                        url=f"{urls.XCHANGE}docs/onchains",
+                    )
+                ],
+            ]
+        ),
+    )
 
 async def discount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
@@ -2012,72 +1968,6 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
-
-
-async def on_chain(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    tx = chainscan.get_tx(ca.DEPLOYER, "eth")
-    tx_filter = [d for d in tx["result"] if f"{ca.DEAD}".lower() in d["to"]]
-    recent_tx = max(tx_filter, key=lambda tx: int(tx["timeStamp"]), default=None)
-    message = bytes.fromhex(recent_tx["input"][2:]).decode("utf-8")
-    time = datetime.fromtimestamp(int(recent_tx["timeStamp"]))
-    duration = datetime.now() - time
-    days, hours, minutes = api.get_duration_days(duration)
-    try:
-        await update.message.reply_text(
-            f"*Last On Chain Message*\n\n{time} UTC\n"
-            f"{days} days, {hours} hours, and {minutes} minutes ago\n\n"
-            f"`{message}`",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="View on chain",
-                            url=f'{urls.ETHER_TX}{recent_tx["hash"]}',
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text="View all on chains", url=f"{urls.XCHANGE}docs/onchains"
-                        )
-                    ],
-                ]
-            ),
-        )
-    except Exception as e:
-        error_message = str(e)
-        if "Message is too long" in error_message:
-            middle_index = len(message) // 2
-
-            part1 = message[:middle_index]
-            part2 = message[middle_index:]
-
-            await update.message.reply_text(
-                f"*Last On Chain Message*\n\n{time} UTC\n"
-                f"{days} days, {hours} hours, and {minutes} minutes ago\n\n"
-                f"`{part1}...`",
-                parse_mode="Markdown",
-            )
-            await update.message.reply_text(
-                f"`...{part2}`",
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                text="View on chain",
-                                url=f'{urls.ETHER_TX}{recent_tx["hash"]}',
-                            )
-                        ],
-                        [
-                            InlineKeyboardButton(
-                                text="View all on chains", url=f"{urls.XCHANGE}docs/onchains"
-                            )
-                        ],
-                    ]
-                ),
-            )
 
 
 async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
