@@ -103,7 +103,7 @@ CHAINS = {
         urls.SCAN_ADDRESS("bsc"),
         urls.SCAN_TX("bsc"),
         urls.SCAN_GAS("bsc"),
-        "bsc",
+        "bnb",
         "-binance",
         "",
         urls.RPC("bsc"),

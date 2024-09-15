@@ -1587,6 +1587,9 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         schedule2 = contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
         schedule_str = api.format_schedule(schedule1, schedule2, chain_native.upper())
 
+        token = contract.functions.loanToken(int(loan_id)).call()
+        borrower = contract.functions.loanBorrower(int(loan_id)).call()
+
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
@@ -1600,13 +1603,19 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         InlineKeyboardButton(
                             text=f"Token Contract",
-                            url=f"{chain_scan_url}{contract.functions.loanToken(int(loan_id)).call()}",
+                            url=f"{chain_scan_url}{token}",
                         )
                     ],
                     [
                         InlineKeyboardButton(
                             text=f"Borrower",
-                            url=f"{chain_address_url}{contract.functions.loanBorrower(int(loan_id)).call()}",
+                            url=f"{chain_address_url}{borrower}",
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton(
+                            text=f"X7 Lending Pool Contract",
+                            url=f"{chain_address_url}{chain_lpool}#code",
                         )
                     ],
                     [

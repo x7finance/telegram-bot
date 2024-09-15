@@ -150,7 +150,8 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             
 
         chain_name = chains.CHAINS[chain].name
-        dex_tools = urls.DEX_TOOLS(chain)
+        chain_dext = chains.CHAINS[chain].dext
+        dex_tools = urls.DEX_TOOLS(chain_dext)
         try:
             if chainscan.get_verified(token_address, chain):
                 verified = "✅️ Contract Verified"
