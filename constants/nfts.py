@@ -4,50 +4,13 @@ from constants import ca
 from hooks import api
 
 
-def data():
+def data(chain):
     return {
-        "eth": {
-            "eco": api.get_nft_data(ca.ECO, "eth"),
-            "liq": api.get_nft_data(ca.LIQ, "eth"),
-            "dex": api.get_nft_data(ca.DEX, "eth"),
-            "borrow": api.get_nft_data(ca.BORROW, "eth"),
-            "magister": api.get_nft_data(ca.MAGISTER, "eth"),
-        },
-        "arb": {
-            "eco": api.get_nft_data(ca.ECO, "arb"),
-            "liq": api.get_nft_data(ca.LIQ, "arb"),
-            "dex": api.get_nft_data(ca.DEX, "arb"),
-            "borrow": api.get_nft_data(ca.BORROW, "arb"),
-            "magister": api.get_nft_data(ca.MAGISTER, "arb"),
-        },
-        "op": {
-            "eco": api.get_nft_data(ca.ECO, "op"),
-            "borrow": api.get_nft_data(ca.BORROW, "op"),
-            "dex": api.get_nft_data(ca.DEX, "op"),
-            "liq": api.get_nft_data(ca.LIQ, "op"),
-            "magister": api.get_nft_data(ca.MAGISTER, "op"),
-        },
-        "poly": {
-            "eco": api.get_nft_data(ca.ECO, "poly"),
-            "borrow": api.get_nft_data(ca.BORROW, "poly"),
-            "dex": api.get_nft_data(ca.DEX, "poly"),
-            "liq": api.get_nft_data(ca.LIQ, "poly"),
-            "magister": api.get_nft_data(ca.MAGISTER, "poly"),
-        },
-        "bsc": {
-            "eco": api.get_nft_data(ca.ECO, "bsc"),
-            "borrow": api.get_nft_data(ca.BORROW, "bsc"),
-            "dex": api.get_nft_data(ca.DEX, "bsc"),
-            "liq": api.get_nft_data(ca.LIQ, "bsc"),
-            "magister": api.get_nft_data(ca.MAGISTER, "bsc"),
-        },
-        "base": {
-            "eco": api.get_nft_data(ca.ECO, "base"),
-            "liq": api.get_nft_data(ca.LIQ, "base"),
-            "dex": api.get_nft_data(ca.DEX, "base"),
-            "borrow": api.get_nft_data(ca.BORROW, "base"),
-            "magister": api.get_nft_data(ca.MAGISTER, "base"),
-        },
+        "eco": api.get_nft_data(ca.ECO(chain), chain),
+        "liq": api.get_nft_data(ca.LIQ(chain), chain),
+        "dex": api.get_nft_data(ca.DEX(chain), chain),
+        "borrow": api.get_nft_data(ca.BORROW(chain), chain),
+        "magister": api.get_nft_data(ca.MAGISTER(chain), chain),
     }
 
 
@@ -63,7 +26,7 @@ def discounts():
             "X7DAO": 15,
             "X7100": 50,
         },
-        "dex": {"LP Fee discounts while trading on Xchange"},
+        "dex": {"50% LP Fee discounts while trading on Xchange"},
         "borrow": {"Fee discounts for borrowing funds for ILL on Xchange"},
         "magister": {
             "X7R": 25,
@@ -72,8 +35,8 @@ def discounts():
     }
 
 
-def mint_prices():
-    return {
+def mint_prices(chain):
+    prices = {
         "eth": {
             "eco": "0.3 ETH - 500 Supply",
             "liq": "0.75 ETH - 250 Supply",
@@ -117,4 +80,5 @@ def mint_prices():
             "magister": "50 ETH - 49 Supply",
         },
     }
+    return prices.get(chain, {})
 
