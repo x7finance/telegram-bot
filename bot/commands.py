@@ -15,7 +15,6 @@ from variables import times, giveaway
 
 bitquery = api.BitQuery()
 coingecko = api.CoinGecko()
-defined = api.Defined()
 dextools = api.Dextools()
 opensea = api.Opensea()
 warpcast = api.WarpcastApi()
@@ -1128,7 +1127,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         treasury = contract.functions.treasuryShare().call() / 10
         liquidity_ratio_target = contract.functions.liquidityRatioTarget().call()
         balance_threshold = contract.functions.balanceThreshold().call() / 10 ** 18
-    except Exception:
+    except Exception as e:
         distribute = "N/A"
         liquidity = "N/A"
         treasury = "N/A"

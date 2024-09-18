@@ -283,7 +283,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("x", commands.x))
 
     application.add_handler(CommandHandler("clickme", click_me))
-    application.add_handler(CommandHandler("everyone", admin.everyone))
+    application.add_handler(CommandHandler("ping", admin.ping))
     application.add_handler(CommandHandler("reset", admin.reset))
     application.add_handler(CommandHandler("wen", admin.wen))
 

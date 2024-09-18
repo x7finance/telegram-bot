@@ -1,24 +1,101 @@
 from telegram import *
 from telegram.ext import *
 
-import os
+import os, requests
 from datetime import datetime, timedelta
 
+from constants import ca, chains
 from hooks import  db, api
 from variables import times
 
 defined = api.Defined()
 
 
-async def everyone(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    channel_id = update.effective_chat.id
-    if str(channel_id) == os.getenv("DAO_TELEGRAM_CHANNEL_ID"):
-        administrators = await context.bot.get_chat_administrators(os.getenv("DAO_TELEGRAM_CHANNEL_ID"))
-        members = [f"@{admin.user.username}" for admin in administrators]
-        message = await update.message.reply_text(
-            "\n".join(members),
-        )
-        await context.bot.edit_message_text("ALL DAO MENTIONED", channel_id, message.id, )
+async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id == int(os.getenv("OWNER_TELEGRAM_CHANNEL_ID")):
+        status = []
+
+        bitquery_url = "https://streaming.bitquery.io/graphql"
+        bitquery_headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {os.getenv("BITQUERY_API_KEY")}'
+        }
+        bitquery_response = requests.post(bitquery_url, headers=bitquery_headers)
+        if bitquery_response.status_code == 200:
+            status.append("🟢 BitQuery: Connected Successfully")
+        else:
+            status.append(f"🔴 BitQuery: Connection failed with status {bitquery_response.status_code}")
+
+        dextools_url = "http://public-api.dextools.io/trial/v2/token/ethereum/TOKEN_ADDRESS/price"
+        dextools_headers = {
+            'accept': 'application/json',
+            'x-api-key': os.getenv("DEXTOOLS_API_KEY")
+        }
+        dextools_response = requests.get(dextools_url, headers=dextools_headers)
+        if dextools_response.status_code == 200:
+            status.append("🟢 Dextools: Connected Successfully")
+        else:
+            status.append(f"🔴 Dextools: Connection failed with status {dextools_response.status_code}")
+
+        cg_url = "https://api.coingecko.com/api/v3/ping"
+        cg_response = requests.get(cg_url)
+        if cg_response.status_code == 200:
+            status.append("🟢 CoinGecko: Connected Successfully")
+        else:
+            status.append(f"🔴 CoinGecko: Connection failed with status {cg_response.status_code}")
+
+        defined_headers = {
+            "Content-Type": "application/json",
+            "Authorization": os.getenv("DEFINED_API_KEY")
+        }
+        pair_query = f"""query {{
+            listPairsWithMetadataForToken (tokenAddress: "{ca.X7R("eth")}" networkId: 1) {{
+                results {{
+                    pair {{
+                        address
+                    }}
+                }}
+            }}
+            }}"""
+        defined_response = requests.post("https://graph.defined.fi/graphql", headers=defined_headers, json={"query": pair_query})
+        if defined_response.status_code == 200:
+            status.append("🟢 Defined: Connected Successfully")
+        else:
+            status.append(f"🔴 Defined: Connection failed with status {defined_response.status_code}")
+
+        opensea_url = f"https://api.opensea.io/v2/chain/ethereum/contract/{ca.PIONEER}/nfts/2"
+        opensea_headers = {
+            "accept": "application/json",
+            "X-API-KEY": os.getenv("OPENSEA_API_KEY")
+        }
+        opensea_response = requests.get(opensea_url, headers=opensea_headers)
+        if opensea_response.status_code == 200:
+            status.append("🟢 Opensea: Connected Successfully")
+        else:
+            status.append(f"🔴 Opensea: Connection failed with status {opensea_response.status_code}")
+
+
+        for chain_name, chain_info in chains.CHAINS.items():
+            scan_url = f"{chain_info.api}?module=stats&action=ethprice&apikey={chain_info.key}"
+            response = requests.get(scan_url)
+            if response.status_code == 200:
+                status.append(f"🟢 {chain_info.scan_name}: Connected Successfully")
+            else:
+                status.append(f"🔴 {chain_info.scan_name}: Connection failed with status {response.status_code}")
+
+        for chain_name, chain_info in chains.CHAINS.items():
+            rpc_url = chain_info.w3
+            rpc_payload = {"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": 1}
+            rpc_response = requests.post(rpc_url, json=rpc_payload)
+            if rpc_response.status_code == 200:
+                status.append(f"🟢 {chain_info.name} RPC: Connected Successfully")
+            else:
+                status.append(f"🔴 {chain_info.name} RPC: Connection failed with status {rpc_response.status_code}")
+
+        await update.message.reply_text(
+            "*X7 Finance Telegram Bot API Status*\n\n" + "\n".join(status),
+            parse_mode="Markdown")
 
 
 async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
