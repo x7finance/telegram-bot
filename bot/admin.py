@@ -27,6 +27,17 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             status.append(f"🔴 BitQuery: Connection failed with status {bitquery_response.status_code}")
 
+        blockspan_url = f"https://api.blockspan.com/v1/collections/contract/{ca.PIONEER}?chain=eth-main"
+        blockspan_headers={
+                "accept": "application/json",
+                "X-API-KEY": os.getenv("BLOCKSPAN_API_KEY"),
+            }
+        blockspan_response = requests.get(blockspan_url, headers=blockspan_headers)
+        if blockspan_response.status_code == 200:
+            status.append("🟢 Blockspan: Connected Successfully")
+        else:
+            status.append(f"🔴 Blockspan: Connection failed with status {blockspan_response.status_code}")
+
         dextools_url = "http://public-api.dextools.io/trial/v2/token/ethereum/TOKEN_ADDRESS/price"
         dextools_headers = {
             'accept': 'application/json',
@@ -74,7 +85,6 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
             status.append("🟢 Opensea: Connected Successfully")
         else:
             status.append(f"🔴 Opensea: Connection failed with status {opensea_response.status_code}")
-
 
         for chain_name, chain_info in chains.CHAINS.items():
             scan_url = f"{chain_info.api}?module=stats&action=ethprice&apikey={chain_info.key}"
