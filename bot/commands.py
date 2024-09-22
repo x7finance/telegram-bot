@@ -879,27 +879,38 @@ async def fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if chain in chains.CHAINS:
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
         chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
-        native = chains.CHAINS[chain].token
+        chain_name = chains.CHAINS[chain].name
+        chain_native = chains.CHAINS[chain].token
+        chain_url = chains.CHAINS[chain].gas
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
         return
+    
+    try:
+        gas_data = chainscan.get_gas(chain)
+        gas_text = (f"Gas:\n"
+                    f'Low: {gas_data["result"]["SafeGasPrice"]} Gwei\n'
+                    f'Average: {gas_data["result"]["ProposeGasPrice"]} Gwei\n'
+                    f'High: {gas_data["result"]["FastGasPrice"]} Gwei\n\n')
+    except Exception:
+       gas_text = ""
     
     gas_price = chain_web3.eth.gas_price / 10**9
     eth_price = chainscan.get_native_price(chain)
 
     swap_cost_in_eth = gas_price * tax.SWAP_GAS
     swap_cost_in_dollars = (swap_cost_in_eth / 10**9)* eth_price
-    swap_text = f"Swap: {swap_cost_in_eth / 10**9:.4f} {native.upper()} (${swap_cost_in_dollars:.2f})"
+    swap_text = f"Swap: {swap_cost_in_eth / 10**9:.4f} {chain_native.upper()} (${swap_cost_in_dollars:.2f})"
     
     try:
-        pair_data = "0xc9c65396" + ca.WETH(chain)[2:].lower().rjust(64, '0') + ca.X7R(chain)[2:].lower().rjust(64, '0')
+        pair_data = "0xc9c65396" + ca.WETH(chain)[2:].lower().rjust(64, '0') + ca.DEAD[2:].lower().rjust(64, '0')
         pair_gas_estimate = chain_web3.eth.estimate_gas({
             'from': chain_web3.to_checksum_address(ca.DEPLOYER),
             'to': chain_web3.to_checksum_address(ca.FACTORY(chain)),
             'data': pair_data,})
         pair_cost_in_eth = gas_price * pair_gas_estimate
         pair_cost_in_dollars = (pair_cost_in_eth / 10**9)* eth_price
-        pair_text = f"Create Pair: {pair_cost_in_eth / 10**9:.2f} {native.upper()} (${pair_cost_in_dollars:.2f})"
+        pair_text = f"Create Pair: {pair_cost_in_eth / 10**9:.2f} {chain_native.upper()} (${pair_cost_in_dollars:.2f})"
     except Exception:
         pair_text = "Create Pair: N/A"
 
@@ -910,7 +921,7 @@ async def fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'data': "0x11ec9d34"})
         split_eth = gas_price * split_gas
         split_dollars = (split_eth / 10**9)* eth_price
-        split_text = f"Splitter Push: {split_eth / 10**9:.4f} {native.upper()} (${split_dollars:.2f})"
+        split_text = f"Splitter Push: {split_eth / 10**9:.4f} {chain_native.upper()} (${split_dollars:.2f})"
     except Exception:
         split_text = "Splitter Push: N/A"
 
@@ -922,19 +933,24 @@ async def fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'data': deposit_data,})
         deposit_eth = gas_price * deposit_gas
         deposit_dollars = (deposit_eth / 10**9)* eth_price
-        deposit_text = f"Mint X7D: {deposit_eth / 10**9:.4f} {native.upper()} (${deposit_dollars:.2f})"
+        deposit_text = f"Mint X7D: {deposit_eth / 10**9:.4f} {chain_native.upper()} (${deposit_dollars:.2f})"
     except Exception:
         deposit_text = "Mint X7D: N/A"
 
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"*Live Xchange Fees ({chain.upper()})*\nUse `/fees [chain-name]` for other chains\n\n"
+            f"*Live Xchange Fees ({chain_name})*\nUse `/fees [chain-name]` for other chains\n\n"
             f"{swap_text}\n"
             f"{pair_text}\n"
             f"{split_text}\n"
-            f"{deposit_text}",
-        parse_mode = "markdown")
+            f"{deposit_text}\n\n"
+            f"{gas_text}",
+        parse_mode="markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton(text=f"{chain_name} Gas Tracker", url=chain_url)]]
+        ),
+    )
 
 
 async def fg(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -968,40 +984,6 @@ async def fg(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=f"https://alternative.me/crypto/fear-and-greed-index.png?timestamp={int(time.time())}",
         caption=caption,
         parse_mode="Markdown",
-    )
-   
-
-async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower()
-    if chain == "":
-        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
-    if chain in chains.GAS_CHAINS:
-        await context.bot.send_chat_action(update.effective_chat.id, "typing")
-        chain_name = chains.CHAINS[chain].name
-        chain_url = chains.CHAINS[chain].gas
-        chain_native = chains.CHAINS[chain].token
-        gas_data = chainscan.get_gas(chain)
-    else:
-        await update.message.reply_text("Gas command supports:\nEthereum, Binance, Polygon")
-        return
-
-    swap_cost_in_eth = float(gas_data["result"]["ProposeGasPrice"]) * float(tax.SWAP_GAS) #356190
-    swap_cost_in_dollars = (swap_cost_in_eth / 10**9) * chainscan.get_native_price(chain)
-    swap_text = f"Estimated Average Swap Cost:\n{swap_cost_in_eth / 10**9:.5f} {chain_native.upper()} (${swap_cost_in_dollars:.2f})"
-    
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*{chain_name} Gas Prices:*\n"
-            f"For other chains use `/gas [chain-name]`\n\n"
-            f'Low: {gas_data["result"]["SafeGasPrice"]} Gwei\n'
-            f'Average: {gas_data["result"]["ProposeGasPrice"]} Gwei\n'
-            f'High: {gas_data["result"]["FastGasPrice"]} Gwei\n\n'
-            f'{swap_text}',
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton(text=f"{chain_name} Gas Tracker", url=chain_url)]]
-        ),
     )
 
 
