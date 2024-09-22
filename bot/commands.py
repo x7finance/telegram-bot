@@ -2975,9 +2975,12 @@ async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) >= 2:
+    if len(context.args) == 2:
         chain = context.args[1].lower()
         wallet = context.args[0]
+    if len(context.args) == 1:
+        chain = ""
+        wallet = context.args[0].lower()
     else:
         await update.message.reply_text(
         f"Please use `/wallet [wallet_address] [chain-name]`",
@@ -3004,46 +3007,25 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     dollar = float(eth) * float(native_price)
     x7r,_ = dextools.get_price(ca.X7R(chain), chain)
     x7dao,_ = dextools.get_price(ca.X7DAO(chain), chain)
-    x7101,_ = dextools.get_price(ca.X7101(chain), chain)
-    x7102,_ = dextools.get_price(ca.X7102(chain), chain)
-    x7103,_ = dextools.get_price(ca.X7103(chain), chain)
-    x7104,_ = dextools.get_price(ca.X7104(chain), chain)
-    x7105,_ = dextools.get_price(ca.X7105(chain), chain)
 
     x7r_balance = chainscan.get_token_balance(wallet, ca.X7R(chain), chain)
     x7r_price = float(x7r_balance) * float(x7r)
     
     x7dao_balance = chainscan.get_token_balance(wallet, ca.X7DAO(chain), chain)
     x7dao_price = float(x7dao_balance) * float(x7dao)
-    
-    x7101_balance = chainscan.get_token_balance(wallet, ca.X7101(chain), chain)
-    x7101_price = float(x7101_balance) * float(x7101)
-    
-    x7102_balance = chainscan.get_token_balance(wallet, ca.X7102(chain), chain)
-    x7102_price = float(x7102_balance) * float(x7102)
-    
-    x7103_balance = chainscan.get_token_balance(wallet, ca.X7103(chain), chain)
-    x7103_price = float(x7103_balance) * float(x7103)
 
-    x7104_balance = chainscan.get_token_balance(wallet, ca.X7104(chain), chain)
-    x7104_price = float(x7104_balance) * float(x7104)
-
-    x7105_balance = chainscan.get_token_balance(wallet, ca.X7105(chain), chain)
-    x7105_price = float(x7105_balance) * float(x7105)
-    
     x7d_balance = chainscan.get_token_balance(wallet, ca.X7D(chain), chain)
     x7d_price = x7d_balance * native_price
     total = (
         x7d_price
         + x7r_price
         + x7dao_price
-        + x7101_price
-        + x7102_price
-        + x7103_price
-        + x7104_price
-        + x7105_price
     )
-    percentages = [round(balance / ca.SUPPLY * 100, 2) for balance in [x7dao_balance, x7101_balance, x7102_balance, x7103_balance, x7104_balance, x7105_balance]]
+
+    if x7dao_balance == 0:
+        x7dao_percentage = 0
+    else:
+        x7dao_percentage = round(x7dao_balance / ca.SUPPLY * 100, 2)
     if x7r_balance == 0:
         x7r_percent = 0
     else:
@@ -3058,12 +3040,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"`{wallet}`\n\n"
             f"{float(eth):.3f} {chain_native.upper()} (${'{:0,.0f}'.format(dollar)})\n\n"
             f"{x7r_balance:,.0f} X7R {x7r_percent}% (${'{:0,.0f}'.format(x7r_price)})\n"
-            f"{x7dao_balance:,.0f} X7DAO {percentages[0]}% (${'{:0,.0f}'.format(x7dao_price)})\n"
-            f"{x7101_balance:,.0f} X7101 {percentages[1]}% (${'{:0,.0f}'.format(x7101_price)})\n"
-            f"{x7102_balance:,.0f} X7102 {percentages[2]}% (${'{:0,.0f}'.format(x7102_price)})\n"
-            f"{x7103_balance:,.0f} X7103 {percentages[3]}% (${'{:0,.0f}'.format(x7103_price)})\n"
-            f"{x7104_balance:,.0f} X7104 {percentages[4]}% (${'{:0,.0f}'.format(x7104_price)})\n"
-            f"{x7105_balance:,.0f} X7105 {percentages[5]}% (${'{:0,.0f}'.format(x7105_price)})\n"
+            f"{x7dao_balance:,.0f} X7DAO {x7dao_percentage}% (${'{:0,.0f}'.format(x7dao_price)})\n"
             f"{x7d_balance:.3f} X7D (${'{:0,.0f}'.format(x7d_price)})\n\n"
             f"{txs} tx's in the last 24 hours\n\n"
             f"Total X7 Finance token value ${'{:0,.0f}'.format(total)}",
