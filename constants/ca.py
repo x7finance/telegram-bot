@@ -130,7 +130,15 @@ def LENDING_DISCOUNT(chain):
         return "0x74001e463b3c7dc95d96a1fdbe621678c24d47da"
 
 def LIQUIDITY_TREASURY(chain):
-    return "0xDDC2DeC8ce4Ab39dB581FC441403b3e3288eB637"
+    map = {
+        "arb": "0xA9570aDDC58A86C44A50401c03d40418BAe76F5B",
+        "bsc": "0x303e92d44B17a75Ae06c7F624e0c8EE6Ab596172",
+        "base": "0xc6726216f8f77Ac17ACc0B2Fb28310B5F283241e",
+        "eth": "0xDDC2DeC8ce4Ab39dB581FC441403b3e3288eB637",
+        "op": "0x32391B59107Af19944CA630Cb50E2e80B3E443BF",
+        "poly": "0xa413f4d546321407D4e809d681094be31d4a70d2"
+    }
+    return map.get(chain) 
 
 def LPOOL(chain, loan_id=None):
     if chain == "eth":
