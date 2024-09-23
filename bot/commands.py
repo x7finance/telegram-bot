@@ -144,6 +144,8 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
             address=chain_web3.to_checksum_address(ca.LPOOL(chain)), abi=abis.read("lendingpool")
         )
     active_terms_count = lending_pool.functions.countOfActiveLoanTerms().call()
+    liquidation_fee = lending_pool.functions.liquidationReward().call() / 10 ** 18
+    liquidation_dollar = liquidation_fee * native_price
     active_loan_addresses = []
 
     for i in range(active_terms_count):
@@ -186,7 +188,7 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 loan_info += f"Premium Fees: {total_premium} {chain_native.upper()} (${total_premium_dollar:,.0f})\n"
 
             loan_info += (
-                f"Total Cost: {total_premium + origination_fee} {chain_native.upper()} (${origination_dollar + total_premium_dollar:,.0f})\n"
+                f"Loan Cost: {total_premium + origination_fee} {chain_native.upper()} (${origination_dollar + total_premium_dollar:,.0f})\n"
                 f"Min Loan: {min_loan / 10 ** 18} {chain_native.upper()}\n"
                 f"Max Loan: {max_loan / 10 ** 18} {chain_native.upper()}\n"
                 f"Min Loan Duration: {math.floor(min_loan_duration / 84600)} days\n"
@@ -199,7 +201,8 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Borrowing {amount} {chain_native.upper()} (${borrow_usd:,.0f}) will cost:\n\n"
         f"{loan_info}"
         f"Principal Repayment Condition:\nPrincipal must be returned by the end of the loan term.\n\n"
-        f"Liquidation conditions:\nFailure to pay a premium payment by its due date or repay the principal by the end of the loan term will make the loan eligible for liquidation.",
+        f"Liquidation Deposit: {liquidation_fee} {chain_native.upper()} (${liquidation_dollar:,.0f})\n"
+        f"Failure to make a premium payment by its due date or repay the principal by the end of the loan term will result in loan liquidation, and the deposit will be forfeited.",
         parse_mode="Markdown"
     )
 
