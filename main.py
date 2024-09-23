@@ -297,5 +297,5 @@ if __name__ == "__main__":
         name="Click Me",
     )
 
-    scanners()
+    #scanners()
     application.run_polling(allowed_updates=Update.ALL_TYPES)
