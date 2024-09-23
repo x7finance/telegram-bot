@@ -167,12 +167,10 @@ async def alert(event, chain):
 
 async def main():
     while True:
-    
         tasks = []
-        for chain, chain_info in chains.CHAINS.items():
-            if chain_info.live:
-                task = log_loop(chain, 5)
-                tasks.append(task)
+        for chain in ["eth", "base"]:
+            task = log_loop(chain, 5)
+            tasks.append(task)
         await asyncio.gather(*tasks)
 
 
