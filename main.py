@@ -232,6 +232,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("factory", commands.factory))
     application.add_handler(CommandHandler("faq", commands.faq))
     application.add_handler(CommandHandler(["fee", "fees", "costs", "gas"], commands.fees))
+    application.add_handler(CommandHandler("feeto", commands.feeto))
     application.add_handler(CommandHandler(["fg", "feargreed"], commands.fg))
     application.add_handler(CommandHandler("giveaway", commands.giveaway_command))
     application.add_handler(CommandHandler("holders", commands.holders))

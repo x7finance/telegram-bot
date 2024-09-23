@@ -129,6 +129,9 @@ def LENDING_DISCOUNT(chain):
     else:
         return "0x74001e463b3c7dc95d96a1fdbe621678c24d47da"
 
+def LIQUIDITY_TREASURY(chain):
+    return "0xDDC2DeC8ce4Ab39dB581FC441403b3e3288eB637"
+
 def LPOOL(chain, loan_id=None):
     if chain == "eth":
         if loan_id is not None and loan_id < 21:
@@ -224,26 +227,6 @@ def TEMP_HUBS(token):
     }
     return map.get(token)
 
-
-# LOANS
-
-def ILL001(chain):
-    if chain == "base":
-        return "0x7400165E167479a3c81C8fC8CC3df3D2a92E9017"
-    else:
-        return "0x7400165E167479a3c81C8fC8CC3df3D2a92E9017"
-    
-def ILL003(chain):
-    if chain == "base":
-        return "0x74001C747B6cc9091EE63bC9424DfF633FBAc617"
-    else:
-        return "0x74001C747B6cc9091EE63bC9424DfF633FBAc617"
-    
-def ILL004(chain):
-    if chain == "base":
-        return "0xF9832C813104a6256771dfBDd3a243D24B7D7941"
-    else:
-        return "0xF9832C813104a6256771dfBDd3a243D24B7D7941"
 
 
 # PAIRS

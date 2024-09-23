@@ -953,6 +953,65 @@ async def fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chain = " ".join(context.args).lower()
+    if chain == "":
+        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
+    if chain in chains.CHAINS:
+        await context.bot.send_chat_action(update.effective_chat.id, "typing")
+        chain_name = chains.CHAINS[chain].name
+        chain_url = chains.CHAINS[chain].scan_address
+    else:
+        await update.message.reply_text(text.CHAIN_ERROR)
+        return
+
+    native_price = chainscan.get_native_price(chain)
+
+    eth = chainscan.get_native_balance(ca.LIQUIDITY_TREASURY(chain), chain)
+    weth = chainscan.get_token_balance(ca.LIQUIDITY_TREASURY(chain), ca.WETH(chain), chain)
+    eth_dollar = (float(eth) + float(weth) * float(native_price))
+
+    tx = chainscan.get_tx(ca.LIQUIDITY_TREASURY(chain), chain)
+    tx_filter = [
+        d for d in tx["result"]
+        if ca.LIQUIDITY_TREASURY(chain).lower() in d["to"].lower() and
+        any(fn in d.get("functionName", "").lower() for fn in ["breaklp", "breaklpandsendeth", "withdraweth"])
+        ]
+    recent_tx = max(tx_filter, key=lambda tx: int(tx["timeStamp"]), default=None)
+
+    if recent_tx:
+        time = datetime.fromtimestamp(int(recent_tx["timeStamp"]))
+        now = datetime.now()
+        duration = now - time
+        days = duration.days
+        hours, remainder = divmod(duration.seconds, 3600)
+        minutes = (remainder % 3600) // 60
+        recent_tx_text = (f"Last Liquidation: {time} UTC\n"
+                        f"{days} days, {hours} hours and {minutes} minutes ago\n\n")
+    else:
+        recent_tx_text = 'Last Liquidation: Not Found'
+
+    await update.message.reply_photo(
+        photo=api.get_random_pioneer(),
+        caption=
+            f"*Xchange Liquidity Treasury ({chain_name})*\n"
+            f"For other chains use `/feeto [chain-name]`\n\n"
+            f"{eth} (${eth_dollar})\n\n"
+            f"{recent_tx_text}",
+        parse_mode="markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        text="Liquidity Treasury Contract",
+                        url=f"{chain_url}{ca.LIQUIDITY_TREASURY(chain)}",
+                    )
+                ],
+            ]
+        ),
+    )
+
+
 async def fg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     fear_response = requests.get("https://api.alternative.me/fng/?limit=0")
     fear_data = fear_response.json()
