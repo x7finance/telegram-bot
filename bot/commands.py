@@ -1599,7 +1599,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
         chain_address_url = chains.CHAINS[chain].scan_address
-        chain_scan_url = chains.CHAINS[chain].scan_token
+        chain_dext = chains.CHAINS[chain].dext
         chain_native = chains.CHAINS[chain].token
         chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
         chain_lpool = ca.LPOOL(chain, int(loan_id))
@@ -1631,12 +1631,14 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         schedule_str = api.format_schedule(schedule1, schedule2, chain_native.upper())
 
         token = contract.functions.loanToken(int(loan_id)).call()
-        borrower = contract.functions.loanBorrower(int(loan_id)).call()
+        name = dextools.get_token_name(token, chain)["name"]
+        pair = contract.functions.loanPair(int(loan_id)).call()
 
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
                 f"*X7 Finance Initial Liquidity Loan - {loan_id} ({chain_name})*\n\n"
+                f"{name}\n\n"
                 f"Payment Schedule UTC:\n{schedule_str}\n\n"
                 f"{remaining}"
                 f"{liquidation_status}",
@@ -1645,28 +1647,16 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     [
                         InlineKeyboardButton(
-                            text=f"Token Contract",
-                            url=f"{chain_scan_url}{token}",
+                            text=f"Chart",
+                            url=f"{urls.DEX_TOOLS(chain_dext)}{pair}",
                         )
                     ],
                     [
                         InlineKeyboardButton(
-                            text=f"Borrower",
-                            url=f"{chain_address_url}{borrower}",
+                            text=f"Loans Dashboard",
+                            url=f"{urls.XCHANGE}lending?tab=lending-pool",
                         )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text=f"X7 Lending Pool Contract",
-                            url=f"{chain_address_url}{chain_lpool}#code",
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text=f"X7 Lending Pool Contract",
-                            url=f"{chain_address_url}{chain_lpool}#code",
-                        )
-                    ],
+                    ]
                 ]
             ),
         )

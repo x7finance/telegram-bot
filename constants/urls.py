@@ -1,72 +1,60 @@
 import os
 
 def SCAN_API(chain):
-    if chain == "eth":
-        return "https://api.etherscan.io/api"
-    if chain == "bsc":
-        return "https://api.bscscan.com/api"
-    if chain == "poly":
-        return "https://api.polygonscan.com/api"
-    if chain == "arb":
-        return "https://api.arbiscan.io/api"
-    if chain == "op":
-        return "https://api-optimistic.etherscan.io/api"
-    if chain == "base":
-        return "https://api.basescan.org/api"
-    
+    map = {
+        "arb": "https://api.arbiscan.io/api",
+        "bsc": "https://api.bscscan.com/api",
+        "base": "https://api.basescan.org/api",
+        "eth": "https://api.etherscan.io/api",
+        "op": "https://api-optimistic.etherscan.io/api",
+        "poly": "https://api.polygonscan.com/api"
+    }
+    return map.get(chain) 
+
 
 def SCAN_TOKEN(chain):
-    if chain == "eth":
-        return "https://etherscan.io/token/"
-    if chain == "bsc":
-        return "https://bscscan.com/token/"
-    if chain == "poly":
-        return "https://polygonscan.com/token/"
-    if chain == "arb":
-        return "https://arbiscan.io/token/"
-    if chain == "op":
-        return "https://optimistic.etherscan.io/token/"
-    if chain == "base":
-        return "https://basescan.org/token/"
+    map = {
+        "eth": "https://etherscan.io/token/",
+        "bsc": "https://bscscan.com/token/",
+        "poly": "https://polygonscan.com/token/",
+        "arb": "https://arbiscan.io/token/",
+        "op": "https://optimistic.etherscan.io/token/",
+        "base": "https://basescan.org/token/"
+    }
+    return map.get(chain)
 
 
 def SCAN_ADDRESS(chain):
-    if chain == "eth":
-        return "https://etherscan.io/address/"
-    if chain == "bsc":
-        return "https://bscscan.com/address/"
-    if chain == "poly":
-        return "https://polygonscan.com/address/"
-    if chain == "arb":
-        return "https://arbiscan.io/address/"
-    if chain == "op":
-        return "https://optimistic.etherscan.io/address/"
-    if chain == "base":
-        return "https://basescan.org/address/"
-    
+    map = {
+        "eth": "https://etherscan.io/address/",
+        "bsc": "https://bscscan.com/address/",
+        "poly": "https://polygonscan.com/address/",
+        "arb": "https://arbiscan.io/address/",
+        "op": "https://optimistic.etherscan.io/address/",
+        "base": "https://basescan.org/address/"
+    }
+    return map.get(chain)
+
 
 def SCAN_TX(chain):
-    if chain == "eth":
-        return "https://etherscan.io/tx/"
-    if chain == "bsc":
-        return "https://bscscan.com/tx/"
-    if chain == "poly":
-        return "https://polygonscan.com/tx/"
-    if chain == "arb":
-        return "https://arbiscan.io/tx/"
-    if chain == "op":
-        return "https://optimistic.etherscan.io/tx/"
-    if chain == "base":
-        return "https://basescan.org/tx/"
+    map = {
+        "eth": "https://etherscan.io/tx/",
+        "bsc": "https://bscscan.com/tx/",
+        "poly": "https://polygonscan.com/tx/",
+        "arb": "https://arbiscan.io/tx/",
+        "op": "https://optimistic.etherscan.io/tx/",
+        "base": "https://basescan.org/tx/"
+    }
+    return map.get(chain)
 
 
 def SCAN_GAS(chain):
-    if chain == "eth":
-        return "https://etherscan.io/gastracker/"
-    if chain == "bsc":
-        return "https://bscscan.com/gastracker/"
-    if chain == "poly":
-        return "https://polygonscan.com/gastracker/"
+    map = {
+        "eth": "https://etherscan.io/gastracker/",
+        "bsc": "https://bscscan.com/gastracker/",
+        "poly": "https://polygonscan.com/gastracker/",
+    }
+    return map.get(chain)
 
 
 def DEX_TOOLS(chain):
@@ -74,18 +62,15 @@ def DEX_TOOLS(chain):
 
 
 def RPC(chain):
-    if chain == "eth":
-        return f"https://lb.drpc.org/ogrpc?network=ethereum&dkey={os.getenv('DRPC_API_KEY')}"
-    if chain == "bsc":
-        return f"https://lb.drpc.org/ogrpc?network=bsc&dkey={os.getenv('DRPC_API_KEY')}"
-    if chain == "poly":
-        return f"https://lb.drpc.org/ogrpc?network=polygon&dkey={os.getenv('DRPC_API_KEY')}"
-    if chain == "arb":
-        return f"https://lb.drpc.org/ogrpc?network=arbitrum&dkey={os.getenv('DRPC_API_KEY')}"
-    if chain == "op":
-        return f"https://lb.drpc.org/ogrpc?network=optimism&dkey={os.getenv('DRPC_API_KEY')}"
-    if chain == "base":
-        return f"https://lb.drpc.org/ogrpc?network=base&dkey={os.getenv('DRPC_API_KEY')}"
+    map = {
+        "eth": f"https://lb.drpc.org/ogrpc?network=ethereum&dkey={os.getenv('DRPC_API_KEY')}",
+        "bsc": f"https://lb.drpc.org/ogrpc?network=bsc&dkey={os.getenv('DRPC_API_KEY')}",
+        "poly": f"https://lb.drpc.org/ogrpc?network=polygon&dkey={os.getenv('DRPC_API_KEY')}",
+        "arb": f"https://lb.drpc.org/ogrpc?network=arbitrum&dkey={os.getenv('DRPC_API_KEY')}",
+        "op": f"https://lb.drpc.org/ogrpc?network=optimism&dkey={os.getenv('DRPC_API_KEY')}",
+        "base": f"https://lb.drpc.org/ogrpc?network=base&dkey={os.getenv('DRPC_API_KEY')}"
+    }
+    return map.get(chain)
 
 
 def XCHANGE_BUY(chain_id, token1):
@@ -94,18 +79,15 @@ def XCHANGE_BUY(chain_id, token1):
 
 def OS_LINK(nft):
     link = "https://pro.opensea.io/collection/"
-    if nft == "eco":
-        return f"{link}x7-ecosystem-maxi"
-    if nft == "liq":
-        return f"{link}x7-liquidity-maxi"
-    if nft == "dex":
-        return f"{link}x7-dex-maxi"
-    if nft == "borrow":
-        return f"{link}x7-borrowing-maxi"
-    if nft == "magister":
-        return f"{link}x7-magister"
-    if nft == "pioneer":
-        return f"{link}x7-pioneer"
+    map = {
+        "eco": f"{link}x7-ecosystem-maxi",
+        "liq": f"{link}x7-liquidity-maxi",
+        "dex": f"{link}x7-dex-maxi",
+        "borrow": f"{link}x7-borrowing-maxi",
+        "magister": f"{link}x7-magister",
+        "pioneer": f"{link}x7-pioneer"
+    }
+    return map.get(nft)
 
 
 # TG
