@@ -20,12 +20,12 @@ def generate_eco_split(chain, eth_value):
     x7100_percentage = contract.functions.outletShare(3).call() / 10
     lending_pool_percentage = contract.functions.outletShare(4).call() / 10
     treasury_percentage = contract.functions.outletShare(5).call() / 10
-    treasury_share = eth_value * treasury_percentage
-
+    
     x7r_share = eth_value * x7r_percentage / 100
     x7dao_share = eth_value * x7dao_percentage / 100
     x7100_share = eth_value * x7100_percentage / 100
     lending_pool_share = eth_value * lending_pool_percentage / 100
+    treasury_share = eth_value * treasury_percentage / 100
 
     return {
         "> X7R Liquidity Hub": (x7r_share, x7r_percentage),
