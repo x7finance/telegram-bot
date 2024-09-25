@@ -2227,6 +2227,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     else:
         if chain in chains.CHAINS:
+            chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
             chain_name = chains.CHAINS[chain].name
             chain_url = chains.CHAINS[chain].scan_address
             chain_native = chains.CHAINS[chain].token
@@ -2244,7 +2245,25 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         dollar = lpool_reserve_dollar + lpool_dollar
         lpool_reserve = round(float(lpool_reserve), 2)
         lpool = round(float(lpool), 2)
-        
+
+        try:
+            contract = chain_web3.eth.contract(
+                address=chain_web3.to_checksum_address(ca.LPOOL(chain)),
+                abi=abis.read("lendingpool"),
+                )
+            count = contract.functions.nextLoanID().call()
+            total_borrowed = 0
+            for loan_id in range(21, count):
+                borrowed = contract.functions.getRemainingLiability(loan_id).call() / 10 ** 18
+                total_borrowed += borrowed
+            
+            total_borrowed_dollar = (float(total_borrowed) * float(native_price))
+
+        except Exception as e:
+            total_borrowed = 0
+            total_borrowed_dollar = 0
+
+            
         await message.delete()
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
@@ -2255,7 +2274,9 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Lending Pool Reserve:\n"
                 f'{lpool_reserve} {chain_native.upper()} (${"{:0,.0f}".format(lpool_reserve_dollar)})\n\n'
                 f"Total\n"
-                f'{pool} {chain_native.upper()} (${"{:0,.0f}".format(dollar)})',
+                f'{pool} {chain_native.upper()} (${"{:0,.0f}".format(dollar)})\n\n'
+                f'Total Currently Borrowed\n'
+                f'{total_borrowed:,.3f} {chain_native.upper()} (${"{:0,.0f}".format(total_borrowed_dollar)})',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
