@@ -2078,7 +2078,6 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     pioneer_id = " ".join(context.args)
 
     if pioneer_id == "":
-        data = opensea.get_nft_collection("/x7-pioneer")
         floor_data = api.get_nft_data(ca.PIONEER, "eth")
         floor = floor_data["floor_price"]
         native_price = chainscan.get_native_price("eth")

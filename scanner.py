@@ -17,7 +17,7 @@ chainscan = api.ChainScan()
 async def error(context):
     sentry_sdk.capture_exception(
         Exception(
-            f"Scanner Error: {context.error} | Traceback: {traceback.format_exc()}"
+            f"Scanner Error: {context} | Traceback: {traceback.format_exc()}"
         )
     )
 
