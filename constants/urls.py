@@ -99,7 +99,7 @@ TG_DAO = "https://telegram.me/collablandbot?start=VFBDI1RFTCNDT01NIy0xMDAyMTM5MT
 
 
 # LINKS
-CA_DIRECTORY = "https://www.x7finance.org/en/docs/breakdowns/contracts"
+CA_DIRECTORY = "https://www.x7finance.org/docs/breakdowns/contracts"
 DISCORD = "https://discord.gg/x7finance"
 DUNE = "https://dune.com/mike_x7f/x7finance"
 GITHUB = "https://github.com/x7finance/"

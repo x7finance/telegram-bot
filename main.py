@@ -226,7 +226,6 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("convert", commands.convert))
     application.add_handler(CommandHandler("countdown", commands.countdown))
     application.add_handler(CommandHandler(["dao", "vote", "snapshot", "propose"], commands.dao_command))
-    application.add_handler(CommandHandler(["discount", "dsc", "dac"], commands.discount))
     application.add_handler(CommandHandler(["docs", "documents"], commands.docs,))
     application.add_handler(CommandHandler(["ecosystem", "tokens"], commands.ecosystem))
     application.add_handler(CommandHandler("factory", commands.factory))

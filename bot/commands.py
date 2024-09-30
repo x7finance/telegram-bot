@@ -733,25 +733,6 @@ async def onchains(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ),
     )
 
-async def discount(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower()
-    if chain == "":
-        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
-    address = chains.CHAINS[chain].scan_address
-    await update.message.reply_text(
-        f"*X7 Finance Discount*\n\n{text.DISCOUNT}",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="X7 Lending Discount Contract",
-                        url=f"{address}{ca.LENDING_DISCOUNT(chain)}#code",
-                    )
-                ],
-            ]
-        ),
-    )
 
 
 async def docs(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2394,78 +2375,79 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             url=f"{chain_url}{ca.X7DAO_LIQ_HUB(chain)}"
         ),
         InlineKeyboardButton(
-            text="X7 Token Burner",
-            url=f"{chain_url}{ca.BURNER(chain)}"
-        ),
-    ],
-    [
-        InlineKeyboardButton(
             text="X7100 Discount Authority",
             url=f"{chain_url}{ca.X7100_DISCOUNT(chain)}",
         ),
+        
+    ],
+    [
         InlineKeyboardButton(
             text="X7R Discount Authority",
             url=f"{chain_url}{ca.X7R_DISCOUNT(chain)}",
         ),
-    ],
-    [
         InlineKeyboardButton(
             text="X7DAO Discount Authority",
             url=f"{chain_url}{ca.X7DAO_DISCOUNT(chain)}",
         ),
-        InlineKeyboardButton(
-            text="X7 Token Time Lock",
-            url=f"{chain_url}{ca.TIME_LOCK(chain)}"
-        ),
     ],
     [
         InlineKeyboardButton(
-            text="X7 Ecosystem Splitter",
-            url=f"{chain_url}{ca.ECO_SPLITTER(chain)}",
-        ),
-        InlineKeyboardButton(
-            text="X7 Treasury Splitter",
-            url=f"{chain_url}{ca.TREASURY_SPLITTER(chain)}",
-        ),
-    ],
-    [
-        InlineKeyboardButton(
-            text="X7 Xchange Discount Authority",
+            text="Xchange Discount Authority",
             url=f"{chain_url}{ca.XCHANGE_DISCOUNT(chain)}",
         ),
         InlineKeyboardButton(
-            text="X7 Lending Discount Authority",
+            text="Lending Discount Authority",
             url=f"{chain_url}{ca.LENDING_DISCOUNT(chain)}",
         ),
     ],
     [
         InlineKeyboardButton(
-            text="X7 Xchange Router with Discounts",
-            url=f"{chain_url}{ca.DISCOUNT_ROUTER(chain)}",
+            text="Token Burner",
+            url=f"{chain_url}{ca.BURNER(chain)}"
         ),
         InlineKeyboardButton(
-            text="X7 Default Token List", url=f"{chain_url}{ca.DEFAULT_TOKEN_LIST(chain)}"
+            text="Token Time Lock",
+            url=f"{chain_url}{ca.TIME_LOCK(chain)}"
         ),
     ],
     [
         InlineKeyboardButton(
-            text="X7 Lending Pool",
+            text="Ecosystem Splitter",
+            url=f"{chain_url}{ca.ECO_SPLITTER(chain)}",
+        ),
+        InlineKeyboardButton(
+            text="Treasury Splitter",
+            url=f"{chain_url}{ca.TREASURY_SPLITTER(chain)}",
+        ),
+    ],
+    [
+        InlineKeyboardButton(
+            text="Liquidity Treasury",
+            url=f"{chain_url}{ca.LIQUIDITY_TREASURY(chain)}",
+        ),
+        InlineKeyboardButton(
+            text="Default Token List",
+            url=f"{chain_url}{ca.DEFAULT_TOKEN_LIST(chain)}"
+        ),
+    ],
+    [
+        InlineKeyboardButton(
+            text="Lending Pool",
             url=f"{chain_url}{ca.LPOOL(chain)}"
         ),
         InlineKeyboardButton(
-            text="X7 Lending Pool Reserve",
+            text="Lending Pool Reserve",
             url=f"{chain_url}{ca.LPOOL_RESERVE(chain)}",
         ),
-        
     ],
     [
         
         InlineKeyboardButton(
-            text="X7 Xchange Factory",
+            text="Xchange Factory",
             url=f"{chain_url}{ca.FACTORY(chain)}"
         ),
         InlineKeyboardButton(
-            text="X7 Xchange Router",
+            text="Xchange Router",
             url=f"{chain_url}{ca.ROUTER(chain)}"
         ),
     ],
