@@ -1152,6 +1152,9 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         treasury = contract.functions.treasuryShare().call() / 10
         liquidity_ratio_target = contract.functions.liquidityRatioTarget().call()
         balance_threshold = contract.functions.balanceThreshold().call() / 10 ** 18
+        liquidity_balance = contract.functions.liquidityBalance().call() / 10 ** 18
+        distribute_balance = contract.functions.distributeBalance().call() / 10 ** 18
+        treasury_balance = contract.functions.treasuryBalance().call() / 10 ** 18
     except Exception as e:
         distribute = "N/A"
         liquidity = "N/A"
@@ -1160,9 +1163,9 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         balance_threshold = "N/A"
 
     split_text = (
-        f"Ecosystem Splitter Share: {distribute}%\n"
-        f"Liquidity Share: {liquidity}%\n"
-        f"Treasury Share: {treasury}%"
+        f"Ecosystem Share: {distribute}% - {distribute_balance:,.3f} {chain_native.upper()}\n"
+        f"Liquidity Share: {liquidity}% - {liquidity_balance:,.3f} {chain_native.upper()}\n"
+        f"Treasury Share: {treasury}% - {treasury_balance:,.3f} {chain_native.upper()}"
     )
 
     if token.upper() in tokens.TOKENS(chain):
@@ -1173,20 +1176,24 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if token == "x7dao":
         try:
             auxiliary = contract.functions.auxiliaryShare().call() / 10
+            auxiliary_balance = contract.functions.auxiliaryBalance().call() / 10 ** 18
         except Exception:
             auxiliary = "N/A"
-        auxiliary_text = f"Auxiliary Share: {auxiliary}%"
+            auxiliary_balance = 0
+        auxiliary_text = f"Auxiliary Share: {auxiliary}% - {auxiliary_balance:,.3f}  {chain_native.upper()}"
         split_text += "\n" + auxiliary_text
 
     if token == "x7100":
         token_str = "x7101-x7105"
         address = ca.X7100(chain)
         try:
-            auxiliary = contract.functions.lendingPoolShare().call() / 10
+            lending_pool = contract.functions.lendingPoolShare().call() / 10
+            lending_pool_balance = contract.functions.lendingPoolBalance().call() / 10 ** 18
         except Exception:
-            auxiliary = "N/A"
-        auxiliary_text = f"Lending Pool Share: {auxiliary}%"
-        split_text += "\n" + auxiliary_text
+            lending_pool = "N/A"
+            lending_pool_balance = 0
+        lending_pool_text = f"Lending Pool Share: {lending_pool}% - {lending_pool_balance:,.3f}  {chain_native.upper()}"
+        split_text += "\n" + lending_pool_text
     else:
         token_str = token
     balance = 0
@@ -1224,10 +1231,10 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"*{token.upper()} Liquidity Hub ({chain_name})*\nUse `hub [token-name] [chain-name]` for other chains\n\n"
             f"{round(float(eth_balance), 2)} {chain_native.upper()} (${eth_dollar:,.0f})\n"
             f"{balance_text} {temp_balance_text}\n\n"
-            f"{split_text}\n\n"
             f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
             f"Balance Threshold: {balance_threshold} {chain_native.upper()}\n\n"
-            f"{buy_back_text}\n\n",
+            f"{split_text}\n\n"
+            f"{buy_back_text}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
