@@ -12,7 +12,7 @@ from variables import times
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
 
-
+LOCAL = False
 CURRENT_BUTTON_DATA = None
 CLICKED_BUTTONS = set()
 FIRST_USER_CLICKED = False
@@ -139,17 +139,24 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if check_time:
                 click_message += f"\n\n🎉🎉 {time_taken:.3f} seconds is the new fastest time! 🎉🎉"
 
+            if times.BURN_ENABLED == True:
 
-            clicks_needed = times.BURN_INCREMENT - (total_click_count % times.BURN_INCREMENT)
+                clicks_needed = times.BURN_INCREMENT - (total_click_count % times.BURN_INCREMENT)
+                message_text = (
+                    f"{api.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
+                    f"{click_message}\n\n"
+                    f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
+                    f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
+                    f"use `/leaderboard` to see the fastest Pioneers!\n\n"
+                )
+            else:
+                message_text = (
+                    f"{api.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
+                    f"{click_message}\n\n"
+                    f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
+                    f"use `/leaderboard` to see the fastest Pioneers!\n\n"
+                )
 
-            message_text = (
-                f"{api.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
-                f"{click_message}\n\n"
-                f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
-                f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
-                f"use `/leaderboard` to see the fastest Pioneers!\n\n"
-                
-            )
 
             photos = await context.bot.get_user_profile_photos(update.effective_user.id, limit=1)
             if photos and photos.photos and photos.photos[0]:
@@ -168,15 +175,17 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode="Markdown"
                 )
 
-            if total_click_count % times.BURN_INCREMENT == 0:
-                burn_message = await api.burn_x7r(times.BURN_AMOUNT(), "eth")
-                await context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text=
-                        f"🔥🔥🔥🔥🔥🔥🔥🔥\n\n"
-                        f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
-                        f"{burn_message}"
-                )
+            if times.BURN_ENABLED == True:
+
+                if total_click_count % times.BURN_INCREMENT == 0:
+                    burn_message = await api.burn_x7r(times.BURN_AMOUNT(), "eth")
+                    await context.bot.send_message(
+                        chat_id=update.effective_chat.id,
+                        text=
+                            f"🔥🔥🔥🔥🔥🔥🔥🔥\n\n"
+                            f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
+                            f"{burn_message}"
+                    )
 
             context.bot_data['clicked_id'] = clicked.message_id
 
@@ -236,7 +245,6 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("giveaway", commands.giveaway_command))
     application.add_handler(CommandHandler("holders", commands.holders))
     application.add_handler(CommandHandler(["hub", "hubs", "buybacks"], commands.hub))
-    application.add_handler(CommandHandler("launch", commands.launch))
     application.add_handler(CommandHandler("leaderboard", commands.leaderboard))
     application.add_handler(CommandHandler(["links", "socials", "dune", "github", "reddit"], commands.links))
     application.add_handler(CommandHandler("liquidate", commands.liquidate))
@@ -289,12 +297,16 @@ if __name__ == "__main__":
     application.add_handler(CallbackQueryHandler(button_function))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies))
 
-    job_queue.run_once(
-        button_send,
-        times.FIRST_BUTTON_TIME,
-        chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
-        name="Click Me",
-    )
+    if LOCAL != True:
+        job_queue.run_once(
+            button_send,
+            times.FIRST_BUTTON_TIME,
+            chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
+            name="Click Me",
+        )
 
-    scanners()
+        scanners()
+    else:
+        print("Running Bot Locally")
+
     application.run_polling(allowed_updates=Update.ALL_TYPES)

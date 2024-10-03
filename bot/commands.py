@@ -1248,55 +1248,37 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    eth_duration = datetime.now() - times.X7M105
-    eth_years, eth_months, eth_weeks, eth_days = api.get_duration_years(eth_duration)
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            "*X7 Finance Launch Info*\n\n"
-            "X7 Finance is prepearing to launch on Base! Check the link below to see the live steps!\n\n"
-            f'ETH Launch\n{times.X7M105.strftime("%A %B %d %Y %I:%M %p")} UTC\n'
-            f"{eth_years} years, {eth_months} months, {eth_weeks} weeks, and {eth_days} days ago\n\n",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="Base Live Launch List",
-                        url=f"{urls.XCHANGE}blog/public/posts/base-live-launch-list",
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        text="ETH Launch TX",
-                        url=f"{urls.ETHER_TX}0x11ff5b6a860170eaac5b33930680bf79dbf0656292cac039805dbcf34e8abdbf",
-                    )
-                ],
-            ]
-        ),
-    )
-
-
 async def leaderboard(update: Update, context: CallbackContext):
     board = db.clicks_get_leaderboard()
     click_counts_total = db.clicks_get_total()
     fastest = db.clicks_fastest_time()
     fastest_user = fastest[0]
     fastest_time = fastest[1]
-    clicks_needed = times.BURN_INCREMENT - (click_counts_total % times.BURN_INCREMENT)
     streak = db.clicks_check_highest_streak()
     streak_user, streak_value = streak
-    await update.message.reply_text(
-        text=
-            f"*X7 Finance Fastest Pioneer 2024 Leaderboard\n(Top 10)\n\n*"
-            f"{api.escape_markdown(board)}\n"
-            f"Total clicks: *{click_counts_total}*\n"
-            f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
-            f"Fastest Click:\n{fastest_time} seconds\nby {api.escape_markdown(fastest_user)}\n\n"
-            f"{api.escape_markdown(streak_user)} clicked the button last and is on a *{streak_value}* click streak!",
-        parse_mode="Markdown"
-    )
+
+    if times.BURN_ENABLED == True:
+        clicks_needed = times.BURN_INCREMENT - (click_counts_total % times.BURN_INCREMENT)
+        await update.message.reply_text(
+            text=
+                f"*X7 Finance Fastest Pioneer 2024 Leaderboard\n(Top 10)\n\n*"
+                f"{api.escape_markdown(board)}\n"
+                f"Total clicks: *{click_counts_total}*\n"
+                f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
+                f"Fastest Click:\n{fastest_time} seconds\nby {api.escape_markdown(fastest_user)}\n\n"
+                f"{api.escape_markdown(streak_user)} clicked the button last and is on a *{streak_value}* click streak!",
+            parse_mode="Markdown"
+        )
+    else:
+        await update.message.reply_text(
+            text=
+                f"*X7 Finance Fastest Pioneer 2024 Leaderboard\n(Top 10)\n\n*"
+                f"{api.escape_markdown(board)}\n"
+                f"Total clicks: *{click_counts_total}*\n"
+                f"Fastest Click:\n{fastest_time} seconds\nby {api.escape_markdown(fastest_user)}\n\n"
+                f"{api.escape_markdown(streak_user)} clicked the button last and is on a *{streak_value}* click streak!",
+            parse_mode="Markdown"
+        )
     
 
 async def links(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -28,4 +28,5 @@ def BURN_AMOUNT():
     time = random.choice(amounts)
     return time
 
+BURN_ENABLED  = False
 BURN_INCREMENT = 25
