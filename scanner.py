@@ -60,11 +60,9 @@ async def alert(event, chain):
         if event["args"]["token0"] == paired_token:
             token_address = event["args"]["token1"]
             token_name = token_1_name
-            token_symbol = token_1_symbol
         else:
             token_address = event["args"]["token0"]
             token_name = token_0_name
-            token_symbol = token_0_symbol
         try:
             if chainscan.get_verified(token_address, chain):
                 verified = "Contract Verified"
@@ -124,22 +122,31 @@ async def alert(event, chain):
             im2 = Image.open(logo).convert("RGBA")
         
         im1.paste(im2, (700, 20), im2)
+
+        message = (
+            f"{token_name} ({token_0_symbol}/{token_1_symbol})\n\n"
+            f"Liquidity: {liq}\n"
+            f"{status}\n"
+            f"Tax: {tax}\n"
+            f"Contract Renounced"
+        )
+
         i1 = ImageDraw.Draw(im1)
         i1.text(
             (26, 30),
-                f"New Pair Created ({chain_name.upper()})\n\n"
-                f"{token_name} ({token_0_symbol}/{token_1_symbol})\n\n"
-                f"Liquidity: {liq}\n\n"
-                f"{status}\n",
+            f"New Pair Created ({chain_name.upper()})\n\n"
+            f"{message}",
             font = ImageFont.truetype(media.FONT, 26),
             fill = (255, 255, 255),
         )
         im1.save(r"media/blackhole.png")
-        
-        channels = [os.getenv("ALERTS_TELEGRAM_CHANNEL_ID"), 
-                    os.getenv(f"MAIN_TELEGRAM_CHANNEL_ID"), 
-                    os.getenv(f"{chain.upper()}_TELEGRAM_CHANNEL_ID")]
-        
+
+        channels = [
+            os.getenv("ALERTS_TELEGRAM_CHANNEL_ID"), 
+            os.getenv(f"MAIN_TELEGRAM_CHANNEL_ID"), 
+            os.getenv(f"{chain.upper()}_TELEGRAM_CHANNEL_ID")
+        ]
+
         for channel in channels:
             if channel:  
                 await application.bot.send_photo(
@@ -147,16 +154,14 @@ async def alert(event, chain):
                     photo=open(r"media/blackhole.png", "rb"),
                     caption=
                         f"*New Pair Created ({chain_name.upper()})*\n\n"
-                        f"{token_name} ({token_0_symbol}/{token_1_symbol})\n\n"
-                        f"Token Address:\n`{token_address}`\n\n"
-                        f"Liquidity: {liq}\n\n"
-                        f"{status}\n",
+                        f"{message}\n\n"
+                        f"Token Address:\n`{token_address}`",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(
                         [
                             [
                                 InlineKeyboardButton(
-                                    text=f"Buy On Xchange",
+                                    text="Buy On Xchange",
                                     url=f"{urls.XCHANGE_BUY(chain_id, token_address)}",
                                 )
                             ],
