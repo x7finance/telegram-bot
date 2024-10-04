@@ -113,8 +113,8 @@ async def alert(event, chain):
         
         liq_data = dextools.get_liquidity(event['args']['pair'], chain)
         liq = liq_data["total"]
-        if liq == "0":
-            liq = "Unavailable"
+        if liq == "$0":
+            liq = "Unknown"
 
         im1 = Image.open((random.choice(media.BLACKHOLE))).convert("RGBA")
         try:
