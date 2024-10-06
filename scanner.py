@@ -126,9 +126,7 @@ async def alert(event, chain):
         message = (
             f"{token_name} ({token_0_symbol}/{token_1_symbol})\n\n"
             f"Liquidity: {liq}\n"
-            f"{status}\n"
-            f"Tax: {tax}\n"
-            f"Contract Renounced"
+            f"{status}"
         )
 
         i1 = ImageDraw.Draw(im1)
