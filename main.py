@@ -13,6 +13,7 @@ application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build(
 job_queue = application.job_queue
 
 LOCAL = False
+CLICK_ME = False
 CURRENT_BUTTON_DATA = None
 CLICKED_BUTTONS = set()
 FIRST_USER_CLICKED = False
@@ -239,9 +240,9 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler(["ecosystem", "tokens"], commands.ecosystem))
     application.add_handler(CommandHandler("factory", commands.factory))
     application.add_handler(CommandHandler("faq", commands.faq))
-    application.add_handler(CommandHandler(["fee", "fees", "costs", "gas"], commands.fees))
     application.add_handler(CommandHandler("feeto", commands.feeto))
     application.add_handler(CommandHandler(["fg", "feargreed"], commands.fg))
+    application.add_handler(CommandHandler(["fee", "fees", "costs", "gas"], commands.gas))
     application.add_handler(CommandHandler("giveaway", commands.giveaway_command))
     application.add_handler(CommandHandler("holders", commands.holders))
     application.add_handler(CommandHandler(["hub", "hubs", "buybacks"], commands.hub))
@@ -298,12 +299,13 @@ if __name__ == "__main__":
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies))
 
     if LOCAL != True:
-        job_queue.run_once(
-            button_send,
-            times.FIRST_BUTTON_TIME,
-            chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
-            name="Click Me",
-        )
+        if CLICK_ME == True:
+            job_queue.run_once(
+                button_send,
+                times.FIRST_BUTTON_TIME,
+                chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
+                name="Click Me",
+            )
 
         scanners()
     else:

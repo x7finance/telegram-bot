@@ -84,11 +84,6 @@ async def alert(event, chain):
                     renounced = "Contract Not Renounced"
             if scan[token_address_str]["is_in_dex"] == "1":
                 try:
-                    if (
-                        scan[token_address_str]["sell_tax"] == "1"
-                        or scan[token_address_str]["buy_tax"] == "1"
-                    ):
-                        return
                     buy_tax_raw = (
                         float(scan[token_address_str]["buy_tax"]) * 100
                     )
@@ -97,10 +92,7 @@ async def alert(event, chain):
                     )
                     buy_tax = int(buy_tax_raw)
                     sell_tax = int(sell_tax_raw)
-                    if sell_tax > 10 or buy_tax > 10:
-                        tax = f"Tax: {buy_tax}/{sell_tax}"
-                    else:
-                        tax = f"Tax: {buy_tax}/{sell_tax}"
+                    tax = f"Tax: {buy_tax}/{sell_tax}"
                 except Exception:
                     tax = f"Tax: Unavailable"
             else:

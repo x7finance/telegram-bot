@@ -856,7 +856,7 @@ async def faq(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
@@ -872,12 +872,14 @@ async def fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     try:
         gas_data = chainscan.get_gas(chain)
-        gas_text = (f"Gas:\n"
-                    f'Low: {gas_data["result"]["SafeGasPrice"]} Gwei\n'
-                    f'Average: {gas_data["result"]["ProposeGasPrice"]} Gwei\n'
-                    f'High: {gas_data["result"]["FastGasPrice"]} Gwei\n\n')
+        gas_text = (
+            f"Gas:\n"
+            f'Low: {float(gas_data["result"]["SafeGasPrice"]):.0f} Gwei\n'
+            f'Average: {float(gas_data["result"]["ProposeGasPrice"]):.0f} Gwei\n'
+             f'High: {float(gas_data["result"]["FastGasPrice"]):.0f} Gwei\n\n'
+             )
     except Exception:
-       gas_text = ""
+        gas_text = ""
     
     gas_price = chain_web3.eth.gas_price / 10**9
     eth_price = chainscan.get_native_price(chain)
@@ -924,7 +926,7 @@ async def fees(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"*Live Xchange Fees ({chain_name})*\nUse `/fees [chain-name]` for other chains\n\n"
+            f"*Live Xchange Gas Fees ({chain_name})*\nUse `/gas [chain-name]` for other chains\n\n"
             f"{swap_text}\n"
             f"{pair_text}\n"
             f"{split_text}\n"
