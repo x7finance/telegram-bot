@@ -6,26 +6,23 @@ from datetime import datetime
 
 from bot import admin, auto, commands, welcome
 from hooks import api, db
-from variables import times
+from constants import settings
 
-
+LOCAL = False
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
 
-LOCAL = False
-CLICK_ME = False
-CURRENT_BUTTON_DATA = None
-CLICKED_BUTTONS = set()
-FIRST_USER_CLICKED = False
-
-
-async def test(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    return
 
 sentry_sdk.init(
     dsn = os.getenv("SENTRY_DSN"),
     traces_sample_rate=1.0
 )
+
+
+async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id == int(os.getenv("OWNER_TELEGRAM_CHANNEL_ID")):
+        return
 
 
 async def error(update: Update, context: CallbackContext):
@@ -51,20 +48,8 @@ async def error(update: Update, context: CallbackContext):
             )
 
 
-def scanners():
-    python_executable = sys.executable
-    script_path = os.path.join(os.path.dirname(__file__), "scanner.py")
-    if os.path.exists(script_path):
-        command = [python_executable, script_path]
-        process = subprocess.Popen(command)
-        return process
-
-
 async def button_send(context: ContextTypes.DEFAULT_TYPE):
-    global CURRENT_BUTTON_DATA, FIRST_USER_CLICKED
-    FIRST_USER_CLICKED = False
-    if context.bot_data is None:
-        context.bot_data = {}
+    context.bot_data["first_user_clicked"] = False
 
     previous_click_me_id = context.bot_data.get('click_me_id')
     previous_clicked_id = context.bot_data.get('clicked_id')
@@ -73,55 +58,52 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
         try:
             await context.bot.delete_message(chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"), message_id=previous_click_me_id)
             await context.bot.delete_message(chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"), message_id=previous_clicked_id)
-
         except Exception:
             pass
 
-    CURRENT_BUTTON_DATA = str(random.randint(1, 100000000))
-    context.bot_data["current_button_data"] = CURRENT_BUTTON_DATA
+    current_button_data = str(random.randint(1, 100000000))
+    context.bot_data["current_button_data"] = current_button_data
 
     keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Click Me!", callback_data=CURRENT_BUTTON_DATA)]]
+        [[InlineKeyboardButton("Click Me!", callback_data=current_button_data)]]
     )
     click_me = await context.bot.send_photo(
-                    photo=api.get_random_pioneer(),
-                    chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
-                    reply_markup=keyboard,
-                )
+        photo=api.get_random_pioneer(),
+        chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
+        reply_markup=keyboard,
+    )
 
-    button_generation_timestamp = time.time()
-    context.bot_data["button_generation_timestamp"] = button_generation_timestamp
+    context.bot_data["button_generation_timestamp"] = time.time()
     context.bot_data['click_me_id'] = click_me.message_id
 
 
 async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global CURRENT_BUTTON_DATA, FIRST_USER_CLICKED
     button_click_timestamp = time.time()
 
-    if context.user_data is None:
-        context.user_data = {}
-
-    CURRENT_BUTTON_DATA = context.bot_data.get("current_button_data")
+    current_button_data = context.bot_data.get("current_button_data")
     button_generation_timestamp = context.bot_data.get("button_generation_timestamp")
-    if not CURRENT_BUTTON_DATA:
+
+    if not current_button_data:
         return
 
     button_data = update.callback_query.data
     user = update.effective_user
     user_info = user.username or f"{user.first_name} {user.last_name}" or user.first_name
 
-    if button_data in CLICKED_BUTTONS:
+    context.user_data.setdefault("clicked_buttons", set())
+
+    if button_data in context.user_data["clicked_buttons"]:
         return
 
-    CLICKED_BUTTONS.add(button_data)
+    context.user_data["clicked_buttons"].add(button_data)
 
-    if button_data == CURRENT_BUTTON_DATA:
+    if button_data == current_button_data:
         time_taken = button_click_timestamp - button_generation_timestamp
 
         await db.clicks_update(user_info, time_taken)
 
-        if not FIRST_USER_CLICKED:
-            FIRST_USER_CLICKED = True
+        if not context.bot_data.get("first_user_clicked"):
+            context.bot_data["first_user_clicked"] = True
 
             user_data = db.clicks_get_by_name(user_info)
             clicks = user_data[0]
@@ -131,8 +113,7 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 click_message = f"🎉🎉 This is their first button click! 🎉🎉"
 
             elif clicks % 10 == 0:
-                click_message = f"🎉🎉 They been the fastest Pioneer {clicks} times and on a *{streak}* click streak! 🎉🎉"
-
+                click_message = f"🎉🎉 They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak! 🎉🎉"
             else:
                 click_message = f"They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak!"
 
@@ -140,9 +121,9 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if check_time:
                 click_message += f"\n\n🎉🎉 {time_taken:.3f} seconds is the new fastest time! 🎉🎉"
 
-            if times.BURN_ENABLED == True:
+            if settings.BURN_ENABLED:
 
-                clicks_needed = times.BURN_INCREMENT - (total_click_count % times.BURN_INCREMENT)
+                clicks_needed = settings.BURN_INCREMENT - (total_click_count % settings.BURN_INCREMENT)
                 message_text = (
                     f"{api.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
                     f"{click_message}\n\n"
@@ -157,7 +138,6 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
                     f"use `/leaderboard` to see the fastest Pioneers!\n\n"
                 )
-
 
             photos = await context.bot.get_user_profile_photos(update.effective_user.id, limit=1)
             if photos and photos.photos and photos.photos[0]:
@@ -176,31 +156,26 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode="Markdown"
                 )
 
-            if times.BURN_ENABLED == True:
-
-                if total_click_count % times.BURN_INCREMENT == 0:
-                    burn_message = await api.burn_x7r(times.BURN_AMOUNT(), "eth")
-                    await context.bot.send_message(
-                        chat_id=update.effective_chat.id,
-                        text=
-                            f"🔥🔥🔥🔥🔥🔥🔥🔥\n\n"
-                            f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
-                            f"{burn_message}"
-                    )
+            if settings.BURN_ENABLED and total_click_count % settings.BURN_INCREMENT == 0:
+                burn_message = await api.burn_x7r(settings.BURN_AMOUNT(), "eth")
+                await context.bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text=f"🔥🔥🔥🔥🔥🔥🔥🔥\n\nThe button has been clicked a total of {total_click_count} times by all Pioneers!\n\n{burn_message}"
+                )
 
             context.bot_data['clicked_id'] = clicked.message_id
 
-            times.RESTART_TIME = datetime.now().timestamp()
-            context.user_data["current_button_data"] = None
-            times.BUTTON_TIME = times.RANDOM_BUTTON_TIME()
+            settings.RESTART_TIME = datetime.now().timestamp()
+            settings.BUTTON_TIME = settings.RANDOM_BUTTON_TIME()
+
             job_queue.run_once(
-            button_send,
-            times.BUTTON_TIME,
-            chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
-            name="Click Me",
-        )
-            
-            return times.BUTTON_TIME
+                button_send,
+                settings.BUTTON_TIME,
+                chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
+                name="Click Me",
+            )
+
+            return settings.BUTTON_TIME
 
 
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -209,9 +184,17 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await button_send(context)
 
 
+def scanners():
+    python_executable = sys.executable
+    script_path = os.path.join(os.path.dirname(__file__), "scanner.py")
+    if os.path.exists(script_path):
+        command = [python_executable, script_path]
+        process = subprocess.Popen(command)
+        return process
+
+
 if __name__ == "__main__":
     application.add_error_handler(error)
-    application.add_handler(CommandHandler("test", test))
 
     application.add_handler(ChatMemberHandler(welcome.message, ChatMemberHandler.CHAT_MEMBER))
     application.add_handler(MessageHandler(filters.StatusUpdate._NewChatMembers(Update) | filters.StatusUpdate._LeftChatMember(Update), welcome.delete))
@@ -234,7 +217,6 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler(["ca", "contract", "contracts"], commands.contracts))
     application.add_handler(CommandHandler("contribute", commands.contribute))
     application.add_handler(CommandHandler("convert", commands.convert))
-    application.add_handler(CommandHandler("countdown", commands.countdown))
     application.add_handler(CommandHandler(["dao", "vote", "snapshot", "propose"], commands.dao_command))
     application.add_handler(CommandHandler(["docs", "documents"], commands.docs,))
     application.add_handler(CommandHandler(["ecosystem", "tokens"], commands.ecosystem))
@@ -243,7 +225,6 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("feeto", commands.feeto))
     application.add_handler(CommandHandler(["fg", "feargreed"], commands.fg))
     application.add_handler(CommandHandler(["fee", "fees", "costs", "gas"], commands.gas))
-    application.add_handler(CommandHandler("giveaway", commands.giveaway_command))
     application.add_handler(CommandHandler("holders", commands.holders))
     application.add_handler(CommandHandler(["hub", "hubs", "buybacks"], commands.hub))
     application.add_handler(CommandHandler("leaderboard", commands.leaderboard))
@@ -298,17 +279,18 @@ if __name__ == "__main__":
     application.add_handler(CallbackQueryHandler(button_function))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies))
 
-    if LOCAL != True:
-        if CLICK_ME == True:
+    if not LOCAL:
+        if settings.CLICK_ME_ENABLED:
             job_queue.run_once(
                 button_send,
-                times.FIRST_BUTTON_TIME,
+                settings.FIRST_BUTTON_TIME,
                 chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
                 name="Click Me",
             )
 
         scanners()
     else:
-        print("Running Bot Locally")
+        application.add_handler(CommandHandler("test", test_command))
+        print("Running Bot locally for testing")
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)

@@ -2,16 +2,15 @@ from telegram import *
 from telegram.ext import *
 
 import asyncio, math, os, pytz, random, re, requests, time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 from PIL import Image, ImageDraw, ImageFont
 from web3 import Web3
 
-from constants import abis, ca, chains, dao, nfts, splitters, tax, text, tokens, urls  
+from constants import abis, ca, chains, dao, nfts, settings, splitters, tax, text, tokens, urls  
 from hooks import api, db, dune 
 import pricebot
 import media
-from variables import times, giveaway
 
 bitquery = api.BitQuery()
 coingecko = api.CoinGecko()
@@ -585,26 +584,6 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown")
 
 
-async def countdown(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    duration = times.COUNTDOWN_TIME - datetime.now()
-    days, hours, minutes = api.get_duration_days(duration)
-    if duration < timedelta(0):
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"*X7 Finance Countdown*\n\nNo countdown set, Please check back for more details",
-            parse_mode="Markdown",
-        )
-        return
-    await update.message.reply_text(
-        text=f"*X7 Finance Countdown:*\n\n"
-        f'{times.COUNTDOWN_TITLE}\n\n{times.COUNTDOWN_TIME.strftime("%A %B %d %Y %I:%M %p")} UTC\n\n'
-        f"{days} days, {hours} hours and {minutes} minutes\n\n"
-        f"{times.COUNTDOWN_DESC}",
-        parse_mode="Markdown",
-    )
-
-
 async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
@@ -1032,28 +1011,6 @@ async def fg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def giveaway_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    ext = " ".join(context.args)
-    duration = giveaway.TIME - datetime.now()
-    days, hours, minutes = api.get_duration_days(duration)
-    if duration < timedelta(0):
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"X7 Finance Giveaway is now closed\n\nPlease check back for more details",
-            parse_mode="Markdown",
-        )
-    else:
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"*{giveaway.NAME}*\n\n{giveaway.TEXT}\n\n"
-                f"Ends:\n\n{giveaway.TIME.strftime('%A %B %d %Y %I:%M %p')} UTC\n\n"
-                f"{days} days, {hours} hours and {minutes} minutes",
-            parse_mode="Markdown",
-            )
-
-
 async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
     if chain == "":
@@ -1120,9 +1077,11 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_native = chains.CHAINS[chain].token
 
     if token in ca.HUBS(chain):
+        if token.startswith("x710") and token in {f"x710{i}" for i in range(1, 6)}:
+            token = "x7100"
         hub_address = ca.HUBS(chain)[token]
     else:
-        await update.message.reply_text("Please follow the command with token liquidity hub name and optional chain")
+        await update.message.reply_text("Please follow the command with X7 token name and optional chain")
         return
     message = await update.message.reply_text("Getting Liquidity Hub data, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
@@ -1259,8 +1218,8 @@ async def leaderboard(update: Update, context: CallbackContext):
     streak = db.clicks_check_highest_streak()
     streak_user, streak_value = streak
 
-    if times.BURN_ENABLED == True:
-        clicks_needed = times.BURN_INCREMENT - (click_counts_total % times.BURN_INCREMENT)
+    if settings.BURN_ENABLED == True:
+        clicks_needed = settings.BURN_INCREMENT - (click_counts_total % settings.BURN_INCREMENT)
         await update.message.reply_text(
             text=
                 f"*X7 Finance Fastest Pioneer 2024 Leaderboard\n(Top 10)\n\n*"

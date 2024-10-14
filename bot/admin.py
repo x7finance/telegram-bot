@@ -4,9 +4,8 @@ from telegram.ext import *
 import os, requests
 from datetime import datetime, timedelta
 
-from constants import ca, chains
+from constants import ca, chains, settings
 from hooks import  db, api
-from variables import times
 
 defined = api.Defined()
 
@@ -119,11 +118,11 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id == int(os.getenv("OWNER_TELEGRAM_CHANNEL_ID")):
         if update.effective_chat.type == "private":
-            if times.BUTTON_TIME is not None:
-                time = times.BUTTON_TIME
+            if settings.BUTTON_TIME is not None:
+                time = settings.BUTTON_TIME
             else:    
-                time = times.FIRST_BUTTON_TIME
-            target_timestamp = times.RESTART_TIME + time
+                time = settings.FIRST_BUTTON_TIME
+            target_timestamp = settings.RESTART_TIME + time
             time_difference_seconds = target_timestamp - datetime.now().timestamp()
             time_difference = timedelta(seconds=time_difference_seconds)
             hours, remainder = divmod(time_difference.seconds, 3600)

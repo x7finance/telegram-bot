@@ -222,10 +222,10 @@ def XCHANGE_DISCOUNT(chain):
 
 def HUBS(chain):
     return {
-    "x7r": X7R_LIQ_HUB(chain),
-    "x7dao": X7DAO_LIQ_HUB(chain),
-    "x7100": X7100_LIQ_HUB(chain),
-}
+        "x7r": X7R_LIQ_HUB(chain),
+        "x7dao": X7DAO_LIQ_HUB(chain),
+        **{f"x710{i}": X7100_LIQ_HUB(chain) for i in range(6)},
+    }
 
 def TEMP_HUBS(token):
     map = {
@@ -236,31 +236,30 @@ def TEMP_HUBS(token):
     return map.get(token)
 
 
-
 # PAIRS
 
 def X7R_PAIR(chain):
-    return ["0x6139240a5907e4ce74673257c320ea366c521aea",
-            "0x8e0d035787e7083d4292536005dd6a69682e4f64"]
+    return ["0x6139240A5907e4CE74673257c320ea366c521AEA",
+            "0x8e0D035787e7083D4292536005dD6A69682e4f64"]
 
 def X7DAO_PAIR(chain):
-    return ["0x75311ee016c82e7770e4aca73a0d142f96ddb969",
-            "0xb8de6270640092463988b6860d68ca63dc7cf700"]
+    return ["0x75311ee016c82e7770E4ACa73a0d142f96ddB969",
+            "0xb8dE6270640092463988B6860d68CA63dC7cF700"]
 
 def X7101_PAIR(chain):
-    return "0x81b786ed4b2f1118e0fa0343ad4760e15448e3e8"
+    return "0xb8dE6270640092463988B6860d68CA63dC7cF700"
 
 def X7102_PAIR(chain):
-    return "0x49c838c60170c36e90cfa6021a57f2268dda3254"
+    return "0x49C838c60170C36E90CFA6021a57f2268dda3254"
 
 def X7103_PAIR(chain):
-    return "0xcecf54edc42c5c9f6ee10cb1efcc23e49f7d5a5d"
+    return "0xcecf54EDC42c5C9f6Ee10cb1eFcc23E49F7D5A5d"
 
 def X7104_PAIR(chain):
-    return "0x7d0d7c088233cbc08ee2400b96d10bf24c40e93a"
+    return "0x7d0D7c088233cBC08ee2400B96D10BF24C40E93a"
 
 def X7105_PAIR(chain):
-    return "0x6d9d1b6b4d53f090639ae8d9e9c83b796da694ee"
+    return "0x6d9D1B6B4D53f090639ae8D9E9C83B796Da694eE"
 
 
 # WALLETS
