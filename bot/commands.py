@@ -1492,8 +1492,8 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 contract = chain_web3.eth.contract(
                     address=chain_web3.to_checksum_address(chain_lpool),
                     abi=abis.read("lendingpool"),
-                    )
-            
+                )
+        
                 amount = contract.functions.nextLoanID().call() - 1
                 loans_text += f"{chain_name}: {amount}\n"
                 total += amount
@@ -1511,11 +1511,11 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         else:
             await update.message.reply_text(
-            f"Use `/loan [ID] [chain]` for loan ID details\nUse `/loan count` for all loans",
-            parse_mode="Markdown",
-        )
-        return
-    
+                f"Use `/loan [ID] [chain]` for loan ID details\nUse `/loan count` for all loans",
+                parse_mode="Markdown",
+            )
+            return
+
     if len(context.args) >= 2:
         loan_id = context.args[0]
         chain = context.args[1].lower()
@@ -1525,23 +1525,25 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown",
         )
         return
+
     if chain == "":
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
+
     if chain in chains.CHAINS:
         chain_name = chains.CHAINS[chain].name
-        chain_address_url = chains.CHAINS[chain].scan_address
         chain_dext = chains.CHAINS[chain].dext
         chain_native = chains.CHAINS[chain].token
         chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
         chain_lpool = ca.LPOOL(chain, int(loan_id))
-        
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
         return
+
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     price = chainscan.get_native_price(chain)
     contract = chain_web3.eth.contract(address=chain_web3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool"))
     liquidation_status = ""
+    
     try:
         liquidation = contract.functions.canLiquidate(int(loan_id)).call()
         if liquidation != 0:
@@ -1554,6 +1556,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     except Exception:
         pass
+
     try:
         liability = contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
         remaining = f'Remaining Liability:\n{liability} {chain_native.upper()} (${"{:0,.0f}".format(price * liability)})'
@@ -1564,6 +1567,22 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         token = contract.functions.loanToken(int(loan_id)).call()
         name = dextools.get_token_name(token, chain)["name"]
         pair = contract.functions.loanPair(int(loan_id)).call()
+
+        term = contract.functions.loanTermLookup(int(loan_id)).call()
+        term_contract = chain_web3.eth.contract(address=chain_web3.to_checksum_address(term), abi=chainscan.get_abi(term, chain))
+        index = 0
+        token_by_id = None
+        while True:
+            try:
+                token_id = term_contract.functions.tokenByIndex(index).call()
+                if token_id == int(loan_id):
+                    token_by_id = index
+                    break
+                index += 1
+            except Exception:
+                break
+    
+        ill_number = api.get_ill_number(term)
 
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
@@ -1584,8 +1603,8 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     ],
                     [
                         InlineKeyboardButton(
-                            text=f"Loans Dashboard",
-                            url=f"{urls.XCHANGE}lending?tab=lending-pool",
+                            text=f"View Loan",
+                            url=f"{urls.XCHANGE}lending/{chain_name.lower()}/{ill_number}/{token_by_id}",
                         )
                     ]
                 ]
@@ -2413,7 +2432,6 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
 
 
 async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
     chain = " ".join(context.args).lower()
     if chain == "":
         chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
@@ -2426,10 +2444,10 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(text.CHAIN_ERROR)
         return
     
-    treasury_eth_raw = chainscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain)
-    eco_eth_raw = chainscan.get_native_balance(ca.ECO_SPLITTER(chain), chain)
-    treasury_eth = float(treasury_eth_raw)
-    eco_eth = float(eco_eth_raw)
+    message = await update.message.reply_text("Getting Splitter Info, Please wait...")
+    await context.bot.send_chat_action(update.effective_chat.id, "typing")
+    treasury_eth = float(chainscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain))
+    eco_eth = float(chainscan.get_native_balance(ca.ECO_SPLITTER(chain), chain))
     native_price = chainscan.get_native_price(chain)
     eco_dollar = float(eco_eth) * float(native_price)
     treasury_dollar = float(treasury_eth) * float(native_price)
@@ -2443,7 +2461,8 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     treasury_distribution = splitters.generate_treasury_split(chain, treasury_eth)
     for location, (share, percentage) in treasury_distribution.items():
         treasury_splitter_text += f"{location}: {share:.2f} {chain_native.upper()} ({percentage:.0f}%)\n"
-
+    
+    await message.delete()
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
@@ -2499,7 +2518,7 @@ async def timestamp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         else:  
             stamp = int(" ".join(context.args).lower())
-            time = api.timestamp_to_datetime(stamp)
+            time = api.convert_timestamp_to_datetime(stamp)
             current_time = datetime.now()
             timestamp_time = datetime.fromtimestamp(stamp)
             time_difference = current_time - timestamp_time
@@ -2609,8 +2628,7 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = await update.message.reply_text("Getting Treasury Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     native_price = chainscan.get_native_price(chain)
-    eth_raw = chainscan.get_native_balance(chain_dao_multi, chain)
-    eth = round(float(eth_raw), 2)
+    eth = round(float(chainscan.get_native_balance(chain_dao_multi, chain)), 2)
     dollar = float(eth) * float(native_price)
     x7r_balance = chainscan.get_token_balance(chain_dao_multi, ca.X7R(chain), chain)
     x7r_price,_ = dextools.get_price(ca.X7R(chain), chain)
@@ -2939,8 +2957,7 @@ async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         recasters_text = ""
 
-    timestamp_raw = last_cast[0].timestamp
-    timestamp = str(timestamp_raw)[:10]
+    timestamp = str(last_cast[0].timestamp)[:10]
     timestamp_int = int(timestamp)
     current_time = datetime.now()
     timestamp_time = datetime.fromtimestamp(timestamp_int)

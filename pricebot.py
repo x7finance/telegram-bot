@@ -52,14 +52,12 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 token_symbol = ""
 
             if scan[token_address]["is_in_dex"] == "1" and scan[token_address]["buy_tax"] and scan[token_address]["buy_tax"]:
-                buy_tax_raw = (float(scan[token_address]["buy_tax"]) * 100)
-                sell_tax_raw = (float(scan[token_address]["sell_tax"]) * 100)
-                buy_tax = int(buy_tax_raw)
-                sell_tax = int(sell_tax_raw)
-                if sell_tax > 10 or buy_tax > 10:
-                    tax = f"⚠️ Tax: {buy_tax}/{sell_tax}"
+                buy_tax = float(scan[token_address]["buy_tax"]) * 100
+                sell_tax = float(scan[token_address]["sell_tax"]) * 100
+                if sell_tax > 5 or buy_tax > 5:
+                    tax = f"⚠️ Tax: {int(buy_tax)}/{int(sell_tax)}"
                 else:
-                    tax = f"✅️ Tax: {buy_tax}/{sell_tax}"
+                    tax = f"✅️ Tax: {int(buy_tax)}/{int(sell_tax)}"
             else:
                 tax = f"❓ Tax - Unknown"
 

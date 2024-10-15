@@ -146,8 +146,7 @@ class ChainScan:
         url = f"{chain_info.api}?module=account&action=balancemulti&address={wallet}&tag=latest{chain_info.key}"
         response = requests.get(url)
         data = response.json()
-        amount_raw = float(data["result"][0]["balance"])
-        return f"{amount_raw / 10 ** 18}"
+        return float(data["result"][0]["balance"]) / 10 ** 18
 
 
     def get_native_price(self, chain):
@@ -247,8 +246,7 @@ class ChainScan:
             chain_native = chains.CHAINS[chain].token
         hub = self.get_internal_tx(hub_address, chain)
         hub_filter = [d for d in hub["result"] if d["from"] in f"{hub_address}".lower()]
-        value_raw = int(hub_filter[0]["value"]) / 10**18
-        value = round(value_raw, 3) 
+        value = round(int(hub_filter[0]["value"]) / 10**18, 3)
         dollar = float(value) * float(self.get_native_price(chain_native))
         time = datetime.fromtimestamp(int(hub_filter[0]["timeStamp"]))
         duration = now - time
@@ -863,7 +861,8 @@ async def burn_x7r(amount, chain):
     except Exception as e:
         return f'Error burning X7R: {e}'
 
-def datetime_to_timestamp(datetime_str):
+
+def convert_datetime_to_timestamp(datetime_str):
     try:
         datetime_obj = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
         timestamp = datetime_obj.timestamp()
@@ -871,19 +870,21 @@ def datetime_to_timestamp(datetime_str):
     except ValueError:
         return "Invalid datetime format. Please use YYYY-MM-DD HH:MM."
 
-def is_eth(address):
-    if address.startswith("0x") and len(address) == 42:
-        return True
-    else:
-        return False
 
-def timestamp_to_datetime(timestamp):
+def convert_timestamp_to_datetime(timestamp):
     try:
         datetime_obj = datetime.fromtimestamp(timestamp)
         datetime_str = datetime_obj.strftime('%Y-%m-%d %H:%M')
         return datetime_str
     except ValueError:
         return "Invalid timestamp."
+
+
+def escape_markdown(text):
+    characters_to_escape = ['*', '_', '`']
+    for char in characters_to_escape:
+        text = text.replace(char, '\\' + char)
+    return text
 
 
 def format_schedule(schedule1, schedule2, native_token):
@@ -929,13 +930,6 @@ def format_schedule(schedule1, schedule2, native_token):
     return "\n".join(schedule_list)
 
 
-def escape_markdown(text):
-    characters_to_escape = ['*', '_', '`']
-    for char in characters_to_escape:
-        text = text.replace(char, '\\' + char)
-    return text
-
-
 def get_duration_years(duration):
     years = duration.days // 365
     months = (duration.days % 365) // 30
@@ -951,6 +945,11 @@ def get_duration_days(duration):
     return days, hours, minutes
 
 
+def get_ill_number(term):
+    for ill_number, contract_address in ca.ILL_ADDRESSES.items():
+        if term.lower() == contract_address.lower():
+            return ill_number
+        
 
 def get_nft_data(nft, chain):
     try:
@@ -988,6 +987,30 @@ def get_nft_data(nft, chain):
         return {"holder_count": 0, "floor_price": "N/A"}
 
 
+def get_random_pioneer():
+    number = f"{random.randint(1, 4480)}".zfill(4)
+    return f"{urls.PIONEERS}{number}.png"
+
+
+def get_scan(token: str, chain: str) -> dict:
+    if chain in chains.CHAINS:
+        chain_info = chains.CHAINS[chain]
+    url = f"https://api.gopluslabs.io/api/v1/token_security/{chain_info.id}?contract_addresses={token}"
+    response = requests.get(url)
+    return response.json()["result"]
+
+
+def get_snapshot():
+    url = "https://hub.snapshot.org/graphql"
+    query = {
+        "query": 'query { proposals ( first: 1, skip: 0, where: { space_in: ["x7finance.eth"]}, '
+                 'orderBy: "created", orderDirection: desc ) { id title start end snapshot state choices '
+                 "scores scores_total author }}"
+    }
+    response = requests.get(url, query)
+    return response.json()
+
+
 def get_unlock_time(chain_web3, contract, token_pair, now):
         timestamp = contract.functions.getTokenUnlockTimestamp(chain_web3.to_checksum_address(token_pair)).call()
         unlock_datetime = datetime.fromtimestamp(timestamp)
@@ -1013,25 +1036,10 @@ def get_unlock_time(chain_web3, contract, token_pair, now):
         return remaining_time_str, unlock_datetime_str
 
 
-def get_random_pioneer():
-    number = f"{random.randint(1, 4480)}".zfill(4)
-    return f"{urls.PIONEERS}{number}.png"
+def is_eth(address):
+    if address.startswith("0x") and len(address) == 42:
+        return True
+    else:
+        return False
 
 
-def get_scan(token: str, chain: str) -> dict:
-    if chain in chains.CHAINS:
-        chain_info = chains.CHAINS[chain]
-    url = f"https://api.gopluslabs.io/api/v1/token_security/{chain_info.id}?contract_addresses={token}"
-    response = requests.get(url)
-    return response.json()["result"]
-
-
-def get_snapshot():
-    url = "https://hub.snapshot.org/graphql"
-    query = {
-        "query": 'query { proposals ( first: 1, skip: 0, where: { space_in: ["x7finance.eth"]}, '
-                 'orderBy: "created", orderDirection: desc ) { id title start end snapshot state choices '
-                 "scores scores_total author }}"
-    }
-    response = requests.get(url, query)
-    return response.json()
