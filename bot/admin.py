@@ -118,15 +118,19 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id == int(os.getenv("OWNER_TELEGRAM_CHANNEL_ID")):
         if update.effective_chat.type == "private":
-            if settings.BUTTON_TIME is not None:
-                time = settings.BUTTON_TIME
-            else:    
-                time = settings.FIRST_BUTTON_TIME
-            target_timestamp = settings.RESTART_TIME + time
-            time_difference_seconds = target_timestamp - datetime.now().timestamp()
-            time_difference = timedelta(seconds=time_difference_seconds)
-            hours, remainder = divmod(time_difference.seconds, 3600)
-            minutes, seconds = divmod(remainder, 60)
+            if settings.CLICK_ME_ENABLED:
+                if settings.BUTTON_TIME is not None:
+                    time = settings.BUTTON_TIME
+                else:    
+                    time = settings.FIRST_BUTTON_TIME
+                target_timestamp = settings.RESTART_TIME + time
+                time_difference_seconds = target_timestamp - datetime.now().timestamp()
+                time_difference = timedelta(seconds=time_difference_seconds)
+                hours, remainder = divmod(time_difference.seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
 
-            await update.message.reply_text(f"Next Click Me:\n\n{hours} hours, {minutes} minutes, {seconds} seconds\n\n"
-            )
+                await update.message.reply_text(f"Next Click Me:\n\n{hours} hours, {minutes} minutes, {seconds} seconds\n\n"
+                )
+            else:
+                await update.message.reply_text(f"Next Click Me:\n\nDisabled\n\n"
+                )

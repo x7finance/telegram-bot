@@ -2654,7 +2654,7 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    async def error():
+    async def trending_error():
         await message.delete()
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
@@ -2674,7 +2674,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
 
     if chain == "":
-        chain_name = "All Chains"
+        chain_name = ""
         filter_by_chain = False
     elif chain in chains.CHAINS:
         if chain == "eth":
@@ -2693,7 +2693,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         if dune.TRENDING_FLAG[chain_name.upper()] == False:
-            message = await update.message.reply_text(f"Getting Xchange Trending for {chain_name}, Please wait...")
+            message = await update.message.reply_text(f"Getting Xchange Trending {chain_name}, Please wait...")
             await context.bot.send_chat_action(update.effective_chat.id, "typing")
             
             execution_id = dune.execute_query("2970801", "medium")
@@ -2703,7 +2703,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 try:
                     response_data = response.json()
                 except ValueError:
-                    await error()
+                    await trending_error()
                     return
 
                 if response_data.get('is_execution_finished', False):
@@ -2711,7 +2711,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await asyncio.sleep(5)
 
             if 'result' not in response_data:
-                await error()
+                await trending_error()
                 return
 
             rows = response_data["result"]["rows"]
@@ -2793,7 +2793,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ),
             )
     except Exception:
-        await error()
+        await trending_error()
 
 
 async def twitter(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2816,7 +2816,7 @@ async def twitter(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    async def error():
+    async def volume_error():
         await message.delete()
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
@@ -2845,7 +2845,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 try:
                     response_data = response.json()
                 except ValueError:
-                    await error()
+                    await volume_error()
                     return
 
                 if response_data.get('is_execution_finished', False):
@@ -2853,7 +2853,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await asyncio.sleep(2)
 
             if 'result' not in response_data:
-                await error()
+                await volume_error()
                 return
 
             try:
@@ -2862,7 +2862,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 last_7d_amt = response_data['result']['rows'][0]['last_7d_amt']
                 lifetime_amt = response_data['result']['rows'][0]['lifetime_amt']
             except (KeyError, IndexError):
-                await error()
+                await volume_error()
                 return
 
             volume_text = (
@@ -2908,8 +2908,8 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     ]
                 ),
             )
-    except Exception as e:
-        await error()
+    except Exception:
+        await volume_error()
 
 
 async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
