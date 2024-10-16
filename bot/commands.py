@@ -2693,11 +2693,11 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if chain == "":
         chain_name = ""
+        chain_name_title = ""
         filter_by_chain = False
     elif chain in chains.CHAINS:
-        if chain == "eth":
-            chain_name = "ethereum"
-        chain_name = chains.CHAINS[chain].name
+        chain_name = "ethereum" if chain == "eth" else chains.CHAINS[chain].name
+        chain_name_title = f"({chain_name.upper()})"
         filter_by_chain = True
     else:
         await update.message.reply_text(text.CHAIN_ERROR)
@@ -2713,19 +2713,19 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if dune.TRENDING_FLAG[chain_name.upper()] == False:
             message = await update.message.reply_text(f"Getting Xchange Trending {chain_name}, Please wait...")
             await context.bot.send_chat_action(update.effective_chat.id, "typing")
-            
-            execution_id = dune.execute_query("2970801", "medium")
+
+            execution_id = dune.execute_query(dune.TOP_PAIRS_ID, "medium")
             response_data = None
-            for _ in range(10):
-                response = dune.get_query_results(execution_id)
+            for attempt in range(4):
                 try:
+                    response = dune.get_query_results(execution_id)
                     response_data = response.json()
                 except ValueError:
                     await trending_error()
                     return
 
                 if response_data.get('is_execution_finished', False):
-                    break 
+                    break
                 await asyncio.sleep(5)
 
             if 'result' not in response_data:
@@ -2734,23 +2734,27 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             rows = response_data["result"]["rows"]
             if filter_by_chain:
-                rows = [row for row in rows if row["pair"] != "TOTAL" and row["blockchain"].lower() == chain]
+                rows = [row for row in rows if row["pair"] != "TOTAL" and row["blockchain"].lower() == chain_name]
             else:
                 rows = [row for row in rows if row["pair"] != "TOTAL"]
 
-            valid_rows = [row for row in rows if isinstance(row.get('last_24hr_amt'), (int, float))]
-
+            valid_rows = [row for row in rows if row.get('last_24hr_amt') is not None and row.get("pair") is not None]
             sorted_rows = sorted(valid_rows, key=lambda x: x.get('last_24hr_amt', 0), reverse=True)
-            top_3_last_24hr_amt = sorted_rows[:3]
-            trending_text = f"*Xchange Trending Pairs ({chain_name.upper()})*\nUse `/trending [chain-name]` for other chains\n\n"
 
-            if not any(item.get("pair") for item in top_3_last_24hr_amt):
+            if len(sorted_rows) < 3:
+                top_trending = sorted_rows
+            else:
+                top_trending = sorted_rows[:3]
+
+            trending_text = f"*Xchange Trending Pairs {chain_name_title.upper()}*\nUse `/trending [chain-name]` for other chains\n\n"
+
+            if not any(item.get("pair") for item in top_trending):
                 await message.delete()
                 await update.message.reply_photo(
                     photo=api.get_random_pioneer(),
                     caption=
-                        f'*Xchange Trending ({chain_name.upper()})*\nUse `/trending [chain-name]` for other chains\n\n'
-                        f'No trending Data for {chain_name}',
+                        f'*Xchange Trending {chain_name_title.upper()}*\nUse `/trending [chain-name]` for other chains\n\n'
+                        f'No trending data for {chain_name}',
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(
                         [
@@ -2765,7 +2769,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
 
             else:
-                for idx, item in enumerate(top_3_last_24hr_amt, start=1):
+                for idx, item in enumerate(top_trending, start=1):
                     pair = item.get("pair")
                     last_24hr_amt = item.get("last_24hr_amt")
                     chain = item.get("blockchain")
@@ -2856,7 +2860,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         if dune.VOLUME_FLAG == False:
-            execution_id = dune.execute_query("2972368", "medium")
+            execution_id = dune.execute_query(dune.VOLUME_ID, "medium")
             response_data = None
             for _ in range(10):
                 response = dune.get_query_results(execution_id)
