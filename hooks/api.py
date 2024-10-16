@@ -89,7 +89,7 @@ class ChainScan:
         if chain not in chains.CHAINS:
             raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=contract&action=getsourcecode&address={contract}{chain_info.key}"
+        url = f"{chain_info.api}?module=contract&action=getsourcecode&address={contract}&apikey={chain_info.key}"
         response = requests.get(url)
         data = response.json()
         return data["result"][0]["ABI"]
@@ -99,7 +99,7 @@ class ChainScan:
         if chain not in chains.CHAINS:
             raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=block&action=getblocknobytime&timestamp={time}&closest=before{chain_info.key}"
+        url = f"{chain_info.api}?module=block&action=getblocknobytime&timestamp={time}&closest=before&apikey={chain_info.key}"
         response = requests.get(url)
         data = response.json()
         return data["result"]
@@ -112,14 +112,14 @@ class ChainScan:
         yesterday = int(time.time()) - 86400
         block_yesterday = self.get_block(chain, yesterday)
         block_now = self.get_block(chain, int(time.time()))
-        tx_url = f"{chain_info.api}?module=account&action=txlist&address={contract}&startblock={block_yesterday}&endblock={block_now}&page=1&offset=1000&sort=asc{chain_info.key}"
+        tx_url = f"{chain_info.api}?module=account&action=txlist&address={contract}&startblock={block_yesterday}&endblock={block_now}&page=1&offset=1000&sort=asc&apikey={chain_info.key}"
         tx_response = requests.get(tx_url)
         tx_data = tx_response.json()
         if tx_data:
             tx_entry_count = len(tx_data['result']) if 'result' in tx_data else 0
         else:
             tx_data = 0
-        internal_tx_url = f"{chain_info.api}?module=account&action=txlist&address={contract}&startblock={block_yesterday}&endblock={block_now}&page=1&offset=1000&sort=asc{chain_info.key}"
+        internal_tx_url = f"{chain_info.api}?module=account&action=txlist&address={contract}&startblock={block_yesterday}&endblock={block_now}&page=1&offset=1000&sort=asc&apikey={chain_info.key}"
         internal_tx_response = requests.get(internal_tx_url)
         internal_tx_data = internal_tx_response.json()
         if internal_tx_data:
@@ -134,7 +134,7 @@ class ChainScan:
         if chain not in chains.CHAINS:
             raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=gastracker&action=gasoracle{chain_info.key}"
+        url = f"{chain_info.api}?module=gastracker&action=gasoracle&apikey={chain_info.key}"
         response = requests.get(url)
         return response.json()
 
@@ -143,7 +143,7 @@ class ChainScan:
         if chain not in chains.CHAINS:
             raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=account&action=balancemulti&address={wallet}&tag=latest{chain_info.key}"
+        url = f"{chain_info.api}?module=account&action=balancemulti&address={wallet}&tag=latest&apikey={chain_info.key}"
         response = requests.get(url)
         data = response.json()
         return float(data["result"][0]["balance"]) / 10 ** 18
@@ -159,7 +159,7 @@ class ChainScan:
         else:
             field = "ethusd"
         
-        url = f"{chain_info.api}?module=stats&action={chain_info.token}price{chain_info.key}"
+        url = f"{chain_info.api}?module=stats&action={chain_info.token}price&apikey={chain_info.key}"
         response = requests.get(url)
         data = response.json()
 
@@ -170,7 +170,7 @@ class ChainScan:
         if chain not in chains.CHAINS:
             raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest{chain_info.key}"
+        url = f"{chain_info.api}?module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={chain_info.key}"
         response = requests.Session().get(url)
         data = response.json()
         return int(data["result"] or 0)
@@ -182,7 +182,7 @@ class ChainScan:
                 raise ValueError(f"Invalid chain: {chain}")
 
             chain_info = chains.CHAINS[chain]
-            url = f"{chain_info.api}?module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest{chain_info.key}"
+            url = f"{chain_info.api}?module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={chain_info.key}"
             response = requests.get(url)
             data = response.json()
             return int(data["result"][:-6])
@@ -194,7 +194,7 @@ class ChainScan:
         if chain not in chains.CHAINS:
             raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=stats&action=tokensupply&contractaddress={token}{chain_info.key}"
+        url = f"{chain_info.api}?module=stats&action=tokensupply&contractaddress={token}&apikey={chain_info.key}"
         response = requests.get(url)
         data = response.json()
         return data["result"]
@@ -205,7 +205,7 @@ class ChainScan:
             if chain not in chains.CHAINS:
                 raise ValueError(f"Invalid chain: {chain}")
             chain_info = chains.CHAINS[chain]
-            url = f"{chain_info.api}?module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest{chain_info.key}"
+            url = f"{chain_info.api}?module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={chain_info.key}"
             response = requests.get(url)
             data = response.json()
             return int(data["result"][:-18])
@@ -217,7 +217,7 @@ class ChainScan:
         if chain not in chains.CHAINS:
             raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=proxy&action=eth_getTransactionByHash&txhash={tx}{chain_info.key}"
+        url = f"{chain_info.api}?module=proxy&action=eth_getTransactionByHash&txhash={tx}&apikey={chain_info.key}"
         response = requests.get(url)
         return response.json()
 
@@ -226,7 +226,7 @@ class ChainScan:
         if chain not in chains.CHAINS:
             raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=account&action=txlist&sort=desc&address={address}{chain_info.key}"
+        url = f"{chain_info.api}?module=account&action=txlist&sort=desc&address={address}&apikey={chain_info.key}"
         response = requests.get(url)
         return response.json()
 
@@ -235,7 +235,7 @@ class ChainScan:
         if chain not in chains.CHAINS:
             raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=account&action=txlistinternal&sort=desc&address={address}{chain_info.key}"
+        url = f"{chain_info.api}?module=account&action=txlistinternal&sort=desc&address={address}&apikey={chain_info.key}"
         response = requests.get(url)
         return response.json()
 
@@ -260,7 +260,7 @@ class ChainScan:
         if chain not in chains.CHAINS:
             raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=contract&action=getsourcecode&address={contract}{chain_info.key}"
+        url = f"{chain_info.api}?module=contract&action=getsourcecode&address={contract}&apikey={chain_info.key}"
         response = requests.get(url)
         data = response.json()
         return True if "SourceCode" in data["result"][0] else False
@@ -270,7 +270,7 @@ class ChainScan:
         if chain not in chains.CHAINS:
             raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=account&action=tokenbalance&contractaddress={ca.X7R(chain)}&address={ca.DEAD}&tag=latest{chain_info.key}"
+        url = f"{chain_info.api}?module=account&action=tokenbalance&contractaddress={ca.X7R(chain)}&address={ca.DEAD}&tag=latest&apikey={chain_info.key}"
         response = requests.get(url)
         data = response.json()
         supply = ca.SUPPLY - int(data["result"][:-18])

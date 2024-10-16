@@ -1,6 +1,5 @@
 import os
 
-# MEDIA
 BLACKHOLE = [os.path.abspath(f"media/blackhole{i}.jpg") for i in range(1, 8)]
 FONT = "media/FreeMonoBold.ttf"
 
@@ -17,7 +16,7 @@ BSC_LOGO = os.path.join("media", "bsc.png")
 ARB_LOGO = os.path.join("media", "Arbitrum.png")
 POLY_LOGO = os.path.join("media", "polygon.png")
 ETH_LOGO = os.path.join("media", "ethereum.png")
-OPTI_LOGO = os.path.join("media", "optimism.png")
+OP_LOGO = os.path.join("media", "optimism.png")
 BASE_LOGO = os.path.join("media", "base.png")
 RAFFLE_LOGO = os.path.join("media", "raffle.jpg")
 PIONEER_LOGO = os.path.join("media", "pioneer.png")

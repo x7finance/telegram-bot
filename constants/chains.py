@@ -66,7 +66,7 @@ CHAINS = {
         "eth-main",
         urls.RPC("eth"),
         urls.SCAN_API("eth"),
-        os.getenv('ETHER'),
+        os.getenv('ETH_SCAN_API_KEY'),
         ca.COM_MULTI("eth"),
         ca.DAO_MULTI("eth")
     ),
@@ -87,7 +87,7 @@ CHAINS = {
         "base-main",
         urls.RPC("base"),
         urls.SCAN_API("base"),
-        os.getenv('BASE'),
+        os.getenv('BASE_SCAN_API_KEY'),
         ca.COM_MULTI("base"),
         ca.DAO_MULTI("base")
     ),
@@ -108,7 +108,7 @@ CHAINS = {
         "",
         urls.RPC("bsc"),
         urls.SCAN_API("bsc"),
-        os.getenv('BSC'),
+        os.getenv('BSC_SCAN_API_KEY'),
         ca.COM_MULTI("bsc"),
         ca.DAO_MULTI("bsc")
     ),
@@ -129,7 +129,7 @@ CHAINS = {
         "arbitrum-main",
         urls.RPC("arb"),
         urls.SCAN_API("arb"),
-        os.getenv('ARB'),
+        os.getenv('ARB_SCAN_API_KEY'),
         ca.COM_MULTI("arb"),
         ca.DAO_MULTI("arb")
     ),
@@ -140,7 +140,7 @@ CHAINS = {
         "Optimisticscan",
         "10",
         "eth",
-        media.OPTI_LOGO,
+        media.OP_LOGO,
         urls.SCAN_TOKEN("op"),
         urls.SCAN_ADDRESS("op"),
         urls.SCAN_TX("op"),
@@ -150,7 +150,7 @@ CHAINS = {
         "optimism-main",
         urls.RPC("op"),
         urls.SCAN_API("op"),
-        os.getenv('OP'),
+        os.getenv('OP_SCAN_API_KEY'),
         ca.COM_MULTI("op"),
         ca.DAO_MULTI("op")
     ),
@@ -171,7 +171,7 @@ CHAINS = {
         "poly-main",
         urls.RPC("poly"),
         urls.SCAN_API("poly"),
-        os.getenv('POLY'),
+        os.getenv('POLY_SCAN_API_KEY'),
         ca.COM_MULTI("poly"),
         ca.DAO_MULTI("poly")
     )
