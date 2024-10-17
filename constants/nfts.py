@@ -66,11 +66,11 @@ def mint_prices(chain):
             "magister": "150 BNB - 49 Supply",
         },
         "poly": {
-            "eco": "390 MATIC - 500 Supply",
-            "liq": "975 MATIC - 250 Supply",
-            "dex": "1950 MATIC - 150 Supply",
-            "borrow": "2600 MATIC - 100 Supply",
-            "magister": "45000 MATIC - 49 Supply",
+            "eco": "390 POL - 500 Supply",
+            "liq": "975 POL - 250 Supply",
+            "dex": "1950 POL - 150 Supply",
+            "borrow": "2600 POL - 100 Supply",
+            "magister": "45000 POL - 49 Supply",
         },
         "base": {
             "eco": "0.3 ETH - 500 Supply",

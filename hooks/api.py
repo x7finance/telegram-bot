@@ -156,10 +156,12 @@ class ChainScan:
 
         if chain == "poly":
             field = "maticusd"
+            token = "matic"
         else:
+            token = chain_info.token
             field = "ethusd"
         
-        url = f"{chain_info.api}?module=stats&action={chain_info.token}price&apikey={chain_info.key}"
+        url = f"{chain_info.api}?module=stats&action={token}price&apikey={chain_info.key}"
         response = requests.get(url)
         data = response.json()
 

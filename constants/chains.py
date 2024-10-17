@@ -160,7 +160,7 @@ CHAINS = {
         "Polygon",
         "Polygonscan",
         "137",
-        "matic",
+        "pol",
         media.POLY_LOGO,
         urls.SCAN_TOKEN("poly"),
         urls.SCAN_ADDRESS("poly"),
