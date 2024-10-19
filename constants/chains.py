@@ -22,6 +22,7 @@ class ChainInfo:
         dext: str,
         opensea: str,
         blockspan: str,
+        tg: str,
         w3: str,
         api: str,
         key: str,
@@ -42,6 +43,7 @@ class ChainInfo:
         self.dext = dext
         self.opensea = opensea
         self.blockspan = blockspan
+        self.tg = tg
         self.w3 = w3
         self.api = api
         self.key = key
@@ -64,6 +66,7 @@ CHAINS = {
         "ether",
         "",
         "eth-main",
+        urls.TG_ETH,
         urls.RPC("eth"),
         urls.SCAN_API("eth"),
         os.getenv('ETH_SCAN_API_KEY'),
@@ -85,6 +88,7 @@ CHAINS = {
         "base",
         "-base",
         "base-main",
+        urls.TG_BASE,
         urls.RPC("base"),
         urls.SCAN_API("base"),
         os.getenv('BASE_SCAN_API_KEY'),
@@ -106,6 +110,7 @@ CHAINS = {
         "bnb",
         "-binance",
         "",
+        urls.TG_BSC,
         urls.RPC("bsc"),
         urls.SCAN_API("bsc"),
         os.getenv('BSC_SCAN_API_KEY'),
@@ -127,6 +132,7 @@ CHAINS = {
         "arbitrum",
         "-arbitrum",
         "arbitrum-main",
+        urls.TG_ARB,
         urls.RPC("arb"),
         urls.SCAN_API("arb"),
         os.getenv('ARB_SCAN_API_KEY'),
@@ -148,6 +154,7 @@ CHAINS = {
         "optimism",
         "-optimism",
         "optimism-main",
+        urls.TG_OP,
         urls.RPC("op"),
         urls.SCAN_API("op"),
         os.getenv('OP_SCAN_API_KEY'),
@@ -169,6 +176,7 @@ CHAINS = {
         "polygon",
         "-polygon",
         "poly-main",
+        urls.TG_POLY,
         urls.RPC("poly"),
         urls.SCAN_API("poly"),
         os.getenv('POLY_SCAN_API_KEY'),
@@ -196,3 +204,4 @@ def FULL_NAMES():
 def SHORT_NAMES():
     chain_list = list(CHAINS.keys())
     return "\n".join(chain_list)
+

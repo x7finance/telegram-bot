@@ -91,11 +91,15 @@ def OS_LINK(nft):
 
 
 # TG
-TG_MAIN = "t.me/x7m105portal"
-TG_BASE = "t.me/x7portal"
 TG_ALERTS = "t.me/xchange_alerts"
 TG_ANNOUNCEMENTS = "t.me/x7announcements"
 TG_DAO = "https://telegram.me/collablandbot?start=VFBDI1RFTCNDT01NIy0xMDAyMTM5MTc4NTQx"
+TG_ETH = "t.me/x7m105portal"
+TG_ARB = ""
+TG_BASE = ""
+TG_BSC = ""
+TG_OP = ""
+TG_POLY = ""
 
 
 # LINKS

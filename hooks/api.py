@@ -155,17 +155,15 @@ class ChainScan:
         chain_info = chains.CHAINS[chain]
 
         if chain == "poly":
-            field = "maticusd"
             token = "matic"
         else:
             token = chain_info.token
-            field = "ethusd"
         
         url = f"{chain_info.api}?module=stats&action={token}price&apikey={chain_info.key}"
         response = requests.get(url)
         data = response.json()
 
-        return float(data["result"][field]) / 1**18
+        return float(data["result"][f"{token}usd"]) / 1**18
 
 
     def get_pool_liq_balance(self, wallet, token, chain):

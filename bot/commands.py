@@ -300,22 +300,23 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ],
         [
             InlineKeyboardButton(
-                text="Multichain Community", url=f"{urls.TG_MAIN}"
-            ),
-            InlineKeyboardButton(
-                text="Base Community", url=f"{urls.TG_BASE}"
-            ), 
-        ],
-        [
-            InlineKeyboardButton(
                 text="Xchange Alerts", url=f"{urls.TG_ALERTS}"
             ),
+        ],
+        [
             InlineKeyboardButton(
                 text="DAO Chat", url=f"{urls.TG_DAO}",
             ),
         ],
     ]
-
+    for chain in chains.CHAINS.values():
+        
+        if chain.tg:
+            buttons.append([
+                InlineKeyboardButton(
+                    text=f"{chain.name} Community Chat", url=f"{chain.tg}",
+                )
+            ])
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=f"\n",
