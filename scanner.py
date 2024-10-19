@@ -41,13 +41,8 @@ async def log_loop(chain, poll_interval):
 
 async def alert(event, chain):
     try:
-        chain_info = chains.CHAINS.get(chain)
-        if chain_info:
-            logo = chain_info.logo
-            paired_token = ca.WETH(chain)
-            dext = chain_info.dext
-            chain_name = chain_info.name
-            chain_id = chain_info.id
+        chain_info, error_message = chains.get_info(chain,token=True)
+        paired_token = ca.WETH(chain)
 
         token_0_info = dextools.get_token_name(event["args"]["token0"], chain)
         token_0_name = token_0_info["name"]
@@ -109,7 +104,7 @@ async def alert(event, chain):
             image_url = defined.get_token_image(token_address, chain)
             im2 = Image.open(requests.get(image_url, stream=True).raw).convert("RGBA")
         except:
-            im2 = Image.open(logo).convert("RGBA")
+            im2 = Image.open(chain_info.logo).convert("RGBA")
         
         im1.paste(im2, (700, 20), im2)
 
@@ -122,7 +117,7 @@ async def alert(event, chain):
         i1 = ImageDraw.Draw(im1)
         i1.text(
             (26, 30),
-            f"New Pair Created ({chain_name.upper()})\n\n"
+            f"New Pair Created ({chain_info.name.upper()})\n\n"
             f"{message}",
             font = ImageFont.truetype(media.FONT, 26),
             fill = (255, 255, 255),
@@ -141,7 +136,7 @@ async def alert(event, chain):
                     channel,
                     photo=open(r"media/blackhole.png", "rb"),
                     caption=
-                        f"*New Pair Created ({chain_name.upper()})*\n\n"
+                        f"*New Pair Created ({chain_info.name.upper()})*\n\n"
                         f"{message}\n\n"
                         f"Token Address:\n`{token_address}`",
                     parse_mode="Markdown",
@@ -150,13 +145,13 @@ async def alert(event, chain):
                             [
                                 InlineKeyboardButton(
                                     text="Buy On Xchange",
-                                    url=f"{urls.XCHANGE_BUY(chain_id, token_address)}",
+                                    url=f"{urls.XCHANGE_BUY(chain_info.id, token_address)}",
                                 )
                             ],
                             [
                                 InlineKeyboardButton(
                                     text="Chart",
-                                    url=f"{urls.DEX_TOOLS(dext)}{event['args']['pair']}",
+                                    url=f"{urls.DEX_TOOLS(chain_info.dext)}{event['args']['pair']}",
                                 )
                             ],
                         ]

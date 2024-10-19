@@ -229,7 +229,7 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="Burn Wallet",
-                        url=f"{chain_info.scan_address}{ca.X7R(chain)}?a={ca.DEAD}",
+                        url=f"{chain_info.scan_token}{ca.X7R(chain)}?a={ca.DEAD}",
                     )
                 ],
             ]
@@ -2051,7 +2051,8 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if error_message:
             await update.message.reply_text(error_message)
             return
-
+        
+        chain_lpool = ca.LPOOL(chain)
         native_price = chainscan.get_native_price(chain)
         lpool_reserve = chainscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
         lpool_reserve_dollar = (float(lpool_reserve) * float(native_price))
@@ -2084,7 +2085,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
-                f"*X7 Finance Lending Pool Info ({chain_name})*\nUse `/pool [chain-name]` for other chains\n\n"
+                f"*X7 Finance Lending Pool Info ({chain_info.name})*\nUse `/pool [chain-name]` for other chains\n\n"
                 f"Lending Pool:\n"
                 f'{lpool} {chain_info.native.upper()} (${"{:0,.0f}".format(lpool_dollar)})\n\n'
                 f"Lending Pool Reserve:\n"
