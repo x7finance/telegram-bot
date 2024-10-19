@@ -155,15 +155,17 @@ class ChainScan:
         chain_info = chains.CHAINS[chain]
 
         if chain == "poly":
+            field = "maticusd"
             token = "matic"
         else:
-            token = chain_info.token
+            token = chain_info.native
+            field = "ethusd"
         
         url = f"{chain_info.api}?module=stats&action={token}price&apikey={chain_info.key}"
         response = requests.get(url)
         data = response.json()
 
-        return float(data["result"][f"{token}usd"]) / 1**18
+        return float(data["result"][field]) / 1**18
 
 
     def get_pool_liq_balance(self, wallet, token, chain):
@@ -243,7 +245,7 @@ class ChainScan:
     def get_liquidity_hub_data(self, hub_address, chain):
         now = datetime.now()
         if chain in chains.CHAINS:
-            chain_native = chains.CHAINS[chain].token
+            chain_native = chains.CHAINS[chain].native
         hub = self.get_internal_tx(hub_address, chain)
         hub_filter = [d for d in hub["result"] if d["from"] in f"{hub_address}".lower()]
         value = round(int(hub_filter[0]["value"]) / 10**18, 3)

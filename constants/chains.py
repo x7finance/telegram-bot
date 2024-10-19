@@ -4,6 +4,8 @@ import os
 from constants import ca, urls
 import media
 
+from web3 import Web3
+
 
 class ChainInfo:
     def __init__(
@@ -13,7 +15,7 @@ class ChainInfo:
         name: str,
         scan_name: str,
         id: str,
-        token: str,
+        native: str,
         logo: str,
         scan_token: str,
         scan_address: str,
@@ -34,7 +36,7 @@ class ChainInfo:
         self.name = name
         self.scan_name = scan_name
         self.id = id
-        self.token = token
+        self.native = native
         self.logo = logo
         self.scan_token = scan_token
         self.scan_address = scan_address
@@ -44,7 +46,7 @@ class ChainInfo:
         self.opensea = opensea
         self.blockspan = blockspan
         self.tg = tg
-        self.w3 = w3
+        self.w3 = Web3(Web3.HTTPProvider(w3))
         self.api = api
         self.key = key
         self.com_multi = com_multi
@@ -205,3 +207,14 @@ def SHORT_NAMES():
     chain_list = list(CHAINS.keys())
     return "\n".join(chain_list)
 
+
+def get_info(chain, token=None):
+    if chain in CHAINS:
+        chain_info = CHAINS[chain]
+
+        if token and not chain_info.trading:
+            return None, f"{chain_info.name} tokens not launched yet!"
+
+        return chain_info, None
+    else:
+        return None, f'Chain not recognised, Please use on of the following abbreviations:\n\n{SHORT_NAMES()}'

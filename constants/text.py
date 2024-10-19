@@ -22,10 +22,6 @@ ABOUT = (
 )
 
 
-CHAIN_ERROR = (
-    f'Chain not recognised, Please use on of the following abbreviations:\n\n{chains.SHORT_NAMES()}\n\n')
-
-
 CONTRIBUTE = (
     "Hey there, potential X7 contributor!\n\n"
     "We're excited you're interested in joining forces with X7 Finance to build groundbreaking DeFi solutions. Our motto is simple: 'Trust No One, Trust Code, Long Live DeFi'.\n\n"
