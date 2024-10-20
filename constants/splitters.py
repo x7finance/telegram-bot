@@ -9,9 +9,9 @@ chainscan = api.ChainScan()
 
 def generate_eco_split(chain, eth_value):
     if chain in chains.CHAINS:
-        chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
-    contract = chain_web3.eth.contract(
-        address=chain_web3.to_checksum_address(ca.ECO_SPLITTER(chain)),
+        chain_info, _ = chains.get_info(chain)
+    contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(ca.ECO_SPLITTER(chain)),
         abi=chainscan.get_abi(ca.ECO_SPLITTER(chain), chain),
         )
             
@@ -38,9 +38,9 @@ def generate_eco_split(chain, eth_value):
 
 def generate_treasury_split(chain, eth_value):
     if chain in chains.CHAINS:
-        chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
-    contract = chain_web3.eth.contract(
-        address=chain_web3.to_checksum_address(ca.TREASURY_SPLITTER(chain)),
+        chain_info, _ = chains.get_info(chain)
+    contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(ca.TREASURY_SPLITTER(chain)),
         abi=chainscan.get_abi(ca.TREASURY_SPLITTER(chain), chain),
     )
     if chain == "eth" or chain  == "base":

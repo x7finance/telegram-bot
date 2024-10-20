@@ -822,9 +822,7 @@ class Opensea:
 async def burn_x7r(amount, chain):
     try:
         if chain in chains.CHAINS:
-            chain_id = int(chains.CHAINS[chain].id)
-            w3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
-            chain_scan_url = chains.CHAINS[chain].scan_tx
+            chain_info, _ = chains.get_info(chain)
 
         sender_address = os.getenv("BURN_WALLET")
         recipient_address = ca.DEAD
@@ -839,13 +837,13 @@ async def burn_x7r(amount, chain):
             + hex(amount_to_send_wei)[2:].rjust(64, '0')
         )
 
-        nonce = w3.eth.get_transaction_count(sender_address)
-        gas = w3.eth.estimate_gas({
+        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+        gas = chain_info.w3.eth.estimate_gas({
             'from': sender_address,
             'to': token_contract_address,
             'data': token_transfer_data,
         })
-        gas_price = w3.to_wei(w3.eth.gas_price / 1e9, 'gwei')
+        gas_price = chain_info.w3.to_wei(chain_info.w3.eth.gas_price / 1e9, 'gwei')
 
         transaction = {
             'from': sender_address,
@@ -854,12 +852,12 @@ async def burn_x7r(amount, chain):
             'gasPrice': gas_price,
             'gas': gas,
             'nonce': nonce,
-            'chainId': chain_id
+            'chainId': chain_info.id
         }
 
-        signed_transaction = w3.eth.account.sign_transaction(transaction, sender_private_key)
-        tx_hash = w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
-        return f"{amount} X7R Burnt\n\n{chain_scan_url}{tx_hash.hex()}"
+        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+        return f"{amount} X7R Burnt\n\n{chain_info.scan_tx}{tx_hash.hex()}"
     except Exception as e:
         return f'Error burning X7R: {e}'
 
@@ -1013,8 +1011,8 @@ def get_snapshot():
     return response.json()
 
 
-def get_unlock_time(chain_web3, contract, token_pair, now):
-        timestamp = contract.functions.getTokenUnlockTimestamp(chain_web3.to_checksum_address(token_pair)).call()
+def get_unlock_time(chain_w3, contract, token_pair, now):
+        timestamp = contract.functions.getTokenUnlockTimestamp(chain_w3.to_checksum_address(token_pair)).call()
         unlock_datetime = datetime.fromtimestamp(timestamp)
         time_remaining = unlock_datetime - now
 

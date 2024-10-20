@@ -23,8 +23,8 @@ async def error(context):
 
 
 async def log_loop(chain, poll_interval):
-    web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
-    factory = web3.eth.contract(address=ca.FACTORY(chain), abi=abis.read("factory"))
+    w3 = chains.CHAINS[chain].w3
+    factory = w3.eth.contract(address=ca.FACTORY(chain), abi=abis.read("factory"))
     pair_filter = factory.events.PairCreated.create_filter(fromBlock="latest")
 
     while True:

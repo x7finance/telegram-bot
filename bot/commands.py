@@ -1396,16 +1396,15 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             total = 0
 
             for chain in chains.CHAINS:
-                chain_name = chains.CHAINS[chain].name
                 chain_lpool = ca.LPOOL(chain)
-                chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
-                contract = chain_web3.eth.contract(
-                    address=chain_web3.to_checksum_address(chain_lpool),
+                chain_info, error_message = chains.get_info(chain)
+                contract = chain_info.w3.eth.contract(
+                    address=chain_info.w3.to_checksum_address(chain_lpool),
                     abi=abis.read("lendingpool"),
                 )
         
                 amount = contract.functions.nextLoanID().call() - 1
-                loans_text += f"{chain_name}: {amount}\n"
+                loans_text += f"{chain_info.name}: {amount}\n"
                 total += amount
 
             await message.delete()
@@ -1444,8 +1443,9 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+    chain_lpool = ca.LPOOL(chain, int(loan_id))
     price = chainscan.get_native_price(chain)
-    contract = chain_web3.eth.contract(address=chain_web3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool"))
+    contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool"))
     liquidation_status = ""
     
     try:
@@ -1473,7 +1473,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pair = contract.functions.loanPair(int(loan_id)).call()
 
         term = contract.functions.loanTermLookup(int(loan_id)).call()
-        term_contract = chain_web3.eth.contract(address=chain_web3.to_checksum_address(term), abi=chainscan.get_abi(term, chain))
+        term_contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(term), abi=chainscan.get_abi(term, chain))
         index = 0
         token_by_id = None
         while True:
@@ -1491,7 +1491,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
-                f"*X7 Finance Initial Liquidity Loan - {loan_id} ({chain_name})*\n\n"
+                f"*X7 Finance Initial Liquidity Loan - {loan_id} ({chain_info.name})*\n\n"
                 f"{name}\n\n"
                 f"Payment Schedule UTC:\n{schedule_str}\n\n"
                 f"{remaining}"
@@ -1508,14 +1508,14 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         InlineKeyboardButton(
                             text=f"View Loan",
-                            url=f"{urls.XCHANGE}lending/{chain_name.lower()}/{ill_number}/{token_by_id}",
+                            url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}",
                         )
                     ]
                 ]
             ),
         )
     except Exception:
-        await update.message.reply_text(f"Loan ID {loan_id} on {chain_name} not found")
+        await update.message.reply_text(f"Loan ID {loan_id} on {chain_info.name} not found")
 
 
 async def loans_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1853,16 +1853,15 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
     pair_text = ""
     total = 0
     for chain in chains.CHAINS:
-        chain_web3 = Web3(Web3.HTTPProvider(chains.CHAINS[chain].w3))
-        chain_name = chains.CHAINS[chain].name
-        contract = chain_web3.eth.contract(
-            address=chain_web3.to_checksum_address(ca.FACTORY(chain)),
+        chain_info, error_message = chains.get_info(chain)
+        contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(ca.FACTORY(chain)),
             abi=abis.read("factory"),
         )
         amount = contract.functions.allPairsLength().call()
         if chain == "eth":
             amount += 141
-        pair_text += f"`{chain_name}:`   {amount}\n"
+        pair_text += f"`{chain_info.name}:`   {amount}\n"
         total += amount
     await message.delete()
     await update.message.reply_photo(
