@@ -525,8 +525,8 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     amount_str = float(amount)
 
-    caption = (f"*X7 Finance Price Conversion*\n\n"
-            f"{amount_str:,.0f} {token.upper()} ({chain.upper()}) is currently worth:\n\n${output}\n\n")
+    caption = (f"*X7 Finance Price Conversion ({token_info.name.upper()})*\n\n"
+            f"{amount_str:,.0f} {token.upper()}  is currently worth:\n\n${output}\n\n")
     
     if amount == "500000" and token.upper() == "X7DAO":
         caption+= "Holding 500,000 X7DAO tokens earns you the right to make X7DAO proposals\n\n"
@@ -1586,12 +1586,12 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
 
-    data = api.get_nft_data(ca.MAGISTER(chain), chain, token=True)
+    data = api.get_nft_data(ca.MAGISTER(chain), chain)
     holders = data["holder_count"]
     try:
         magisters = bitquery.get_nft_holder_list(ca.MAGISTER(chain), chain)
@@ -1611,7 +1611,7 @@ async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="Magister Holder List",
-                        url=f"{chain_info.url}{ca.MAGISTER(chain)}#balances",
+                        url=f"{chain_info.scan_token}{ca.MAGISTER(chain)}#balances",
                     )
                 ],
             ]
@@ -2966,7 +2966,7 @@ async def wp(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
-    chain_info, error_message = chains.get_info(chain,token=True)
+    chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
