@@ -73,20 +73,20 @@ def LIQ(chain):
         return "0x7000f8270b955377e047da8202ae3c408186b4f7"
 
 def DEX(chain):
-    if chain == "base":
+    if chain == "eth":
         return "0x7000b3B5e4e126610A7b7d1Af2D2DE8685c7C4f7"
     else:
         return "0x7000b3B5e4e126610A7b7d1Af2D2DE8685c7C4f7"
 
 
 def BORROW(chain):
-    if chain == "base":
+    if chain == "eth":
         return "0x7000D5d7707Bf86b317deC635e459E47b9aBD4F7"
     else:
         return "0x7000D5d7707Bf86b317deC635e459E47b9aBD4F7"
     
 def MAGISTER(chain):
-    if chain == "base":
+    if chain == "eth":
         return "0x7dA0bb55E4097FC2d78a1822105057F36C5F360d"
     else:
         return "0x7dA0bb55E4097FC2d78a1822105057F36C5F360d"
@@ -97,37 +97,41 @@ PIONEER = "0x70000299ee8910ccacd97b1bb560e34f49c9e4f7"
 # SMART CA
 
 def BURNER(chain):
-    if chain == "base":
-        return "0x70008F0B06060A31515733DB6dCB515c64f3DeAd"
-    else:
-        return "0x70008F0B06060A31515733DB6dCB515c64f3DeAd"
-    
+    map = {
+        "eth": "0x70008F0B06060A31515733DB6dCB515c64f3DeAd",
+        "base": "0xA649b52295b4DB30648e633504f1714337603DEa",
+        "bsc": "0xA4fA641C8AB0a94Ad9CaAbaDcd43F91730b24676",
+        "poly": "0x5c95C015b9E3B2deE4d2E4112cEa97F6209b489e",
+        "arb": "0xA1A0744f4195F7058333A464a3Be90a771B22d98",
+        "op": "0x1675ad54b0c41413b6e6c563b89E6b1C3c5b5796",
+    }
+    return map.get(chain)
+
 def DEFAULT_TOKEN_LIST(chain):
-    if chain  == "base":
-        return "0x7deF192aDB727777c5f24c05018cfbaFDFaD805a"
-    else:
-        return "0x7deF192aDB727777c5f24c05018cfbaFDFaD805a"
+    return "0x7deF192aDB727777c5f24c05018cfbaFDFaD805a"
 
 def DISCOUNT_ROUTER(chain):
-    if chain == "base":
-        return "0x7de8dd6146aa8b4a2ed8343aa83bc8874fb17000"
-    else:
-        return "0x7de8dd6146aa8b4a2ed8343aa83bc8874fb17000"
+    return "0x7de8dd6146aa8b4a2ed8343aa83bc8874fb17000"
 
 def ECO_SPLITTER(chain):
-    if chain == "base":
-        return "0x70001BA1BA4d85739E7B6A7C646B8aba5ed6c888"
-    else:
-        return "0x70001BA1BA4d85739E7B6A7C646B8aba5ed6c888"
+    map = {
+        "eth": "0x70001BA1BA4d85739E7B6A7C646B8aba5ed6c888",
+    }
+    return map.get(chain, "0xA65DF22BC2ec986859B43D1803b75D48232f2902")
 
 def FACTORY(chain):
     return "0x8B76C05676D205563ffC1cbd11c0A6e3d83929c5"
 
 def LENDING_DISCOUNT(chain):
-    if chain == "base":
-        return "0x74001e463b3c7dc95d96a1fdbe621678c24d47da"
-    else:
-        return "0x74001e463b3c7dc95d96a1fdbe621678c24d47da"
+    map = {
+        "eth": "0x74001e463B3c7dC95D96a1FDBE621678C24D47Da",
+        "base": "0x758808B831E3f58c040c1D4A179EFFc9f2e31E0C",
+        "bsc": "0x87A53C0d9691c742C819189B86E444A4236b91B",
+        "poly": "0xBeaCd59B75224c07fca41bC6F36c76Cce3E7D1FF",
+        "arb": "0x45A529953014E38aF4e38Bbc173d256433A3Ac94",
+        "op": "0x758808B831E3f58c040c1D4A179EFFc9f2e31E0C",
+    }
+    return map.get(chain)
 
 def LIQUIDITY_TREASURY(chain):
     map = {
@@ -141,20 +145,33 @@ def LIQUIDITY_TREASURY(chain):
     return map.get(chain) 
 
 def LPOOL(chain, loan_id=None):
+    eth_map = {
+        True: "0x740015c39da5d148fca25a467399d00bce10c001",
+        False: "0x74001DcFf64643B76cE4919af4DcD83da6Fe1E02"
+    }
+    map = {
+        "eth": lambda loan_id: eth_map[loan_id is not None and loan_id < 21],
+        "base": "0x4eE199B7DFED6B96402623BdEcf2B1ae2f3750Dd",
+        "bsc": "0x6396898c25b2bbF824DcdEc99A6F4061CC12f573",
+        "poly": "0xF57C56270E9FbF18B254E05168C632c9f3D9a442",
+        "arb": "0x7F3F8bcF93e17734AEec765128156690e8c7e8d3",
+        "op": "0x94ada63c4B836AbBA14D2a20624bDF39b9DD5Ed5"
+    }
     if chain == "eth":
-        if loan_id is not None and loan_id < 21:
-            return "0x740015c39da5d148fca25a467399d00bce10c001"
-        else:
-            return "0x74001DcFf64643B76cE4919af4DcD83da6Fe1E02"
-    else:
-        return "0x740015c39da5d148fca25a467399d00bce10c001"
+        return map["eth"](loan_id)
+    return map.get(chain)
 
 def LPOOL_RESERVE(chain):
-    if chain == "base":
-        return "0x7Ca54e9Aa3128bF15f764fa0f0f93e72b5267000"
-    else:
-        return "0x7Ca54e9Aa3128bF15f764fa0f0f93e72b5267000"
-    
+    map = {
+        "eth": "0x7Ca54e9Aa3128bF15f764fa0f0f93e72b5267000",
+        "base": "0x1C17a7E472CDded644b1a9bC2dd52304d6215Af3",
+        "bsc": "0x3dE169E39A91519C16497C60510d7AE1ddf443B",
+        "poly": "0x6e77E844CDac13698d06a00a9Ddb0465c5a78429",
+        "arb": "0xB9a7346CeFc95aE5C4105c31453824A737Cd2760",
+        "op": "0xb71016b5BdbbAB0f8d1A50e66B6a757D1Dcd1Db2"
+    }
+    return map.get(chain)
+
 def ROUTER(chain):
     map = {
         "arb": "0x7C79C9483Ee518783b31C78920f73D0fDeabe246",
@@ -167,58 +184,87 @@ def ROUTER(chain):
     return map.get(chain) 
 
 def TIME_LOCK(chain):
-    if chain == "base":
-        return "0x7000F4Cddca46FB77196466C3833Be4E89ab810C"
-    else:
-        return "0x7000F4Cddca46FB77196466C3833Be4E89ab810C"
+    map = {
+        "eth": "0x7000F4Cddca46FB77196466C3833Be4E89ab810C",
+        "bsc": "0x8135bDc81185969A4F7eCf2F65d737C6e119C5f4",
+        "poly": "0xf748Fc84EEe0caa845eDF0C56781f77161D10Ae2",
+        "arb": "0x029D9B5bC816638864402dACdFe5540488D3c3Fe",
+        "op": "0xeB108169a1962874A02bbBBAE8F123C97EA297dA",
+        "base": "0xeB108169a1962874A02bbBBAE8F123C97EA297dA"
+    }
+    return map.get(chain)
     
 def TREASURY_SPLITTER(chain):
-    if chain == "base" or chain == "eth":
-        return "0x7000706E2727686eDF46cA0E42690F87b9de1999"
-    else:
-        return "0x70006B785AA87821331a974C3d5af81CdE5BB999"
+    map = {
+        "eth": "0x7000706E2727686eDF46cA0E42690F87b9de1999",
+        "base": "0x75cb47A14BFEb7EFB7fD616904935E44F19580BE",
+        "bsc": "0x9f94e2A7b4AE351eb6A9d1c09E8d005b8d94C08",
+        "poly": "0x6767095743cfED43B7B758BCc022FeaBBb7BcEBa",
+        "arb": "0x9f168f2e3CB2F94031A8aec5bBfb37a2928b4c86",
+        "op": "0x75cb47A14BFEb7EFB7fD616904935E44F19580BE"
+    }
+    return map.get(chain)
 
 def X7100_DISCOUNT(chain):
-    if chain == "base":
-        return "0x7100AAcC6047281b105201cb9e0DEcF9Ae5431DA"
-    else:
-        return "0x7100AAcC6047281b105201cb9e0DEcF9Ae5431DA"
+    map = {
+        "eth": "0x7100AAcC6047281b105201cb9e0DEcF9Ae5431DA",
+    }
+    return map.get(chain, "0x383f768222818aE9C391600913DD8Ab309254F39")
     
 def X7100_LIQ_HUB(chain):
-    if chain == "base":
-        return "0xA4437E62CD7E8E6199a0199deA7E78641f181825"
-    else:
-        return "0xA4437E62CD7E8E6199a0199deA7E78641f181825"
-    
+    map = {
+        "eth": "0xA4437E62CD7E8E6199a0199deA7E78641f181825",
+        "bsc": "0xA9fE3c1Fc5705044C33409B87486daf57f2630bf",
+        "poly": "0x950c0685E6eAf16Fb7643a3EAB7EE57a91DB8cc3",
+        "arb": "0x84f864Bf33607fD42663db4823D8f30093711b37",
+        "op": "0x62c72ce2B7ec919888238C8d866227b726ea2CEA",
+        "base": "0xa6433641803102AC2be4fff17C339762d9C9C2E0"
+    }
+    return map.get(chain)
+
 def X7DAO_DISCOUNT(chain):
-    if chain == "base":
-        return "0x7da05D75f51056f3B83b43F397668Cf6A5051cDa"
-    else:
-        return "0x7da05D75f51056f3B83b43F397668Cf6A5051cDa"
-    
+    map = {
+        "eth": "0x7da05D75f51056f3B83b43F397668Cf6A5051cDa",
+    }
+    return map.get(chain, "0x864C53A08A99DaDc219b309Aa867c45D222d0938")
+
 def X7DAO_LIQ_HUB(chain):
-    if chain == "base":
-        return "0x6913Bb5E6b85De1C47f0bc5C8ed3409d3aB14130"
-    else:
-        return "0x6913Bb5E6b85De1C47f0bc5C8ed3409d3aB14130"
+    map = {
+        "eth": "0x6913Bb5E6b85De1C47f0bc5C8ed3409d3aB14130",
+        "base": "0x005eB898b4557aFf72ef4c28934AdDba19c12b0b",
+        "bsc": "0xE2E8a085025Eaf7130111aD82c18799f047d7278",
+        "poly": "0x0Bf5f8B61360b2abff48547C4558f50389cf0221",
+        "arb": "0x22B31DC2D1cD37788202a4b9AbFfd17b56b186aa"
+    }
+    return map.get(chain)
     
 def X7R_DISCOUNT(chain):
-    if chain == "base":
-        return "0x712bC6ddcd97A776B2482531058C629456B93eda"
-    else:
-        return "0x712bC6ddcd97A776B2482531058C629456B93eda"
-    
+    map = {
+        "eth": "0x712bC6ddcd97A776B2482531058C629456B93eda",
+    }
+    return map.get(chain, "0xdd2cD5fe4248FD5656d3240EB7FdbD5c9930a686")
+
 def X7R_LIQ_HUB(chain):
-    if chain == "base":
-        return "0xDD53194e7Ea18402513b823fa5BE47be83352173"
-    else:
-        return "0xDD53194e7Ea18402513b823fa5BE47be83352173"
+    map = {
+        "eth": "0xDD53194e7Ea18402513b823fa5BE47be83352173",
+        "base": "0x34AeB703bf00Bf6033231bf964a7714f0f9A215C",
+        "bsc": "0x4B0d2d38f080f94634Bfe42B405A623a419389EF",
+        "poly": "0xBa7a7956716F32DF5F958A895Ba860f41889D828",
+        "arb": "0xeC6a8dE27138D686D96A60F2E9B7ccB5bA53C94C",
+        "op": "0xFAa2B600c430d01dEB94D8955Ad02F100E2066D4"
+    }
+    return map.get(chain)
 
 def XCHANGE_DISCOUNT(chain):
-    if chain == "base":
-        return "0x7de8ab0dd777561ce98b7ef413f6fd564e89c1da"
-    else:
-        return "0x7de8ab0dd777561ce98b7ef413f6fd564e89c1da"
+    map = {
+        "eth": "0x6377c6219c7Ab053F17cA9E3D823e63473e669A2",
+        "base": "0x6fD8d2a09a090A69d05b0d21a3c187de6a9A57E7",
+        "bsc": "0x75163692e0081d20C965c45fBb027A01694431bB",
+        "poly": "0x976Cc8346085e06896D37B6dCA01cD08535F37EB",
+        "arb": "0xC5f73c308a35606B700746113AaCF5FFd175a3c0",
+        "op": "0x6fD8d2a09a090A69d05b0d21a3c187de6a9A57E7"
+    }
+    return map.get(chain)
 
 def HUBS(chain):
     return {
