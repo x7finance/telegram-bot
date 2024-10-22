@@ -2,7 +2,7 @@ from telegram import *
 from telegram.ext import *
 
 from hooks import api
-from constants import chains, tokens, urls
+from constants import ca, chains, tokens, urls
 
 
 coingecko = api.CoinGecko()
@@ -130,11 +130,13 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             else:
                 owner_percent = "❓ Tokens Held By Owner Unknown"
 
-
-            if "dex" in scan[token_address] and scan[token_address]["dex"]:
-                pair = scan[token_address]["dex"][0]["pair"]
-            else:
-                pair = defined.get_pair(token_address, chain)
+            try:
+                if "dex" in scan[token_address] and scan[token_address]["dex"]:
+                    pair = scan[token_address]["dex"][0]["pair"]
+                else:
+                    pair = defined.get_pair(token_address, chain)
+            except Exception:
+                pair = ca.DEAD
         else:
             renounced = "❓ Renounced - Unknown"
             tax = "❓ Tax - Unknown"
