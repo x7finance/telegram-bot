@@ -103,8 +103,6 @@ TG_POLY = ""
 
 
 # LINKS
-CA_DIRECTORY = "https://www.x7finance.org/docs/breakdowns/contracts"
-DISCORD = "https://discord.gg/x7finance"
 DUNE = "https://dune.com/mike_x7f/x7finance"
 GITHUB = "https://github.com/x7finance/"
 MEDIUM = "https://medium.com/@X7Finance"

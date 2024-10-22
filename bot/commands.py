@@ -911,7 +911,7 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 [
                     InlineKeyboardButton(
-                        text="Liquidity Treasury Contract",
+                        text=chain_info.scan_name,
                         url=f"{chain_info.scan_address}{ca.LIQUIDITY_TREASURY(chain)}",
                     )
                 ],
@@ -1377,8 +1377,8 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 [
                     InlineKeyboardButton(
-                        text="Lending Pool Contract",
-                        url=f"{chain_info.scan_address}{chain_lpool}#writeContract",
+                        text="Lending Dashboard",
+                        url=f"{urls.XCHANGE}lending",
                     )
                 ],
             ]
@@ -1575,8 +1575,8 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 [
                     InlineKeyboardButton(
-                        text="Token Time Lock Contract",
-                        url=f"{chain_info.scan_address}{ca.TIME_LOCK(chain)}#readContract",
+                        text=chain_info.scan_name,
+                        url=f"{chain_info.scan_address}{ca.TIME_LOCK(chain)}",
                     )
                 ],
             ]
@@ -1907,6 +1907,7 @@ async def pfp(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     pioneer_id = " ".join(context.args)
+    chain = "eth"
 
     if pioneer_id == "":
         floor_data = api.get_nft_data(ca.PIONEER, "eth")
@@ -1964,8 +1965,8 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
                     ],
                     [
                         InlineKeyboardButton(
-                            text="Pioneer Contract",
-                            url=f"{urls.SCAN_TOKEN('eth')}/{ca.PIONEER}",
+                            text=chains.CHAINS[chain].scan_name,
+                            url=f"{chains.CHAINS[chain].scan_token}{ca.PIONEER}",
                         )
                     ],
                 ]
@@ -2098,13 +2099,13 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     [
                         InlineKeyboardButton(
-                            text="Lending Pool Contract",
+                            text=f"Lending Pool - {chain_info.scan_name}",
                             url=f"{chain_info.scan_address}{chain_lpool}",
                         )
                     ],
                     [
                         InlineKeyboardButton(
-                            text="Lending Pool Reserve Contract",
+                            text=f"Lending Pool Reserve - {chain_info.scan_name}",
                             url=f"{chain_info.scan_address}{ca.LPOOL_RESERVE(chain)}",
                         )
                     ],
@@ -2187,8 +2188,8 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     buttons = [
     [
         InlineKeyboardButton(
-            text="Contracts Directory",
-            url=f"{urls.CA_DIRECTORY}",
+            text="Contracts Dashboard",
+            url=f"{urls.XCHANGE}dashboard",
         ),
     ],
     [
@@ -3006,7 +3007,7 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ],
                 [
                     InlineKeyboardButton(
-                        text="X7D Contract",
+                        text=chain_info.scan_name,
                         url=f"{chain_info.scan_token + ca.X7D(chain)}",
                     )
                 ],
