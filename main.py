@@ -121,9 +121,9 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if check_time:
                 click_message += f"\n\n🎉🎉 {time_taken:.3f} seconds is the new fastest time! 🎉🎉"
 
-            if settings.BURN_ENABLED:
+            if settings.CLICK_ME_BURN:
 
-                clicks_needed = settings.BURN_INCREMENT - (total_click_count % settings.BURN_INCREMENT)
+                clicks_needed = settings.CLICK_ME_BURN - (total_click_count % settings.CLICK_ME_BURN)
                 message_text = (
                     f"{api.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
                     f"{click_message}\n\n"
@@ -156,7 +156,7 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode="Markdown"
                 )
 
-            if settings.BURN_ENABLED and total_click_count % settings.BURN_INCREMENT == 0:
+            if settings.CLICK_ME_BURN and total_click_count % settings.CLICK_ME_BURN == 0:
                 burn_message = await api.burn_x7r(settings.BURN_AMOUNT(), "eth")
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,

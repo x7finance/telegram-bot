@@ -1144,8 +1144,8 @@ async def leaderboard(update: Update, context: CallbackContext):
     streak = db.clicks_check_highest_streak()
     streak_user, streak_value = streak
 
-    if settings.BURN_ENABLED == True:
-        clicks_needed = settings.BURN_INCREMENT - (click_counts_total % settings.BURN_INCREMENT)
+    if settings.CLICK_ME_BURN:
+        clicks_needed = settings.CLICK_ME_BURN - (click_counts_total % settings.CLICK_ME_BURN)
         await update.message.reply_text(
             text=
                 f"*X7 Finance Fastest Pioneer 2024 Leaderboard\n(Top 10)\n\n*"
