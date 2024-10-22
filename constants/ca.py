@@ -1,46 +1,46 @@
 # TOKEN CA
 
 def X7R(chain):
-    if chain == "base":
-        return "0x70008F18Fc58928dcE982b0A69C2c21ff80Dca54"
-    else:
-        return "0x70008F18Fc58928dcE982b0A69C2c21ff80Dca54"
-    
+    map = {
+        "base": "0xEe6bA04895613b20a9B200e9EB25293576f8F1e4",
+    }
+    return map.get(chain, "0x70008F18Fc58928dcE982b0A69C2c21ff80Dca54")
+
 def X7DAO(chain):
-    if chain == "base":
-        return "0x7105E64bF67ECA3Ae9b123F0e5Ca2b83b2eF2dA0"
-    else:
-        return "0x7105E64bF67ECA3Ae9b123F0e5Ca2b83b2eF2dA0"
+    map = {
+        "base": "0xa30494c8bE9360a1Dd25108b7074628274b9fd6c",
+    }
+    return map.get(chain, "0x7105E64bF67ECA3Ae9b123F0e5Ca2b83b2eF2dA0")
 
 def X7101(chain):
-    if chain == "base":
-        return "0x7101a9392eac53b01e7c07ca3baca945a56ee105"
-    else:
-        return "0x7101a9392eac53b01e7c07ca3baca945a56ee105"
-    
+    map = {
+        "base": "0x6b7B78552aCB26B161f39E5731B1A2ebc2436253",
+    }
+    return map.get(chain, "0x7101a9392eac53b01e7c07ca3baca945a56ee105")
+
 def X7102(chain):
-    if chain == "base":
-        return "0x7102dc82ef61bfb0410b1b1bf8ea74575bf0a105"
-    else:
-        return "0x7102dc82ef61bfb0410b1b1bf8ea74575bf0a105"
-    
+    map = {
+        "base": "0xA4A002ee15Ed6fc6C9459e4789856dD20ffdfe62",
+    }
+    return map.get(chain, "0x7102dc82ef61bfb0410b1b1bf8ea74575bf0a105")
+
 def X7103(chain):
-    if chain == "base":
-        return "0x7103eBdbF1f89be2d53EFF9B3CF996C9E775c105"
-    else:
-        return "0x7103eBdbF1f89be2d53EFF9B3CF996C9E775c105"
-    
+    map = {
+        "base": "0xfF3a265b30450b41BaCf1B2413792da4769C7003",
+    }
+    return map.get(chain, "0x7103eBdbF1f89be2d53EFF9B3CF996C9E775c105")
+
 def X7104(chain):
-    if chain == "base":
-        return "0x7104D1f179Cc9cc7fb5c79Be6Da846E3FBC4C105"
-    else:
-        return "0x7104D1f179Cc9cc7fb5c79Be6Da846E3FBC4C105"
-    
+    map = {
+        "base": "0xEDFc68F09d4B6211ede5ee06acF9f560FC561F04",
+    }
+    return map.get(chain, "0x7104D1f179Cc9cc7fb5c79Be6Da846E3FBC4C105")
+
 def X7105(chain):
-    if chain == "base":
-        return "0x7105FAA4a26eD1c67B8B2b41BEc98F06Ee21D105"
-    else:
-        return "0x7105FAA4a26eD1c67B8B2b41BEc98F06Ee21D105"
+    map = {
+        "base": "0x941d37f4BCc92236ebE5aF46777b7E816d6d418A",
+    }
+    return map.get(chain, "0x7105FAA4a26eD1c67B8B2b41BEc98F06Ee21D105")
     
 def X7100(chain):
     return [
@@ -52,45 +52,43 @@ def X7100(chain):
     ]
 
 def X7D(chain):
-    if chain == "base":
-        return "0x7D000a1B9439740692F8942A296E1810955F5000"
-    else:
-        return "0x7D000a1B9439740692F8942A296E1810955F5000"
-
+    map = {
+        "base": "0x446906ed090364EC7d1b16cA8Fb6D0fFC50854bD",
+    }
+    return map.get(chain, "0x7D000a1B9439740692F8942A296E1810955F5000")
 
 # NFTS
-    
+
 def ECO(chain):
-    if chain == "base":
-        return "0x7000cae2c1016e7de45ec9b54f1835b966bca4f7"
-    else:
-        return "0x7000cae2c1016e7de45ec9b54f1835b966bca4f7"
-    
+    map = {
+        "base": "0xBc7A6859514D1874d2F14Af083F4e86DDd79fd32",
+    }
+    return map.get(chain, "0x7000cae2c1016e7de45ec9b54f1835b966bca4f7")
+
 def LIQ(chain):
-    if chain == "base":
-        return "0x7000f8270b955377e047da8202ae3c408186b4f7"
-    else:
-        return "0x7000f8270b955377e047da8202ae3c408186b4f7"
+    map = {
+        "base": "0xEe6bA04895613b20a9B200e9EB25293576f8F1e4",
+    }
+    return map.get(chain, "0x7000f8270b955377e047da8202ae3c408186b4f7")
 
 def DEX(chain):
-    if chain == "eth":
-        return "0x7000b3B5e4e126610A7b7d1Af2D2DE8685c7C4f7"
-    else:
-        return "0x7000b3B5e4e126610A7b7d1Af2D2DE8685c7C4f7"
-
+    map = {
+        "base": "0x1AC7633C465f87A5620703eC27cf067588BDb095",
+    }
+    return map.get(chain, "0x7000b3B5e4e126610A7b7d1Af2D2DE8685c7C4f7")
 
 def BORROW(chain):
-    if chain == "eth":
-        return "0x7000D5d7707Bf86b317deC635e459E47b9aBD4F7"
-    else:
-        return "0x7000D5d7707Bf86b317deC635e459E47b9aBD4F7"
-    
+    map = {
+        "base": "0x7000D5d7707Bf86b317deC635e459E47b9aBD4F7",
+    }
+    return map.get(chain, "0xE1c7244Cc32980Db8dB191FD87731E091057Dc6F")
+
 def MAGISTER(chain):
-    if chain == "eth":
-        return "0x7dA0bb55E4097FC2d78a1822105057F36C5F360d"
-    else:
-        return "0x7dA0bb55E4097FC2d78a1822105057F36C5F360d"
-    
+    map = {
+        "base": "0x54E52e3Df66Ee56871c3c7672aD6F04889C11477",
+    }
+    return map.get(chain, "0x7dA0bb55E4097FC2d78a1822105057F36C5F360d")
+
 PIONEER = "0x70000299ee8910ccacd97b1bb560e34f49c9e4f7"
 
 
