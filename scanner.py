@@ -2,7 +2,6 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder
 
 import asyncio, os, requests, random, sentry_sdk, traceback
-from web3 import Web3
 from PIL import Image, ImageDraw, ImageFont
 
 from constants import abis, ca, urls, chains
@@ -27,19 +26,36 @@ async def log_loop(chain, poll_interval):
     factory = w3.eth.contract(address=ca.FACTORY(chain), abi=abis.read("factory"))
     pair_filter = factory.events.PairCreated.create_filter(fromBlock="latest")
 
+    loan_filters = {}
+    for ill_key, ill_address in ca.ILL_ADDRESSES.items():
+        contract = w3.eth.contract(address=ill_address, abi=abis.read("factory"))
+        loan_filters[ill_key] = contract.events.loanOriginated.create_filter(fromBlock="latest")
+    
     while True:
         try:
-
+        
             for PairCreated in pair_filter.get_new_entries():
-                await alert(PairCreated, chain)
+                await pair_alert(PairCreated, chain)
+
+            for ill_key, loan_filter in loan_filters.items():
+                for loanOriginated in loan_filter.get_new_entries():
+                    await loan_alert(loanOriginated, chain)
+
             await asyncio.sleep(poll_interval)
 
         except Exception as e:
-            await error(Exception(f"Error in log_loop for chain {chain}: {e}"))
+            await error(Exception(f"Error in log loop for chain {chain}: {e}"))
             await asyncio.sleep(10)
 
 
-async def alert(event, chain):
+async def loan_alert(event, chain):
+    try:
+        print(event)
+    except Exception as e:
+        await error(Exception(f"Error in loan alert for chain {chain}: {e}"))
+
+
+async def pair_alert(event, chain):
     try:
         chain_info, error_message = chains.get_info(chain)
         paired_token = ca.WETH(chain)
@@ -158,7 +174,7 @@ async def alert(event, chain):
                     ),
                 )
     except Exception as e:
-        await error(Exception(f"Error in alert for chain {chain}: {e}"))
+        await error(Exception(f"Error in pair alert for chain {chain}: {e}"))
         
 
 async def main():
