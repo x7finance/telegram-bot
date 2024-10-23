@@ -51,6 +51,11 @@ async def log_loop(chain, poll_interval):
 async def loan_alert(event, chain):
     try:
         print(event)
+        await application.bot.send_message(
+            chat=int(os.getenv("OWNER_TELEGRAM_CHANNEL_ID")),
+            text=event
+            )
+        
     except Exception as e:
         await error(Exception(f"Error in loan alert for chain {chain}: {e}"))
 
