@@ -41,7 +41,7 @@ async def log_loop(chain, poll_interval):
 
 async def alert(event, chain):
     try:
-        chain_info, error_message = chains.get_info(chain,token=True)
+        chain_info, error_message = chains.get_info(chain)
         paired_token = ca.WETH(chain)
 
         token_0_info = dextools.get_token_name(event["args"]["token0"], chain)
