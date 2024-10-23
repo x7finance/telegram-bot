@@ -28,7 +28,7 @@ async def log_loop(chain, poll_interval):
 
     loan_filters = {}
     for ill_key, ill_address in ca.ILL_ADDRESSES.items():
-        contract = w3.eth.contract(address=ill_address, abi=abis.read("factory"))
+        contract = w3.eth.contract(address=ill_address, abi=chainscan.get_abi(ill_address, chain))
         loan_filters[ill_key] = contract.events.loanOriginated.create_filter(fromBlock="latest")
     
     while True:
