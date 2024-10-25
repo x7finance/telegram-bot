@@ -16,9 +16,9 @@ class BitQuery:
             'Authorization': f'Bearer {os.getenv("BITQUERY_API_KEY")}'
         }
 
+
     def get_nft_holder_list(self, nft, chain):
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
+        chain_info = chains.CHAINS[chain]
         query = f'''
         {{
         EVM(dataset: archive, network: {chain_info.name.lower()}) {{
@@ -50,8 +50,7 @@ class BitQuery:
 
 
     def get_proposers(self, chain):
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
+        chain_info = chains.CHAINS[chain]
         query = f'''
         {{
         EVM(dataset: archive, network: {chain_info.name.lower()}) {{
@@ -83,43 +82,39 @@ class BitQuery:
 
 class ChainScan:
     def __init__(self):
-        pass
+        self.url = "https://api.etherscan.io/v2/api"
+        self.key = os.getenv('ETHERSCAN_API_KEY')
         
+
     def get_abi(self, contract: str, chain: str) -> str:
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=contract&action=getsourcecode&address={contract}&apikey={chain_info.key}"
+        url = f"{self.url}?chainid={chain_info.id}&module=contract&action=getsourcecode&address={contract}&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
         return data["result"][0]["ABI"]
 
 
     def get_block(self, chain: str, time: "int") -> str:
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=block&action=getblocknobytime&timestamp={time}&closest=before&apikey={chain_info.key}"
+        url = f"{self.url}?chainid={chain_info.id}&module=block&action=getblocknobytime&timestamp={time}&closest=before&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
         return data["result"]
 
 
     def get_daily_tx_count(self, contract: str, chain: str, ) -> int:
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
         yesterday = int(time.time()) - 86400
         block_yesterday = self.get_block(chain, yesterday)
         block_now = self.get_block(chain, int(time.time()))
-        tx_url = f"{chain_info.api}?module=account&action=txlist&address={contract}&startblock={block_yesterday}&endblock={block_now}&page=1&offset=1000&sort=asc&apikey={chain_info.key}"
+        tx_url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlist&address={contract}&startblock={block_yesterday}&endblock={block_now}&page=1&offset=1000&sort=asc&apikey={self.key}"
         tx_response = requests.get(tx_url)
         tx_data = tx_response.json()
         if tx_data:
             tx_entry_count = len(tx_data['result']) if 'result' in tx_data else 0
         else:
             tx_data = 0
-        internal_tx_url = f"{chain_info.api}?module=account&action=txlist&address={contract}&startblock={block_yesterday}&endblock={block_now}&page=1&offset=1000&sort=asc&apikey={chain_info.key}"
+        internal_tx_url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlist&address={contract}&startblock={block_yesterday}&endblock={block_now}&page=1&offset=1000&sort=asc&apikey={self.key}"
         internal_tx_response = requests.get(internal_tx_url)
         internal_tx_data = internal_tx_response.json()
         if internal_tx_data:
@@ -131,27 +126,21 @@ class ChainScan:
 
 
     def get_gas(self, chain):
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=gastracker&action=gasoracle&apikey={chain_info.key}"
+        url = f"{self.url}?chainid={chain_info.id}&module=gastracker&action=gasoracle&apikey={self.key}"
         response = requests.get(url)
         return response.json()
 
 
     def get_native_balance(self, wallet, chain):
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=account&action=balancemulti&address={wallet}&tag=latest&apikey={chain_info.key}"
+        url = f"{self.url}?chainid={chain_info.id}&module=account&action=balancemulti&address={wallet}&tag=latest&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
         return float(data["result"][0]["balance"]) / 10 ** 18
 
 
     def get_native_price(self, chain):
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
 
         if chain == "poly":
@@ -161,30 +150,17 @@ class ChainScan:
             token = chain_info.native
             field = "ethusd"
         
-        url = f"{chain_info.api}?module=stats&action={token}price&apikey={chain_info.key}"
+        url = f"{self.url}?chainid={chain_info.id}&module=stats&action={token}price&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
-
         return float(data["result"][field]) / 1**18
 
-
-    def get_pool_liq_balance(self, wallet, token, chain):
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
-        chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={chain_info.key}"
-        response = requests.Session().get(url)
-        data = response.json()
-        return int(data["result"] or 0)
 
 
     def get_stables_balance(self, wallet, token, chain):
         try:
-            if chain not in chains.CHAINS:
-                raise ValueError(f"Invalid chain: {chain}")
-
             chain_info = chains.CHAINS[chain]
-            url = f"{chain_info.api}?module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={chain_info.key}"
+            url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={self.key}"
             response = requests.get(url)
             data = response.json()
             return int(data["result"][:-6])
@@ -193,10 +169,8 @@ class ChainScan:
 
 
     def get_supply(self, token, chain):
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=stats&action=tokensupply&contractaddress={token}&apikey={chain_info.key}"
+        url = f"{self.url}?chainid={chain_info.id}&module=stats&action=tokensupply&contractaddress={token}&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
         return data["result"]
@@ -204,10 +178,8 @@ class ChainScan:
 
     def get_token_balance(self, wallet, token, chain):
         try:
-            if chain not in chains.CHAINS:
-                raise ValueError(f"Invalid chain: {chain}")
             chain_info = chains.CHAINS[chain]
-            url = f"{chain_info.api}?module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={chain_info.key}"
+            url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={self.key}"
             response = requests.get(url)
             data = response.json()
             return int(data["result"][:-18])
@@ -216,63 +188,37 @@ class ChainScan:
 
 
     def get_tx_from_hash(self, tx, chain):
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=proxy&action=eth_getTransactionByHash&txhash={tx}&apikey={chain_info.key}"
+        url = f"{self.url}?chainid={chain_info.id}&module=proxy&action=eth_getTransactionByHash&txhash={tx}&apikey={self.key}"
         response = requests.get(url)
         return response.json()
 
 
     def get_tx(self, address, chain):
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=account&action=txlist&sort=desc&address={address}&apikey={chain_info.key}"
+        url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlist&sort=desc&address={address}&apikey={self.key}"
         response = requests.get(url)
         return response.json()
 
 
     def get_internal_tx(self, address, chain):
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=account&action=txlistinternal&sort=desc&address={address}&apikey={chain_info.key}"
+        url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlistinternal&sort=desc&address={address}&apikey={self.key}"
         response = requests.get(url)
         return response.json()
 
 
-    def get_liquidity_hub_data(self, hub_address, chain):
-        now = datetime.now()
-        if chain in chains.CHAINS:
-            chain_native = chains.CHAINS[chain].native
-        hub = self.get_internal_tx(hub_address, chain)
-        hub_filter = [d for d in hub["result"] if d["from"] in f"{hub_address}".lower()]
-        value = round(int(hub_filter[0]["value"]) / 10**18, 3)
-        dollar = float(value) * float(self.get_native_price(chain_native))
-        time = datetime.fromtimestamp(int(hub_filter[0]["timeStamp"]))
-        duration = now - time
-        days = duration.days
-        hours, remainder = divmod(duration.seconds, 3600)
-        minutes = (remainder % 3600) // 60
-        return value, dollar, time, days, hours, minutes
-
-
     def get_verified(self, contract, chain):
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=contract&action=getsourcecode&address={contract}&apikey={chain_info.key}"
+        url = f"{self.url}?chainid={chain_info.id}&module=contract&action=getsourcecode&address={contract}&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
         return True if "SourceCode" in data["result"][0] else False
 
 
     def get_x7r_supply(self, chain):
-        if chain not in chains.CHAINS:
-            raise ValueError(f"Invalid chain: {chain}")
         chain_info = chains.CHAINS[chain]
-        url = f"{chain_info.api}?module=account&action=tokenbalance&contractaddress={ca.X7R(chain)}&address={ca.DEAD}&tag=latest&apikey={chain_info.key}"
+        url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={ca.X7R(chain)}&address={ca.DEAD}&tag=latest&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
         supply = ca.SUPPLY - int(data["result"][:-18])
@@ -289,8 +235,7 @@ class Dextools:
 
 
     def get_dex(self, pair, chain):
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
+        chain_info = chains.CHAINS[chain]
         endpoint = f'pool/{chain_info.dext}/{pair}'
 
         response = requests.get(self.url + endpoint, headers=self.headers)
@@ -308,8 +253,7 @@ class Dextools:
     
 
     def get_price(self, token, chain):
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
+        chain_info = chains.CHAINS[chain]
         endpoint = f'token/{chain_info.dext}/{token.lower()}/price'
 
         response = requests.get(self.url + endpoint, headers=self.headers)
@@ -347,8 +291,7 @@ class Dextools:
         
 
     def get_token_info(self, pair, chain):
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
+        chain_info = chains.CHAINS[chain]
         endpoint = f"token/{chain_info.dext}/{pair}/info"
         response = requests.get(self.url + endpoint, headers=self.headers)
 
@@ -387,8 +330,7 @@ class Dextools:
             }
         
     def get_token_name(self, address, chain):
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
+        chain_info = chains.CHAINS[chain]
         endpoint = f"token/{chain_info.dext}/{address.lower()}"
         response = requests.get(self.url + endpoint, headers=self.headers)
         if response.status_code == 200:
@@ -476,8 +418,7 @@ class Dextools:
 
 
     def get_volume(self, pair, chain):
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
+        chain_info = chains.CHAINS[chain]
 
         if isinstance(pair, str):
             pairs = [pair]
@@ -584,8 +525,7 @@ class Defined:
 
 
     def get_price_change(self, address, chain):
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
+        chain_info = chains.CHAINS[chain]
 
         current_timestamp = int(datetime.now().timestamp()) - 300
         one_hour_ago_timestamp = int((datetime.now() - timedelta(hours=1)).timestamp())
@@ -652,8 +592,7 @@ class Defined:
 
 
     def get_token_image(self, token, chain):
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
+        chain_info = chains.CHAINS[chain]
 
         image = f'''
             query {{
@@ -678,8 +617,7 @@ class Defined:
 
 
     def get_pair(self, address, chain):
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
+        chain_info = chains.CHAINS[chain]
         
         pair_query = f"""query {{
             listPairsWithMetadataForToken (tokenAddress: "{address}" networkId: {chain_info.id}) {{
@@ -703,8 +641,7 @@ class Defined:
 
     def get_volume(self, pair, chain):
         try:
-            if chain in chains.CHAINS:
-                chain_info = chains.CHAINS[chain]
+            chain_info = chains.CHAINS[chain]
 
             volume = f'''
                 query {{
@@ -730,8 +667,7 @@ class Defined:
         
     def search(self, address, chain=None):
         if chain is not None:
-            if chain in chains.CHAINS:
-                chain_info = chains.CHAINS[chain]
+            chain_info = chains.CHAINS[chain]
             search_query = f"""query {{
                 filterTokens(phrase:"{address}", rankings: {{attribute:liquidity}} limit:1, filters: {{network:[{chain_info.id}]}}) {{
                     results{{
@@ -821,8 +757,7 @@ class Opensea:
 
 async def burn_x7r(amount, chain):
     try:
-        if chain in chains.CHAINS:
-            chain_info, _ = chains.get_info(chain)
+        chain_info, _ = chains.get_info(chain)
 
         sender_address = os.getenv("BURN_WALLET")
         recipient_address = ca.DEAD
@@ -949,13 +884,27 @@ def get_ill_number(term):
     for ill_number, contract_address in ca.ILL_ADDRESSES.items():
         if term.lower() == contract_address.lower():
             return ill_number
-        
+
+
+def get_liquidity_hub_data(hub_address, chain):
+        now = datetime.now()
+        chain_native = chains.CHAINS[chain].native
+        hub = ChainScan().get_internal_tx(hub_address, chain)
+        hub_filter = [d for d in hub["result"] if d["from"] in f"{hub_address}".lower()]
+        value = round(int(hub_filter[0]["value"]) / 10**18, 3)
+        dollar = float(value) * float(ChainScan.get_native_price(chain_native))
+        time = datetime.fromtimestamp(int(hub_filter[0]["timeStamp"]))
+        duration = now - time
+        days = duration.days
+        hours, remainder = divmod(duration.seconds, 3600)
+        minutes = (remainder % 3600) // 60
+        return value, dollar, time, days, hours, minutes    
+
 
 def get_nft_data(nft, chain):
     try:
-        if chain in chains.CHAINS:
-            chain_info = chains.CHAINS[chain]
 
+        chain_info = chains.CHAINS[chain]
         url = f"https://api.blockspan.com/v1/collections/contract/{nft}?chain={chain_info.blockspan}"
         response = requests.get(
             url,
@@ -993,8 +942,7 @@ def get_random_pioneer():
 
 
 def get_scan(token: str, chain: str) -> dict:
-    if chain in chains.CHAINS:
-        chain_info = chains.CHAINS[chain]
+    chain_info = chains.CHAINS[chain]
     url = f"https://api.gopluslabs.io/api/v1/token_security/{chain_info.id}?contract_addresses={token}"
     response = requests.get(url)
     return response.json()["result"]

@@ -26,8 +26,6 @@ class ChainInfo:
         blockspan: str,
         tg: str,
         w3: str,
-        api: str,
-        key: str,
         com_multi: str,
         dao_multi: str
     ):
@@ -47,8 +45,6 @@ class ChainInfo:
         self.blockspan = blockspan
         self.tg = tg
         self.w3 = Web3(Web3.HTTPProvider(w3))
-        self.api = api
-        self.key = key
         self.com_multi = com_multi
         self.dao_multi = dao_multi
 
@@ -70,8 +66,6 @@ CHAINS = {
         "eth-main",
         urls.TG_ETH,
         urls.RPC("eth"),
-        urls.SCAN_API("eth"),
-        os.getenv('ETH_SCAN_API_KEY'),
         ca.COM_MULTI("eth"),
         ca.DAO_MULTI("eth")
     ),
@@ -92,8 +86,6 @@ CHAINS = {
         "base-main",
         urls.TG_BASE,
         urls.RPC("base"),
-        urls.SCAN_API("base"),
-        os.getenv('BASE_SCAN_API_KEY'),
         ca.COM_MULTI("base"),
         ca.DAO_MULTI("base")
     ),
@@ -114,8 +106,6 @@ CHAINS = {
         "",
         urls.TG_BSC,
         urls.RPC("bsc"),
-        urls.SCAN_API("bsc"),
-        os.getenv('BSC_SCAN_API_KEY'),
         ca.COM_MULTI("bsc"),
         ca.DAO_MULTI("bsc")
     ),
@@ -136,8 +126,6 @@ CHAINS = {
         "arbitrum-main",
         urls.TG_ARB,
         urls.RPC("arb"),
-        urls.SCAN_API("arb"),
-        os.getenv('ARB_SCAN_API_KEY'),
         ca.COM_MULTI("arb"),
         ca.DAO_MULTI("arb")
     ),
@@ -158,8 +146,6 @@ CHAINS = {
         "optimism-main",
         urls.TG_OP,
         urls.RPC("op"),
-        urls.SCAN_API("op"),
-        os.getenv('OP_SCAN_API_KEY'),
         ca.COM_MULTI("op"),
         ca.DAO_MULTI("op")
     ),
@@ -180,8 +166,6 @@ CHAINS = {
         "poly-main",
         urls.TG_POLY,
         urls.RPC("poly"),
-        urls.SCAN_API("poly"),
-        os.getenv('POLY_SCAN_API_KEY'),
         ca.COM_MULTI("poly"),
         ca.DAO_MULTI("poly")
     )

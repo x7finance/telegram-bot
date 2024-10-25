@@ -1020,7 +1020,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
             days,
             hours,
             minutes,
-        ) = chainscan.get_liquidity_hub_data(hub_address, chain)
+        ) = api.get_liquidity_hub_data(hub_address, chain)
 
         buy_back_text = (
             f'Last Buy Back: {time} UTC\n{value} {chain_info.native.upper()} (${"{:0,.0f}".format(dollar)})\n'

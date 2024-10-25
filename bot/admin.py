@@ -85,22 +85,22 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             status.append(f"🔴 Opensea: Connection failed with status {opensea_response.status_code}")
 
-        for chain_name, chain_info in chains.CHAINS.items():
-            scan_url = f"{chain_info.api}?module=stats&action=ethprice&apikey={chain_info.key}"
-            response = requests.get(scan_url)
-            if response.status_code == 200:
-                status.append(f"🟢 {chain_info.scan_name}: Connected Successfully")
-            else:
-                status.append(f"🔴 {chain_info.scan_name}: Connection failed with status {response.status_code}")
+        etherscan_url = "https://api.etherscan.io/v2/api"
+        etherscan_key = os.getenv('ETHERSCAN_API_KEY')
+        etherscan_url = f"{etherscan_url}?module=stats&action=ethprice&apikey={etherscan_key}"
+        response = requests.get(etherscan_url)
+        if response.status_code == 200:
+            status.append(f"🟢 Etherscan: Connected Successfully")
+        else:
+            status.append(f"🔴 Etherscan: Connection failed with status {response.status_code}")
 
-        for chain_name, chain_info in chains.CHAINS.items():
-            rpc_url = chain_info.w3
-            rpc_payload = {"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": 1}
-            rpc_response = requests.post(rpc_url, json=rpc_payload)
-            if rpc_response.status_code == 200:
-                status.append(f"🟢 {chain_info.name} RPC: Connected Successfully")
-            else:
-                status.append(f"🔴 {chain_info.name} RPC: Connection failed with status {rpc_response.status_code}")
+        rpc_url = f"https://lb.drpc.org/ogrpc?network=ethereum&dkey={os.getenv('DRPC_API_KEY')}"
+        rpc_payload = {"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": 1}
+        rpc_response = requests.post(rpc_url, json=rpc_payload)
+        if rpc_response.status_code == 200:
+            status.append(f"🟢 DRPC: Connected Successfully")
+        else:
+            status.append(f"🔴 DRPC: Connection failed with status {rpc_response.status_code}")
 
         await update.message.reply_text(
             "*X7 Finance Telegram Bot API Status*\n\n" + "\n".join(status),
