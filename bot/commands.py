@@ -1334,9 +1334,6 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown",
             reply_markup=keyboard
         )
-    else:
-        await update.message.reply_text(text.CHAIN_ERROR)
-
 
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
@@ -2538,13 +2535,14 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_name = ""
         chain_name_title = ""
         filter_by_chain = False
-    elif chain in chains.CHAINS:
-        chain_name = "ethereum" if chain == "eth" else chains.CHAINS[chain].name
-        chain_name_title = f"({chain_name.upper()})"
-        filter_by_chain = True
     else:
-        await update.message.reply_text(text.CHAIN_ERROR)
-        return
+        chain_info, error_message = chains.get_info(chain)
+        if error_message:
+            await update.message.reply_text(error_message)
+            return
+        chain_name = "ethereum" if chain == "eth" else chain_info.name
+        chain_name_title = f"({chain_info.name.upper()})"
+        filter_by_chain = True
 
     if chain_name.upper() not in dune.TRENDING_FLAG:
         dune.TRENDING_TEXT[chain_name.upper()] = ""

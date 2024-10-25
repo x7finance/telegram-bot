@@ -204,7 +204,7 @@ def FULL_NAMES():
 
 
 def SHORT_NAMES():
-    chain_list = list(CHAINS.keys())
+    chain_list = [key.upper() for key in CHAINS.keys()]
     return "\n".join(chain_list)
 
 
@@ -217,4 +217,4 @@ def get_info(chain, token=None):
 
         return chain_info, None
     else:
-        return None, f'Chain not recognised, Please use on of the following abbreviations:\n\n{SHORT_NAMES()}'
+        return None, f'Chain not recognised, Please use one of the following abbreviations:\n\n{SHORT_NAMES()}'
