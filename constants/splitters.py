@@ -4,7 +4,7 @@ from web3 import Web3
 from constants import ca, chains
 from hooks import api
 
-chainscan = api.ChainScan()
+etherscan = api.Etherscan()
 
 
 def generate_eco_split(chain, eth_value):
@@ -12,7 +12,7 @@ def generate_eco_split(chain, eth_value):
         chain_info, _ = chains.get_info(chain)
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(ca.ECO_SPLITTER(chain)),
-        abi=chainscan.get_abi(ca.ECO_SPLITTER(chain), chain),
+        abi=etherscan.get_abi(ca.ECO_SPLITTER(chain), chain),
         )
             
     x7r_percentage = contract.functions.outletShare(1).call() / 10
@@ -41,7 +41,7 @@ def generate_treasury_split(chain, eth_value):
         chain_info, _ = chains.get_info(chain)
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(ca.TREASURY_SPLITTER(chain)),
-        abi=chainscan.get_abi(ca.TREASURY_SPLITTER(chain), chain),
+        abi=etherscan.get_abi(ca.TREASURY_SPLITTER(chain), chain),
     )
     if chain == "eth" or chain  == "base":
         profit_percentage = contract.functions.outletShare(1).call() / 1000

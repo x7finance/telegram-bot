@@ -8,7 +8,7 @@ from constants import ca, chains, tokens, urls
 coingecko = api.CoinGecko()
 defined = api.Defined()
 dextools = api.Dextools()
-chainscan = api.ChainScan()
+etherscan = api.Etherscan()
 
 
 async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, chain):
@@ -153,7 +153,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
         chain_dext = chains.CHAINS[chain].dext
         dex_tools = urls.DEX_TOOLS(chain_dext)
         try:
-            if chainscan.get_verified(token_address, chain):
+            if etherscan.get_verified(token_address, chain):
                 verified = "✅️ Contract Verified"
             else:
                 verified = "❌ Contract Unverified"

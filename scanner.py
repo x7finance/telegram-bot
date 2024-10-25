@@ -10,7 +10,7 @@ import media
 
 defined = api.Defined()
 dextools = api.Dextools()
-chainscan = api.ChainScan()
+etherscan = api.Etherscan()
 
 
 async def error(context):
@@ -28,7 +28,7 @@ async def log_loop(chain, poll_interval):
 
     loan_filters = {}
     for ill_key, ill_address in ca.ILL_ADDRESSES.items():
-        contract = w3.eth.contract(address=ill_address, abi=chainscan.get_abi(ill_address, chain))
+        contract = w3.eth.contract(address=ill_address, abi=etherscan.get_abi(ill_address, chain))
         loan_filters[ill_key] = contract.events.loanOriginated.create_filter(fromBlock="latest")
     
     while True:
@@ -80,7 +80,7 @@ async def pair_alert(event, chain):
             token_address = event["args"]["token0"]
             token_name = token_0_name
         try:
-            if chainscan.get_verified(token_address, chain):
+            if etherscan.get_verified(token_address, chain):
                 verified = "Contract Verified"
             else:
                 verified = "Contract Unverified"

@@ -80,7 +80,7 @@ class BitQuery:
             return "N/A"
         
 
-class ChainScan:
+class Etherscan:
     def __init__(self):
         self.url = "https://api.etherscan.io/v2/api"
         self.key = os.getenv('ETHERSCAN_API_KEY')
@@ -889,10 +889,10 @@ def get_ill_number(term):
 def get_liquidity_hub_data(hub_address, chain):
         now = datetime.now()
         chain_native = chains.CHAINS[chain].native
-        hub = ChainScan().get_internal_tx(hub_address, chain)
+        hub = Etherscan().get_internal_tx(hub_address, chain)
         hub_filter = [d for d in hub["result"] if d["from"] in f"{hub_address}".lower()]
         value = round(int(hub_filter[0]["value"]) / 10**18, 3)
-        dollar = float(value) * float(ChainScan.get_native_price(chain_native))
+        dollar = float(value) * float(Etherscan.get_native_price(chain_native))
         time = datetime.fromtimestamp(int(hub_filter[0]["timeStamp"]))
         duration = now - time
         days = duration.days

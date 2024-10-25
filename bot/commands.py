@@ -17,7 +17,7 @@ coingecko = api.CoinGecko()
 dextools = api.Dextools()
 opensea = api.Opensea()
 warpcast = api.WarpcastApi()
-chainscan = api.ChainScan()
+etherscan = api.Etherscan()
 
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -82,7 +82,7 @@ async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     when = round(time.time())
     try:
-        blocks = {chain: chainscan.get_block(chain, when) for chain in chains.CHAINS}
+        blocks = {chain: etherscan.get_block(chain, when) for chain in chains.CHAINS}
     except Exception:
         blocks = 0
     blocks_text = "\n".join([f"{block_type.upper()}: `{block}`" for block_type, block in blocks.items()])
@@ -135,7 +135,7 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = await update.message.reply_text("Getting Loan Rates Info, Please wait...")
 
     loan_info = ""
-    native_price = chainscan.get_native_price(chain)
+    native_price = etherscan.get_native_price(chain)
     borrow_usd = native_price * float(amount)
     lending_pool = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)), abi=abis.read("lendingpool")
@@ -154,7 +154,7 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         for loan_term in active_loan_addresses:
             loan_contract = chain_info.w3.eth.contract(
-                address=chain_info.w3.to_checksum_address(loan_term), abi=chainscan.get_abi(loan_term, chain)
+                address=chain_info.w3.to_checksum_address(loan_term), abi=etherscan.get_abi(loan_term, chain)
             )
             
             loan_name = loan_contract.functions.name().call()
@@ -212,11 +212,11 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    burn = chainscan.get_token_balance(ca.DEAD, ca.X7R(chain), chain)
+    burn = etherscan.get_token_balance(ca.DEAD, ca.X7R(chain), chain)
     percent = round(burn / ca.SUPPLY * 100, 2)
     price,_ = dextools.get_price(ca.X7R(chain), "eth")
     burn_dollar = float(price) * float(burn)
-    native = burn_dollar / chainscan.get_native_price(chain)
+    native = burn_dollar / etherscan.get_native_price(chain)
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
@@ -404,7 +404,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     if x7token == ca.X7R(chain):
-        x7_supply = chainscan.get_x7r_supply("eth")
+        x7_supply = etherscan.get_x7r_supply("eth")
     else:
         x7_supply = ca.SUPPLY
     token_info = token_names[x7token]
@@ -515,7 +515,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
     elif token.upper() == "X7D":
         token_info = chains.CHAINS[chain]
-        price = chainscan.get_native_price(chain)
+        price = etherscan.get_native_price(chain)
     else:
         await update.message.reply_text("Token not found, please use X7 tokens only")
         return
@@ -799,7 +799,7 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     try:
-        gas_data = chainscan.get_gas(chain)
+        gas_data = etherscan.get_gas(chain)
         gas_text = (
             f"Gas:\n"
             f'Low: {float(gas_data["result"]["SafeGasPrice"]):.0f} Gwei\n'
@@ -810,7 +810,7 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
         gas_text = ""
     
     gas_price = chain_info.w3.eth.gas_price / 10**9
-    eth_price = chainscan.get_native_price(chain)
+    eth_price = etherscan.get_native_price(chain)
 
     swap_cost_in_eth = gas_price * tax.SWAP_GAS
     swap_cost_in_dollars = (swap_cost_in_eth / 10**9)* eth_price
@@ -874,12 +874,12 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
-    native_price = chainscan.get_native_price(chain)
-    eth = chainscan.get_native_balance(ca.LIQUIDITY_TREASURY(chain), chain)
-    weth = chainscan.get_token_balance(ca.LIQUIDITY_TREASURY(chain), ca.WETH(chain), chain)
+    native_price = etherscan.get_native_price(chain)
+    eth = etherscan.get_native_balance(ca.LIQUIDITY_TREASURY(chain), chain)
+    weth = etherscan.get_token_balance(ca.LIQUIDITY_TREASURY(chain), ca.WETH(chain), chain)
     eth_dollar = (float(eth) + float(weth) * float(native_price))
 
-    tx = chainscan.get_tx(ca.LIQUIDITY_TREASURY(chain), chain)
+    tx = etherscan.get_tx(ca.LIQUIDITY_TREASURY(chain), chain)
     tx_filter = [
         d for d in tx["result"]
         if ca.LIQUIDITY_TREASURY(chain).lower() in d["to"].lower() and
@@ -1029,9 +1029,9 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         buy_back_text = f'Last Buy Back: None Found'
 
-    eth_price = chainscan.get_native_price(chain)
+    eth_price = etherscan.get_native_price(chain)
     contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(hub_address), abi=chainscan.get_abi(hub_address, chain)
+        address=chain_info.w3.to_checksum_address(hub_address), abi=etherscan.get_abi(hub_address, chain)
     )
     try:
         distribute = contract.functions.distributeShare().call() / 10
@@ -1085,28 +1085,28 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         token_str = token
     balance = 0
 
-    eth_balance = chainscan.get_native_balance(hub_address, chain)
+    eth_balance = etherscan.get_native_balance(hub_address, chain)
     eth_dollar = (float(eth_balance) * float(eth_price))
 
     if isinstance(address, str):
-        balance += chainscan.get_token_balance(hub_address, address, chain)
+        balance += etherscan.get_token_balance(hub_address, address, chain)
         dollar = float(price) * float(balance)
         balance_text = f"{balance:,.0f} {token_str.upper()} (${dollar:,.0f})"
     elif isinstance(address, list):
         for quint in address:
-            balance += chainscan.get_token_balance(hub_address, quint, chain)
+            balance += etherscan.get_token_balance(hub_address, quint, chain)
         balance_text = f"{balance:,.0f} {token_str.upper()}"
 ## TEMP
     temp_balance = 0
     if chain == "eth":
         temp_hub_address = ca.TEMP_HUBS(token)
         if isinstance(address, str):
-            temp_balance = chainscan.get_token_balance(temp_hub_address, address, chain)
+            temp_balance = etherscan.get_token_balance(temp_hub_address, address, chain)
             temp_dollar = float(price) * float(temp_balance)
             temp_balance_text = f"\n{temp_balance:,.0f} {token_str.upper()} (${temp_dollar:,.0f}) - Temp Hub"
         elif isinstance(address, list):
             for quint in address:
-                temp_balance += chainscan.get_token_balance(temp_hub_address, quint, chain)
+                temp_balance += etherscan.get_token_balance(temp_hub_address, quint, chain)
             temp_balance_text = f"\n{temp_balance:,.0f} {token_str.upper()} - Temp Hub"
     else:
         temp_balance_text = ""
@@ -1441,7 +1441,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     chain_lpool = ca.LPOOL(chain, int(loan_id))
-    price = chainscan.get_native_price(chain)
+    price = etherscan.get_native_price(chain)
     contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool"))
     liquidation_status = ""
     
@@ -1470,7 +1470,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pair = contract.functions.loanPair(int(loan_id)).call()
 
         term = contract.functions.loanTermLookup(int(loan_id)).call()
-        term_contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(term), abi=chainscan.get_abi(term, chain))
+        term_contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(term), abi=etherscan.get_abi(term, chain))
         index = 0
         token_by_id = None
         while True:
@@ -1544,7 +1544,7 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(ca.TIME_LOCK(chain)), 
-        abi=chainscan.get_abi(ca.TIME_LOCK(chain), chain)
+        abi=etherscan.get_abi(ca.TIME_LOCK(chain), chain)
     )
     now = datetime.now()
 
@@ -1909,18 +1909,18 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     if pioneer_id == "":
         floor_data = api.get_nft_data(ca.PIONEER, "eth")
         floor = floor_data["floor_price"]
-        native_price = chainscan.get_native_price("eth")
+        native_price = etherscan.get_native_price("eth")
         if floor != "N/A":
             floor_round = round(floor, 2)
             floor_dollar = floor * float(native_price)
         else:
             floor_round = "N/A"
             floor_dollar = 0 
-        pioneer_pool = float(chainscan.get_native_balance(ca.PIONEER, "eth"))
+        pioneer_pool = float(etherscan.get_native_balance(ca.PIONEER, "eth"))
         each = float(pioneer_pool) / 639
         each_dollar = float(each) * float(native_price)
         total_dollar = float(pioneer_pool) * float(native_price)
-        tx = chainscan.get_tx(ca.PIONEER, "eth")
+        tx = etherscan.get_tx(ca.PIONEER, "eth")
         tx_filter = [d for d in tx["result"] if ca.PIONEER.lower() in d["to"].lower() and d.get("functionName", "") == "claimRewards(uint256[] _pids)"]
         recent_tx = max(tx_filter, key=lambda tx: int(tx["timeStamp"]), default=None)
 
@@ -2017,9 +2017,9 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chain_name = chains.CHAINS[chain].name
             chain_lpool = ca.LPOOL(chain)
             try:
-                price = chainscan.get_native_price(chain)
-                lpool_reserve = chainscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
-                lpool = chainscan.get_native_balance(chain_lpool, chain)
+                price = etherscan.get_native_price(chain)
+                lpool_reserve = etherscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
+                lpool = etherscan.get_native_balance(chain_lpool, chain)
             except Exception:
                 price = 0
                 lpool_reserve = 0
@@ -2050,10 +2050,10 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         
         chain_lpool = ca.LPOOL(chain)
-        native_price = chainscan.get_native_price(chain)
-        lpool_reserve = chainscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
+        native_price = etherscan.get_native_price(chain)
+        lpool_reserve = etherscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
         lpool_reserve_dollar = (float(lpool_reserve) * float(native_price))
-        lpool = float(chainscan.get_native_balance(chain_lpool, chain))
+        lpool = float(etherscan.get_native_balance(chain_lpool, chain))
         lpool_dollar = (float(lpool) * float(native_price))
         pool = round(float(lpool_reserve) + float(lpool), 2)
         dollar = lpool_reserve_dollar + lpool_dollar
@@ -2301,9 +2301,9 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     message = await update.message.reply_text("Getting Splitter Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    treasury_eth = float(chainscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain))
-    eco_eth = float(chainscan.get_native_balance(ca.ECO_SPLITTER(chain), chain))
-    native_price = chainscan.get_native_price(chain)
+    treasury_eth = float(etherscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain))
+    eco_eth = float(etherscan.get_native_balance(ca.ECO_SPLITTER(chain), chain))
+    native_price = etherscan.get_native_price(chain)
     eco_dollar = float(eco_eth) * float(native_price)
     treasury_dollar = float(treasury_eth) * float(native_price)
 
@@ -2467,16 +2467,16 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     message = await update.message.reply_text("Getting Treasury Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    native_price = chainscan.get_native_price(chain)
-    eth = round(float(chainscan.get_native_balance(chain_info.dao_multi, chain)), 2)
+    native_price = etherscan.get_native_price(chain)
+    eth = round(float(etherscan.get_native_balance(chain_info.dao_multi, chain)), 2)
     dollar = float(eth) * float(native_price)
-    x7r_balance = chainscan.get_token_balance(chain_info.dao_multi, ca.X7R(chain), chain)
+    x7r_balance = etherscan.get_token_balance(chain_info.dao_multi, ca.X7R(chain), chain)
     x7r_price,_ = dextools.get_price(ca.X7R(chain), chain)
     x7r_price = float(x7r_balance) * float(x7r_price)
-    x7dao_balance = chainscan.get_token_balance(chain_info.dao_multi, ca.X7DAO(chain), chain)
+    x7dao_balance = etherscan.get_token_balance(chain_info.dao_multi, ca.X7DAO(chain), chain)
     x7dao_price,_ = dextools.get_price(ca.X7DAO(chain), chain)
     x7dao_price = float(x7dao_balance) * float(x7dao_price)
-    x7d_balance = chainscan.get_token_balance(chain_info.dao_multi, ca.X7D(chain), chain)
+    x7d_balance = etherscan.get_token_balance(chain_info.dao_multi, ca.X7D(chain), chain)
     x7d_price = x7d_balance * native_price
     total = x7r_price + dollar + x7d_price + x7dao_price
     x7r_percent = round(x7r_balance / ca.SUPPLY * 100, 2)
@@ -2865,19 +2865,19 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     message = await update.message.reply_text("Getting Wallet Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    native_price = chainscan.get_native_price(chain)
-    eth = chainscan.get_native_balance(wallet, chain)
+    native_price = etherscan.get_native_price(chain)
+    eth = etherscan.get_native_balance(wallet, chain)
     dollar = float(eth) * float(native_price)
     x7r,_ = dextools.get_price(ca.X7R(chain), chain)
     x7dao,_ = dextools.get_price(ca.X7DAO(chain), chain)
 
-    x7r_balance = chainscan.get_token_balance(wallet, ca.X7R(chain), chain)
+    x7r_balance = etherscan.get_token_balance(wallet, ca.X7R(chain), chain)
     x7r_price = float(x7r_balance) * float(x7r)
     
-    x7dao_balance = chainscan.get_token_balance(wallet, ca.X7DAO(chain), chain)
+    x7dao_balance = etherscan.get_token_balance(wallet, ca.X7DAO(chain), chain)
     x7dao_price = float(x7dao_balance) * float(x7dao)
 
-    x7d_balance = chainscan.get_token_balance(wallet, ca.X7D(chain), chain)
+    x7d_balance = etherscan.get_token_balance(wallet, ca.X7D(chain), chain)
     x7d_price = x7d_balance * native_price
     total = (
         x7d_price
@@ -2892,8 +2892,8 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if x7r_balance == 0:
         x7r_percent = 0
     else:
-        x7r_percent = round(x7r_balance / chainscan.get_x7r_supply(chain) * 100, 2)
-    txs = chainscan.get_daily_tx_count(wallet, chain)
+        x7r_percent = round(x7r_balance / etherscan.get_x7r_supply(chain) * 100, 2)
+    txs = etherscan.get_daily_tx_count(wallet, chain)
     
     await message.delete()
     await update.message.reply_photo(
@@ -2973,10 +2973,10 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
     chain_lpool = ca.LPOOL(chain)
-    native_price = chainscan.get_native_price(chain)
-    lpool_reserve = chainscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
+    native_price = etherscan.get_native_price(chain)
+    lpool_reserve = etherscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
     lpool_reserve_dollar = (float(lpool_reserve) * float(native_price))
-    lpool = chainscan.get_native_balance(chain_lpool, chain)
+    lpool = etherscan.get_native_balance(chain_lpool, chain)
     lpool_dollar = (float(lpool) * float(native_price))
     dollar = lpool_reserve_dollar + lpool_dollar
     supply = round(float(lpool_reserve) + float(lpool), 2)
@@ -3038,7 +3038,7 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if ath_data:
             ath_change = f'{ath_data[1]}'
             ath_value = ath_data[0]
-            ath = f'${ath_value} (${"{:0,.0f}".format(ath_value * chainscan.get_x7r_supply(chain))}) {ath_change[:3]}%'
+            ath = f'${ath_value} (${"{:0,.0f}".format(ath_value * etherscan.get_x7r_supply(chain))}) {ath_change[:3]}%'
         else:
             ath = "Unavailable"    
     else:
@@ -3091,7 +3091,7 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if ath_data:
             ath_change = f'{ath_data[1]}'
             ath_value = ath_data[0]
-            ath = f'${ath_value} (${"{:0,.0f}".format(ath_value * chainscan.get_x7r_supply(chain))}) {ath_change[:3]}%'
+            ath = f'${ath_value} (${"{:0,.0f}".format(ath_value * etherscan.get_x7r_supply(chain))}) {ath_change[:3]}%'
         else:
             ath = "Unavailable"    
     else:
