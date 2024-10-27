@@ -27,9 +27,11 @@ async def log_loop(chain, poll_interval):
     pair_filter = factory.events.PairCreated.create_filter(fromBlock="latest")
 
     loan_filters = {}
-    for ill_key, ill_address in ca.ILL_ADDRESSES.items():
+    chain_addresses = ca.ILL_ADDRESSES.get(chain, {})
+
+    for ill_key, ill_address in chain_addresses.items():
         contract = w3.eth.contract(address=ill_address, abi=etherscan.get_abi(ill_address, chain))
-        loan_filters[ill_key] = contract.events.loanOriginated.create_filter(fromBlock="latest")
+        loan_filters[ill_key] = contract.events.LoanOriginated.create_filter(fromBlock="latest")
     
     while True:
         try:
@@ -38,8 +40,8 @@ async def log_loop(chain, poll_interval):
                 await pair_alert(PairCreated, chain)
 
             for ill_key, loan_filter in loan_filters.items():
-                for loanOriginated in loan_filter.get_new_entries():
-                    await loan_alert(loanOriginated, chain)
+                for LoanOriginated in loan_filter.get_new_entries():
+                    await loan_alert(LoanOriginated, chain)
 
             await asyncio.sleep(poll_interval)
 
@@ -50,12 +52,76 @@ async def log_loop(chain, poll_interval):
 
 async def loan_alert(event, chain):
     try:
-        print(event)
-        await application.bot.send_message(
-            chat=int(os.getenv("OWNER_TELEGRAM_CHANNEL_ID")),
-            text=event
-            )
-        
+        chain_info, error_message = chains.get_info(chain)
+        loan_id = event["args"]["loanID"]
+        contract_address = event["address"]
+        contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(contract_address), abi=etherscan.get_abi(contract_address, chain))
+
+        liability = contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
+        schedule1 = contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
+        schedule2 = contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
+        schedule_str = api.format_schedule(schedule1, schedule2, chain_info.native.upper())
+
+        index = 0
+        token_by_id = None
+        while True:
+            try:
+                token_id = contract.functions.tokenByIndex(index).call()
+                if token_id == int(loan_id):
+                    token_by_id = index
+                    break
+                index += 1
+            except Exception:
+                break
+    
+        ill_number = api.get_ill_number(contract_address)
+
+        im1 = Image.open((random.choice(media.BLACKHOLE))).convert("RGBA")
+        im2 = Image.open(chain_info.logo).convert("RGBA")
+        im1.paste(im2, (700, 20), im2)
+
+        message = (
+            f"{liability} {chain_info.native.upper()}\n\n"
+            f"Payment Schedule UTC:\n{schedule_str}"
+        )
+
+        i1 = ImageDraw.Draw(im1)
+        i1.text(
+            (26, 30),
+            f"New Loan Originated ({chain_info.name.upper()})\n\n"
+            f"{message}",
+            font = ImageFont.truetype(media.FONT, 26),
+            fill = (255, 255, 255),
+        )
+        im1.save(r"media/blackhole.png")
+
+        channels = [
+            os.getenv("ALERTS_TELEGRAM_CHANNEL_ID"), 
+            os.getenv(f"MAIN_TELEGRAM_CHANNEL_ID"), 
+            os.getenv(f"{chain.upper()}_TELEGRAM_CHANNEL_ID")
+        ]
+
+        for channel in channels:
+            if channel:  
+
+                await application.bot.send_photo(
+                    channel,
+                    photo=open(r"media/blackhole.png", "rb"),
+                    caption=
+                        f"*New Loan Originated ({chain_info.name.upper()})*\n\n"
+                        f"{message}",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(
+                        [
+                            [
+                                InlineKeyboardButton(
+                                    text=f"View Loan",
+                                    url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}",
+                                )
+                            ]
+                        ]
+                    ),
+                )  
     except Exception as e:
         await error(Exception(f"Error in loan alert for chain {chain}: {e}"))
 

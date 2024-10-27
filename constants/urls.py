@@ -1,15 +1,5 @@
 import os
 
-def SCAN_API(chain):
-    map = {
-        "arb": "https://api.arbiscan.io/api",
-        "bsc": "https://api.bscscan.com/api",
-        "base": "https://api.basescan.org/api",
-        "eth": "https://api.etherscan.io/api",
-        "op": "https://api-optimistic.etherscan.io/api",
-        "poly": "https://api.polygonscan.com/api"
-    }
-    return map.get(chain) 
 
 
 def SCAN_TOKEN(chain):

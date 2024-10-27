@@ -881,9 +881,10 @@ def get_duration_days(duration):
 
 
 def get_ill_number(term):
-    for ill_number, contract_address in ca.ILL_ADDRESSES.items():
-        if term.lower() == contract_address.lower():
-            return ill_number
+    for chain, addresses in ca.ILL_ADDRESSES.items():
+        for ill_number, contract_address in addresses.items():
+            if term.lower() == contract_address.lower():
+                return ill_number
 
 
 def get_liquidity_hub_data(hub_address, chain):
