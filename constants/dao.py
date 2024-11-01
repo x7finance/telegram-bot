@@ -2,7 +2,7 @@
 
 from constants import ca
 
-def CONTRACT_MAPPINGS(chain):
+def contract_mappings(chain):
     return {
     "X7100 Liquidity Hub": ((
         "setShares\n"

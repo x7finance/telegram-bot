@@ -64,7 +64,7 @@ CHAINS = {
         "ether",
         "",
         "eth-main",
-        urls.TG_ETH,
+        5,
         urls.RPC("eth"),
         ca.COM_MULTI("eth"),
         ca.DAO_MULTI("eth")
@@ -84,7 +84,7 @@ CHAINS = {
         "base",
         "-base",
         "base-main",
-        urls.TG_BASE,
+        2,
         urls.RPC("base"),
         ca.COM_MULTI("base"),
         ca.DAO_MULTI("base")
@@ -104,7 +104,7 @@ CHAINS = {
         "bnb",
         "-binance",
         "",
-        urls.TG_BSC,
+        "",
         urls.RPC("bsc"),
         ca.COM_MULTI("bsc"),
         ca.DAO_MULTI("bsc")
@@ -124,7 +124,7 @@ CHAINS = {
         "arbitrum",
         "-arbitrum",
         "arbitrum-main",
-        urls.TG_ARB,
+        "",
         urls.RPC("arb"),
         ca.COM_MULTI("arb"),
         ca.DAO_MULTI("arb")
@@ -144,7 +144,7 @@ CHAINS = {
         "optimism",
         "-optimism",
         "optimism-main",
-        urls.TG_OP,
+        "",
         urls.RPC("op"),
         ca.COM_MULTI("op"),
         ca.DAO_MULTI("op")
@@ -164,7 +164,7 @@ CHAINS = {
         "polygon",
         "-polygon",
         "poly-main",
-        urls.TG_POLY,
+        "",
         urls.RPC("poly"),
         ca.COM_MULTI("poly"),
         ca.DAO_MULTI("poly")
@@ -175,21 +175,21 @@ CHAINS = {
 GAS_CHAINS = ["eth", "poly", "bsc"]
 
 
-def DEFAULT_CHAIN(chat_id):
-    if chat_id == int(os.getenv("BASE_TELEGRAM_CHANNEL_ID")):
-        return "base"
-    else:
-        return "eth"
-
-
-def FULL_NAMES():
+def full_names():
     chain_names = [chain.name for chain in CHAINS.values()]
     return "\n".join(chain_names)
 
 
-def SHORT_NAMES():
+def short_names():
     chain_list = [key.upper() for key in CHAINS.keys()]
     return "\n".join(chain_list)
+
+
+def get_chain(chat_id):
+    for chain_name, chain_info in CHAINS.items():
+        if chat_id == chain_info.tg:
+            return chain_name
+    return "eth"
 
 
 def get_info(chain, token=None):
@@ -201,4 +201,4 @@ def get_info(chain, token=None):
 
         return chain_info, None
     else:
-        return None, f'Chain not recognised, Please use one of the following abbreviations:\n\n{SHORT_NAMES()}'
+        return None, f'Chain not recognised, Please use one of the following abbreviations:\n\n{short_names()}'

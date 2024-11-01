@@ -2,11 +2,11 @@ import random
 from datetime import datetime
 
 
-def RANDOM_BUTTON_TIME():
+def random_button_time():
     time = random.randint(3600, 86400)
     return time
 
-def BURN_AMOUNT():
+def burn_amount():
     amounts = [777, 1000, 1500, 2000]
     time = random.choice(amounts)
     return time
@@ -16,6 +16,6 @@ CLICK_ME_ENABLED = True
 CLICK_ME_BURN = False
 
 BUTTON_TIME = None
-FIRST_BUTTON_TIME = RANDOM_BUTTON_TIME()
+FIRST_BUTTON_TIME = random_button_time()
 RESTART_TIME = datetime.now().timestamp()
 

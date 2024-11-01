@@ -6,7 +6,7 @@ from datetime import datetime
 
 from bot import admin, auto, commands, welcome
 from hooks import api, db
-from constants import settings
+from constants import chains, settings, urls
 
 LOCAL = False
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
@@ -21,7 +21,7 @@ sentry_sdk.init(
 
 async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    if user_id == int(os.getenv("OWNER_TELEGRAM_CHANNEL_ID")):
+    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
         return
 
 
@@ -56,8 +56,8 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
 
     if previous_click_me_id:
         try:
-            await context.bot.delete_message(chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"), message_id=previous_click_me_id)
-            await context.bot.delete_message(chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"), message_id=previous_clicked_id)
+            await context.bot.delete_message(chat_id=urls.TG_MAIN_CHANNEL_ID, message_id=previous_click_me_id)
+            await context.bot.delete_message(chat_id=urls.TG_MAIN_CHANNEL_ID, message_id=previous_clicked_id)
         except Exception:
             pass
 
@@ -69,7 +69,7 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
     )
     click_me = await context.bot.send_photo(
         photo=api.get_random_pioneer(),
-        chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
+        chat_id=urls.TG_MAIN_CHANNEL_ID,
         reply_markup=keyboard,
     )
 
@@ -157,7 +157,7 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
 
             if settings.CLICK_ME_BURN and total_click_count % settings.CLICK_ME_BURN == 0:
-                burn_message = await api.burn_x7r(settings.BURN_AMOUNT(), "eth")
+                burn_message = await api.burn_x7r(settings.burn_amount(), "eth")
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
                     text=f"🔥🔥🔥🔥🔥🔥🔥🔥\n\nThe button has been clicked a total of {total_click_count} times by all Pioneers!\n\n{burn_message}"
@@ -171,7 +171,7 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
             job_queue.run_once(
                 button_send,
                 settings.BUTTON_TIME,
-                chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
+                chat_id=urls.TG_MAIN_CHANNEL_ID,
                 name="Click Me",
             )
 
@@ -180,7 +180,7 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    if user_id == int(os.getenv("OWNER_TELEGRAM_CHANNEL_ID")):
+    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
         await button_send(context)
 
 
@@ -284,7 +284,7 @@ if __name__ == "__main__":
             job_queue.run_once(
                 button_send,
                 settings.FIRST_BUTTON_TIME,
-                chat_id=os.getenv("MAIN_TELEGRAM_CHANNEL_ID"),
+                chat_id=urls.TG_MAIN_CHANNEL_ID,
                 name="Click Me",
             )
 

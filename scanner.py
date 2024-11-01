@@ -96,9 +96,8 @@ async def loan_alert(event, chain):
         im1.save(r"media/blackhole.png")
 
         channels = [
-            os.getenv("ALERTS_TELEGRAM_CHANNEL_ID"), 
-            os.getenv(f"MAIN_TELEGRAM_CHANNEL_ID"), 
-            os.getenv(f"{chain.upper()}_TELEGRAM_CHANNEL_ID")
+            urls.TG_MAIN_CHANNEL_ID, 
+            urls.TG_ALERTS_CHANNEL_ID
         ]
 
         for channel in channels:
@@ -212,9 +211,8 @@ async def pair_alert(event, chain):
         im1.save(r"media/blackhole.png")
 
         channels = [
-            os.getenv("ALERTS_TELEGRAM_CHANNEL_ID"), 
-            os.getenv(f"MAIN_TELEGRAM_CHANNEL_ID"), 
-            os.getenv(f"{chain.upper()}_TELEGRAM_CHANNEL_ID")
+            urls.TG_MAIN_CHANNEL_ID, 
+            urls.TG_ALERTS_CHANNEL_ID
         ]
 
         for channel in channels:

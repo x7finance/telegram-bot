@@ -12,7 +12,7 @@ defined = api.Defined()
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    if user_id == int(os.getenv("OWNER_TELEGRAM_CHANNEL_ID")):
+    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
         status = []
 
         bitquery_url = "https://streaming.bitquery.io/graphql"
@@ -109,14 +109,14 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    if user_id == int(os.getenv("OWNER_TELEGRAM_CHANNEL_ID")):
+    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
         reset_text = db.clicks_reset()
         await update.message.reply_text(f"{reset_text}")
 
 
 async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    if user_id == int(os.getenv("OWNER_TELEGRAM_CHANNEL_ID")):
+    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
         if update.effective_chat.type == "private":
             if settings.CLICK_ME_ENABLED:
                 if settings.BUTTON_TIME is not None:

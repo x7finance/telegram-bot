@@ -76,12 +76,7 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     was_member, is_member = result
     new_member = update.chat_member.new_chat_member
 
-    if str(channel_id) == os.getenv("MAIN_TELEGRAM_CHANNEL_ID") or str(channel_id) == os.getenv("BASE_TELEGRAM_CHANNEL_ID"):
-        if str(channel_id) == os.getenv("BASE_TELEGRAM_CHANNEL_ID"):
-            chain = "BASE"
-        else:
-            chain = None
-        
+    if str(channel_id) == urls.TG_MAIN_CHANNEL_ID:
         new_member_id = new_member.user.id
         if new_member.user.username:
             new_member_username = f"@{new_member.user.username}"
@@ -107,7 +102,7 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             welcome_message = await update.effective_chat.send_video(
                 video=open(media.WELCOMEVIDEO, 'rb'),
                 caption=
-                    f"{text.WELCOME(new_member_username, chain)}",
+                    f"{text.welcome(new_member_username)}",
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup(
                     [

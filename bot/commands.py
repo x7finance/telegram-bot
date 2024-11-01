@@ -1,12 +1,10 @@
 from telegram import *
 from telegram.ext import *
 
-import asyncio, math, os, pytz, random, re, requests, time
+import asyncio, math, pytz, random, re, requests, time
 from datetime import datetime
 
 from PIL import Image, ImageDraw, ImageFont
-from web3 import Web3
-
 from constants import abis, ca, chains, dao, nfts, settings, splitters, tax, text, tokens, urls  
 from hooks import api, db, dune 
 import pricebot
@@ -33,7 +31,7 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def admins(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    administrators = await context.bot.get_chat_administrators(os.getenv("MAIN_TELEGRAM_CHANNEL_ID"))
+    administrators = await context.bot.get_chat_administrators(urls.TG_MAIN_CHANNEL_ID)
     community_team = [f"@{admin.user.username}" for admin in administrators if 'community team' in admin.custom_title.lower()]
     og = [f"@{admin.user.username}" for admin in administrators if 'og' in admin.custom_title.lower()]
     await update.message.reply_photo(
@@ -205,7 +203,7 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -238,7 +236,7 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -284,15 +282,12 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text="DAO Chat", url=f"{urls.TG_DAO}",
             ),
         ],
+        [
+            InlineKeyboardButton(
+                text="Community Chat", url=f"{urls.TG_PORTAL}",
+            ),
+        ],
     ]
-    for chain in chains.CHAINS.values():
-        
-        if chain.tg:
-            buttons.append([
-                InlineKeyboardButton(
-                    text=f"{chain.name} Community Chat", url=f"{chain.tg}",
-                )
-            ])
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=f"\n",
@@ -302,7 +297,7 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -350,95 +345,87 @@ async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    token_names = {
-        "x7r": {"contract": ca.X7R(chain), "image": media.X7R_LOGO},
-        "x7dao": {"contract": ca.X7DAO(chain), "image": media.X7DAO_LOGO},
-        "x7101": {"contract": ca.X7101(chain), "image": media.X7101_LOGO},
-        "x7102": {"contract": ca.X7102(chain), "image": media.X7102_LOGO},
-        "x7103": {"symbol": ca.X7103(chain), "image": media.X7103_LOGO},
-        "x7104": {"contract": ca.X7104(chain), "image": media.X7104_LOGO},
-        "x7105": {"contract": ca.X7105(chain), "image": media.X7105_LOGO},
-    }
-
-    x7token = context.args[0].lower()
-    if x7token not in token_names:
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"*X7 Finance Market Cap (ETH) Comparison*\n\n"
-                f"Please enter X7 token first followed by token to compare\n\n"
-                f"ie. `/compare x7r uni`",
-            parse_mode="Markdown",
-        )
-        return
     
-    token2 = context.args[1].lower()
-    search = coingecko.search(token2)
-    if "coins" in search and search["coins"]:
-        token_id = search["coins"][0]["api_symbol"]
-    else:
-        await update.message.reply_photo(
+    try:
+        token_names = {
+            "x7r": {"contract": ca.X7R(chain), "image": media.X7R_LOGO},
+            "x7dao": {"contract": ca.X7DAO(chain), "image": media.X7DAO_LOGO},
+            "x7101": {"contract": ca.X7101(chain), "image": media.X7101_LOGO},
+            "x7102": {"contract": ca.X7102(chain), "image": media.X7102_LOGO},
+            "x7103": {"symbol": ca.X7103(chain), "image": media.X7103_LOGO},
+            "x7104": {"contract": ca.X7104(chain), "image": media.X7104_LOGO},
+            "x7105": {"contract": ca.X7105(chain), "image": media.X7105_LOGO},
+        }
+
+        x7token = context.args[0].lower()
+        if x7token not in token_names:
+            await update.message.reply_photo(
                 photo=api.get_random_pioneer(),
                 caption=
                     f"*X7 Finance Market Cap Comparison*\n\n"
-                    f"No Market Cap data found for {token2.upper()}",
+                    f"Please enter X7 token first followed by token to compare\n\n"
+                    f"ie. `/compare x7r uni`",
                 parse_mode="Markdown",
             )
-        return
+            return
+        
+        token2 = context.args[1].lower()
+        search = coingecko.search(token2)
+        if "coins" in search and search["coins"]:
+            token_id = search["coins"][0]["api_symbol"]
 
-    token_market_cap = coingecko.get_mcap(token_id)
-    if token_market_cap == 0:
+        token_market_cap = coingecko.get_mcap(token_id)
+        if x7token == ca.X7R(chain):
+            x7_supply = etherscan.get_x7r_supply("eth")
+        else:
+            x7_supply = ca.SUPPLY
+        token_info = token_names[x7token]
+        x7_price,_ = dextools.get_price(token_info["contract"], "eth")
+        x7_market_cap = float(x7_price) * float(x7_supply)
+        percent = ((token_market_cap - x7_market_cap) / x7_market_cap) * 100
+        x = (token_market_cap - x7_market_cap) / x7_market_cap
+        token_value = token_market_cap / x7_supply
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
                 f"*X7 Finance Market Cap Comparison*\n\n"
-                f"No Market Cap data found for {token2.upper()}",
+                f"{context.args[1].upper()} Market Cap:\n"
+                f'${"{:,.0f}".format(token_market_cap)}\n\n'
+                f'Token value of {context.args[0].upper()} at {context.args[1].upper()} Market Cap:\n'
+                f'${"{:,.2f}".format(token_value)}\n'
+                f'{"{:,.0f}%".format(percent)}\n'
+                f'{"{:,.0f}x".format(x)}',
             parse_mode="Markdown",
-        )
-        return
-    if x7token == ca.X7R(chain):
-        x7_supply = etherscan.get_x7r_supply("eth")
-    else:
-        x7_supply = ca.SUPPLY
-    token_info = token_names[x7token]
-    x7_price,_ = dextools.get_price(token_info["contract"], "eth")
-    x7_market_cap = float(x7_price) * float(x7_supply)
-    percent = ((token_market_cap - x7_market_cap) / x7_market_cap) * 100
-    x = (token_market_cap - x7_market_cap) / x7_market_cap
-    token_value = token_market_cap / x7_supply
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Market Cap Comparison*\n\n"
-            f"{context.args[1].upper()} Market Cap:\n"
-            f'${"{:,.0f}".format(token_market_cap)}\n\n'
-            f'Token value of {context.args[0].upper()} at {context.args[1].upper()} Market Cap:\n'
-            f'${"{:,.2f}".format(token_value)}\n'
-            f'{"{:,.0f}%".format(percent)}\n'
-            f'{"{:,.0f}x".format(x)}',
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
+            reply_markup=InlineKeyboardMarkup(
                 [
-                    InlineKeyboardButton(
-                        text=f"{context.args[1].upper()} Chart",
-                        url=f"https://www.coingecko.com/en/coins/{token_id}",
-                    )
-                ],
-            ]
-        ),
-    )
+                    [
+                        InlineKeyboardButton(
+                            text=f"{context.args[1].upper()} Chart",
+                            url=f"https://www.coingecko.com/en/coins/{token_id}",
+                        )
+                    ],
+                ]
+            ),
+        )
+    except Exception:
+        await update.message.reply_photo(
+                photo=api.get_random_pioneer(),
+                caption=
+                    f"*X7 Finance Market Cap Comparison*\n\n"
+                    f"Comparison not avaliable",
+                parse_mode="Markdown",
+            )
 
 
 async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -462,7 +449,7 @@ async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def contracts(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -494,7 +481,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
         amount = context.args[0]
         amount = amount.replace(',', '')
         token = context.args[1]
-        chain = chains.DEFAULT_CHAIN(update.effective_chat.id) if len(context.args) < 3 else context.args[2]
+        chain = chains.get_chain(update.effective_message.message_thread_id) if len(context.args) < 3 else context.args[2]
 
         if not amount.isdigit():
             await context.bot.send_message(update.effective_chat.id, "Please provide a valid amount")
@@ -507,8 +494,8 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if error_message:
         await update.message.reply_text(error_message)
         return
-    if token.upper() in tokens.TOKENS(chain):
-        token_info = tokens.TOKENS(chain)[token.upper()][chain]
+    if token.upper() in tokens.TOKENS:
+        token_info = tokens.TOKENS[token.upper()].get(chain)
         address = token_info.ca
         price, _ = dextools.get_price(address, chain)
             
@@ -538,7 +525,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -546,7 +533,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     buttons = []
     input_contract = " ".join(context.args).lower()
-    contract_names = list(dao.CONTRACT_MAPPINGS(chain))
+    contract_names = list(dao.contract_mappings(chain))
     formatted_contract_names = '\n'.join(contract_names)
     keyboard = InlineKeyboardMarkup(
             [[InlineKeyboardButton(text="Vote Here",url=urls.SNAPSHOT,)],
@@ -617,12 +604,12 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         else:
             matching_contract = None
-            for contract in dao.CONTRACT_MAPPINGS(chain).keys():
+            for contract in dao.contract_mappings(chain).keys():
                 if contract.lower() == input_contract:
                     matching_contract = contract
                     break
             if matching_contract:
-                contract_text, contract_ca = dao.CONTRACT_MAPPINGS(chain)[matching_contract]
+                contract_text, contract_ca = dao.contract_mappings(chain)[matching_contract]
                 await update.message.reply_photo(
                     photo=api.get_random_pioneer(),
                     caption=(
@@ -791,7 +778,7 @@ async def faq(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -868,7 +855,7 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -955,7 +942,7 @@ async def fg(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -995,7 +982,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain = context.args[1].lower()
     if len(context.args) == 1:
         token = context.args[0].lower()
-        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
+        chain = chains.get_chain(update.effective_message.message_thread_id)
     
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
@@ -1055,8 +1042,8 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Treasury Share: {treasury}% - {treasury_balance:,.3f} {chain_info.native.upper()}"
     )
 
-    if token.upper() in tokens.TOKENS(chain):
-        token_info = tokens.TOKENS(chain)[token.upper()][chain]
+    if token.upper() in tokens.TOKENS:
+        token_info = tokens.TOKENS[token.upper()].get(chain)
         address = token_info.ca
         price, _ = dextools.get_price(address, chain)
 
@@ -1196,7 +1183,7 @@ async def links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -1204,8 +1191,8 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     message = await update.message.reply_text("Getting Liquidity data, Please wait...")
 
-    x7r_pairs = tokens.TOKENS(chain)["X7R"][chain].pairs
-    x7dao_pairs = tokens.TOKENS(chain)["X7DAO"][chain].pairs
+    x7r_pairs = tokens.TOKENS["X7R"].get(chain).pairs
+    x7dao_pairs = tokens.TOKENS["X7DAO"].get(chain).pairs
 
     if isinstance(x7r_pairs, str):
         x7r_pairs = [x7r_pairs]
@@ -1316,27 +1303,27 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 url=f"{chain_info.scan_address}{pair}"
             )])
 
-        keyboard = InlineKeyboardMarkup(buttons)
+    keyboard = InlineKeyboardMarkup(buttons)
 
-        final_text = (
-            f"{x7r_text}\n"
-            f"{x7dao_text}\n"
-        )
+    final_text = (
+        f"{x7r_text}\n"
+        f"{x7dao_text}\n"
+    )
 
-        await message.delete()
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=(
-                f"*X7 Finance Liquidity ({chain_info.name})*\n"
-                f"Use `liquidity [chain-name]` for other chains\n\n"
-                f"{final_text}"
-            ),
-            parse_mode="Markdown",
-            reply_markup=keyboard
-        )
+    await message.delete()
+    await update.message.reply_photo(
+        photo=api.get_random_pioneer(),
+        caption=(
+            f"*X7 Finance Liquidity ({chain_info.name})*\n"
+            f"Use `liquidity [chain-name]` for other chains\n\n"
+            f"{final_text}"
+        ),
+        parse_mode="Markdown",
+        reply_markup=keyboard
+    )
 
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -1433,7 +1420,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if not chain:
-        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
+        chain = chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -1534,7 +1521,7 @@ async def loans_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -1582,7 +1569,7 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -1617,7 +1604,7 @@ async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -1628,11 +1615,12 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
     caps_info = {}
     caps = {}
 
-    for token in tokens.TOKENS(chain):
-        token_info = tokens.TOKENS(chain)[token][chain]
-        address = token_info.ca
-        caps_info[address] = dextools.get_token_info(address, chain)
-        caps[address] = caps_info[address]["mcap"]
+    for token, chains_info in tokens.TOKENS.items():
+        token_info = chains_info.get(chain)
+        if token_info:
+            address = token_info.ca
+            caps_info[address] = dextools.get_token_info(address, chain)
+            caps[address] = caps_info[address]["mcap"]
 
     total_mcap = 0
     for token, mcap in caps.items():
@@ -1747,7 +1735,7 @@ async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -2042,6 +2030,16 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f'Lending Pool Reserve: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
                 f'Total: ${"{:0,.0f}".format(total_dollar)}',
             parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            text=f"Lending Pool Dashboard",
+                            url=f"{urls.XCHANGE}/lending",
+                        )
+                    ]
+                ]
+            ),
         )
     else:
         chain_info, error_message = chains.get_info(chain)
@@ -2096,23 +2094,17 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     [
                         InlineKeyboardButton(
-                            text=f"Lending Pool - {chain_info.scan_name}",
-                            url=f"{chain_info.scan_address}{chain_lpool}",
+                            text=f"Lending Pool Dashboard",
+                            url=f"{urls.XCHANGE}/lending",
                         )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text=f"Lending Pool Reserve - {chain_info.scan_name}",
-                            url=f"{chain_info.scan_address}{ca.LPOOL_RESERVE(chain)}",
-                        )
-                    ],
+                    ]
                 ]
             ),
         )
 
 
 async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain,token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -2175,7 +2167,7 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
 
     chain_info, error_message = chains.get_info(chain)
     if error_message:
@@ -2293,7 +2285,7 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
 
 
 async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -2338,7 +2330,7 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def tax_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -2459,7 +2451,7 @@ async def time_command(update: Update, context: CallbackContext):
 
 
 async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -2857,7 +2849,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown")
         return
     if not chain:
-        chain = chains.DEFAULT_CHAIN(update.effective_chat.id)
+        chain = chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -2964,7 +2956,7 @@ async def wp(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -3015,7 +3007,7 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain,token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -3023,7 +3015,7 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    chain_pair = tokens.TOKENS(chain)["X7DAO"][chain].pairs
+    chain_pair = tokens.TOKENS["X7DAO"].get(chain).pairs
     info = dextools.get_token_info(ca.X7DAO(chain), chain)
     holders = info["holders"]
     market_cap = info["mcap"]
@@ -3056,19 +3048,19 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
             f"Contract Address:\n`{ca.X7DAO(chain)}`",
-    parse_mode="Markdown",
-    reply_markup=InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{ca.X7DAO(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7DAO(chain)}")],
-            [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7DAO(chain))}")],
-        ]
-    ),
-)
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{ca.X7DAO(chain)}")],
+                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7DAO(chain)}")],
+                [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7DAO(chain))}")],
+            ]
+        ),
+    )
 
 
 async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain,token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -3076,7 +3068,7 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    chain_pair = tokens.TOKENS(chain)["X7R"][chain].pairs
+    chain_pair = tokens.TOKENS["X7R"].get(chain).pairs
     info = dextools.get_token_info(ca.X7R(chain), chain)
     holders = info["holders"]
     market_cap = info["mcap"]
@@ -3121,7 +3113,7 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain,token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -3129,7 +3121,7 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    chain_pair = tokens.TOKENS(chain)["X7101"][chain].pairs
+    chain_pair = tokens.TOKENS["X7101"].get(chain).pairs
     info = dextools.get_token_info(ca.X7101(chain), chain)
     holders = info["holders"]
     market_cap = info["mcap"]
@@ -3162,19 +3154,19 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
             f"Contract Address:\n`{ca.X7101(chain)}`",
-    parse_mode="Markdown",
-    reply_markup=InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{ca.X7101(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7101(chain)}")],
-            [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7101(chain))}")],
-        ]
-    ),
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{ca.X7101(chain)}")],
+                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7101(chain)}")],
+                [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7101(chain))}")],
+            ]
+        ),
     )
 
 
 async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain,token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -3182,7 +3174,7 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
-    chain_pair = tokens.TOKENS(chain)["X7102"][chain].pairs
+    chain_pair = tokens.TOKENS["X7102"].get(chain).pairs
     info = dextools.get_token_info(ca.X7102(chain), chain)
     holders = info["holders"]
     market_cap = info["mcap"]
@@ -3215,19 +3207,19 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
             f"Contract Address:\n`{ca.X7102(chain)}`",
-    parse_mode="Markdown",
-    reply_markup=InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{ca.X7102(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7102(chain)}")],
-            [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7102(chain))}")],
-        ]
-    ),
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{ca.X7102(chain)}")],
+                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7102(chain)}")],
+                [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7102(chain))}")],
+            ]
+        ),
     )
 
 
 async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain,token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -3235,7 +3227,7 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
-    chain_pair = tokens.TOKENS(chain)["X7103"][chain].pairs
+    chain_pair = tokens.TOKENS["X7103"].get(chain).pairs
     info = dextools.get_token_info(ca.X7103(chain), chain)
     holders = info["holders"]
     market_cap = info["mcap"]
@@ -3268,19 +3260,19 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
             f"Contract Address:\n`{ca.X7103(chain)}`",
-    parse_mode="Markdown",
-    reply_markup=InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{ca.X7103(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7103(chain)}")],
-            [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7103(chain))}")],
-        ]
-    ),
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{ca.X7103(chain)}")],
+                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7103(chain)}")],
+                [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7103(chain))}")],
+            ]
+        ),
     )
 
 
 async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain,token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -3288,7 +3280,7 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
-    chain_pair = tokens.TOKENS(chain)["X7104"][chain].pairs
+    chain_pair = tokens.TOKENS["X7104"].get(chain).pairs
     info = dextools.get_token_info(ca.X7104(chain), chain)
     holders = info["holders"]
     market_cap = info["mcap"]
@@ -3321,19 +3313,19 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
             f"Contract Address:\n`{ca.X7104(chain)}`",
-    parse_mode="Markdown",
-    reply_markup=InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{ca.X7104(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7104(chain)}")],
-            [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7104(chain))}")],
-        ]
-    ),
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{ca.X7104(chain)}")],
+                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7104(chain)}")],
+                [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7104(chain))}")],
+            ]
+        ),
     )
 
 
 async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.DEFAULT_CHAIN(update.effective_chat.id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain,token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -3341,7 +3333,7 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
-    chain_pair = tokens.TOKENS(chain)["X7105"][chain].pairs
+    chain_pair = tokens.TOKENS["X7105"].get(chain).pairs
     info = dextools.get_token_info(ca.X7105(chain), chain)
     holders = info["holders"]
     market_cap = info["mcap"]
@@ -3374,14 +3366,14 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
             f"Contract Address:\n`{ca.X7105(chain)}`",
-    parse_mode="Markdown",
-    reply_markup=InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{ca.X7105(chain)}")],
-            [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7105(chain)}")],
-            [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7105(chain))}")],
-        ]
-    ),
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{ca.X7105(chain)}")],
+                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7105(chain)}")],
+                [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7105(chain))}")],
+            ]
+        ),
     )
 
 async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
