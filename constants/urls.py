@@ -1,5 +1,6 @@
-import os
+# URLS
 
+import os
 
 
 def SCAN_TOKEN(chain):

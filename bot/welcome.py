@@ -1,7 +1,6 @@
 from telegram import *
 from telegram.ext import *
 
-import os
 from typing import Optional, Tuple
 
 from constants import text, urls

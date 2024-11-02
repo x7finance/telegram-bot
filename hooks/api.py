@@ -1,9 +1,10 @@
 import random, requests, os, time, json
+
 from typing import Union
 from farcaster import Warpcast
 from datetime import datetime, timedelta
 from pycoingecko import CoinGeckoAPI
-from web3 import Web3
+
 from constants import ca, chains, urls
 
 

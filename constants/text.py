@@ -1,7 +1,7 @@
 # TEXT
 
 from hooks import api
-from constants import chains, urls
+from constants import chains
 
 
 ABOUT = (
