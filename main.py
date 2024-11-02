@@ -1,12 +1,10 @@
 from telegram import *
 from telegram.ext import *
 
-import os, sys, sentry_sdk, subprocess, random, time
-from datetime import datetime
+import os, sys, sentry_sdk, subprocess
 
 from bot import admin, auto, commands, welcome
-from hooks import api, db
-from constants import chains, settings, urls
+from constants import settings, urls
 
 LOCAL = False
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
@@ -46,142 +44,6 @@ async def error(update: Update, context: CallbackContext):
                     f"Error occurred without a valid message: {context.error}"
                 )
             )
-
-
-async def button_send(context: ContextTypes.DEFAULT_TYPE):
-    context.bot_data["first_user_clicked"] = False
-
-    previous_click_me_id = context.bot_data.get('click_me_id')
-    previous_clicked_id = context.bot_data.get('clicked_id')
-
-    if previous_click_me_id:
-        try:
-            await context.bot.delete_message(chat_id=urls.TG_MAIN_CHANNEL_ID, message_id=previous_click_me_id)
-            await context.bot.delete_message(chat_id=urls.TG_MAIN_CHANNEL_ID, message_id=previous_clicked_id)
-        except Exception:
-            pass
-
-    current_button_data = str(random.randint(1, 100000000))
-    context.bot_data["current_button_data"] = current_button_data
-
-    keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Click Me!", callback_data=current_button_data)]]
-    )
-    click_me = await context.bot.send_photo(
-        photo=api.get_random_pioneer(),
-        chat_id=urls.TG_MAIN_CHANNEL_ID,
-        reply_markup=keyboard,
-    )
-
-    context.bot_data["button_generation_timestamp"] = time.time()
-    context.bot_data['click_me_id'] = click_me.message_id
-
-
-async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    button_click_timestamp = time.time()
-
-    current_button_data = context.bot_data.get("current_button_data")
-    button_generation_timestamp = context.bot_data.get("button_generation_timestamp")
-
-    if not current_button_data:
-        return
-
-    button_data = update.callback_query.data
-    user = update.effective_user
-    user_info = user.username or f"{user.first_name} {user.last_name}" or user.first_name
-
-    context.user_data.setdefault("clicked_buttons", set())
-
-    if button_data in context.user_data["clicked_buttons"]:
-        return
-
-    context.user_data["clicked_buttons"].add(button_data)
-
-    if button_data == current_button_data:
-        time_taken = button_click_timestamp - button_generation_timestamp
-
-        await db.clicks_update(user_info, time_taken)
-
-        if not context.bot_data.get("first_user_clicked"):
-            context.bot_data["first_user_clicked"] = True
-
-            user_data = db.clicks_get_by_name(user_info)
-            clicks = user_data[0]
-            streak = user_data[2]
-            total_click_count = db.clicks_get_total()
-            if clicks == 1:
-                click_message = f"🎉🎉 This is their first button click! 🎉🎉"
-
-            elif clicks % 10 == 0:
-                click_message = f"🎉🎉 They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak! 🎉🎉"
-            else:
-                click_message = f"They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak!"
-
-            check_time = db.clicks_check_is_fastest(time_taken)
-            if check_time:
-                click_message += f"\n\n🎉🎉 {time_taken:.3f} seconds is the new fastest time! 🎉🎉"
-
-            if settings.CLICK_ME_BURN:
-
-                clicks_needed = settings.CLICK_ME_BURN - (total_click_count % settings.CLICK_ME_BURN)
-                message_text = (
-                    f"{api.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
-                    f"{click_message}\n\n"
-                    f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
-                    f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
-                    f"use `/leaderboard` to see the fastest Pioneers!\n\n"
-                )
-            else:
-                message_text = (
-                    f"{api.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
-                    f"{click_message}\n\n"
-                    f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
-                    f"use `/leaderboard` to see the fastest Pioneers!\n\n"
-                )
-
-            photos = await context.bot.get_user_profile_photos(update.effective_user.id, limit=1)
-            if photos and photos.photos and photos.photos[0]:
-                photo = photos.photos[0][0].file_id
-
-                clicked = await context.bot.send_photo(
-                    photo=photo,
-                    chat_id=update.effective_chat.id,
-                    caption=message_text,
-                    parse_mode="Markdown"
-                )
-            else:
-                clicked = await context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text=message_text,
-                    parse_mode="Markdown"
-                )
-
-            if settings.CLICK_ME_BURN and total_click_count % settings.CLICK_ME_BURN == 0:
-                burn_message = await api.burn_x7r(settings.burn_amount(), "eth")
-                await context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text=f"🔥🔥🔥🔥🔥🔥🔥🔥\n\nThe button has been clicked a total of {total_click_count} times by all Pioneers!\n\n{burn_message}"
-                )
-
-            context.bot_data['clicked_id'] = clicked.message_id
-
-            settings.RESTART_TIME = datetime.now().timestamp()
-            settings.BUTTON_TIME = settings.RANDOM_BUTTON_TIME()
-
-            job_queue.run_once(
-                button_send,
-                settings.BUTTON_TIME,
-                chat_id=urls.TG_MAIN_CHANNEL_ID,
-                name="Click Me",
-            )
-
-            return settings.BUTTON_TIME
-
-
-async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-        await button_send(context)
 
 
 def scanners():
@@ -271,18 +133,18 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler(["x7105", "105"], commands.x7105))
     application.add_handler(CommandHandler("x", commands.x))
 
-    application.add_handler(CommandHandler("clickme", click_me))
+    application.add_handler(CommandHandler("clickme", admin.click_me))
     application.add_handler(CommandHandler("ping", admin.ping))
     application.add_handler(CommandHandler("reset", admin.reset))
     application.add_handler(CommandHandler("wen", admin.wen))
 
-    application.add_handler(CallbackQueryHandler(button_function))
+    application.add_handler(CallbackQueryHandler(auto.button_function))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies))
 
     if not LOCAL:
         if settings.CLICK_ME_ENABLED:
             job_queue.run_once(
-                button_send,
+                auto.button_send,
                 settings.FIRST_BUTTON_TIME,
                 chat_id=urls.TG_MAIN_CHANNEL_ID,
                 name="Click Me",

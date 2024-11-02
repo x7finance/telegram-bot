@@ -4,10 +4,17 @@ from telegram.ext import *
 import os, requests
 from datetime import datetime, timedelta
 
-from constants import ca, chains, settings
+from bot import auto
+from constants import ca, settings
 from hooks import  db, api
 
 defined = api.Defined()
+
+
+async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+        await auto.button_send(context)
 
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):

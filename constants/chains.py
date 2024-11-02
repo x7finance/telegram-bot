@@ -1,6 +1,5 @@
 # CHAINS
 
-import os
 from constants import ca, urls
 import media
 
