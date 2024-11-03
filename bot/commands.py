@@ -1339,22 +1339,22 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     num_loans = contract.functions.nextLoanID().call()
     liquidatable_loans = 0
     results = []
-    for loan_id in range(num_loans + 1):
+    for loan_id in range(num_loans):
         try:
             result = contract.functions.canLiquidate(int(loan_id)).call()
-            if result == 1:
+            if result > 0:
                 liquidatable_loans += 1
                 results.append(f"Loan ID {loan_id}")
         except Exception:
             continue
 
     liquidatable_loans_text = f"Total liquidatable loans: {liquidatable_loans}"
-    output = "\n".join([liquidatable_loans_text] + results)
+    output = "\n".join([liquidatable_loans_text] + results) 
     await message.delete()
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"*X7 Finance Loan Liquidations ({chain_info.name})*\nfor other chains use `/liquidate [chain-name]`\n\n"
+            f"*X7 Finance Loan Liquidations ({chain_info.name})*\nFor other chains use `/liquidate [chain-name]`\n\n"
             f"{output}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -1368,6 +1368,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         ),
     )
+
 
 
 async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
