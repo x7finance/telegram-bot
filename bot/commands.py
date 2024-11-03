@@ -1441,7 +1441,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"\n\n*Eligible For Liquidation*\n"
                 f"Cost: {liquidation / 10 ** 18} {chain_info.native.upper()} "
                 f'(${"{:0,.0f}".format(price * liquidation / 10 ** 18)})\n'
-                f'Reward: {reward} {chain_info.native} (${"{:0,.0f}".format(price * reward)})'
+                f'Reward: {reward} {chain_info.native.upper()} (${"{:0,.0f}".format(price * reward)})'
             )
     except Exception:
         pass
