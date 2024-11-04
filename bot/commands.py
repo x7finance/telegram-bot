@@ -2286,7 +2286,7 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
 
 
 async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.chains.get_chain(update.effective_message.message_thread_id)
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
