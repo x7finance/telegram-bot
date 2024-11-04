@@ -32,14 +32,12 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def admins(update: Update, context: ContextTypes.DEFAULT_TYPE):
     administrators = await context.bot.get_chat_administrators(urls.TG_MAIN_CHANNEL_ID)
-    community_team = [f"@{admin.user.username}" for admin in administrators if 'community team' in admin.custom_title.lower()]
-    og = [f"@{admin.user.username}" for admin in administrators if 'og' in admin.custom_title.lower()]
+    team = [f"@{admin.user.username}" for admin in administrators if 'x7' in admin.custom_title.lower()]
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=(
             "*X7 Finance Telegram Admins*\n\n"
-            "Community Team:\n" + "\n".join(community_team) +
-            "\n\nOGs:\n" + "\n".join(og)
+            "X7 Team:\n" + "\n".join(team)
         ),
         parse_mode="Markdown",
     )
@@ -111,17 +109,17 @@ async def blog(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) ==  2:
+    if len(context.args) >=  1:
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
         amount = context.args[0]
         amount_in_wei = int(float(amount) * 10 ** 18)
-        chain = context.args[1]
+        chain = chains.get_chain(update.effective_message.message_thread_id) if len(context.args) < 2 else context.args[1]
     else:
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
                 f"*X7 Finance Loan Rates*\n\n"
-                "Follow the /borrow command with an amount and chain",
+                "Follow the /borrow command with an amount to borrow",
             parse_mode="Markdown"
             )
         return
@@ -269,7 +267,7 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
         [
             InlineKeyboardButton(
-                text="Announcements", url=f"{urls.TG_ANNOUNCEMENTS}"
+                text="X7 Portal", url=f"{urls.TG_PORTAL}",
             ),
         ],
         [
@@ -282,10 +280,10 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text="DAO Chat", url=f"{urls.TG_DAO}",
             ),
         ],
+
         [
             InlineKeyboardButton(
-                text="Community Chat", url=f"{urls.TG_PORTAL}",
-            ),
+                text="Xchange Create Bot", url=f"{urls.TG_XCHANGE_CREATE}")
         ],
     ]
     await update.message.reply_photo(
@@ -478,8 +476,8 @@ async def contribute(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) >= 2:
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
-        amount = context.args[0]
-        amount = amount.replace(',', '')
+        amount_raw = context.args[0]
+        amount = amount_raw.replace(',', '')
         token = context.args[1]
         chain = chains.get_chain(update.effective_message.message_thread_id) if len(context.args) < 3 else context.args[2]
 
@@ -487,7 +485,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(update.effective_chat.id, "Please provide a valid amount")
             return
     else:
-        await context.bot.send_message(update.effective_chat.id, "Please provide the amount, X7 token and optional chain")
+        await context.bot.send_message(update.effective_chat.id, "Please provide the amount and X7 token name")
         return
 
     chain_info, error_message = chains.get_info(chain, token=True)
@@ -974,15 +972,13 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) == 0 or len(context.args) > 2:
-        await update.message.reply_text("Please follow the command with token liquidity hub name and optional chain")
+    if not (1 <= len(context.args) <= 2):
+        await update.message.reply_text("Please follow the command with token liquidity hub name")
         return
-    if len(context.args) == 2:
-        token = context.args[0].lower()
-        chain = context.args[1].lower()
-    if len(context.args) == 1:
-        token = context.args[0].lower()
-        chain = chains.get_chain(update.effective_message.message_thread_id)
+
+    token = context.args[0].lower()
+    chain = context.args[1].lower() if len(context.args) == 2 else chains.get_chain(update.effective_message.message_thread_id)
+
     
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
@@ -994,7 +990,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
             token = "x7100"
         hub_address = ca.HUBS(chain)[token]
     else:
-        await update.message.reply_text("Please follow the command with X7 token name and optional chain")
+        await update.message.reply_text("Please follow the command with X7 token name")
         return
     message = await update.message.reply_text("Getting Liquidity Hub data, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
@@ -1083,28 +1079,13 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for quint in address:
             balance += etherscan.get_token_balance(hub_address, quint, chain)
         balance_text = f"{balance:,.0f} {token_str.upper()}"
-## TEMP
-    temp_balance = 0
-    if chain == "eth":
-        temp_hub_address = ca.TEMP_HUBS(token)
-        if isinstance(address, str):
-            temp_balance = etherscan.get_token_balance(temp_hub_address, address, chain)
-            temp_dollar = float(price) * float(temp_balance)
-            temp_balance_text = f"\n{temp_balance:,.0f} {token_str.upper()} (${temp_dollar:,.0f}) - Temp Hub"
-        elif isinstance(address, list):
-            for quint in address:
-                temp_balance += etherscan.get_token_balance(temp_hub_address, quint, chain)
-            temp_balance_text = f"\n{temp_balance:,.0f} {token_str.upper()} - Temp Hub"
-    else:
-        temp_balance_text = ""
-##
     await message.delete()
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
             f"*{token.upper()} Liquidity Hub ({chain_info.name})*\nUse `hub [token-name] [chain-name]` for other chains\n\n"
             f"{round(float(eth_balance), 2)} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
-            f"{balance_text} {temp_balance_text}\n\n"
+            f"{balance_text}\n\n"
             f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
             f"Balance Threshold: {balance_threshold} {chain_info.native.upper()}\n\n"
             f"{split_text}\n\n"
@@ -1372,56 +1353,15 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) == 1:
-        loan_id = context.args[0]
-        if loan_id == "count":
-            message = await update.message.reply_text("Getting Loan Info, Please wait...")
-            await context.bot.send_chat_action(update.effective_chat.id, "typing")
-            loans_text = ""
-            total = 0
-
-            for chain in chains.CHAINS:
-                chain_lpool = ca.LPOOL(chain)
-                chain_info, error_message = chains.get_info(chain)
-                contract = chain_info.w3.eth.contract(
-                    address=chain_info.w3.to_checksum_address(chain_lpool),
-                    abi=abis.read("lendingpool"),
-                )
-        
-                amount = contract.functions.nextLoanID().call() - 1
-                loans_text += f"{chain_info.name}: {amount}\n"
-                total += amount
-
-            await message.delete()
-            await update.message.reply_photo(
-                photo=api.get_random_pioneer(),
-                caption=
-                    f"*X7 Finance Loan Count*\n"
-                    f"Use `/loan [ID] [chain]` for Individual loan details\n\n"
-                    f"{loans_text}\n"
-                    f"`Total:`   {total}",
-                parse_mode="Markdown",
-            )
-            return
-        else:
-            await update.message.reply_text(
-                f"Use `/loan [ID] [chain]` for loan ID details\nUse `/loan count` for all loans",
-                parse_mode="Markdown",
-            )
-            return
-
-    if len(context.args) >= 2:
-        loan_id = context.args[0]
-        chain = context.args[1].lower()
-    else:
+    if len(context.args) < 2:
         await update.message.reply_text(
-            f"Use `/loan [ID] [chain]` for loan ID details\nUse `/loan count` for all loans",
+            "Please follow command with loan ID number\n",
             parse_mode="Markdown",
         )
         return
 
-    if not chain:
-        chain = chains.get_chain(update.effective_message.message_thread_id)
+    loan_id = context.args[0]
+    chain = context.args[1].lower() if len(context.args) > 1 else chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -1993,10 +1933,10 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
 
 
 async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower()
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     message = await update.message.reply_text("Getting Lending Pool Info, Please wait...")
-    if not chain:
+    if chain == "all":
         pool_text = ""
         total_lpool_reserve_dollar = 0
         total_lpool_dollar = 0
@@ -2025,7 +1965,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
-                f"*X7 Finance Lending Pool Info *\nUse `/pool [chain-name]` for individual chains\n\n"
+                f"*X7 Finance Lending Pool Info *\nUse `/pool [chain-name or all]` for individual chains\n\n"
                 f"{pool_text}\n"
                 f'Lending Pool: ${"{:0,.0f}".format(total_lpool_dollar)}\n'
                 f'Lending Pool Reserve: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
@@ -2522,20 +2462,13 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
         )
 
-    chain = " ".join(context.args).lower()
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
 
-    if not chain:
-        chain_name = ""
-        chain_name_title = ""
-        filter_by_chain = False
-    else:
-        chain_info, error_message = chains.get_info(chain)
-        if error_message:
-            await update.message.reply_text(error_message)
-            return
-        chain_name = "ethereum" if chain == "eth" else chain_info.name
-        chain_name_title = f"({chain_info.name.upper()})"
-        filter_by_chain = True
+    chain_info, error_message = chains.get_info(chain)
+    if error_message:
+        await update.message.reply_text(error_message)
+        return
+    chain_name = "ethereum" if chain == "eth" else chain_info.name
 
     if chain_name.upper() not in dune.TRENDING_FLAG:
         dune.TRENDING_TEXT[chain_name.upper()] = ""
@@ -2567,10 +2500,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
 
             rows = response_data["result"]["rows"]
-            if filter_by_chain:
-                rows = [row for row in rows if row["pair"] != "TOTAL" and row["blockchain"].lower() == chain_name]
-            else:
-                rows = [row for row in rows if row["pair"] != "TOTAL"]
+            rows = [row for row in rows if row["pair"] != "TOTAL"]
 
             valid_rows = [row for row in rows if row.get('last_24hr_amt') is not None and row.get("pair") is not None]
             sorted_rows = sorted(valid_rows, key=lambda x: x.get('last_24hr_amt', 0), reverse=True)
@@ -2580,14 +2510,14 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 top_trending = sorted_rows[:3]
 
-            trending_text = f"*Xchange Trending Pairs {chain_name_title.upper()}*\nUse `/trending [chain-name]` for other chains\n\n"
+            trending_text = f"*Xchange Trending Pairs ({chain_info.name.upper()})\n*\nUse `/trending [chain-name]` for other chains\n\n"
 
             if not any(item.get("pair") for item in top_trending):
                 await message.delete()
                 await update.message.reply_photo(
                     photo=api.get_random_pioneer(),
                     caption=
-                        f'*Xchange Trending {chain_name_title.upper()}*\nUse `/trending [chain-name]` for other chains\n\n'
+                        f'*Xchange Trending ({chain_info.name.upper()})*\nUse `/trending [chain-name]` for other chains\n\n'
                         f'No trending data for {chain_name}',
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(
@@ -2833,24 +2763,24 @@ async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) == 2:
-        chain = context.args[1].lower()
-        wallet = context.args[0]
-    if len(context.args) == 1:
-        chain = ""
-        wallet = context.args[0].lower()
-    else:
+    args = context.args
+
+    if not (1 <= len(args) <= 2):
         await update.message.reply_text(
-        f"Please use `/wallet [wallet_address] [chain-name]`",
-        parse_mode="Markdown")
+            "Please follow command with wallet address",
+            parse_mode="Markdown"
+        )
         return
+    
+    wallet = args[0].lower()
+    chain = args[1].lower() if len(args) == 2 else chains.get_chain(update.effective_message.message_thread_id)
+
     if not re.match(r'^0x[a-fA-F0-9]{40}$', wallet):
         await update.message.reply_text(
-        f"Please use `/wallet [wallet_address] [chain-name]`",
-        parse_mode="Markdown")
+            "Please follow command with wallet address",
+            parse_mode="Markdown"
+        )
         return
-    if not chain:
-        chain = chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)

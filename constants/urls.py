@@ -86,8 +86,9 @@ TG_MAIN_CHANNEL_ID = "-1002417477914"
 TG_ALERTS_CHANNEL_ID = "-1002441901341"
 TG_ALERTS = "t.me/xchange_alerts"
 TG_ANNOUNCEMENTS = "t.me/x7announcements"
-TG_PORTAL= "t.me/x7m105portal"
+TG_PORTAL= "t.me/x7portal"
 TG_DAO = "https://telegram.me/collablandbot?start=VFBDI1RFTCNDT01NIy0xMDAyMTM5MTc4NTQx"
+TG_XCHANGE_CREATE = "https://t.me/xchange_launcher_bot/"
 
 
 # LINKS
@@ -101,3 +102,4 @@ TWITTER = "https://twitter.com/x7_finance/"
 WARPCAST = "https://warpcast.com/x7finance"
 WP_LINK = "https://x7.finance/wp/v1_1_0/X7FinanceWhitepaper.pdf"
 XCHANGE = "https://x7finance.org/"
+
