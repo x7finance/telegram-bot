@@ -1353,7 +1353,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) < 2:
+    if len(context.args) < 1:
         await update.message.reply_text(
             "Please follow command with loan ID number\n",
             parse_mode="Markdown",
