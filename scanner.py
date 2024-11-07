@@ -12,6 +12,12 @@ defined = api.Defined()
 dextools = api.Dextools()
 etherscan = api.Etherscan()
 
+channels = [
+            urls.TG_MAIN_CHANNEL_ID,
+            f"{urls.TG_MAIN_CHANNEL_ID}_788", 
+            urls.TG_ALERTS_CHANNEL_ID
+        ]
+
 
 async def error(context):
     sentry_sdk.capture_exception(
@@ -94,11 +100,6 @@ async def loan_alert(event, chain):
             fill = (255, 255, 255),
         )
         im1.save(r"media/blackhole.png")
-
-        channels = [
-            urls.TG_MAIN_CHANNEL_ID, 
-            urls.TG_ALERTS_CHANNEL_ID
-        ]
 
         for channel in channels:
             if channel:  
@@ -210,11 +211,6 @@ async def pair_alert(event, chain):
             fill = (255, 255, 255),
         )
         im1.save(r"media/blackhole.png")
-
-        channels = [
-            urls.TG_MAIN_CHANNEL_ID, 
-            urls.TG_ALERTS_CHANNEL_ID
-        ]
 
         for channel in channels:
             if channel:  
