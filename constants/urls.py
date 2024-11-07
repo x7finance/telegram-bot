@@ -83,7 +83,7 @@ def OS_LINK(nft):
 
 # TG
 TG_MAIN_CHANNEL_ID = "-1002417477914"
-TG_ALERTS_CHANNEL_ID = "-1002441901341"
+TG_ALERTS_CHANNEL_ID = "-1001942497316"
 TG_ALERTS = "t.me/xchange_alerts"
 TG_ANNOUNCEMENTS = "t.me/x7announcements"
 TG_PORTAL= "t.me/x7portal"

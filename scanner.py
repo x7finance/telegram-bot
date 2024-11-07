@@ -108,7 +108,8 @@ async def loan_alert(event, chain):
                     photo=open(r"media/blackhole.png", "rb"),
                     caption=
                         f"*New Loan Originated ({chain_info.name.upper()})*\n\n"
-                        f"{message}",
+                        f"{message}\n\n"
+                        f"{api.escape_markdown(urls.TG_ALERTS)}",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(
                         [
@@ -223,7 +224,8 @@ async def pair_alert(event, chain):
                     caption=
                         f"*New Pair Created ({chain_info.name.upper()})*\n\n"
                         f"{message}\n\n"
-                        f"Token Address:\n`{token_address}`",
+                        f"Token Address:\n`{token_address}`\n\n"
+                        f"{api.escape_markdown(urls.TG_ALERTS)}",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(
                         [
