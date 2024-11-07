@@ -103,7 +103,7 @@ CHAINS = {
         "bnb",
         "-binance",
         "",
-        "",
+        797,
         urls.RPC("bsc"),
         ca.COM_MULTI("bsc"),
         ca.DAO_MULTI("bsc")
@@ -123,7 +123,7 @@ CHAINS = {
         "arbitrum",
         "-arbitrum",
         "arbitrum-main",
-        "",
+        793,
         urls.RPC("arb"),
         ca.COM_MULTI("arb"),
         ca.DAO_MULTI("arb")
@@ -143,7 +143,7 @@ CHAINS = {
         "optimism",
         "-optimism",
         "optimism-main",
-        "",
+        795,
         urls.RPC("op"),
         ca.COM_MULTI("op"),
         ca.DAO_MULTI("op")
@@ -163,7 +163,7 @@ CHAINS = {
         "polygon",
         "-polygon",
         "poly-main",
-        "",
+        799,
         urls.RPC("poly"),
         ca.COM_MULTI("poly"),
         ca.DAO_MULTI("poly")
