@@ -13,10 +13,10 @@ dextools = api.Dextools()
 etherscan = api.Etherscan()
 
 channels = [
-            urls.TG_MAIN_CHANNEL_ID,
-            f"{urls.TG_MAIN_CHANNEL_ID}_788", 
-            urls.TG_ALERTS_CHANNEL_ID
-        ]
+    (urls.TG_MAIN_CHANNEL_ID, None, urls.TG_ALERTS),
+    (urls.TG_MAIN_CHANNEL_ID, 892, urls.TG_ALERTS),
+    (urls.TG_ALERTS_CHANNEL_ID, None, urls.TG_PORTAL)
+]
 
 
 async def error(context):
@@ -61,15 +61,17 @@ async def loan_alert(event, chain):
         chain_info, error_message = chains.get_info(chain)
         loan_id = event["args"]["loanID"]
         contract_address = event["address"]
-        contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(contract_address), abi=etherscan.get_abi(contract_address, chain))
+        contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(contract_address),
+            abi=etherscan.get_abi(contract_address, chain)
+        )
 
         liability = contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
         schedule1 = contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
         schedule2 = contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
         schedule_str = api.format_schedule(schedule1, schedule2, chain_info.native.upper())
 
-        index = 0
-        token_by_id = None
+        index, token_by_id = 0, None
         while True:
             try:
                 token_id = contract.functions.tokenByIndex(index).call()
@@ -79,10 +81,10 @@ async def loan_alert(event, chain):
                 index += 1
             except Exception:
                 break
-    
+
         ill_number = api.get_ill_number(contract_address)
 
-        im1 = Image.open((random.choice(media.BLACKHOLE))).convert("RGBA")
+        im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")
         im2 = Image.open(chain_info.logo).convert("RGBA")
         im1.paste(im2, (700, 20), im2)
 
@@ -94,37 +96,46 @@ async def loan_alert(event, chain):
         i1 = ImageDraw.Draw(im1)
         i1.text(
             (26, 30),
-            f"New Loan Originated ({chain_info.name.upper()})\n\n"
-            f"{message}",
-            font = ImageFont.truetype(media.FONT, 26),
-            fill = (255, 255, 255),
+            f"New Loan Originated ({chain_info.name.upper()})\n\n{message}",
+            font=ImageFont.truetype(media.FONT, 26),
+            fill=(255, 255, 255)
         )
-        im1.save(r"media/blackhole.png")
+        image_path = r"media/blackhole.png"
+        im1.save(image_path)
 
-        for channel in channels:
-            if channel:  
+        caption = (
+            f"*New Loan Originated ({chain_info.name.upper()})*\n\n"
+            f"{message}\n\n"
+        )
 
-                await application.bot.send_photo(
-                    channel,
-                    photo=open(r"media/blackhole.png", "rb"),
-                    caption=
-                        f"*New Loan Originated ({chain_info.name.upper()})*\n\n"
-                        f"{message}\n\n"
-                        f"{api.escape_markdown(urls.TG_ALERTS)}",
-                    parse_mode="Markdown",
-                    reply_markup=InlineKeyboardMarkup(
-                        [
-                            [
-                                InlineKeyboardButton(
-                                    text=f"View Loan",
-                                    url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}",
-                                )
-                            ]
-                        ]
-                    ),
-                )  
+        button = InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        text="View Loan",
+                        url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}"
+                    )
+                ]
+            ]
+        )
+
+        with open(image_path, "rb") as photo:
+            for channel, thread_id, link in channels:
+                send_params = {
+                    "chat_id": channel,
+                    "photo": photo,
+                    "caption": f"{caption}{api.escape_markdown(link)}",
+                    "parse_mode": "Markdown",
+                    "reply_markup": button
+                }
+
+                if thread_id is not None:
+                    send_params["message_thread_id"] = thread_id
+
+                await application.bot.send_photo(**send_params)
+
     except Exception as e:
-        await error(Exception(f"Error in loan alert for chain {chain}: {e}"))
+        await error(f"Error in loan alert for chain {chain}: {e}")
 
 
 async def pair_alert(event, chain):
@@ -187,7 +198,7 @@ async def pair_alert(event, chain):
         if liq == "$0":
             liq = "Unknown"
 
-        im1 = Image.open((random.choice(media.BLACKHOLE))).convert("RGBA")
+        im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")
         try:
             image_url = defined.get_token_image(token_address, chain)
             im2 = Image.open(requests.get(image_url, stream=True).raw).convert("RGBA")
@@ -205,44 +216,42 @@ async def pair_alert(event, chain):
         i1 = ImageDraw.Draw(im1)
         i1.text(
             (26, 30),
-            f"New Pair Created ({chain_info.name.upper()})\n\n"
-            f"{message}",
-            font = ImageFont.truetype(media.FONT, 26),
-            fill = (255, 255, 255),
+            f"New Pair Created ({chain_info.name.upper()})\n\n{message}",
+            font=ImageFont.truetype(media.FONT, 26),
+            fill=(255, 255, 255)
         )
-        im1.save(r"media/blackhole.png")
+        image_path = r"media/blackhole.png"
+        im1.save(image_path)
 
-        for channel in channels:
-            if channel:  
-                await application.bot.send_photo(
-                    channel,
-                    photo=open(r"media/blackhole.png", "rb"),
-                    caption=
-                        f"*New Pair Created ({chain_info.name.upper()})*\n\n"
-                        f"{message}\n\n"
-                        f"Token Address:\n`{token_address}`\n\n"
-                        f"{api.escape_markdown(urls.TG_ALERTS)}",
-                    parse_mode="Markdown",
-                    reply_markup=InlineKeyboardMarkup(
-                        [
-                            [
-                                InlineKeyboardButton(
-                                    text="Buy On Xchange",
-                                    url=f"{urls.XCHANGE_BUY(chain_info.id, token_address)}",
-                                )
-                            ],
-                            [
-                                InlineKeyboardButton(
-                                    text="Chart",
-                                    url=f"{urls.DEX_TOOLS(chain_info.dext)}{event['args']['pair']}",
-                                )
-                            ],
-                        ]
-                    ),
-                )
+        caption = (
+            f"*New Pair Created ({chain_info.name.upper()})*\n\n"
+            f"{message}\n\n"
+            f"Token Address:\n`{token_address}`\n\n"
+        )
+
+        buttons = InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton("Buy On Xchange", url=f"{urls.XCHANGE_BUY(chain_info.id, token_address)}")],
+                [InlineKeyboardButton("Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{event['args']['pair']}")]
+            ]
+        )
+
+        with open(image_path, "rb") as photo:
+            for channel, thread_id, link in channels:
+                send_params = {
+                    "chat_id": channel,
+                    "photo": photo,
+                    "caption": f"{caption}{api.escape_markdown(link)}",
+                    "parse_mode": "Markdown",
+                    "reply_markup": buttons
+                }
+
+                if thread_id is not None:
+                    send_params["message_thread_id"] = thread_id
+
+                await application.bot.send_photo(**send_params)
     except Exception as e:
-        await error(Exception(f"Error in pair alert for chain {chain}: {e}"))
-        
+        await error(f"Error in pair alert for chain {chain}: {e}")
 
 async def main():
     while True:
