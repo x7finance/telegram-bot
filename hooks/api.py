@@ -939,7 +939,7 @@ def get_nft_data(nft, chain):
 
 
 def get_random_pioneer():
-    number = f"{random.randint(1, 4480)}".zfill(4)
+    number = f"{random.randint(1, 12)}".zfill(4)
     return f"{urls.PIONEERS}{number}.png"
 
 
