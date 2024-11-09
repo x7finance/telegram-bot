@@ -42,7 +42,7 @@ async def admins(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def alerts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        f"\n",
+        f"*Xchange Alerts*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -86,7 +86,7 @@ async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def blog(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        f"\n",
+        f"*X7 Finance Blog*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -204,7 +204,7 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     burn_dollar = float(price) * float(burn)
     native = burn_dollar / etherscan.get_native_price(chain)
     await update.message.reply_text(
-            f"*X7R Tokens Burned ({chain_info.name})*\nUse `/burn [chain-name]` for other chains\n\n"
+            f"*X7R Tokens Burned ({chain_info.name})*\n\n"
             f'{"{:0,.0f}".format(float(burn))} / {native:,.3f} {chain_info.native.upper()} (${"{:0,.0f}".format(float(burn_dollar))})\n'
             f"{percent}% of Supply",
         parse_mode="markdown",
@@ -229,8 +229,7 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     await update.message.reply_text(
-            f"*X7 Finance Buy Links ({chain_info.name})*\nUse `/buy [chain-name]` for other chains\n"
-            f"Use `/constellations` for constellations",
+            f"*X7 Finance Buy Links ({chain_info.name})*\n\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -273,7 +272,7 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ],
     ]
     await update.message.reply_text(
-        f"\n",
+        f"*X7 Finance Channels*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -287,8 +286,7 @@ async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         return
     
     await update.message.reply_text(
-        f"*X7 Finance Chart Links ({chain_info.name})*\nUse `/chart [chain-name]` for other chains\n"
-        f"Use `/constellations` for constellations",
+        f"*X7 Finance Chart Links ({chain_info.name})*\n\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -427,7 +425,7 @@ async def contracts(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     await update.message.reply_text(
-        f"*X7 Finance Contract Addresses ({chain_info.name})*\nUse `/ca [chain-name]` for other chains\n\n"
+        f"*X7 Finance Contract Addresses ({chain_info.name})*\n\n"
         f"*X7R - Rewards Token *\n`{ca.X7R(chain)}`\n\n"
         f"*X7DAO - Governance Token*\n`{ca.X7DAO(chain)}`\n\n"
         f"For advanced trading and arbitrage opportunities see `/constellations`",
@@ -558,7 +556,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         if input_contract == "functions":
             await update.message.reply_text(
-                f"*X7 Finance DAO*\n\nUse `/dao [contract-name]` for a list of DAO callable functions\n\n"
+                f"*X7 Finance DAO*\n\n"
                 f"*Contract Names:*\n\n{formatted_contract_names}\n\n",
                 parse_mode="Markdown",
                 reply_markup=keyboard
@@ -627,7 +625,7 @@ async def docs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await update.message.reply_text(
-        f"\n",
+        f"*X7 Finance Docs*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -660,7 +658,7 @@ async def factory(update: Update, context: ContextTypes.DEFAULT_TYPE):
         buttons.append(buttons_row)
 
     await update.message.reply_text(
-        f"\n",
+        f"*X7 Finance Factories*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -721,7 +719,7 @@ async def faq(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await update.message.reply_text(
-        f"\n",
+        f"*X7 Finance FAQ*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -789,7 +787,7 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
         deposit_text = "Mint X7D: N/A"
 
     await update.message.reply_text(
-        f"*Live Xchange Gas Fees ({chain_info.name})*\nUse `/gas [chain-name]` for other chains\n\n"
+        f"*Live Xchange Gas Fees ({chain_info.name})*\n\n"
         f"{swap_text}\n"
         f"{pair_text}\n"
         f"{split_text}\n"
@@ -835,8 +833,7 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
         recent_tx_text = 'Last Liquidation: Not Found'
 
     await update.message.reply_text(
-        f"*Xchange Liquidity Treasury ({chain_info.name})*\n"
-        f"For other chains use `/feeto [chain-name]`\n\n"
+        f"*Xchange Liquidity Treasury ({chain_info.name})*\n\n"
         f"{eth} (${eth_dollar})\n\n"
         f"{recent_tx_text}",
         parse_mode="markdown",
@@ -907,8 +904,7 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7d_holders = x7d_info["holders"]
     
     await update.message.reply_text(
-        f"*X7 Finance Token Holders ({chain_info.name})*\n"
-        f"For other chains use `/holders [chain-name]`\n\n"
+        f"*X7 Finance Token Holders ({chain_info.name})*\n\n"
         f"X7R:        {x7r_holders}\n"
         f"X7DAO:  {x7dao_holders}\n"
         f"X7DAO ≥ 500K: {x7dao_proposers}\n"
@@ -1027,7 +1023,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         balance_text = f"{balance:,.0f} {token_str.upper()}"
     await message.delete()
     await update.message.reply_text(
-        f"*{token.upper()} Liquidity Hub ({chain_info.name})*\nUse `hub [token-name] [chain-name]` for other chains\n\n"
+        f"*{token.upper()} Liquidity Hub ({chain_info.name})*\n\n"
         f"{round(float(eth_balance), 2)} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
         f"{balance_text}\n\n"
         f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
@@ -1213,7 +1209,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     final_text = f"{x7r_text}\n------\n\n{x7dao_text}\n"
     await message.delete()
     await update.message.reply_text(
-        f"*X7 Finance Liquidity ({chain_info.name})*\nUse `liquidity [chain-name]` for other chains\n\n{final_text}",
+        f"*X7 Finance Liquidity ({chain_info.name})*\n\n{final_text}",
         parse_mode="Markdown",
         reply_markup=keyboard
     )
@@ -1249,7 +1245,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     output = "\n".join([liquidatable_loans_text] + results) 
     await message.delete()
     await update.message.reply_text(
-        f"*X7 Finance Loan Liquidations ({chain_info.name})*\nFor other chains use `/liquidate [chain-name]`\n\n"
+        f"*X7 Finance Loan Liquidations ({chain_info.name})*\n\n"
         f"{output}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -1397,7 +1393,7 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7d_remaining_time_str, x7d_unlock_datetime_str = api.get_unlock_time(chain_info.w3, contract, ca.X7D(chain), now)
 
     await update.message.reply_text(
-        f"*X7 Finance Liquidity Locks* ({chain_info.name})\nfor other chains use `/locks [chain-name]`\n\n"
+        f"*X7 Finance Liquidity Locks ({chain_info.name})*\n\n"
         f"*X7R*\nUniswap - {x7r_uni_unlock_datetime_str}\n{x7r_uni_remaining_time_str}\n\n"
         f"Xchange - {x7r_xchange_unlock_datetime_str}\n{x7r_xchange_remaining_time_str}\n\n"
         f"*X7DAO*\nUniswap - {x7dao_uni_unlock_datetime_str}\n{x7dao_uni_remaining_time_str}\n\n"
@@ -1432,8 +1428,7 @@ async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         address = ""
     await update.message.reply_text(
-        f"*X7 Finance Magister Holders ({chain_info.name})*\n"
-        f"Use `/magisters [chain-name]` or other chains\n\n"
+        f"*X7 Finance Magister Holders ({chain_info.name})*\n\n"
         f"Holders - {holders}\n\n"
         f"{address}",
         parse_mode="Markdown",
@@ -1572,7 +1567,7 @@ async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await update.message.reply_text(
-        f"\n",
+        f"*X7 Finance Media*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -1653,7 +1648,7 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.delete()
     await update.message.reply_text(
-        f"*NFT Info ({chain_info.name})*\nUse `/nft [chain-name]` for other chains\n\n"
+        f"*NFT Info ({chain_info.name})*\n\n"
         f"*Ecosystem Maxi*\n{eco_price}\n"
         f"Available - {500 - eco_count}\nFloor price - {eco_floor} {chain_info.native.upper()}\n"
         f"{eco_discount_text}\n\n"
@@ -1841,7 +1836,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             total_dollar += dollar 
         await message.delete()
         await update.message.reply_text(
-            f"*X7 Finance Lending Pool Info *\nUse `/pool [chain-name or all]` for individual chains\n\n"
+            f"*X7 Finance Lending Pool Info *\n\n"
             f"{pool_text}\n"
             f'Lending Pool: ${"{:0,.0f}".format(total_lpool_dollar)}\n'
             f'Lending Pool Reserve: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
@@ -1895,7 +1890,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
         await message.delete()
         await update.message.reply_text(
-            f"*X7 Finance Lending Pool Info ({chain_info.name})*\nUse `/pool [chain-name]` for other chains\n\n"
+            f"*X7 Finance Lending Pool Info ({chain_info.name})*\n\n"
             f"Lending Pool:\n"
             f'{lpool} {chain_info.native.upper()} (${"{:0,.0f}".format(lpool_dollar)})\n\n'
             f"Lending Pool Reserve:\n"
@@ -1929,9 +1924,7 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7dao_price, x7dao_change  = dextools.get_price(ca.X7DAO(chain), chain)
 
     await update.message.reply_text(
-        f"*X7 Finance Token Price Info ({chain_info.name})*\n"
-        f"Use `/x7r [chain]` or `/x7dao [chain]` for all other details\n"
-        f"Use `/constellations` for constellations\n\n"
+        f"*X7 Finance Token Price Info ({chain_info.name})*\n\n"
         f"X7R\n"
         f"💰 Price: {x7r_price}\n"
         f"{x7r_change}\n\n"
@@ -1972,7 +1965,7 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         buttons.append(buttons_row)
     await update.message.reply_text(
-        f"\n",
+        f"*X7 Finance Routers*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -2088,7 +2081,7 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     ]
 
     await update.message.reply_text(
-        f"*X7 Finance Smart Contracts ({chain_info.name})*\nUse `/smart [chain-name]` for other chains",
+        f"*X7 Finance Smart Contracts ({chain_info.name})*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -2121,8 +2114,7 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await message.delete()
     await update.message.reply_text(
-        f"*X7 Finance Ecosystem Splitters ({chain_info.name})*\n"
-        f"Use `/splitters [chain-name]` for other chains\n\n"
+        f"*X7 Finance Ecosystem Splitters ({chain_info.name})*\n\n"
         f"Ecosystem Splitter\n{eco_eth:.2f} {chain_info.native.upper()} (${'{:0,.0f}'.format(eco_dollar)})\n"
         f"{eco_splitter_text}\n"
         f"Treasury Splitter\n{treasury_eth:.2f} {chain_info.native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
@@ -2146,8 +2138,7 @@ async def tax_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     tax_info = tax.generate_info(chain)
     await update.message.reply_text(
-        f"*X7 Finance Tax Info ({chain_info.name})*\n"
-        f"Use `/tax [chain-name]` for other chains\n\n"
+        f"*X7 Finance Tax Info ({chain_info.name})*\n\n"
         f"{tax_info}\n",
         parse_mode="Markdown",
     )
@@ -2279,7 +2270,7 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7dao_percent = round(x7dao_balance / ca.SUPPLY * 100, 2)
     await message.delete()
     await update.message.reply_text(
-        f"*X7 Finance Treasury ({chain_info.name})*\nUse `/treasury [chain-name]` for other chains\n\n"
+        f"*X7 Finance Treasury ({chain_info.name})*\n\n"
         f'{eth} {chain_info.native.upper()} (${"{:0,.0f}".format(dollar)})\n'
         f'{x7d_balance} X7D (${"{:0,.0f}".format(x7d_price)})\n'
         f'{"{:0,.0f}".format(x7r_balance)} X7R ({x7r_percent}%) (${"{:0,.0f}".format(x7r_price)})\n'
@@ -2370,12 +2361,12 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 top_trending = sorted_rows[:3]
 
-            trending_text = f"*Xchange Trending Pairs ({chain_info.name.upper()})\n*\nUse `/trending [chain-name]` for other chains\n\n"
+            trending_text = f"*Xchange Trending Pairs ({chain_info.name.upper()})\n*\n\n"
 
             if not any(item.get("pair") for item in top_trending):
                 await message.delete()
                 await update.message.reply_text(
-                    f'*Xchange Trending ({chain_info.name.upper()})*\nUse `/trending [chain-name]` for other chains\n\n'
+                    f'*Xchange Trending ({chain_info.name.upper()})*\n\n'
                     f'No trending data for {chain_name}',
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(
@@ -2665,7 +2656,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await message.delete()
     await update.message.reply_text(
-        f"*X7 Finance Wallet Info ({chain_info.name})*\nUse `/wallet [wallet_address] [chain-name]` for other chains\n\n"
+        f"*X7 Finance Wallet Info ({chain_info.name})*\n\n"
         f"`{wallet}`\n\n"
         f"{float(eth):.3f} {chain_info.native.upper()} (${'{:0,.0f}'.format(dollar)})\n\n"
         f"{x7r_balance:,.0f} X7R {x7r_percent}% (${'{:0,.0f}'.format(x7r_price)})\n"
@@ -2752,8 +2743,7 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
     holders = info["holders"]
 
     await update.message.reply_text(
-        f"*X7D ({chain_info.name}) Info*\n"
-        f"For other chains use `/x7d [chain-name]`\n\n"
+        f"*X7D ({chain_info.name}) Info*\n\n"
         f"Holders: {holders}\n\n"
         f'Lending Pool:\n{lpool_rounded} X7D (${"{:0,.0f}".format(lpool_dollar)})\n\n'
         f'Lending Pool Reserve:\n{lpool_reserve_rounded} X7D (${"{:0,.0f}".format(lpool_reserve_dollar)})\n\n'
