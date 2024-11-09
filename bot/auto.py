@@ -32,7 +32,7 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
         [[InlineKeyboardButton("Click Me!", callback_data=current_button_data)]]
     )
     click_me = await context.bot.send_photo(
-        photo=api.get_random_pioneer(),
+        photo=media.PIONEER_LOGO,
         chat_id=urls.TG_MAIN_CHANNEL_ID,
         reply_markup=keyboard,
     )

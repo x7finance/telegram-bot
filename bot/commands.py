@@ -20,7 +20,7 @@ etherscan = api.Etherscan()
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        f"{text.ABOUT}",
+        text.ABOUT,
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -33,20 +33,16 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def admins(update: Update, context: ContextTypes.DEFAULT_TYPE):
     administrators = await context.bot.get_chat_administrators(urls.TG_MAIN_CHANNEL_ID)
     team = [f"@{admin.user.username}" for admin in administrators if 'x7' in admin.custom_title.lower()]
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=(
-            "*X7 Finance Telegram Admins*\n\n"
-            "X7 Team:\n" + "\n".join(team)
-        ),
-        parse_mode="Markdown",
+    await update.message.reply_text(
+        "*X7 Finance Telegram Admins*\n\n"
+        "X7 Team:\n" + "\n".join(team),
+        parse_mode="Markdown"
     )
 
 
 async def alerts(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=f"\n",
+    await update.message.reply_text(
+        f"\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -57,9 +53,8 @@ async def alerts(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def announcements(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption="\n",
+    await update.message.reply_text(
+        "\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -82,19 +77,16 @@ async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         blocks = 0
     blocks_text = "\n".join([f"{block_type.upper()}: `{block}`" for block_type, block in blocks.items()])
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*Latest Blocks*\n\n"
-            f"{blocks_text}",
+    await update.message.reply_text(
+        f"*Latest Blocks*\n\n"
+        f"{blocks_text}",
         parse_mode="Markdown"
     )
 
 
 async def blog(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=f"\n",
+    await update.message.reply_text(
+        f"\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -115,11 +107,9 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
         amount_in_wei = int(float(amount) * 10 ** 18)
         chain = chains.get_chain(update.effective_message.message_thread_id) if len(context.args) < 2 else context.args[1]
     else:
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"*X7 Finance Loan Rates*\n\n"
-                "Follow the /borrow command with an amount to borrow",
+        await update.message.reply_text(
+            f"*X7 Finance Loan Rates*\n\n"
+            "Follow the /borrow command with an amount to borrow",
             parse_mode="Markdown"
             )
         return
@@ -213,9 +203,7 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     price,_ = dextools.get_price(ca.X7R(chain), "eth")
     burn_dollar = float(price) * float(burn)
     native = burn_dollar / etherscan.get_native_price(chain)
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
+    await update.message.reply_text(
             f"*X7R Tokens Burned ({chain_info.name})*\nUse `/burn [chain-name]` for other chains\n\n"
             f'{"{:0,.0f}".format(float(burn))} / {native:,.3f} {chain_info.native.upper()} (${"{:0,.0f}".format(float(burn_dollar))})\n'
             f"{percent}% of Supply",
@@ -240,9 +228,7 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
     
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
+    await update.message.reply_text(
             f"*X7 Finance Buy Links ({chain_info.name})*\nUse `/buy [chain-name]` for other chains\n"
             f"Use `/constellations` for constellations",
         parse_mode="Markdown",
@@ -286,9 +272,8 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text="Xchange Create Bot", url=f"{urls.TG_XCHANGE_CREATE}")
         ],
     ]
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=f"\n",
+    await update.message.reply_text(
+        f"\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -301,11 +286,9 @@ async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         await update.message.reply_text(error_message)
         return
     
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Chart Links ({chain_info.name})*\nUse `/chart [chain-name]` for other chains\n"
-            f"Use `/constellations` for constellations",
+    await update.message.reply_text(
+        f"*X7 Finance Chart Links ({chain_info.name})*\nUse `/chart [chain-name]` for other chains\n"
+        f"Use `/constellations` for constellations",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -332,13 +315,11 @@ async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply = "✅ Both inputs match"
     else:
         reply = f"❌ Inputs do not match"
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Input Checker*\n\n"
-            f"First:\n{first}\n\n"
-            f"Second:\n{second}\n\n"
-            f"{reply}",
+    await update.message.reply_text(
+        f"*X7 Finance Input Checker*\n\n"
+        f"First:\n{first}\n\n"
+        f"Second:\n{second}\n\n"
+        f"{reply}",
         parse_mode="Markdown")
 
 
@@ -364,9 +345,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         x7token = context.args[0].lower()
         if x7token not in token_names:
-            await update.message.reply_photo(
-                photo=api.get_random_pioneer(),
-                caption=
+            await update.message.reply_text(
                     f"*X7 Finance Market Cap Comparison*\n\n"
                     f"Please enter X7 token first followed by token to compare\n\n"
                     f"ie. `/compare x7r uni`",
@@ -390,16 +369,14 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
         percent = ((token_market_cap - x7_market_cap) / x7_market_cap) * 100
         x = (token_market_cap - x7_market_cap) / x7_market_cap
         token_value = token_market_cap / x7_supply
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"*X7 Finance Market Cap Comparison*\n\n"
-                f"{context.args[1].upper()} Market Cap:\n"
-                f'${"{:,.0f}".format(token_market_cap)}\n\n'
-                f'Token value of {context.args[0].upper()} at {context.args[1].upper()} Market Cap:\n'
-                f'${"{:,.2f}".format(token_value)}\n'
-                f'{"{:,.0f}%".format(percent)}\n'
-                f'{"{:,.0f}x".format(x)}',
+        await update.message.reply_text(
+            f"*X7 Finance Market Cap Comparison*\n\n"
+            f"{context.args[1].upper()} Market Cap:\n"
+            f'${"{:,.0f}".format(token_market_cap)}\n\n'
+            f'Token value of {context.args[0].upper()} at {context.args[1].upper()} Market Cap:\n'
+            f'${"{:,.2f}".format(token_value)}\n'
+            f'{"{:,.0f}%".format(percent)}\n'
+            f'{"{:,.0f}x".format(x)}',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -413,9 +390,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
         )
     except Exception:
-        await update.message.reply_photo(
-                photo=api.get_random_pioneer(),
-                caption=
+        await update.message.reply_text(
                     f"*X7 Finance Market Cap Comparison*\n\n"
                     f"Comparison not avaliable",
                 parse_mode="Markdown",
@@ -429,20 +404,18 @@ async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
     
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f'*X7 Finance Constellation Addresses ({chain_info.name})*\n\n'
-            f'X7101\n'
-            f'`{ca.X7101(chain)}`\n\n'
-            f'X7102:\n'
-            f'`{ca.X7101(chain)}`\n\n'
-            f'X7103\n'
-            f'`{ca.X7103(chain)}`\n\n'
-            f'X7104\n'
-            f'`{ca.X7104(chain)}`\n\n'
-            f'X7105\n'
-            f'`{ca.X7105(chain)}`',
+    await update.message.reply_text(
+        f'*X7 Finance Constellation Addresses ({chain_info.name})*\n\n'
+        f'X7101\n'
+        f'`{ca.X7101(chain)}`\n\n'
+        f'X7102:\n'
+        f'`{ca.X7101(chain)}`\n\n'
+        f'X7103\n'
+        f'`{ca.X7103(chain)}`\n\n'
+        f'X7104\n'
+        f'`{ca.X7104(chain)}`\n\n'
+        f'X7105\n'
+        f'`{ca.X7105(chain)}`',
         parse_mode="Markdown")
 
 
@@ -453,22 +426,18 @@ async def contracts(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
     
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Contract Addresses ({chain_info.name})*\nUse `/ca [chain-name]` for other chains\n\n"
-            f"*X7R - Rewards Token *\n`{ca.X7R(chain)}`\n\n"
-            f"*X7DAO - Governance Token*\n`{ca.X7DAO(chain)}`\n\n"
-            f"For advanced trading and arbitrage opportunities see `/constellations`",
+    await update.message.reply_text(
+        f"*X7 Finance Contract Addresses ({chain_info.name})*\nUse `/ca [chain-name]` for other chains\n\n"
+        f"*X7R - Rewards Token *\n`{ca.X7R(chain)}`\n\n"
+        f"*X7DAO - Governance Token*\n`{ca.X7DAO(chain)}`\n\n"
+        f"For advanced trading and arbitrage opportunities see `/constellations`",
         parse_mode="Markdown",
     )
 
 
 async def contribute(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"{text.CONTRIBUTE}",
+    await update.message.reply_text(
+        text.CONTRIBUTE,
         parse_mode="Markdown"  
     )
 
@@ -516,9 +485,8 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if amount == "500000" and token.upper() == "X7DAO":
         caption+= "Holding 500,000 X7DAO tokens earns you the right to make X7DAO proposals\n\n"
         
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=f"{caption}",
+    await update.message.reply_text(
+        caption,
         parse_mode="Markdown")
 
 
@@ -574,29 +542,24 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for choice, score in zip(proposal["choices"], proposal["scores"])
         )
         
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f'*X7 Finance DAO*\n'
-                f'use `/dao functions` for a list of call callable contracts\n\n'
-                f'*{header}*\n\n'
-                f'{proposal["title"]} by - '
-                f'{proposal["author"][-5:]}\n\n'
-                f'{choices_text}\n\n'
-                f'{"{:0,.0f}".format(proposal["scores_total"])} Total Votes\n\n'
-                f'{end_status}',
+        await update.message.reply_text(
+            f'*X7 Finance DAO*\n'
+            f'use `/dao functions` for a list of call callable contracts\n\n'
+            f'*{header}*\n\n'
+            f'{proposal["title"]} by - '
+            f'{proposal["author"][-5:]}\n\n'
+            f'{choices_text}\n\n'
+            f'{"{:0,.0f}".format(proposal["scores_total"])} Total Votes\n\n'
+            f'{end_status}',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(buttons)
         )
         return
     else:
         if input_contract == "functions":
-            await update.message.reply_photo(
-                photo=api.get_random_pioneer(),
-                caption=(
-                    f"*X7 Finance DAO*\n\nUse `/dao [contract-name]` for a list of DAO callable functions\n\n"
-                    f"*Contract Names:*\n\n{formatted_contract_names}\n\n"
-                ),
+            await update.message.reply_text(
+                f"*X7 Finance DAO*\n\nUse `/dao [contract-name]` for a list of DAO callable functions\n\n"
+                f"*Contract Names:*\n\n{formatted_contract_names}\n\n",
                 parse_mode="Markdown",
                 reply_markup=keyboard
             )
@@ -608,38 +571,30 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     break
             if matching_contract:
                 contract_text, contract_ca = dao.contract_mappings(chain)[matching_contract]
-                await update.message.reply_photo(
-                    photo=api.get_random_pioneer(),
-                    caption=(
-                        f"*X7 Finance DAO Functions* - {matching_contract}\n\n"
-                        f"The following functions can be called on the {matching_contract} contract:\n\n"
-                        f"{contract_text}"
-                    ),
+                await update.message.reply_text(
+                    f"*X7 Finance DAO Functions* - {matching_contract}\n\n"
+                    f"The following functions can be called on the {matching_contract} contract:\n\n"
+                    f"{contract_text}",
                     parse_mode="Markdown",
                     reply_markup=keyboard
                 )
             else:
-                await update.message.reply_photo(
-                    photo=api.get_random_pioneer(),
-                    caption=(
-                        f"*X7 Finance DAO Functions*\n\n"
-                        f"'{input_contract}' not found - Use `/dao` followed by one of the contract names below:\n\n"
-                        f"{formatted_contract_names}"
-                    ),
+                await update.message.reply_text(
+                    f"*X7 Finance DAO Functions*\n\n"
+                    f"'{input_contract}' not found - Use `/dao` followed by one of the contract names below:\n\n"
+                    f"{formatted_contract_names}",
                     parse_mode="Markdown"
                 )
 
 
 async def onchains(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            "*X7 Finance Onchain Messages*\n\n"
-            'The stealth launch story of X7 Finance was heralded as an '
-            '"incredible way to launch a project in this day and age."\n\n'
-            "The on-chain, decentralized communications from X7's global collective "
-            'of developers to the community provide chronological evidence on how the '
-            'X7 community and ecosystem was born - and how the foundation was built.',
+    await update.message.reply_text(
+        "*X7 Finance Onchain Messages*\n\n"
+        'The stealth launch story of X7 Finance was heralded as an '
+        '"incredible way to launch a project in this day and age."\n\n'
+        "The on-chain, decentralized communications from X7's global collective "
+        'of developers to the community provide chronological evidence on how the '
+        'X7 community and ecosystem was born - and how the foundation was built.',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -671,9 +626,8 @@ async def docs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ],
     ]
 
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=f"\n",
+    await update.message.reply_text(
+        f"\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -705,9 +659,8 @@ async def factory(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         buttons.append(buttons_row)
 
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=f"\n",
+    await update.message.reply_text(
+        f"\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -767,9 +720,8 @@ async def faq(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ],
     ]
 
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=f"\n",
+    await update.message.reply_text(
+        f"\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -836,15 +788,13 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         deposit_text = "Mint X7D: N/A"
 
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*Live Xchange Gas Fees ({chain_info.name})*\nUse `/gas [chain-name]` for other chains\n\n"
-            f"{swap_text}\n"
-            f"{pair_text}\n"
-            f"{split_text}\n"
-            f"{deposit_text}\n\n"
-            f"{gas_text}",
+    await update.message.reply_text(
+        f"*Live Xchange Gas Fees ({chain_info.name})*\nUse `/gas [chain-name]` for other chains\n\n"
+        f"{swap_text}\n"
+        f"{pair_text}\n"
+        f"{split_text}\n"
+        f"{deposit_text}\n\n"
+        f"{gas_text}",
         parse_mode="markdown",
         reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton(text=f"{chain_info.name} Gas Tracker", url=chain_info.scan_address)]]
@@ -884,13 +834,11 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         recent_tx_text = 'Last Liquidation: Not Found'
 
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*Xchange Liquidity Treasury ({chain_info.name})*\n"
-            f"For other chains use `/feeto [chain-name]`\n\n"
-            f"{eth} (${eth_dollar})\n\n"
-            f"{recent_tx_text}",
+    await update.message.reply_text(
+        f"*Xchange Liquidity Treasury ({chain_info.name})*\n"
+        f"For other chains use `/feeto [chain-name]`\n\n"
+        f"{eth} (${eth_dollar})\n\n"
+        f"{recent_tx_text}",
         parse_mode="markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -958,15 +906,13 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7d_info = dextools.get_token_info(ca.X7D(chain), chain)
     x7d_holders = x7d_info["holders"]
     
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Token Holders ({chain_info.name})*\n"
-            f"For other chains use `/holders [chain-name]`\n\n"
-            f"X7R:        {x7r_holders}\n"
-            f"X7DAO:  {x7dao_holders}\n"
-            f"X7DAO ≥ 500K: {x7dao_proposers}\n"
-            f"X7D:        {x7d_holders}",
+    await update.message.reply_text(
+        f"*X7 Finance Token Holders ({chain_info.name})*\n"
+        f"For other chains use `/holders [chain-name]`\n\n"
+        f"X7R:        {x7r_holders}\n"
+        f"X7DAO:  {x7dao_holders}\n"
+        f"X7DAO ≥ 500K: {x7dao_proposers}\n"
+        f"X7D:        {x7d_holders}",
         parse_mode="Markdown",
     )
 
@@ -1080,16 +1026,14 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
             balance += etherscan.get_token_balance(hub_address, quint, chain)
         balance_text = f"{balance:,.0f} {token_str.upper()}"
     await message.delete()
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*{token.upper()} Liquidity Hub ({chain_info.name})*\nUse `hub [token-name] [chain-name]` for other chains\n\n"
-            f"{round(float(eth_balance), 2)} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
-            f"{balance_text}\n\n"
-            f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
-            f"Balance Threshold: {balance_threshold} {chain_info.native.upper()}\n\n"
-            f"{split_text}\n\n"
-            f"{buy_back_text}",
+    await update.message.reply_text(
+        f"*{token.upper()} Liquidity Hub ({chain_info.name})*\nUse `hub [token-name] [chain-name]` for other chains\n\n"
+        f"{round(float(eth_balance), 2)} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
+        f"{balance_text}\n\n"
+        f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
+        f"Balance Threshold: {balance_threshold} {chain_info.native.upper()}\n\n"
+        f"{split_text}\n\n"
+        f"{buy_back_text}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1188,8 +1132,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total_x7dao_eth = 0
 
     x7r_liquidity_data = [dextools.get_liquidity(pair, chain) for pair in x7r_pairs]
-    x7dao_liquidity_data = [dextools.get_liquidity(pair, chain) for pair in x7dao_pairs]
-
+    
     x7r_text = "*X7R*\n"
     for i, liquidity in enumerate(x7r_liquidity_data):
         exchange_name = "Uniswap" if i == 0 else "Xchange"
@@ -1198,110 +1141,83 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
         total_liquidity = liquidity.get('total', 'N/A')
 
         if token_liquidity != 'N/A':
-            cleaned_token_liquidity = token_liquidity.replace(',', '')
-            token_liquidity_float = float(cleaned_token_liquidity)
+            token_liquidity_float = float(token_liquidity.replace(',', ''))
             total_x7r_supply += token_liquidity_float
             percentage = (token_liquidity_float / ca.SUPPLY) * 100
         else:
             percentage = 'N/A'
 
         if eth_liquidity != 'N/A':
-            cleaned_eth_liquidity = eth_liquidity.replace(',', '')
-            total_x7r_eth += float(cleaned_eth_liquidity)
+            total_x7r_eth += float(eth_liquidity.replace(',', ''))
 
         x7r_text += (
-            f"{exchange_name}\n{token_liquidity} X7R ({percentage:.2f}%)\n{eth_liquidity} {chain_info.native.upper()} \n"
-            f"{total_liquidity}\n\n"
+            f"{exchange_name}\n{token_liquidity} X7R ({percentage:.2f}%)\n"
+            f"{eth_liquidity} {chain_info.native.upper()} \n{total_liquidity}\n\n"
         )
 
         if total_liquidity != 'N/A':
-            try:
-                cleaned_total_liquidity = total_liquidity.replace('$', '').replace(',', '')
-                total_x7r_liquidity += float(cleaned_total_liquidity)
-            except ValueError:
-                pass
+            total_x7r_liquidity += float(total_liquidity.replace('$', '').replace(',', ''))
 
-        total_x7r_percentage = (total_x7r_supply / ca.SUPPLY) * 100
+    total_x7r_percentage = (total_x7r_supply / ca.SUPPLY) * 100
+    x7r_text += (
+        f"Total:\n{total_x7r_supply:,.2f} X7R ({total_x7r_percentage:.2f}%)\n"
+        f"{total_x7r_eth:,.2f} {chain_info.native.upper()}\n"
+        f"${total_x7r_liquidity:,.2f}\n"
+    )
 
-        x7r_text += (
-            f"Total:\n{total_x7r_supply:,.2f} X7R ({total_x7r_percentage:.2f}%)\n"
-            f"{total_x7r_eth:,.2f} {chain_info.native.upper()}\n"
-            f"${total_x7r_liquidity:,.2f}\n"
-        )
+    x7dao_liquidity_data = [dextools.get_liquidity(pair, chain) for pair in x7dao_pairs]
+    x7dao_text = "*X7DAO*\n"
 
-        x7dao_text = "*X7DAO*\n"
-        for i, liquidity in enumerate(x7dao_liquidity_data):
-            exchange_name = "Uniswap" if i == 0 else "Xchange"
-            token_liquidity = liquidity.get('token', 'N/A')
-            eth_liquidity = liquidity.get('eth', 'N/A')
-            total_liquidity = liquidity.get('total', 'N/A')
+    for i, liquidity in enumerate(x7dao_liquidity_data):
+        exchange_name = "Uniswap" if i == 0 else "Xchange"
+        token_liquidity = liquidity.get('token', 'N/A')
+        eth_liquidity = liquidity.get('eth', 'N/A')
+        total_liquidity = liquidity.get('total', 'N/A')
 
-            if token_liquidity != 'N/A':
-                cleaned_token_liquidity = token_liquidity.replace(',', '')
-                token_liquidity_float = float(cleaned_token_liquidity)
-                total_x7dao_supply += token_liquidity_float
-                percentage = (token_liquidity_float / ca.SUPPLY) * 100
-            else:
-                percentage = 'N/A'
+        if token_liquidity != 'N/A':
+            token_liquidity_float = float(token_liquidity.replace(',', ''))
+            total_x7dao_supply += token_liquidity_float
+            percentage = (token_liquidity_float / ca.SUPPLY) * 100
+        else:
+            percentage = 'N/A'
 
-            if eth_liquidity != 'N/A':
-                cleaned_eth_liquidity = eth_liquidity.replace(',', '')
-                total_x7dao_eth += float(cleaned_eth_liquidity)
-
-            x7dao_text += (
-                f"{exchange_name}\n{token_liquidity} X7DAO ({percentage:.2f}%)\n{eth_liquidity} {chain_info.native.upper()} \n"
-                f"{total_liquidity}\n\n"
-            )
-
-            if total_liquidity != 'N/A':
-                try:
-                    cleaned_total_liquidity = total_liquidity.replace('$', '').replace(',', '')
-                    total_x7dao_liquidity += float(cleaned_total_liquidity)
-                except ValueError:
-                    pass
-
-        total_x7dao_percentage = (total_x7dao_supply / ca.SUPPLY) * 100
+        if eth_liquidity != 'N/A':
+            total_x7dao_eth += float(eth_liquidity.replace(',', ''))
 
         x7dao_text += (
-            f"Total:\n{total_x7dao_supply:,.2f} X7DAO ({total_x7dao_percentage:.2f}%)\n"
-            f"{total_x7dao_eth:,.2f} {chain_info.native.upper()}\n"
-            f"${total_x7dao_liquidity:,.2f}\n"
+            f"{exchange_name}\n{token_liquidity} X7DAO ({percentage:.2f}%)\n"
+            f"{eth_liquidity} {chain_info.native.upper()} \n{total_liquidity}\n\n"
         )
 
-        buttons = []
-        
-        for i, pair in enumerate(x7r_pairs):
-            exchange_name = "Uniswap" if i == 0 else "Xchange"
-            buttons.append([InlineKeyboardButton(
-                text=f"X7R - {exchange_name}",
-                url=f"{chain_info.scan_address}{pair}"
-            )])
+        if total_liquidity != 'N/A':
+            total_x7dao_liquidity += float(total_liquidity.replace('$', '').replace(',', ''))
 
-        for i, pair in enumerate(x7dao_pairs):
-            exchange_name = "Uniswap" if i == 0 else "Xchange"
-            buttons.append([InlineKeyboardButton(
-                text=f"X7DAO - {exchange_name}",
-                url=f"{chain_info.scan_address}{pair}"
-            )])
+    total_x7dao_percentage = (total_x7dao_supply / ca.SUPPLY) * 100
+    x7dao_text += (
+        f"Total:\n{total_x7dao_supply:,.2f} X7DAO ({total_x7dao_percentage:.2f}%)\n"
+        f"{total_x7dao_eth:,.2f} {chain_info.native.upper()}\n"
+        f"${total_x7dao_liquidity:,.2f}\n"
+    )
+
+    buttons = []
+    for i, pair in enumerate(x7r_pairs):
+        exchange_name = "Uniswap" if i == 0 else "Xchange"
+        buttons.append([InlineKeyboardButton(text=f"X7R - {exchange_name}", url=f"{chain_info.scan_address}{pair}")])
+
+    for i, pair in enumerate(x7dao_pairs):
+        exchange_name = "Uniswap" if i == 0 else "Xchange"
+        buttons.append([InlineKeyboardButton(text=f"X7DAO - {exchange_name}", url=f"{chain_info.scan_address}{pair}")])
 
     keyboard = InlineKeyboardMarkup(buttons)
 
-    final_text = (
-        f"{x7r_text}\n"
-        f"{x7dao_text}\n"
-    )
-
+    final_text = f"{x7r_text}\n------\n\n{x7dao_text}\n"
     await message.delete()
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=(
-            f"*X7 Finance Liquidity ({chain_info.name})*\n"
-            f"Use `liquidity [chain-name]` for other chains\n\n"
-            f"{final_text}"
-        ),
+    await update.message.reply_text(
+        f"*X7 Finance Liquidity ({chain_info.name})*\nUse `liquidity [chain-name]` for other chains\n\n{final_text}",
         parse_mode="Markdown",
         reply_markup=keyboard
     )
+
 
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
@@ -1332,11 +1248,9 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     liquidatable_loans_text = f"Total liquidatable loans: {liquidatable_loans}"
     output = "\n".join([liquidatable_loans_text] + results) 
     await message.delete()
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Loan Liquidations ({chain_info.name})*\nFor other chains use `/liquidate [chain-name]`\n\n"
-            f"{output}",
+    await update.message.reply_text(
+        f"*X7 Finance Loan Liquidations ({chain_info.name})*\nFor other chains use `/liquidate [chain-name]`\n\n"
+        f"{output}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1413,14 +1327,12 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
         ill_number = api.get_ill_number(term)
 
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"*X7 Finance Initial Liquidity Loan - {loan_id} ({chain_info.name})*\n\n"
-                f"{name}\n\n"
-                f"Payment Schedule UTC:\n{schedule_str}\n\n"
-                f"{remaining}"
-                f"{liquidation_status}",
+        await update.message.reply_text(
+            f"*X7 Finance Initial Liquidity Loan - {loan_id} ({chain_info.name})*\n\n"
+            f"{name}\n\n"
+            f"Payment Schedule UTC:\n{schedule_str}\n\n"
+            f"{remaining}"
+            f"{liquidation_status}",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -1444,10 +1356,8 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def loans_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption= 
-            f"{text.LOANS}",
+    await update.message.reply_text(
+        text.LOANS,
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1486,15 +1396,13 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     x7d_remaining_time_str, x7d_unlock_datetime_str = api.get_unlock_time(chain_info.w3, contract, ca.X7D(chain), now)
 
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Liquidity Locks* ({chain_info.name})\nfor other chains use `/locks [chain-name]`\n\n"
-            f"*X7R*\nUniswap - {x7r_uni_unlock_datetime_str}\n{x7r_uni_remaining_time_str}\n\n"
-            f"Xchange - {x7r_xchange_unlock_datetime_str}\n{x7r_xchange_remaining_time_str}\n\n"
-            f"*X7DAO*\nUniswap - {x7dao_uni_unlock_datetime_str}\n{x7dao_uni_remaining_time_str}\n\n"
-            f"Xchange - {x7dao_xchange_unlock_datetime_str}\n{x7dao_xchange_remaining_time_str}\n\n"
-            f"*X7D*\n{x7d_unlock_datetime_str}\n{x7d_remaining_time_str}",
+    await update.message.reply_text(
+        f"*X7 Finance Liquidity Locks* ({chain_info.name})\nfor other chains use `/locks [chain-name]`\n\n"
+        f"*X7R*\nUniswap - {x7r_uni_unlock_datetime_str}\n{x7r_uni_remaining_time_str}\n\n"
+        f"Xchange - {x7r_xchange_unlock_datetime_str}\n{x7r_xchange_remaining_time_str}\n\n"
+        f"*X7DAO*\nUniswap - {x7dao_uni_unlock_datetime_str}\n{x7dao_uni_remaining_time_str}\n\n"
+        f"Xchange - {x7dao_xchange_unlock_datetime_str}\n{x7dao_xchange_remaining_time_str}\n\n"
+        f"*X7D*\n{x7d_unlock_datetime_str}\n{x7d_remaining_time_str}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1523,13 +1431,11 @@ async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
         address = "\n\n".join(map(lambda x: f"`{x}`", magisters))
     except Exception:
         address = ""
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Magister Holders ({chain_info.name})*\n"
-            f"Use `/magisters [chain-name]` or other chains\n\n"
-            f"Holders - {holders}\n\n"
-            f"{address}",
+    await update.message.reply_text(
+        f"*X7 Finance Magister Holders ({chain_info.name})*\n"
+        f"Use `/magisters [chain-name]` or other chains\n\n"
+        f"Holders - {holders}\n\n"
+        f"{address}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1579,19 +1485,17 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
         cons_mcap_value = float(''.join(filter(str.isdigit, mcap)))
         total_cons += cons_mcap_value
 
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Market Cap Info ({chain_info.name})*\n\n"
-            f'`X7R: `            {caps[ca.X7R(chain)]}\n'
-            f'`X7DAO:`         {caps[ca.X7DAO(chain)]}\n'
-            f'`X7101:`         {caps[ca.X7101(chain)]}\n'
-            f'`X7102:`         {caps[ca.X7102(chain)]}\n'
-            f'`X7103:`         {caps[ca.X7103(chain)]}\n'
-            f'`X7104:`         {caps[ca.X7104(chain)]}\n'
-            f'`X7105:`         {caps[ca.X7105(chain)]}\n\n'
-            f'`Constellations Combined:` ${total_cons:,.0f}\n'
-            f'`Total Market Cap:` ${total_mcap:,.0f}',
+    await update.message.reply_text(
+        f"*X7 Finance Market Cap Info ({chain_info.name})*\n\n"
+        f'`X7R: `            {caps[ca.X7R(chain)]}\n'
+        f'`X7DAO:`         {caps[ca.X7DAO(chain)]}\n'
+        f'`X7101:`         {caps[ca.X7101(chain)]}\n'
+        f'`X7102:`         {caps[ca.X7102(chain)]}\n'
+        f'`X7103:`         {caps[ca.X7103(chain)]}\n'
+        f'`X7104:`         {caps[ca.X7104(chain)]}\n'
+        f'`X7105:`         {caps[ca.X7105(chain)]}\n\n'
+        f'`Constellations Combined:` ${total_cons:,.0f}\n'
+        f'`Total Market Cap:` ${total_mcap:,.0f}',
         parse_mode="Markdown",
     )
 
@@ -1667,9 +1571,8 @@ async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ],
     ]
 
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=f"\n",
+    await update.message.reply_text(
+        f"\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -1749,25 +1652,23 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await message.delete()
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*NFT Info ({chain_info.name})*\nUse `/nft [chain-name]` for other chains\n\n"
-            f"*Ecosystem Maxi*\n{eco_price}\n"
-            f"Available - {500 - eco_count}\nFloor price - {eco_floor} {chain_info.native.upper()}\n"
-            f"{eco_discount_text}\n\n"
-            f"*Liquidity Maxi*\n{liq_price}\n"
-            f"Available - {250 - liq_count}\nFloor price - {liq_floor} {chain_info.native.upper()}\n"
-            f"{liq_discount_text}\n\n"
-            f"*Dex Maxi*\n{dex_price}\n"
-            f"Available - {150 - dex_count}\nFloor price - {dex_floor} {chain_info.native.upper()}\n"
-            f"{dex_discount_text}\n\n"
-            f"*Borrow Maxi*\n{borrow_price}\n"
-            f"Available - {100 - borrow_count}\nFloor price - {borrow_floor} {chain_info.native.upper()}\n"
-            f"{borrow_discount_text}\n\n"
-            f"*Magister*\n{magister_price}\n"
-            f"Available - {49 - magister_count}\nFloor price - {magister_floor} {chain_info.native.upper()}\n"
-            f"{magister_discount_text}\n",
+    await update.message.reply_text(
+        f"*NFT Info ({chain_info.name})*\nUse `/nft [chain-name]` for other chains\n\n"
+        f"*Ecosystem Maxi*\n{eco_price}\n"
+        f"Available - {500 - eco_count}\nFloor price - {eco_floor} {chain_info.native.upper()}\n"
+        f"{eco_discount_text}\n\n"
+        f"*Liquidity Maxi*\n{liq_price}\n"
+        f"Available - {250 - liq_count}\nFloor price - {liq_floor} {chain_info.native.upper()}\n"
+        f"{liq_discount_text}\n\n"
+        f"*Dex Maxi*\n{dex_price}\n"
+        f"Available - {150 - dex_count}\nFloor price - {dex_floor} {chain_info.native.upper()}\n"
+        f"{dex_discount_text}\n\n"
+        f"*Borrow Maxi*\n{borrow_price}\n"
+        f"Available - {100 - borrow_count}\nFloor price - {borrow_floor} {chain_info.native.upper()}\n"
+        f"{borrow_discount_text}\n\n"
+        f"*Magister*\n{magister_price}\n"
+        f"Available - {49 - magister_count}\nFloor price - {magister_floor} {chain_info.native.upper()}\n"
+        f"{magister_discount_text}\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -1790,12 +1691,10 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pair_text += f"`{chain_info.name}:`   {amount}\n"
         total += amount
     await message.delete()
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Pair Count*\n\n"
-            f"{pair_text}\n"
-            f"`TOTAL:`  {total}",
+    await update.message.reply_text(
+        f"*X7 Finance Pair Count*\n\n"
+        f"{pair_text}\n"
+        f"`TOTAL:`  {total}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1808,26 +1707,6 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         ),
     )
-
-
-async def pfp(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_chat_action(update.effective_chat.id, "upload_photo")
-    text = " ".join(context.args)
-    if text == "":
-        await update.message.reply_text("Please follow the command with desired name")
-    elif len(text) > 17:
-        await update.message.reply_text("Name too long, please use under 17 characters")
-    else:
-        img = Image.open(requests.get(api.get_random_pioneer(), stream=True).raw)
-        i1 = ImageDraw.Draw(img)
-        position = (380, 987.7)
-        font = ImageFont.truetype(r"media/Bartomes.otf", 34)
-        for char in text:
-            i1.text(position, char, font=font, fill=(255, 255, 255))
-            position = (position[0] + 37.5, position[1])
-        img.save(r"media/pfp.png")
-        await update.message.reply_photo(
-            photo=open(r"media/pfp.png", "rb"))
 
 
 async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
@@ -1866,14 +1745,12 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         else:
             recent_tx_text = 'Last Claim: Not Found\n\n'
 
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"*X7 Pioneer NFT Info*\n\n"
-                f"Floor Price: {floor_round} ETH (${'{:0,.0f}'.format(floor_dollar)})\n"
-                f"Pioneer Pool: {pioneer_pool:.3f} ETH (${'{:0,.0f}'.format(total_dollar)})\n"
-                f"Per Pioneer: {each:.3f} ETH (${each_dollar:,.2f})\n\n"
-                f"{recent_tx_text}",
+        await update.message.reply_text(
+            f"*X7 Pioneer NFT Info*\n\n"
+            f"Floor Price: {floor_round} ETH (${'{:0,.0f}'.format(floor_dollar)})\n"
+            f"Pioneer Pool: {pioneer_pool:.3f} ETH (${'{:0,.0f}'.format(total_dollar)})\n"
+            f"Per Pioneer: {each:.3f} ETH (${each_dollar:,.2f})\n\n"
+            f"{recent_tx_text}",
             parse_mode="markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -1903,6 +1780,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         if "nft" in data and data["nft"]:
             status = data["nft"]["traits"][0]["value"]
             image_url = data["nft"]["image_url"]
+            print(image_url)
         else:
             await update.message.reply_text(f"Pioneer {pioneer_id} not found")
             return
@@ -1962,14 +1840,12 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             total_lpool_dollar += lpool_dollar
             total_dollar += dollar 
         await message.delete()
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"*X7 Finance Lending Pool Info *\nUse `/pool [chain-name or all]` for individual chains\n\n"
-                f"{pool_text}\n"
-                f'Lending Pool: ${"{:0,.0f}".format(total_lpool_dollar)}\n'
-                f'Lending Pool Reserve: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
-                f'Total: ${"{:0,.0f}".format(total_dollar)}',
+        await update.message.reply_text(
+            f"*X7 Finance Lending Pool Info *\nUse `/pool [chain-name or all]` for individual chains\n\n"
+            f"{pool_text}\n"
+            f'Lending Pool: ${"{:0,.0f}".format(total_lpool_dollar)}\n'
+            f'Lending Pool Reserve: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
+            f'Total: ${"{:0,.0f}".format(total_dollar)}',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2018,18 +1894,16 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             
         await message.delete()
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=
-                f"*X7 Finance Lending Pool Info ({chain_info.name})*\nUse `/pool [chain-name]` for other chains\n\n"
-                f"Lending Pool:\n"
-                f'{lpool} {chain_info.native.upper()} (${"{:0,.0f}".format(lpool_dollar)})\n\n'
-                f"Lending Pool Reserve:\n"
-                f'{lpool_reserve} {chain_info.native.upper()} (${"{:0,.0f}".format(lpool_reserve_dollar)})\n\n'
-                f"Total\n"
-                f'{pool} {chain_info.native.upper()} (${"{:0,.0f}".format(dollar)})\n\n'
-                f'Total Currently Borrowed\n'
-                f'{total_borrowed:,.3f} {chain_info.native.upper()} (${"{:0,.0f}".format(total_borrowed_dollar)})',
+        await update.message.reply_text(
+            f"*X7 Finance Lending Pool Info ({chain_info.name})*\nUse `/pool [chain-name]` for other chains\n\n"
+            f"Lending Pool:\n"
+            f'{lpool} {chain_info.native.upper()} (${"{:0,.0f}".format(lpool_dollar)})\n\n'
+            f"Lending Pool Reserve:\n"
+            f'{lpool_reserve} {chain_info.native.upper()} (${"{:0,.0f}".format(lpool_reserve_dollar)})\n\n'
+            f"Total\n"
+            f'{pool} {chain_info.native.upper()} (${"{:0,.0f}".format(dollar)})\n\n'
+            f'Total Currently Borrowed\n'
+            f'{total_borrowed:,.3f} {chain_info.native.upper()} (${"{:0,.0f}".format(total_borrowed_dollar)})',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2054,18 +1928,16 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7r_price, x7r_change  = dextools.get_price(ca.X7R(chain), chain)
     x7dao_price, x7dao_change  = dextools.get_price(ca.X7DAO(chain), chain)
 
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Token Price Info ({chain_info.name})*\n"
-            f"Use `/x7r [chain]` or `/x7dao [chain]` for all other details\n"
-            f"Use `/constellations` for constellations\n\n"
-            f"X7R\n"
-            f"💰 Price: {x7r_price}\n"
-            f"{x7r_change}\n\n"
-            f"X7DAO\n"
-            f"💰 Price: {x7dao_price}\n"
-            f"{x7dao_change}",
+    await update.message.reply_text(
+        f"*X7 Finance Token Price Info ({chain_info.name})*\n"
+        f"Use `/x7r [chain]` or `/x7dao [chain]` for all other details\n"
+        f"Use `/constellations` for constellations\n\n"
+        f"X7R\n"
+        f"💰 Price: {x7r_price}\n"
+        f"{x7r_change}\n\n"
+        f"X7DAO\n"
+        f"💰 Price: {x7dao_price}\n"
+        f"{x7dao_change}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2099,9 +1971,8 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             )
         buttons.append(buttons_row)
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=f"\n",
+    await update.message.reply_text(
+        f"\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -2216,10 +2087,8 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     ],
     ]
 
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Smart Contracts ({chain_info.name})*\nUse `/smart [chain-name]` for other chains",
+    await update.message.reply_text(
+        f"*X7 Finance Smart Contracts ({chain_info.name})*\nUse `/smart [chain-name]` for other chains",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -2251,15 +2120,13 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         treasury_splitter_text += f"{location}: {share:.2f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
     
     await message.delete()
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Ecosystem Splitters ({chain_info.name})*\n"
-            f"Use `/splitters [chain-name]` for other chains\n\n"
-            f"Ecosystem Splitter\n{eco_eth:.2f} {chain_info.native.upper()} (${'{:0,.0f}'.format(eco_dollar)})\n"
-            f"{eco_splitter_text}\n"
-            f"Treasury Splitter\n{treasury_eth:.2f} {chain_info.native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
-            f"{treasury_splitter_text}",
+    await update.message.reply_text(
+        f"*X7 Finance Ecosystem Splitters ({chain_info.name})*\n"
+        f"Use `/splitters [chain-name]` for other chains\n\n"
+        f"Ecosystem Splitter\n{eco_eth:.2f} {chain_info.native.upper()} (${'{:0,.0f}'.format(eco_dollar)})\n"
+        f"{eco_splitter_text}\n"
+        f"Treasury Splitter\n{treasury_eth:.2f} {chain_info.native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
+        f"{treasury_splitter_text}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2278,12 +2145,10 @@ async def tax_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     tax_info = tax.generate_info(chain)
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Tax Info ({chain_info.name})*\n"
-            f"Use `/tax [chain-name]` for other chains\n\n"
-            f"{tax_info}\n",
+    await update.message.reply_text(
+        f"*X7 Finance Tax Info ({chain_info.name})*\n"
+        f"Use `/tax [chain-name]` for other chains\n\n"
+        f"{tax_info}\n",
         parse_mode="Markdown",
     )
 
@@ -2311,13 +2176,11 @@ async def timestamp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             days = time_difference.days % 30
             hours, remainder = divmod(time_difference.seconds, 3600)
             minutes = remainder // 60
-            await update.message.reply_photo(
-                photo=api.get_random_pioneer(),
-                caption=
-                    f"*X7 Finance Timestamp Conversion*\n\n"
-                    f"{stamp}\n{time} UTC\n\n"
-                    f"{years} years, {months} months, {days} days, "
-                    f"{hours} hours, {minutes} minutes {time_message}",
+            await update.message.reply_text(
+                f"*X7 Finance Timestamp Conversion*\n\n"
+                f"{stamp}\n{time} UTC\n\n"
+                f"{years} years, {months} months, {days} days, "
+                f"{hours} hours, {minutes} minutes {time_message}",
                 parse_mode="Markdown",
             )
     except Exception:
@@ -2415,15 +2278,13 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7r_percent = round(x7r_balance / ca.SUPPLY * 100, 2)
     x7dao_percent = round(x7dao_balance / ca.SUPPLY * 100, 2)
     await message.delete()
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Treasury ({chain_info.name})*\nUse `/treasury [chain-name]` for other chains\n\n"
-            f'{eth} {chain_info.native.upper()} (${"{:0,.0f}".format(dollar)})\n'
-            f'{x7d_balance} X7D (${"{:0,.0f}".format(x7d_price)})\n'
-            f'{"{:0,.0f}".format(x7r_balance)} X7R ({x7r_percent}%) (${"{:0,.0f}".format(x7r_price)})\n'
-            f'{"{:0,.0f}".format(x7dao_balance)} X7DAO ({x7dao_percent}%) (${"{:0,.0f}".format(x7dao_price)})\n'
-            f'Total: (${"{:0,.0f}".format(total)})',
+    await update.message.reply_text(
+        f"*X7 Finance Treasury ({chain_info.name})*\nUse `/treasury [chain-name]` for other chains\n\n"
+        f'{eth} {chain_info.native.upper()} (${"{:0,.0f}".format(dollar)})\n'
+        f'{x7d_balance} X7D (${"{:0,.0f}".format(x7d_price)})\n'
+        f'{"{:0,.0f}".format(x7r_balance)} X7R ({x7r_percent}%) (${"{:0,.0f}".format(x7r_price)})\n'
+        f'{"{:0,.0f}".format(x7dao_balance)} X7DAO ({x7dao_percent}%) (${"{:0,.0f}".format(x7dao_price)})\n'
+        f'Total: (${"{:0,.0f}".format(total)})',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2447,9 +2308,8 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async def trending_error():
         await message.delete()
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=f'*Xchange Trending*\n\nUnable to get Dune data, please use the link below',
+        await update.message.reply_text(
+            f'*Xchange Trending*\n\nUnable to get Dune data, please use the link below',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2514,11 +2374,9 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             if not any(item.get("pair") for item in top_trending):
                 await message.delete()
-                await update.message.reply_photo(
-                    photo=api.get_random_pioneer(),
-                    caption=
-                        f'*Xchange Trending ({chain_info.name.upper()})*\nUse `/trending [chain-name]` for other chains\n\n'
-                        f'No trending data for {chain_name}',
+                await update.message.reply_text(
+                    f'*Xchange Trending ({chain_info.name.upper()})*\nUse `/trending [chain-name]` for other chains\n\n'
+                    f'No trending data for {chain_name}',
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(
                         [
@@ -2541,9 +2399,8 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         trending_text += f'{idx}. {pair} ({chain.upper()}) \n24 Hour Volume: ${"{:0,.0f}".format(last_24hr_amt)}\n\n'
 
             await message.delete()
-            await update.message.reply_photo(
-                photo=api.get_random_pioneer(),
-                caption=f'{trending_text}',
+            await update.message.reply_text(
+                trending_text,
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup(
                     [
@@ -2564,9 +2421,8 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ).strftime("%Y-%m-%d %H:%M:%S")
 
         else:
-            await update.message.reply_photo(
-                photo=api.get_random_pioneer(),
-                caption=f'{dune.TRENDING_TEXT[chain_name.upper()]}Last Updated: {dune.TRENDING_LAST_DATE[chain_name.upper()]}',
+            await update.message.reply_text(
+                f'{dune.TRENDING_TEXT[chain_name.upper()]}Last Updated: {dune.TRENDING_LAST_DATE[chain_name.upper()]}',
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup(
                     [
@@ -2603,9 +2459,8 @@ async def twitter(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async def volume_error():
         await message.delete()
-        await update.message.reply_photo(
-            photo=api.get_random_pioneer(),
-            caption=f'*Xchange Volume*\n\nUnable to get Dune data, please use the link below',
+        await update.message.reply_text(
+            f'*Xchange Volume*\n\nUnable to get Dune data, please use the link below',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2658,9 +2513,8 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
             await message.delete()
-            await update.message.reply_photo(
-                photo=api.get_random_pioneer(),
-                caption=f"*Xchange Trading Volume*\n\n{volume_text}",
+            await update.message.reply_text(
+                f"*Xchange Trading Volume*\n\n{volume_text}",
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup(
                     [
@@ -2678,10 +2532,9 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
             dune.VOLUME_TEXT = volume_text
         else:
             await message.delete()
-            await update.message.reply_photo(
-                photo=api.get_random_pioneer(),
-                caption=f'*Xchange Trading Volume*\n\n'
-                        f'{dune.VOLUME_TEXT}\n\nLast Updated: {dune.VOLUME_LAST_DATE} (UTC)',
+            await update.message.reply_text(
+                f'*Xchange Trading Volume*\n\n'
+                f'{dune.VOLUME_TEXT}\n\nLast Updated: {dune.VOLUME_LAST_DATE} (UTC)',
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup(
                     [
@@ -2733,21 +2586,13 @@ async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     hours, remainder = divmod(time_difference.seconds, 3600)
     minutes = remainder // 60
 
-    if last_cast[0].embeds and last_cast[0].embeds.images:
-        photo_url = last_cast[0].embeds.images[0].url
-    else:
-        photo_url = api.get_random_pioneer()
-
-    await update.message.reply_photo(
-        photo=photo_url,
-        caption=(
-            f"*X7 Finance Warpcast*\n\n"
-            f"Latest Cast by {name}:\n{days} days, {hours} hours and {minutes} minutes ago\n\n{api.escape_markdown(last_cast[0].text)}\n\n"
-            f"Likes: {likes}\n"
-            f"Replies: {replies}\n"
-            f"Recasts: {recasts}"
-            f"{recasters_text}"
-        ),
+    await update.message.reply_text(
+        f"*X7 Finance Warpcast*\n\n"
+        f"Latest Cast by {name}:\n{days} days, {hours} hours and {minutes} minutes ago\n\n{api.escape_markdown(last_cast[0].text)}\n\n"
+        f"Likes: {likes}\n"
+        f"Replies: {replies}\n"
+        f"Recasts: {recasts}"
+        f"{recasters_text}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2819,17 +2664,15 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     txs = etherscan.get_daily_tx_count(wallet, chain)
     
     await message.delete()
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Wallet Info ({chain_info.name})*\nUse `/wallet [wallet_address] [chain-name]` for other chains\n\n"
-            f"`{wallet}`\n\n"
-            f"{float(eth):.3f} {chain_info.native.upper()} (${'{:0,.0f}'.format(dollar)})\n\n"
-            f"{x7r_balance:,.0f} X7R {x7r_percent}% (${'{:0,.0f}'.format(x7r_price)})\n"
-            f"{x7dao_balance:,.0f} X7DAO {x7dao_percentage}% (${'{:0,.0f}'.format(x7dao_price)})\n"
-            f"{x7d_balance:.3f} X7D (${'{:0,.0f}'.format(x7d_price)})\n\n"
-            f"{txs} tx's in the last 24 hours\n\n"
-            f"Total X7 Finance token value ${'{:0,.0f}'.format(total)}",
+    await update.message.reply_text(
+        f"*X7 Finance Wallet Info ({chain_info.name})*\nUse `/wallet [wallet_address] [chain-name]` for other chains\n\n"
+        f"`{wallet}`\n\n"
+        f"{float(eth):.3f} {chain_info.native.upper()} (${'{:0,.0f}'.format(dollar)})\n\n"
+        f"{x7r_balance:,.0f} X7R {x7r_percent}% (${'{:0,.0f}'.format(x7r_price)})\n"
+        f"{x7dao_balance:,.0f} X7DAO {x7dao_percentage}% (${'{:0,.0f}'.format(x7dao_price)})\n"
+        f"{x7d_balance:.3f} X7D (${'{:0,.0f}'.format(x7d_price)})\n\n"
+        f"{txs} tx's in the last 24 hours\n\n"
+        f"Total X7 Finance token value ${'{:0,.0f}'.format(total)}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2908,15 +2751,13 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
     info = dextools.get_token_info(ca.X7D(chain), chain)
     holders = info["holders"]
 
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7D ({chain_info.name}) Info*\n"
-            f"For other chains use `/x7d [chain-name]`\n\n"
-            f"Holders: {holders}\n\n"
-            f'Lending Pool:\n{lpool_rounded} X7D (${"{:0,.0f}".format(lpool_dollar)})\n\n'
-            f'Lending Pool Reserve:\n{lpool_reserve_rounded} X7D (${"{:0,.0f}".format(lpool_reserve_dollar)})\n\n'
-            f'Total Supply:\n{supply} X7D (${"{:0,.0f}".format(dollar)})',
+    await update.message.reply_text(
+        f"*X7D ({chain_info.name}) Info*\n"
+        f"For other chains use `/x7d [chain-name]`\n\n"
+        f"Holders: {holders}\n\n"
+        f'Lending Pool:\n{lpool_rounded} X7D (${"{:0,.0f}".format(lpool_dollar)})\n\n'
+        f'Lending Pool Reserve:\n{lpool_reserve_rounded} X7D (${"{:0,.0f}".format(lpool_reserve_dollar)})\n\n'
+        f'Total Supply:\n{supply} X7D (${"{:0,.0f}".format(dollar)})',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2967,18 +2808,16 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         ath = "Unavailable"    
     
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7DAO Info ({chain_info.name})*\n\n"
-            f"💰 Price: {price}\n"
-            f'💎 Market Cap:  {market_cap}\n'
-            f"📊 24 Hour Volume: {volume}\n"
-            f"💦 Liquidity: {liquidity}\n"
-            f"👪 Holders: {holders}\n"
-            f"🔝 ATH: {ath}\n\n"
-            f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7DAO(chain)}`",
+    await update.message.reply_text(
+        f"*X7DAO Info ({chain_info.name})*\n\n"
+        f"💰 Price: {price}\n"
+        f'💎 Market Cap:  {market_cap}\n'
+        f"📊 24 Hour Volume: {volume}\n"
+        f"💦 Liquidity: {liquidity}\n"
+        f"👪 Holders: {holders}\n"
+        f"🔝 ATH: {ath}\n\n"
+        f"{price_change}\n\n"
+        f"Contract Address:\n`{ca.X7DAO(chain)}`",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3020,18 +2859,16 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         ath = "Unavailable"        
     
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7R Info ({chain_info.name})*\n\n"
-            f"💰 Price: {price}\n"
-            f'💎 Market Cap:  {market_cap}\n'
-            f"📊 24 Hour Volume: {volume}\n"
-            f"💦 Liquidity: {liquidity}\n"
-            f"👪 Holders: {holders}\n"
-            f"🔝 ATH: {ath}\n"
-            f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7R(chain)}`",
+    await update.message.reply_text(
+        f"*X7R Info ({chain_info.name})*\n\n"
+        f"💰 Price: {price}\n"
+        f'💎 Market Cap:  {market_cap}\n'
+        f"📊 24 Hour Volume: {volume}\n"
+        f"💦 Liquidity: {liquidity}\n"
+        f"👪 Holders: {holders}\n"
+        f"🔝 ATH: {ath}\n"
+        f"{price_change}\n\n"
+        f"Contract Address:\n`{ca.X7R(chain)}`",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3073,18 +2910,16 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         ath = "Unavailable"        
     
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7101 Info ({chain_info.name})*\n\n"
-            f"💰 Price: {price}\n"
-            f'💎 Market Cap:  {market_cap}\n'
-            f"📊 24 Hour Volume: {volume}\n"
-            f"💦 Liquidity: {liquidity}\n"
-            f"👪 Holders: {holders}\n"
-            f"🔝 ATH: {ath}\n\n"
-            f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7101(chain)}`",
+    await update.message.reply_text(
+        f"*X7101 Info ({chain_info.name})*\n\n"
+        f"💰 Price: {price}\n"
+        f'💎 Market Cap:  {market_cap}\n'
+        f"📊 24 Hour Volume: {volume}\n"
+        f"💦 Liquidity: {liquidity}\n"
+        f"👪 Holders: {holders}\n"
+        f"🔝 ATH: {ath}\n\n"
+        f"{price_change}\n\n"
+        f"Contract Address:\n`{ca.X7101(chain)}`",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3126,18 +2961,16 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         ath = "Unavailable"        
     
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7102 Info ({chain_info.name})*\n\n"
-            f"💰 Price: {price}\n"
-            f'💎 Market Cap:  {market_cap}\n'
-            f"📊 24 Hour Volume: {volume}\n"
-            f"💦 Liquidity: {liquidity}\n"
-            f"👪 Holders: {holders}\n"
-            f"🔝 ATH: {ath}\n\n"
-            f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7102(chain)}`",
+    await update.message.reply_text(
+        f"*X7102 Info ({chain_info.name})*\n\n"
+        f"💰 Price: {price}\n"
+        f'💎 Market Cap:  {market_cap}\n'
+        f"📊 24 Hour Volume: {volume}\n"
+        f"💦 Liquidity: {liquidity}\n"
+        f"👪 Holders: {holders}\n"
+        f"🔝 ATH: {ath}\n\n"
+        f"{price_change}\n\n"
+        f"Contract Address:\n`{ca.X7102(chain)}`",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3179,18 +3012,16 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         ath = "Unavailable"        
     
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7103 Info ({chain_info.name})*\n\n"
-            f"💰 Price: {price}\n"
-            f'💎 Market Cap:  {market_cap}\n'
-            f"📊 24 Hour Volume: {volume}\n"
-            f"💦 Liquidity: {liquidity}\n"
-            f"👪 Holders: {holders}\n"
-            f"🔝 ATH: {ath}\n\n"
-            f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7103(chain)}`",
+    await update.message.reply_text(
+        f"*X7103 Info ({chain_info.name})*\n\n"
+        f"💰 Price: {price}\n"
+        f'💎 Market Cap:  {market_cap}\n'
+        f"📊 24 Hour Volume: {volume}\n"
+        f"💦 Liquidity: {liquidity}\n"
+        f"👪 Holders: {holders}\n"
+        f"🔝 ATH: {ath}\n\n"
+        f"{price_change}\n\n"
+        f"Contract Address:\n`{ca.X7103(chain)}`",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3232,18 +3063,16 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         ath = "Unavailable"        
     
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7104 Info ({chain_info.name})*\n\n"
-            f"💰 Price: {price}\n"
-            f'💎 Market Cap:  {market_cap}\n'
-            f"📊 24 Hour Volume: {volume}\n"
-            f"💦 Liquidity: {liquidity}\n"
-            f"👪 Holders: {holders}\n"
-            f"🔝 ATH: {ath}\n\n"
-            f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7104(chain)}`",
+    await update.message.reply_text(
+        f"*X7104 Info ({chain_info.name})*\n\n"
+        f"💰 Price: {price}\n"
+        f'💎 Market Cap:  {market_cap}\n'
+        f"📊 24 Hour Volume: {volume}\n"
+        f"💦 Liquidity: {liquidity}\n"
+        f"👪 Holders: {holders}\n"
+        f"🔝 ATH: {ath}\n\n"
+        f"{price_change}\n\n"
+        f"Contract Address:\n`{ca.X7104(chain)}`",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3285,18 +3114,16 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         ath = "Unavailable"          
     
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7105 Info* ({chain_info.name})\n\n"
-            f"💰 Price: {price}\n"
-            f'💎 Market Cap:  {market_cap}\n'
-            f"📊 24 Hour Volume: {volume}\n"
-            f"💦 Liquidity: {liquidity}\n"
-            f"👪 Holders: {holders}\n"
-            f"🔝 ATH: {ath}\n\n"
-            f"{price_change}\n\n"
-            f"Contract Address:\n`{ca.X7105(chain)}`",
+    await update.message.reply_text(
+        f"*X7105 Info* ({chain_info.name})\n\n"
+        f"💰 Price: {price}\n"
+        f'💎 Market Cap:  {market_cap}\n'
+        f"📊 24 Hour Volume: {volume}\n"
+        f"💦 Liquidity: {liquidity}\n"
+        f"👪 Holders: {holders}\n"
+        f"🔝 ATH: {ath}\n\n"
+        f"{price_change}\n\n"
+        f"Contract Address:\n`{ca.X7105(chain)}`",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
