@@ -119,8 +119,8 @@ async def loan_alert(event, chain):
             ]
         )
 
-        with open(image_path, "rb") as photo:
-            for channel, thread_id, link in channels:
+        for channel, thread_id, link in channels:
+            with open(image_path, "rb") as photo:
                 send_params = {
                     "chat_id": channel,
                     "photo": photo,
@@ -236,8 +236,8 @@ async def pair_alert(event, chain):
             ]
         )
 
-        with open(image_path, "rb") as photo:
-            for channel, thread_id, link in channels:
+        for channel, thread_id, link in channels:
+            with open(image_path, "rb") as photo:
                 send_params = {
                     "chat_id": channel,
                     "photo": photo,
