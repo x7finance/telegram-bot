@@ -32,14 +32,20 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def admins(update: Update, context: ContextTypes.DEFAULT_TYPE):
     administrators = await context.bot.get_chat_administrators(urls.TG_MAIN_CHANNEL_ID)
-    team = [f"@{admin.user.username}" for admin in administrators if 'x7' in admin.custom_title.lower()]
+    team = [
+        f"@{admin.user.username}" 
+        for admin in administrators 
+        if admin.custom_title and 'x7' in admin.custom_title.lower() and admin.user.username
+    ]
+    team.sort(key=lambda username: username.lower())
+    
     await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            "*X7 Finance Telegram Admins*\n\n"
-            "X7 Team:\n" + "\n".join(team),
-        parse_mode="Markdown",
-    )
+            photo=api.get_random_pioneer(),
+            caption=
+                "*X7 Finance Telegram Admins*\n\n"
+                + "\n".join(team),
+            parse_mode="Markdown",
+        )
 
 
 async def alerts(update: Update, context: ContextTypes.DEFAULT_TYPE):
