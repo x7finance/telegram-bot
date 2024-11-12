@@ -38,7 +38,7 @@ async def admins(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if admin.custom_title and 'x7' in admin.custom_title.lower() and admin.user.username
     ]
     team.sort(key=lambda username: username.lower())
-    
+
     await update.message.reply_photo(
             photo=api.get_random_pioneer(),
             caption=
@@ -1188,7 +1188,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     x7r_text = "*X7R*\n"
     for i, liquidity in enumerate(x7r_liquidity_data):
-        exchange_name = "Uniswap" if i == 0 else "Xchange"
+        exchange_name = "Xchange" if i == 0 else "Uniswap"
         token_liquidity = liquidity.get('token', 'N/A')
         eth_liquidity = liquidity.get('eth', 'N/A')
         total_liquidity = liquidity.get('total', 'N/A')
@@ -1205,24 +1205,24 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         x7r_text += (
             f"{exchange_name}\n{token_liquidity} X7R ({percentage:.2f}%)\n"
-            f"{eth_liquidity} {chain_info.native.upper()} \n{total_liquidity}\n\n"
+            f"{eth_liquidity} {chain_info.native.upper()}\n{total_liquidity}\n\n"
         )
 
         if total_liquidity != 'N/A':
             total_x7r_liquidity += float(total_liquidity.replace('$', '').replace(',', ''))
 
-    total_x7r_percentage = (total_x7r_supply / ca.SUPPLY) * 100
-    x7r_text += (
-        f"Total:\n{total_x7r_supply:,.2f} X7R ({total_x7r_percentage:.2f}%)\n"
-        f"{total_x7r_eth:,.2f} {chain_info.native.upper()}\n"
-        f"${total_x7r_liquidity:,.2f}\n"
-    )
+    if len(x7r_pairs) > 1:
+        total_x7r_percentage = (total_x7r_supply / ca.SUPPLY) * 100
+        x7r_text += (
+            f"Total:\n{total_x7r_supply:,.2f} X7R ({total_x7r_percentage:.2f}%)\n"
+            f"{total_x7r_eth:,.2f} {chain_info.native.upper()}\n"
+            f"${total_x7r_liquidity:,.2f}\n"
+        )
 
     x7dao_liquidity_data = [dextools.get_liquidity(pair, chain) for pair in x7dao_pairs]
     x7dao_text = "*X7DAO*\n"
-
     for i, liquidity in enumerate(x7dao_liquidity_data):
-        exchange_name = "Uniswap" if i == 0 else "Xchange"
+        exchange_name = "Xchange" if i == 0 else "Uniswap"
         token_liquidity = liquidity.get('token', 'N/A')
         eth_liquidity = liquidity.get('eth', 'N/A')
         total_liquidity = liquidity.get('total', 'N/A')
@@ -1239,31 +1239,32 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         x7dao_text += (
             f"{exchange_name}\n{token_liquidity} X7DAO ({percentage:.2f}%)\n"
-            f"{eth_liquidity} {chain_info.native.upper()} \n{total_liquidity}\n\n"
+            f"{eth_liquidity} {chain_info.native.upper()}\n{total_liquidity}\n\n"
         )
 
         if total_liquidity != 'N/A':
             total_x7dao_liquidity += float(total_liquidity.replace('$', '').replace(',', ''))
 
-    total_x7dao_percentage = (total_x7dao_supply / ca.SUPPLY) * 100
-    x7dao_text += (
-        f"Total:\n{total_x7dao_supply:,.2f} X7DAO ({total_x7dao_percentage:.2f}%)\n"
-        f"{total_x7dao_eth:,.2f} {chain_info.native.upper()}\n"
-        f"${total_x7dao_liquidity:,.2f}\n"
-    )
+    if len(x7dao_pairs) > 1:
+        total_x7dao_percentage = (total_x7dao_supply / ca.SUPPLY) * 100
+        x7dao_text += (
+            f"Total:\n{total_x7dao_supply:,.2f} X7DAO ({total_x7dao_percentage:.2f}%)\n"
+            f"{total_x7dao_eth:,.2f} {chain_info.native.upper()}\n"
+            f"${total_x7dao_liquidity:,.2f}\n"
+        )
 
     buttons = []
     for i, pair in enumerate(x7r_pairs):
-        exchange_name = "Uniswap" if i == 0 else "Xchange"
+        exchange_name = "Xchange" if i == 0 else "Uniswap"
         buttons.append([InlineKeyboardButton(text=f"X7R - {exchange_name}", url=f"{chain_info.scan_address}{pair}")])
 
     for i, pair in enumerate(x7dao_pairs):
-        exchange_name = "Uniswap" if i == 0 else "Xchange"
+        exchange_name = "Xchange" if i == 0 else "Uniswap"
         buttons.append([InlineKeyboardButton(text=f"X7DAO - {exchange_name}", url=f"{chain_info.scan_address}{pair}")])
 
     keyboard = InlineKeyboardMarkup(buttons)
 
-    final_text = f"{x7r_text}\n------\n\n{x7dao_text}\n"
+    final_text = f"{x7r_text}\n{x7dao_text}\n"
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
