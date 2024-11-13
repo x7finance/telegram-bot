@@ -100,6 +100,6 @@ REDDIT = "https://www.reddit.com/r/x7finance"
 SNAPSHOT = "https://snapshot.org/#/x7finance.eth"
 TWITTER = "https://twitter.com/x7_finance/"
 WARPCAST = "https://warpcast.com/x7finance"
-WP_LINK = "https://x7.finance/wp/v1_1_0/X7FinanceWhitepaper.pdf"
+WP_LINK = "https://assets.x7finance.org/pdf/whitepaper-1.1.pdf"
 XCHANGE = "https://x7finance.org/"
 

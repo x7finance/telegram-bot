@@ -1886,7 +1886,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
                 [
                     InlineKeyboardButton(
                         text="X7 Pioneer Dashboard",
-                        url="https://x7.finance/x/nft/pioneer",
+                        url=f"{urls.XCHANGE}dashboard/pioneer",
                     )
                 ],
                 [
