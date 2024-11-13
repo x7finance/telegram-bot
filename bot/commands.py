@@ -2401,6 +2401,7 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ),
     )
 
+
 async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
     async def trending_error():
         await message.delete()
@@ -2425,18 +2426,22 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if error_message:
         await update.message.reply_text(error_message)
         return
-    chain_name = "ethereum" if chain == "eth" else chain_info.name
+    chain_name = "ethereum" if chain == "eth" else chain_info.name.lower()
     chain_name_title = f"({chain_info.name.upper()})"
 
     if chain_name.upper() not in dune.TRENDING_FLAG:
         dune.TRENDING_TEXT[chain_name.upper()] = ""
         dune.TRENDING_FLAG[chain_name.upper()] = False
         dune.TRENDING_TIMESTAMP[chain_name.upper()] = datetime.now().timestamp()
-        dune.TRENDING_LAST_DATE[chain_name.upper()] = datetime.fromtimestamp(dune.TRENDING_TIMESTAMP[chain_name.upper()]).strftime("%Y-%m-%d %H:%M:%S")
+        dune.TRENDING_LAST_DATE[chain_name.upper()] = datetime.fromtimestamp(
+            dune.TRENDING_TIMESTAMP[chain_name.upper()]
+        ).strftime("%Y-%m-%d %H:%M:%S")
 
     try:
-        if dune.TRENDING_FLAG[chain_name.upper()] == False:
-            message = await update.message.reply_text(f"Getting Xchange Trending {chain_name}, Please wait...")
+        if not dune.TRENDING_FLAG[chain_name.upper()]:
+            message = await update.message.reply_text(
+                f"Getting Xchange Trending {chain_name}, Please wait..."
+            )
             await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
             execution_id = dune.execute_query(dune.TOP_PAIRS_ID, "medium")
@@ -2453,22 +2458,26 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     break
                 await asyncio.sleep(5)
 
-            if 'result' not in response_data:
+            if not response_data or 'result' not in response_data:
                 await trending_error()
                 return
 
             rows = response_data["result"]["rows"]
-            rows = [row for row in rows if row["pair"] != "TOTAL" and row["blockchain"].lower() == chain_name]
-            
-            valid_rows = [row for row in rows if row.get('last_24hr_amt') is not None and row.get("pair") is not None]
+            rows = [
+                row for row in rows
+                if row.get("pair") and row["pair"].lower() != "total" and
+                row.get("blockchain", "").strip().lower() == chain_name.strip().lower()
+            ]
+
+            valid_rows = [
+                row for row in rows
+                if row.get('last_24hr_amt') is not None and isinstance(row['last_24hr_amt'], (int, float))
+            ]
+
             sorted_rows = sorted(valid_rows, key=lambda x: x.get('last_24hr_amt', 0), reverse=True)
+            top_trending = sorted_rows[:3] if len(sorted_rows) >= 3 else sorted_rows
 
-            if len(sorted_rows) < 3:
-                top_trending = sorted_rows
-            else:
-                top_trending = sorted_rows[:3]
-
-            trending_text = f"*Xchange Trending Pairs {chain_name_title.upper()}*\n\n"
+            trending_text = f"*Xchange Trending Pairs {chain_name_title}*\n\n"
 
             if not any(item.get("pair") for item in top_trending):
                 await message.delete()
@@ -2490,13 +2499,12 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
                 return
 
-            else:
-                for idx, item in enumerate(top_trending, start=1):
-                    pair = item.get("pair")
-                    last_24hr_amt = item.get("last_24hr_amt")
-                    chain = item.get("blockchain")
-                    if pair is not None and last_24hr_amt is not None:
-                        trending_text += f'{idx}. {pair} ({chain.upper()}) \n24 Hour Volume: ${"{:0,.0f}".format(last_24hr_amt)}\n\n'
+            for idx, item in enumerate(top_trending, start=1):
+                pair = item.get("pair")
+                last_24hr_amt = item.get("last_24hr_amt")
+                blockchain = item.get("blockchain")
+                if pair and last_24hr_amt:
+                    trending_text += f'{idx}. {pair} ({blockchain.upper()})\n24 Hour Volume: ${"{:0,.0f}".format(last_24hr_amt)}\n\n'
 
             await message.delete()
             await update.message.reply_photo(
@@ -2509,7 +2517,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             InlineKeyboardButton(
                                 text="X7 Dune Dashboard", url=f"{urls.DUNE}"
                             )
-                        ],
+                        ]
                     ]
                 ),
             )
@@ -2539,6 +2547,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     except Exception:
         await trending_error()
+
 
 async def twitter(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_sticker(sticker=media.TWITTER_STICKER)
