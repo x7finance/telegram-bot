@@ -2397,12 +2397,6 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         url=f"{chain_info.scan_address}{chain_info.dao_multi}",
                     )
                 ],
-                [
-                    InlineKeyboardButton(
-                        text="Community Multi-sig Wallet",
-                        url=f"{chain_info.scan_address}{chain_info.com_multi}",
-                    )
-                ]
             ]
         ),
     )

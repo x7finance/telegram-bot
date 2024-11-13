@@ -43,26 +43,31 @@ def generate_treasury_split(chain, eth_value):
         address=chain_info.w3.to_checksum_address(ca.TREASURY_SPLITTER(chain)),
         abi=etherscan.get_abi(ca.TREASURY_SPLITTER(chain), chain),
     )
-    if chain == "eth" or chain  == "base":
-        profit_percentage = contract.functions.outletShare(1).call() / 1000
-        reward_pool_percentage = contract.functions.outletShare(2).call() / 1000
-        community_multisig_percentage = contract.functions.outletShare(3).call() / 1000
-        developers_multisig_percentage = contract.functions.outletShare(4).call() / 1000
+    
+    profit_percentage = contract.functions.outletShare(1).call() / 1000
+    reward_pool_percentage = contract.functions.outletShare(2).call() / 1000
+    slot_1_percentage = contract.functions.outletShare(3).call() / 1000
+    slot_2_percentage = contract.functions.outletShare(4).call() / 1000
 
-    else:
-        profit_percentage = 49
-        reward_pool_percentage = contract.functions.outletShare(8).call() / 1000
-        community_multisig_percentage = contract.functions.outletShare(9).call() / 1000
-        developers_multisig_percentage = contract.functions.outletShare(10).call() / 1000
-        
     profit_share = eth_value * profit_percentage / 100
     reward_pool_share = eth_value * reward_pool_percentage / 100
-    developers_multisig_share = eth_value * developers_multisig_percentage / 100
-    community_multisig_share = eth_value * community_multisig_percentage / 100
+    slot_1_share = eth_value * slot_1_percentage / 100
+    slot_2_share = eth_value * slot_2_percentage / 100
+
+    slot_names = {
+        "eth": ("Pioneer Pool", "Community Multi Sig", "Developer Multi Sig"),
+        "base": (),
+        "bsc": (),
+        "arb": (),
+        "op": (),
+        "poly": (),
+    }
     
+    rewards_pool_name, slot_1_name, slot_2_name = slot_names.get(chain, ("Rewards Pool", "Slot 1", "Slot 2"))
+
     return {
             "> DAO Multi Sig": (profit_share, profit_percentage), 
-            "> Rewards Pool": (reward_pool_share, reward_pool_percentage),
-            "> Community Multi Sig": (community_multisig_share, community_multisig_percentage),
-            "> Operations Multi Sig": (developers_multisig_share, developers_multisig_percentage)
+            f"> {rewards_pool_name}": (reward_pool_share, reward_pool_percentage),
+            f"> {slot_1_name}": (slot_1_share, slot_1_percentage),
+            f"> {slot_2_name}": (slot_2_share, slot_2_percentage)
     }
