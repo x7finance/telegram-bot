@@ -10,7 +10,7 @@
 <div align="center">
 <a href="https://www.x7finance.org/">Website</a> 
 <span> · </span>
-<a href="https://t.me/X7m105portal">Telegram</a> 
+<a href="https://t.me/X7portal">Telegram</a> 
 <span> · </span>
 <a href="https://twitter.com/X7_Finance">Twitter</a>
 </div>

@@ -85,7 +85,7 @@ ECOSYSTEM = (
 def welcome(user):
     return (f"Welcome {api.escape_markdown(user)} to X7 Finance\n\nHome of Xchange - A censorship resistant DEX offering initial loaned liquidity on\n\n{chains.full_names()}"
             f"\n\n"
-            "Verify as human and check out the links to get started!")
+            " ❗ Verify as human to unlock chat! ❗")
 
 
 LOANS =(

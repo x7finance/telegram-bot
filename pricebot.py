@@ -4,7 +4,6 @@ from telegram.ext import *
 from hooks import api
 from constants import ca, chains, tokens, urls
 
-
 coingecko = api.CoinGecko()
 defined = api.Defined()
 dextools = api.Dextools()

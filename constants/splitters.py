@@ -1,6 +1,5 @@
 # SPLITTERS
 
-from web3 import Web3
 from constants import ca, chains
 from hooks import api
 

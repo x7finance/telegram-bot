@@ -16,10 +16,11 @@ RESTRICTIONS = {
 
 
 async def button_callback(update: Update, context: CallbackContext) -> None:
-    user_id = update.callback_query.from_user.id
-    action, _ = update.callback_query.data.split(":", 1)
+    query = update.callback_query
+    user_id = query.from_user.id
+    action, allowed_user_id = query.data.split(":")
 
-    if action == "unmute":
+    if action == "unmute" and str(user_id) == allowed_user_id:
         user_restrictions = {key: True for key in RESTRICTIONS}
 
         await context.bot.restrict_chat_member(
@@ -29,7 +30,10 @@ async def button_callback(update: Update, context: CallbackContext) -> None:
         )
         try:
             previous_welcome_message_id = context.bot_data.get('welcome_message_id')
-            await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=previous_welcome_message_id)
+            await context.bot.delete_message(
+                chat_id=update.effective_chat.id,
+                message_id=previous_welcome_message_id
+            )
         except Exception:
             pass
 
@@ -107,20 +111,10 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     [
                         [
                             InlineKeyboardButton(
-                                text="I am human!",
+                                text=" ❗ I am human! ❗",
                                 callback_data=f"unmute:{new_member_id}",
                             )
-                        ],
-                        [
-                            InlineKeyboardButton(
-                                text="Website",
-                                url=f"{urls.XCHANGE}about",
-                            ),
-                            InlineKeyboardButton(
-                                text="Xchange",
-                                url=urls.XCHANGE,
-                            ),
-                        ],
+                        ]
                     ]
                 )
             )
