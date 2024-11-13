@@ -111,7 +111,7 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     [
                         [
                             InlineKeyboardButton(
-                                text=" ❗ I am human! ❗",
+                                text="❗ I am human! ❗",
                                 callback_data=f"unmute:{new_member_id}",
                             )
                         ]
