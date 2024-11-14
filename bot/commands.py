@@ -976,7 +976,6 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     token = context.args[0].lower()
     chain = context.args[1].lower() if len(context.args) == 2 else chains.get_chain(update.effective_message.message_thread_id)
 
-    
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
@@ -986,6 +985,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if token.startswith("x710") and token in {f"x710{i}" for i in range(1, 6)}:
             token = "x7100"
         hub_address = ca.HUBS(chain)[token]
+        split_text = splitters.generate_hub_split(chain, hub_address, token)
     else:
         await update.message.reply_text("Please follow the command with X7 token name")
         return
@@ -1000,7 +1000,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
             days,
             hours,
             minutes,
-        ) = api.get_liquidity_hub_data(hub_address, chain)
+        ) = api.get_last_buyback(hub_address, chain)
 
         buy_back_text = (
             f'Last Buy Back: {time} UTC\n{value} {chain_info.native.upper()} (${"{:0,.0f}".format(dollar)})\n'
@@ -1010,81 +1010,15 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         buy_back_text = f'Last Buy Back: None Found'
 
     eth_price = etherscan.get_native_price(chain)
-    contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(hub_address), abi=etherscan.get_abi(hub_address, chain)
-    )
-    try:
-        distribute = contract.functions.distributeShare().call() / 10
-        liquidity = contract.functions.liquidityShare().call() / 10
-        treasury = contract.functions.treasuryShare().call() / 10
-        liquidity_ratio_target = contract.functions.liquidityRatioTarget().call()
-        balance_threshold = contract.functions.balanceThreshold().call() / 10 ** 18
-        liquidity_balance = contract.functions.liquidityBalance().call() / 10 ** 18
-        distribute_balance = contract.functions.distributeBalance().call() / 10 ** 18
-        treasury_balance = contract.functions.treasuryBalance().call() / 10 ** 18
-    except Exception as e:
-        distribute = "N/A"
-        liquidity = "N/A"
-        treasury = "N/A"
-        liquidity_ratio_target = "N/A"
-        balance_threshold = "N/A"
-
-    split_text = (
-        f"Ecosystem Share: {distribute}% - {distribute_balance:,.3f} {chain_info.native.upper()}\n"
-        f"Liquidity Share: {liquidity}% - {liquidity_balance:,.3f} {chain_info.native.upper()}\n"
-        f"Treasury Share: {treasury}% - {treasury_balance:,.3f} {chain_info.native.upper()}"
-    )
-
-    if token.upper() in tokens.TOKENS:
-        token_info = tokens.TOKENS[token.upper()].get(chain)
-        address = token_info.ca
-        price, _ = dextools.get_price(address, chain)
-
-    if token == "x7dao":
-        try:
-            auxiliary = contract.functions.auxiliaryShare().call() / 10
-            auxiliary_balance = contract.functions.auxiliaryBalance().call() / 10 ** 18
-        except Exception:
-            auxiliary = "N/A"
-            auxiliary_balance = 0
-        auxiliary_text = f"Auxiliary Share: {auxiliary}% - {auxiliary_balance:,.3f}  {chain_info.native.upper()}"
-        split_text += "\n" + auxiliary_text
-
-    if token == "x7100":
-        token_str = "x7101-x7105"
-        address = ca.X7100(chain)
-        try:
-            lending_pool = contract.functions.lendingPoolShare().call() / 10
-            lending_pool_balance = contract.functions.lendingPoolBalance().call() / 10 ** 18
-        except Exception:
-            lending_pool = "N/A"
-            lending_pool_balance = 0
-        lending_pool_text = f"Lending Pool Share: {lending_pool}% - {lending_pool_balance:,.3f}  {chain_info.native.upper()}"
-        split_text += "\n" + lending_pool_text
-    else:
-        token_str = token
-    balance = 0
-
     eth_balance = etherscan.get_native_balance(hub_address, chain)
     eth_dollar = (float(eth_balance) * float(eth_price))
 
-    if isinstance(address, str):
-        balance += etherscan.get_token_balance(hub_address, address, chain)
-        dollar = float(price) * float(balance)
-        balance_text = f"{balance:,.0f} {token_str.upper()} (${dollar:,.0f})"
-    elif isinstance(address, list):
-        for quint in address:
-            balance += etherscan.get_token_balance(hub_address, quint, chain)
-        balance_text = f"{balance:,.0f} {token_str.upper()}"
     await message.delete()
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
             f"*{token.upper()} Liquidity Hub ({chain_info.name})*\n\n"
             f"{round(float(eth_balance), 2)} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
-            f"{balance_text}\n\n"
-            f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
-            f"Balance Threshold: {balance_threshold} {chain_info.native.upper()}\n\n"
             f"{split_text}\n\n"
             f"{buy_back_text}",
         parse_mode="Markdown",

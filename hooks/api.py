@@ -888,19 +888,19 @@ def get_ill_number(term):
                 return ill_number
 
 
-def get_liquidity_hub_data(hub_address, chain):
-        now = datetime.now()
-        chain_native = chains.CHAINS[chain].native
-        hub = Etherscan().get_internal_tx(hub_address, chain)
-        hub_filter = [d for d in hub["result"] if d["from"] in f"{hub_address}".lower()]
-        value = round(int(hub_filter[0]["value"]) / 10**18, 3)
-        dollar = float(value) * float(Etherscan.get_native_price(chain_native))
-        time = datetime.fromtimestamp(int(hub_filter[0]["timeStamp"]))
-        duration = now - time
-        days = duration.days
-        hours, remainder = divmod(duration.seconds, 3600)
-        minutes = (remainder % 3600) // 60
-        return value, dollar, time, days, hours, minutes    
+def get_last_buyback(hub_address, chain):
+    now = datetime.now()
+    chain_native = chains.CHAINS[chain].native
+    hub = Etherscan().get_internal_tx(hub_address, chain)
+    hub_filter = [d for d in hub["result"] if d["from"] in f"{hub_address}".lower()]
+    value = round(int(hub_filter[0]["value"]) / 10**18, 3)
+    dollar = float(value) * float(Etherscan.get_native_price(chain_native))
+    time = datetime.fromtimestamp(int(hub_filter[0]["timeStamp"]))
+    duration = now - time
+    days = duration.days
+    hours, remainder = divmod(duration.seconds, 3600)
+    minutes = (remainder % 3600) // 60
+    return value, dollar, time, days, hours, minutes    
 
 
 def get_nft_data(nft, chain):
