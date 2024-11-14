@@ -139,8 +139,10 @@ def generate_treasury_split(chain, eth_value):
         "op": (),
         "poly": (),
     }
-    
-    rewards_pool_name, slot_1_name, slot_2_name = slot_names.get(chain, ("Rewards Pool", "Slot 1", "Slot 2"))
+
+    rewards_pool_name, slot_1_name, slot_2_name = (
+        slot_names.get(chain) if slot_names.get(chain) else ("Rewards Pool", "Slot 1", "Slot 2")
+    )
 
     return {
             "> DAO Multi Sig": (profit_share, profit_percentage), 
