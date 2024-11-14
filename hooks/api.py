@@ -244,13 +244,13 @@ class Dextools:
         try:
             if data is not None:
                 if "data" in data and "exchange" in data["data"] and "name" in data["data"]["exchange"]:
-                    return data["data"]["exchange"]["name"]
+                    return f"({data["data"]["exchange"]["name"]} pair)"
                 else:
-                    return "Unknown DEX"
+                    return ""
             else:
-                return "Unknown DEX"
+                return ""
         except Exception:
-            "Unknown DEX"
+            ""
     
 
     def get_price(self, token, chain):
@@ -356,91 +356,36 @@ class Dextools:
             }
 
 
-    def get_liquidity(self, pair: Union[str, list[str]], chain: str):
+    def get_liquidity(self, pair, chain):
         if chain not in chains.CHAINS:
-            return {"total": "0", "token": "0", "eth": "0"}
+            return {"total": "N/A", "token": "0", "eth": "0.00"}
 
         chain_info = chains.CHAINS[chain]
 
-        pairs = [pair] if isinstance(pair, str) else pair
+        endpoint = f'pool/{chain_info.dext}/{pair}/liquidity'
+        response = requests.get(self.url + endpoint, headers=self.headers)
 
-        liquidity_data = {}
-        total_liquidity = 0
-        total_token = 0
-        total_eth = 0
+        liquidity_data = {
+            "total": "N/A",
+            "token": "0",
+            "eth": "0.00"
+        }
 
-        for p in pairs:
-            if isinstance(p, str):
-                endpoint = f'pool/{chain_info.dext}/{p}/liquidity'
-                response = requests.get(self.url + endpoint, headers=self.headers)
+        if response.status_code == 200:
+            data = response.json()
+            if data and "data" in data:
+                total = data['data'].get('liquidity', 0)
+                token = data['data']['reserves'].get('mainToken', 0)
+                eth = data['data']['reserves'].get('sideToken', 0)
 
-                liquidity_data[p] = {
-                    "total": "$0",
-                    "token": "0",
-                    "eth": "0.00"
+                liquidity_data = {
+                    "total": f"${'{:,.0f}'.format(total)}" if total else "N/A",
+                    "token": f"{'{:,.0f}'.format(token)}",
+                    "eth": f"{'{:,.2f}'.format(eth)}"
                 }
 
-                if response.status_code == 200:
-                    try:
-                        data = response.json()
-                        total = data['data']['liquidity']
-                        token = data['data']['reserves']['mainToken']
-                        eth = data['data']['reserves']['sideToken']
+        return liquidity_data
 
-                        liquidity_data[p] = {
-                            "total": f"${'{:,.0f}'.format(total)}",
-                            "token": f"{'{:,.0f}'.format(token)}",
-                            "eth": f"{'{:,.2f}'.format(eth)}"
-                        }
-
-                        total_liquidity += total
-                        total_token += token
-                        total_eth += eth
-                    except Exception:
-                        liquidity_data[p] = {
-                            "total": "$0",
-                            "token": "0",
-                            "eth": "0.00"
-                        }
-
-        if isinstance(pair, list):
-            liquidity_data = {
-                "total": f"${'{:,.0f}'.format(total_liquidity)}",
-                "token": f"{'{:,.0f}'.format(total_token)}",
-                "eth": f"{'{:,.2f}'.format(total_eth)}"
-            }
-            return liquidity_data
-        else:
-            return liquidity_data.get(pair, {
-                "total": "0",
-                "token": "0",
-                "eth": "0.00"
-            })
-
-
-    def get_volume(self, pair, chain):
-        chain_info = chains.CHAINS[chain]
-
-        if isinstance(pair, str):
-            pairs = [pair]
-        else:
-            pairs = pair
-
-        total_volume = 0.0
-
-        for p in pairs:
-            endpoint = f"pool/{chain_info.dext}/{p}/price"
-            response = requests.get(self.url + endpoint, headers=self.headers)
-            
-            if response.status_code == 200:
-                data = response.json()
-                try:
-                    volume = float(data["data"]["volume24h"])
-                    total_volume += volume
-                except (KeyError, ValueError):
-                    continue
-
-        return f'${"{:,.0f}".format(total_volume)}' if total_volume > 0 else "N/A"
 
 
 
@@ -664,7 +609,7 @@ class Defined:
             current_value = data['data']['getDetailedPairStats']['stats_day1']['statsUsd']['volume']['currentValue']
             return "${:,.0f}".format(float(current_value))
         except Exception as e:
-                return "N/A"
+            return "N/A"
         
     def search(self, address, chain=None):
         if chain is not None:

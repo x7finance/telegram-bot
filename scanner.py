@@ -194,8 +194,7 @@ async def pair_alert(event, chain):
             status = "Scan Unavailable"
         
         liq_data = dextools.get_liquidity(event['args']['pair'], chain)
-        liq = liq_data["total"]
-        if liq == "$0":
+        if liq_data["total"] == "N/A":
             liq = "Unknown"
 
         im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")

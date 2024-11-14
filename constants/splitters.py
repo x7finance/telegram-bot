@@ -132,7 +132,7 @@ def generate_treasury_split(chain, eth_value):
     slot_2_share = eth_value * slot_2_percentage / 100
 
     slot_names = {
-        "eth": ("Pioneer Pool", "Community Multi Sig", "Developer Multi Sig"),
+        "eth": ("Pioneer Pool", "Community Multi Sig", "Utility Deployer"),
         "base": (),
         "bsc": (),
         "arb": (),

@@ -130,10 +130,9 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 owner_percent = "❓ Tokens Held By Owner Unknown"
 
             try:
-                if "dex" in scan[token_address] and scan[token_address]["dex"]:
+                pair = defined.get_pair(token_address, chain)
+                if not pair and "dex" in scan[token_address] and scan[token_address]["dex"]:
                     pair = scan[token_address]["dex"][0]["pair"]
-                else:
-                    pair = defined.get_pair(token_address, chain)
             except Exception:
                 pair = ca.DEAD
         else:
@@ -168,7 +167,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             price = f"${price}"
         else:
             price = "N/A"
-        volume = dextools.get_volume(pair, chain)
+        volume = defined.get_volume(pair, chain)
         liquidity = dextools.get_liquidity(pair, chain)['total']
         await update.message.reply_text(
             f"*{token_name} {token_symbol}* - {chain_name}\n"
@@ -176,7 +175,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             f'💰 Price: {price}\n'
             f"💎 Market Cap: {mcap}\n"
             f"📊 24 Hour Volume: {volume}\n"
-            f"💦 Liquidity: {liquidity} ({dex} pair)\n"
+            f"💦 Liquidity: {liquidity} {dex}\n"
             f"👪 Holders: {holders}\n\n"
             f"{price_change}\n\n"
             f"{status}",
