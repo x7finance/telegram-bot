@@ -1362,13 +1362,11 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     now = datetime.now()
 
-    x7r_pairs = ca.X7R_PAIR(chain)
-    x7r_uni_remaining_time_str, x7r_uni_unlock_datetime_str = api.get_unlock_time(chain_info.w3, contract, x7r_pairs[0], now)
-    x7r_xchange_remaining_time_str, x7r_xchange_unlock_datetime_str = api.get_unlock_time(chain_info.w3, contract, x7r_pairs[1], now)
+    x7r_pair = ca.X7R_PAIR(chain)
+    x7r_remaining_time_str, x7r_unlock_datetime_str = api.get_unlock_time(chain_info.w3, contract, x7r_pair, now)
     
-    x7dao_pairs = ca.X7DAO_PAIR(chain)
-    x7dao_uni_remaining_time_str, x7dao_uni_unlock_datetime_str = api.get_unlock_time(chain_info.w3, contract, x7dao_pairs[0], now)
-    x7dao_xchange_remaining_time_str, x7dao_xchange_unlock_datetime_str = api.get_unlock_time(chain_info.w3, contract, x7dao_pairs[1], now)
+    x7dao_pair = ca.X7DAO_PAIR(chain)
+    x7dao_remaining_time_str, x7dao_unlock_datetime_str = api.get_unlock_time(chain_info.w3, contract, x7dao_pair, now)
     
     x7d_remaining_time_str, x7d_unlock_datetime_str = api.get_unlock_time(chain_info.w3, contract, ca.X7D(chain), now)
 
@@ -1376,10 +1374,10 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=api.get_random_pioneer(),
         caption=
             f"*X7 Finance Liquidity Locks ({chain_info.name})*\n\n"
-            f"*X7R*\nUniswap - {x7r_uni_unlock_datetime_str}\n{x7r_uni_remaining_time_str}\n\n"
-            f"Xchange - {x7r_xchange_unlock_datetime_str}\n{x7r_xchange_remaining_time_str}\n\n"
-            f"*X7DAO*\nUniswap - {x7dao_uni_unlock_datetime_str}\n{x7dao_uni_remaining_time_str}\n\n"
-            f"Xchange - {x7dao_xchange_unlock_datetime_str}\n{x7dao_xchange_remaining_time_str}\n\n"
+            f"*X7R*\n"
+            f"{x7r_unlock_datetime_str}\n{x7r_remaining_time_str}\n\n"
+            f"*X7DAO*\n"
+            f"{x7dao_unlock_datetime_str}\n{x7dao_remaining_time_str}\n\n"
             f"*X7D*\n{x7d_unlock_datetime_str}\n{x7d_remaining_time_str}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
