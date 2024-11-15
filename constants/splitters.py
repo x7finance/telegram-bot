@@ -68,6 +68,8 @@ def generate_hub_split(chain, hub_address, token):
         f"Treasury Share: {treasury:.0f}% - {treasury_balance:,.3f} {chain_info.native.upper()}"
     )
 
+    threshold_text = f"Balance Threshold: {balance_threshold} {chain_info.native.upper()}"
+    
     token_str = token
     balance = 0
     if token.upper() in tokens.TOKENS:
@@ -90,11 +92,14 @@ def generate_hub_split(chain, hub_address, token):
         try:
             lending_pool = contract.functions.lendingPoolShare().call() / 10
             lending_pool_balance = contract.functions.lendingPoolBalance().call() / 10 ** 18
+            liquidity_balance_threshold = contract.functions.liquidityBalanceThreshold().call() / 10 ** 18
         except Exception:
             lending_pool = "N/A"
             lending_pool_balance = 0
+            liquidity_balance_threshold = "N/A"
         split_text += f"\nLending Pool Share: {lending_pool}% - {lending_pool_balance:,.3f} {chain_info.native.upper()}"
-
+        threshold_text += f"\nLiquidity Balance Threshold: {liquidity_balance_threshold} {chain_info.native.upper()}"
+    
     balance_text = ""
     if isinstance(address, str):
         balance = etherscan.get_token_balance(hub_address, address, chain)
@@ -108,7 +113,7 @@ def generate_hub_split(chain, hub_address, token):
     return (
         f"{balance_text}\n\n"
         f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
-        f"Balance Threshold: {balance_threshold} {chain_info.native.upper()}\n\n"
+        f"{threshold_text}\n\n"
         f"{split_text}"
     )
 
