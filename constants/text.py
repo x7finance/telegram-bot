@@ -82,13 +82,8 @@ ECOSYSTEM = (
     "The X7 Finance protocol will only permit minting of new X7 Deposit tokens when on-chain reserves permit."
 )
 
-def welcome(user):
-    return (f"Welcome {api.escape_markdown(user)} to X7 Finance\n\nHome of Xchange - A censorship resistant DEX offering initial loaned liquidity on\n\n{chains.full_names()}"
-            f"\n\n"
-            "❗ Verify as human to unlock chat! ❗")
 
-
-LOANS =(
+LOANS = (
     "*X7 Finance Loan Terms*\n\n"
     "Loan terms are defined by standalone smart contracts that provide the following:\n\n"
     "1. Loan origination fee\n"
@@ -448,6 +443,15 @@ QUOTES = [
     " configurable or alternative automated marketing making capabilities\n● Non-native token (ETH, BNB, etc.) "
     "initial liquidity loans\n",
 ]
+
+
+def welcome(user):
+    return (
+        f"Welcome {api.escape_markdown(user)} to X7 Finance\n\n"
+        f"Home of Xchange - A censorship resistant DEX offering initial loaned liquidity on\n\n"
+        f"{chains.full_names()}"
+    )
+
 
 X_REPLIES = [
     "Raid!",

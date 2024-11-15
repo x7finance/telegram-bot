@@ -3,7 +3,7 @@ from telegram.ext import *
 
 from typing import Optional, Tuple
 
-from constants import text, urls
+from constants import settings, text, urls
 import media
 
 
@@ -97,26 +97,32 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 except Exception:
                     pass
 
-            await context.bot.restrict_chat_member(
-                chat_id=update.effective_chat.id,
-                user_id=new_member_id,
-                permissions=RESTRICTIONS,
-            )
-            welcome_message = await update.effective_chat.send_video(
-                video=open(media.WELCOMEVIDEO, 'rb'),
-                caption=
-                    f"{text.welcome(new_member_username)}",
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                text="❗ I am human! ❗",
-                                callback_data=f"unmute:{new_member_id}",
-                            )
-                        ]
-                    ]
+            if settings.WELCOME_RESTRICTIONS:
+                await context.bot.restrict_chat_member(
+                    chat_id=update.effective_chat.id,
+                    user_id=new_member_id,
+                    permissions=RESTRICTIONS,
                 )
-            )
+                welcome_message = await update.effective_chat.send_video(
+                    video=open(media.WELCOMEVIDEO, 'rb'),
+                    caption=
+                        f"{text.welcome(new_member_username)}",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(
+                        [
+                            [
+                                InlineKeyboardButton(
+                                    text="❗ I am human! ❗",
+                                    callback_data=f"unmute:{new_member_id}",
+                                )
+                            ]
+                        ]
+                    )
+                )
 
-            context.bot_data['welcome_message_id'] = welcome_message.message_id
+                context.bot_data['welcome_message_id'] = welcome_message.message_id
+            else:
+                await update.effective_chat.send_message(
+                    text=f"{text.welcome(new_member_username)}",
+                    parse_mode="Markdown"
+                )
