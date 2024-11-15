@@ -120,9 +120,10 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     )
                 )
 
-                context.bot_data['welcome_message_id'] = welcome_message.message_id
             else:
                 await update.effective_chat.send_message(
                     text=f"{text.welcome(new_member_username)}",
                     parse_mode="Markdown"
                 )
+        
+        context.bot_data['welcome_message_id'] = welcome_message.message_id
