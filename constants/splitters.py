@@ -44,9 +44,9 @@ def generate_hub_split(chain, hub_address, token):
         address=chain_info.w3.to_checksum_address(hub_address), abi=etherscan.get_abi(hub_address, chain)
     )
     try:
-        distribute = contract.functions.distributeShare().call()
-        liquidity = contract.functions.liquidityShare().call()
-        treasury = contract.functions.treasuryShare().call()
+        distribute = contract.functions.distributeShare().call() / 10
+        liquidity = contract.functions.liquidityShare().call() / 10
+        treasury = contract.functions.treasuryShare().call() / 10
         liquidity_ratio_target = contract.functions.liquidityRatioTarget().call()
         balance_threshold = contract.functions.balanceThreshold().call() / 10 ** 18
         liquidity_balance = contract.functions.liquidityBalance().call() / 10 ** 18
@@ -63,9 +63,9 @@ def generate_hub_split(chain, hub_address, token):
         treasury_balance = 0
 
     split_text = (
-        f"Ecosystem Share: {distribute}% - {distribute_balance:,.3f} {chain_info.native.upper()}\n"
-        f"Liquidity Share: {liquidity}% - {liquidity_balance:,.3f} {chain_info.native.upper()}\n"
-        f"Treasury Share: {treasury}% - {treasury_balance:,.3f} {chain_info.native.upper()}"
+        f"Ecosystem Share: {distribute:.0f}% - {distribute_balance:,.3f} {chain_info.native.upper()}\n"
+        f"Liquidity Share: {liquidity:.0f}% - {liquidity_balance:,.3f} {chain_info.native.upper()}\n"
+        f"Treasury Share: {treasury:.0f}% - {treasury_balance:,.3f} {chain_info.native.upper()}"
     )
 
     token_str = token

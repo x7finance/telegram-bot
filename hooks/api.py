@@ -329,6 +329,7 @@ class Dextools:
                 "mcap": "N/A",
                 "holders": "N/A"
             }
+       
         
     def get_token_name(self, address, chain):
         chain_info = chains.CHAINS[chain]
@@ -385,8 +386,6 @@ class Dextools:
                 }
 
         return liquidity_data
-
-
 
 
 class CoinGecko:
