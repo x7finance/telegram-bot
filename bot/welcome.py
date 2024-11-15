@@ -71,6 +71,7 @@ async def member(chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, 
 
 
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handles welcoming new members in the main channel."""
     channel_id = update.effective_chat.id
     result = await member(update.chat_member)
     if result is None:
@@ -81,16 +82,14 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if str(channel_id) == urls.TG_MAIN_CHANNEL_ID:
         new_member_id = new_member.user.id
-        if new_member.user.username:
-            new_member_username = f"@{new_member.user.username}"
-        else:
-            if new_member.user.last_name:
-                new_member_username = f"{new_member.user.first_name} {new_member.user.last_name}"
-            else:
-                new_member_username = new_member.user.first_name
 
+        new_member_username = (
+            f"@{new_member.user.username}" if new_member.user.username
+            else f"{new_member.user.first_name} {new_member.user.last_name or ''}".strip()
+        )
 
         welcome_message = None
+        reply_markup = None
 
         if not was_member and is_member:
             previous_welcome_message_id = context.bot_data.get('welcome_message_id')
@@ -102,33 +101,23 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     )
                 except Exception:
                     pass
-
+            
             if settings.WELCOME_RESTRICTIONS:
                 await context.bot.restrict_chat_member(
                     chat_id=update.effective_chat.id,
                     user_id=new_member_id,
                     permissions=RESTRICTIONS,
                 )
-                welcome_message = await update.effective_chat.send_video(
-                    ideo=open(media.WELCOMEVIDEO, 'rb'),
-                    caption=f"{text.welcome(new_member_username)}",
-                    parse_mode="Markdown",
-                    reply_markup=InlineKeyboardMarkup(
-                        [
-                            [
-                                InlineKeyboardButton(
-                                    text="❗ I am human! ❗",
-                                    callback_data=f"unmute:{new_member_id}",
-                                )
-                            ]
-                        ]
-                    )
+                reply_markup = InlineKeyboardMarkup(
+                    [[InlineKeyboardButton(text="❗ I am human! ❗", callback_data=f"unmute:{new_member_id}")]]
                 )
-            else:
-                welcome_message = await update.effective_chat.send_message(
-                    text=f"{text.welcome(new_member_username)}",
-                    parse_mode="Markdown"
-                )
+
+            welcome_message = await update.effective_chat.send_video(
+                video=open(media.WELCOMEVIDEO, 'rb'),
+                caption=f"{text.welcome(new_member_username)}",
+                parse_mode="Markdown",
+                reply_markup=reply_markup
+            )
 
         if welcome_message:
             context.bot_data['welcome_message_id'] = welcome_message.message_id
