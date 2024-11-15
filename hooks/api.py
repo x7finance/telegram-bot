@@ -244,7 +244,7 @@ class Dextools:
         try:
             if data is not None:
                 if "data" in data and "exchange" in data["data"] and "name" in data["data"]["exchange"]:
-                    return f"({data["data"]["exchange"]["name"]} pair)"
+                    return f'({data["data"]["exchange"]["name"]} pair)'
                 else:
                     return ""
             else:
