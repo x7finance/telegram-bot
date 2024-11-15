@@ -6,7 +6,7 @@ import os, sys, sentry_sdk, subprocess
 from bot import admin, auto, commands, welcome
 from constants import settings, urls
 
-LOCAL = True
+LOCAL = False
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
 
