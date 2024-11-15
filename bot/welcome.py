@@ -89,11 +89,17 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             else:
                 new_member_username = new_member.user.first_name
 
+
+        welcome_message = None
+
         if not was_member and is_member:
             previous_welcome_message_id = context.bot_data.get('welcome_message_id')
             if previous_welcome_message_id:
                 try:
-                    await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=previous_welcome_message_id)
+                    await context.bot.delete_message(
+                        chat_id=update.effective_chat.id,
+                        message_id=previous_welcome_message_id
+                    )
                 except Exception:
                     pass
 
@@ -104,9 +110,8 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                     permissions=RESTRICTIONS,
                 )
                 welcome_message = await update.effective_chat.send_video(
-                    video=open(media.WELCOMEVIDEO, 'rb'),
-                    caption=
-                        f"{text.welcome(new_member_username)}",
+                    ideo=open(media.WELCOMEVIDEO, 'rb'),
+                    caption=f"{text.welcome(new_member_username)}",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(
                         [
@@ -119,11 +124,11 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                         ]
                     )
                 )
-
             else:
-                await update.effective_chat.send_message(
+                welcome_message = await update.effective_chat.send_message(
                     text=f"{text.welcome(new_member_username)}",
                     parse_mode="Markdown"
                 )
-        
-        context.bot_data['welcome_message_id'] = welcome_message.message_id
+
+        if welcome_message:
+            context.bot_data['welcome_message_id'] = welcome_message.message_id
