@@ -289,19 +289,19 @@ def X7DAO_PAIR(chain):
     return "0xb8dE6270640092463988B6860d68CA63dC7cF700"
 
 def X7101_PAIR(chain):
-    return "0xb8dE6270640092463988B6860d68CA63dC7cF700"
+    return "0x63deeba8d883bc820bfaab547c7ea26da289ca3e"
 
 def X7102_PAIR(chain):
-    return "0x49C838c60170C36E90CFA6021a57f2268dda3254"
+    return "0xf54110316d169ede3ac6becbcd98beaf884ac524"
 
 def X7103_PAIR(chain):
-    return "0xcecf54EDC42c5C9f6Ee10cb1eFcc23E49F7D5A5d"
+    return "0x4d5eb653e06138ab001db55478bbf8d6fb750ea5"
 
 def X7104_PAIR(chain):
-    return "0x7d0D7c088233cBC08ee2400B96D10BF24C40E93a"
+    return "0x27fd46c6af01a7221e61b88f47546a10d34a7c4e"
 
 def X7105_PAIR(chain):
-    return "0x6d9D1B6B4D53f090639ae8D9E9C83B796Da694eE"
+    return "0x6ea054f8538f56437981a46b30406c5cbb09e97f"
 
 
 # WALLETS
