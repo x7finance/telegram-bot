@@ -120,7 +120,7 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode="Markdown"
                 )
 
-            if settings.db.settings_get('burn') and total_click_count % settings.CLICK_ME_BURN == 0:
+            if db.settings_get('burn') and total_click_count % settings.CLICK_ME_BURN == 0:
                 burn_message = await api.burn_x7r(settings.burn_amount(), "eth")
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
