@@ -440,7 +440,7 @@ async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f'X7101\n'
             f'`{ca.X7101(chain)}`\n\n'
             f'X7102:\n'
-            f'`{ca.X7101(chain)}`\n\n'
+            f'`{ca.X7102(chain)}`\n\n'
             f'X7103\n'
             f'`{ca.X7103(chain)}`\n\n'
             f'X7104\n'
