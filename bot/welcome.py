@@ -3,7 +3,8 @@ from telegram.ext import *
 
 from typing import Optional, Tuple
 
-from constants import settings, text, urls
+from hooks import db
+from constants import text, urls
 import media
 
 
@@ -102,7 +103,7 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 except Exception:
                     pass
             
-            if settings.WELCOME_RESTRICTIONS:
+            if db.settings_get('welcome_restrictions'):
                 await context.bot.restrict_chat_member(
                     chat_id=update.effective_chat.id,
                     user_id=new_member_id,

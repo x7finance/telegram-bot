@@ -197,3 +197,38 @@ async def clicks_update(name, time_taken):
         
     db_connection.commit()
     close_db_connection(db_connection, cursor)
+
+
+def settings_set(setting_name: str, value: bool):
+    try:
+        db_connection = create_db_connection()
+        cursor = db_connection.cursor()
+
+        cursor.execute("""
+            UPDATE settings SET value = %s WHERE setting_name = %s
+        """, (1 if value else 0, setting_name))
+        
+        db_connection.commit()
+    except mysql.connector.Error as e:
+        return f"Error updating {setting_name}: {e}"
+    finally:
+        cursor.close()
+        db_connection.close()
+
+
+def settings_get(setting_name: str) -> bool:
+    try:
+        db_connection = create_db_connection()
+        cursor = db_connection.cursor()
+
+        cursor.execute("""
+            SELECT value FROM settings WHERE setting_name = %s
+        """, (setting_name,))
+        
+        result = cursor.fetchone()
+        cursor.close()
+        db_connection.close()
+
+        return result[0] == 1 if result else False
+    except mysql.connector.Error as e:
+        return False

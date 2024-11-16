@@ -14,11 +14,8 @@ def burn_amount():
     return time
 
 
-CLICK_ME_ENABLED = True
-CLICK_ME_BURN = False
-WELCOME_RESTRICTIONS = False
-
 BUTTON_TIME = None
+CLICK_ME_BURN = 50
 FIRST_BUTTON_TIME = random_button_time()
 RESTART_TIME = datetime.now().timestamp()
 

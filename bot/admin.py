@@ -10,6 +10,56 @@ from hooks import  db, api
 
 defined = api.Defined()
 
+async def command(update, context):
+    user_id = update.effective_user.id
+    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
+        await update.message.reply_text("You are not authorized to use this command.")
+        return
+
+    valid_settings = ['click_me', 'welcome_restrictions', 'burn']
+
+    if len(context.args) == 0:
+        click_me_status = "ON" if db.settings_get('click_me') else "OFF"
+        restrictions_status = "ON" if db.settings_get('welcome_restrictions') else "OFF"
+        burn_status = "ON" if db.settings_get('burn') else "OFF"
+
+        await update.message.reply_text(
+            f"Click Me: {click_me_status}\n"
+            f"Burn: {burn_status}\n"
+            f"Welcome Restrictions: {restrictions_status}"
+            
+        )
+        return
+
+    setting = context.args[0].lower()
+
+    if setting == 'reset':
+        reset_text = db.clicks_reset()
+        await update.message.reply_text(f"{reset_text}")
+        return
+
+    if len(context.args) == 2:
+        value = context.args[1].lower()
+
+        if setting not in valid_settings:
+            formatted_settings = "\n".join([setting for setting in valid_settings])
+            
+            await update.message.reply_text(
+                f"Error: '{setting}' is not a valid setting. Please use one of the following:\n\n{formatted_settings}"
+            )
+            return
+
+        if value not in ['on', 'off']:
+            await update.message.reply_text("Error: Value must be 'on' or 'off'.")
+            return
+
+        value_bool = value == 'on'
+        
+        db.settings_set(setting, value_bool)
+        await update.message.reply_text(f"Setting '{setting}' updated to {value.upper()}.")
+    else:
+        await update.message.reply_text("Invalid usage. Use '/admin <setting> <on/off>' or '/admin reset'.")
+
 
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -114,18 +164,11 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown")
 
 
-async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-        reset_text = db.clicks_reset()
-        await update.message.reply_text(f"{reset_text}")
-
-
 async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
         if update.effective_chat.type == "private":
-            if settings.CLICK_ME_ENABLED:
+            if db.settings_get("click_me"):
                 if settings.BUTTON_TIME is not None:
                     time = settings.BUTTON_TIME
                 else:    

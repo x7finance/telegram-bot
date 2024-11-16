@@ -1044,7 +1044,7 @@ async def leaderboard(update: Update, context: CallbackContext):
     streak = db.clicks_check_highest_streak()
     streak_user, streak_value = streak
 
-    if settings.CLICK_ME_BURN:
+    if db.setting_get('burn'):
         clicks_needed = settings.CLICK_ME_BURN - (click_counts_total % settings.CLICK_ME_BURN)
         await update.message.reply_text(
             text=

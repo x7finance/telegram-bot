@@ -5,6 +5,8 @@ import os, sys, sentry_sdk, subprocess
 
 from bot import admin, auto, commands, welcome
 from constants import settings, urls
+from hooks import db
+
 
 LOCAL = False
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
@@ -133,16 +135,16 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler(["x7105", "105"], commands.x7105))
     application.add_handler(CommandHandler("x", commands.x))
 
+    application.add_handler(CommandHandler("admin", admin.command))
     application.add_handler(CommandHandler("clickme", admin.click_me))
     application.add_handler(CommandHandler("ping", admin.ping))
-    application.add_handler(CommandHandler("reset", admin.reset))
     application.add_handler(CommandHandler("wen", admin.wen))
 
     application.add_handler(CallbackQueryHandler(auto.button_function))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies))
 
     if not LOCAL:
-        if settings.CLICK_ME_ENABLED:
+        if db.settings_get("click_me"):
             job_queue.run_once(
                 auto.button_send,
                 settings.FIRST_BUTTON_TIME,
