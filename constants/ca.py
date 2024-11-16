@@ -211,7 +211,7 @@ def X7100_DISCOUNT(chain):
     
 def X7100_LIQ_HUB(chain):
     map = {
-        "eth": "0xA4437E62CD7E8E6199a0199deA7E78641f181825",
+        "eth": "0x1df9B4aC212ef4d8DbEc7Fb5623c33E04970Db3f",
         "bsc": "0xA9fE3c1Fc5705044C33409B87486daf57f2630bf",
         "poly": "0x950c0685E6eAf16Fb7643a3EAB7EE57a91DB8cc3",
         "arb": "0x84f864Bf33607fD42663db4823D8f30093711b37",
@@ -228,7 +228,7 @@ def X7DAO_DISCOUNT(chain):
 
 def X7DAO_LIQ_HUB(chain):
     map = {
-        "eth": "0x6913Bb5E6b85De1C47f0bc5C8ed3409d3aB14130",
+        "eth": "0x7f0A0E38aCb20Bb5b701d4EAce9fD0a559D8Bfd0",
         "base": "0x005eB898b4557aFf72ef4c28934AdDba19c12b0b",
         "bsc": "0xE2E8a085025Eaf7130111aD82c18799f047d7278",
         "poly": "0x0Bf5f8B61360b2abff48547C4558f50389cf0221",
@@ -244,7 +244,7 @@ def X7R_DISCOUNT(chain):
 
 def X7R_LIQ_HUB(chain):
     map = {
-        "eth": "0xDD53194e7Ea18402513b823fa5BE47be83352173",
+        "eth": "0xd089aAeb716b6930fe71f96D335F8Cd2c07fa505",
         "base": "0x34AeB703bf00Bf6033231bf964a7714f0f9A215C",
         "bsc": "0x4B0d2d38f080f94634Bfe42B405A623a419389EF",
         "poly": "0xBa7a7956716F32DF5F958A895Ba860f41889D828",
