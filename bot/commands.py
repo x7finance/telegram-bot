@@ -452,7 +452,7 @@ async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def contracts(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
