@@ -1508,20 +1508,14 @@ async def me(update: Update, context: CallbackContext):
 
 
 async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    token_names = [token.lower() for token in tokens.TOKENS.keys()]
+    token_dirs = [urls.TOKEN_IMG_DIR(token) for token in token_names]
+    token_dirs_str = "\n".join(token_dirs)
+    caption = f"*X7 Finance Media*\n\n{token_dirs_str}"
     buttons = [
         [
             InlineKeyboardButton(
                 text="X7 Official Images", url="https://imgur.com/a/WEszZTa"
-            ),
-            InlineKeyboardButton(
-                text="X7 Official Token Logos Pack 1",
-                url="https://t.me/X7announcements/58",
-            ),
-        ],
-        [
-            InlineKeyboardButton(
-                text="X7 Official Token Logos Pack 2",
-                url="https://t.me/X7announcements/141",
             ),
             InlineKeyboardButton(
                 text="X7 TG Sticker Pack 1",
@@ -1552,7 +1546,7 @@ async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
-        caption=f"\n",
+        caption=caption,
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )

@@ -3,14 +3,31 @@
 import os
 
 
-def SCAN_TOKEN(chain):
+def DEX_TOOLS(chain):
+    return f"https://www.dextools.io/app/{chain}/pair-explorer/"
+
+
+def OS_LINK(nft):
+    link = "https://pro.opensea.io/collection/"
     map = {
-        "eth": "https://etherscan.io/token/",
-        "bsc": "https://bscscan.com/token/",
-        "poly": "https://polygonscan.com/token/",
-        "arb": "https://arbiscan.io/token/",
-        "op": "https://optimistic.etherscan.io/token/",
-        "base": "https://basescan.org/token/"
+        "eco": f"{link}x7-ecosystem-maxi",
+        "liq": f"{link}x7-liquidity-maxi",
+        "dex": f"{link}x7-dex-maxi",
+        "borrow": f"{link}x7-borrowing-maxi",
+        "magister": f"{link}x7-magister",
+        "pioneer": f"{link}x7-pioneer"
+    }
+    return map.get(nft)
+
+
+def RPC(chain):
+    map = {
+        "eth": f"https://lb.drpc.org/ogrpc?network=ethereum&dkey={os.getenv('DRPC_API_KEY')}",
+        "bsc": f"https://lb.drpc.org/ogrpc?network=bsc&dkey={os.getenv('DRPC_API_KEY')}",
+        "poly": f"https://lb.drpc.org/ogrpc?network=polygon&dkey={os.getenv('DRPC_API_KEY')}",
+        "arb": f"https://lb.drpc.org/ogrpc?network=arbitrum&dkey={os.getenv('DRPC_API_KEY')}",
+        "op": f"https://lb.drpc.org/ogrpc?network=optimism&dkey={os.getenv('DRPC_API_KEY')}",
+        "base": f"https://lb.drpc.org/ogrpc?network=base&dkey={os.getenv('DRPC_API_KEY')}"
     }
     return map.get(chain)
 
@@ -27,6 +44,28 @@ def SCAN_ADDRESS(chain):
     return map.get(chain)
 
 
+
+def SCAN_GAS(chain):
+    map = {
+        "eth": "https://etherscan.io/gastracker/",
+        "bsc": "https://bscscan.com/gastracker/",
+        "poly": "https://polygonscan.com/gastracker/",
+    }
+    return map.get(chain)
+
+
+def SCAN_TOKEN(chain):
+    map = {
+        "eth": "https://etherscan.io/token/",
+        "bsc": "https://bscscan.com/token/",
+        "poly": "https://polygonscan.com/token/",
+        "arb": "https://arbiscan.io/token/",
+        "op": "https://optimistic.etherscan.io/token/",
+        "base": "https://basescan.org/token/"
+    }
+    return map.get(chain)
+
+
 def SCAN_TX(chain):
     map = {
         "eth": "https://etherscan.io/tx/",
@@ -39,46 +78,12 @@ def SCAN_TX(chain):
     return map.get(chain)
 
 
-def SCAN_GAS(chain):
-    map = {
-        "eth": "https://etherscan.io/gastracker/",
-        "bsc": "https://bscscan.com/gastracker/",
-        "poly": "https://polygonscan.com/gastracker/",
-    }
-    return map.get(chain)
-
-
-def DEX_TOOLS(chain):
-    return f"https://www.dextools.io/app/{chain}/pair-explorer/"
-
-
-def RPC(chain):
-    map = {
-        "eth": f"https://lb.drpc.org/ogrpc?network=ethereum&dkey={os.getenv('DRPC_API_KEY')}",
-        "bsc": f"https://lb.drpc.org/ogrpc?network=bsc&dkey={os.getenv('DRPC_API_KEY')}",
-        "poly": f"https://lb.drpc.org/ogrpc?network=polygon&dkey={os.getenv('DRPC_API_KEY')}",
-        "arb": f"https://lb.drpc.org/ogrpc?network=arbitrum&dkey={os.getenv('DRPC_API_KEY')}",
-        "op": f"https://lb.drpc.org/ogrpc?network=optimism&dkey={os.getenv('DRPC_API_KEY')}",
-        "base": f"https://lb.drpc.org/ogrpc?network=base&dkey={os.getenv('DRPC_API_KEY')}"
-    }
-    return map.get(chain)
+def TOKEN_IMG_DIR(token):
+    return f"https://assets.x7finance.org/images/tokens/{token}.png"
 
 
 def XCHANGE_BUY(chain_id, token1):
     return f"https://x7finance.org/?chainId={chain_id}&token1={token1}"
-
-
-def OS_LINK(nft):
-    link = "https://pro.opensea.io/collection/"
-    map = {
-        "eco": f"{link}x7-ecosystem-maxi",
-        "liq": f"{link}x7-liquidity-maxi",
-        "dex": f"{link}x7-dex-maxi",
-        "borrow": f"{link}x7-borrowing-maxi",
-        "magister": f"{link}x7-magister",
-        "pioneer": f"{link}x7-pioneer"
-    }
-    return map.get(nft)
 
 
 # TG
