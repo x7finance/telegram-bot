@@ -543,10 +543,9 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         snapshot = api.get_snapshot()
         proposal = snapshot["data"]["proposals"][0]
         end = datetime.fromtimestamp(proposal["end"])
-        duration = end - datetime.now()
-        days, hours, minutes = api.get_duration_days(duration)
+        when = api.get_time_difference(int(end.timestamp()))
         if proposal["state"] == "active":
-            end_status = f'Vote Closing: {end.strftime("%Y-%m-%d %H:%M:%S")} UTC\n{days} days, {hours} hours and {minutes} minutes\n\n'
+            end_status = f'Vote Closing: {end.strftime("%Y-%m-%d %H:%M:%S")} UTC\n{when}\n\n'
             header = 'Current Open Proposal'
             buttons.extend([
             [InlineKeyboardButton(
@@ -559,7 +558,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
             ])
         else:
-            end_status = f'Vote Closed: {end.strftime("%Y-%m-%d %H:%M:%S")}'
+            end_status = f'Vote Closed: {end.strftime("%Y-%m-%d %H:%M:%S")}\n{when}'
             header = 'No Current Open Proposal\n\nLast Proposal:'
             buttons.extend([
             [InlineKeyboardButton(
@@ -874,13 +873,9 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if recent_tx:
         time = datetime.fromtimestamp(int(recent_tx["timeStamp"]))
-        now = datetime.now()
-        duration = now - time
-        days = duration.days
-        hours, remainder = divmod(duration.seconds, 3600)
-        minutes = (remainder % 3600) // 60
+        when = api.get_time_difference(int(recent_tx["timeStamp"]))
         recent_tx_text = (f"Last Liquidation: {time} UTC\n"
-                        f"{days} days, {hours} hours and {minutes} minutes ago\n\n")
+                        f"{when}\n\n")
     else:
         recent_tx_text = 'Last Liquidation: Not Found'
 
@@ -998,14 +993,12 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
             value,
             dollar,
             time,
-            days,
-            hours,
-            minutes,
+            timestamp
         ) = api.get_last_buyback(hub_address, chain)
-
+        when = api.get_time_difference(timestamp)
         buy_back_text = (
             f'Last Buy Back: {time} UTC\n{value} {chain_info.native.upper()} (${"{:0,.0f}".format(dollar)})\n'
-            f"{days} days, {hours} hours and {minutes} minutes ago"
+            f"{when}"
         )
     except Exception:
         buy_back_text = f'Last Buy Back: None Found'
@@ -1360,25 +1353,38 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
         address=chain_info.w3.to_checksum_address(ca.TIME_LOCK(chain)), 
         abi=etherscan.get_abi(ca.TIME_LOCK(chain), chain)
     )
-    now = datetime.now()
 
-    x7r_pair = ca.X7R_PAIR(chain)
-    x7r_remaining_time_str, x7r_unlock_datetime_str = api.get_unlock_time(chain_info.w3, contract, x7r_pair, now)
-    
-    x7dao_pair = ca.X7DAO_PAIR(chain)
-    x7dao_remaining_time_str, x7dao_unlock_datetime_str = api.get_unlock_time(chain_info.w3, contract, x7dao_pair, now)
-    
-    x7d_remaining_time_str, x7d_unlock_datetime_str = api.get_unlock_time(chain_info.w3, contract, ca.X7D(chain), now)
+    x7r_timestamp = contract.functions.getTokenUnlockTimestamp(
+        chain_info.w3.to_checksum_address(ca.X7R_PAIR(chain))
+    ).call()
+    x7r_remaining_time = api.get_time_difference(x7r_timestamp)
+    x7r_date = datetime.fromtimestamp(x7r_timestamp)
+    x7r_date_str = x7r_date.strftime('%Y-%m-%d %H:%M')
+
+    x7dao_timestamp = contract.functions.getTokenUnlockTimestamp(
+        chain_info.w3.to_checksum_address(ca.X7DAO_PAIR(chain))
+    ).call()
+    x7dao_remaining_time = api.get_time_difference(x7dao_timestamp)
+    x7dao_date = datetime.fromtimestamp(x7dao_timestamp)
+    x7dao_date_str = x7dao_date.strftime('%Y-%m-%d %H:%M')
+
+    x7d_timestamp = contract.functions.getTokenUnlockTimestamp(
+        chain_info.w3.to_checksum_address(ca.X7D(chain))
+    ).call()
+    x7d_remaining_time = api.get_time_difference(x7d_timestamp)
+    x7d_date = datetime.fromtimestamp(x7d_timestamp)
+    x7d_date_str = x7d_date.strftime('%Y-%m-%d %H:%M')
 
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
-        caption=
+        caption=(
             f"*X7 Finance Liquidity Locks ({chain_info.name})*\n\n"
             f"*X7R*\n"
-            f"{x7r_unlock_datetime_str}\n{x7r_remaining_time_str}\n\n"
+            f"{x7r_date_str}\n{x7r_remaining_time}\n\n"
             f"*X7DAO*\n"
-            f"{x7dao_unlock_datetime_str}\n{x7dao_remaining_time_str}\n\n"
-            f"*X7D*\n{x7d_unlock_datetime_str}\n{x7d_remaining_time_str}",
+            f"{x7dao_date_str}\n{x7dao_remaining_time}\n\n"
+            f"*X7D*\n{x7d_date_str}\n{x7d_remaining_time}"
+        ),
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1391,6 +1397,7 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         ),
     )
+
 
 
 async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1733,13 +1740,10 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         if recent_tx:
             by = recent_tx["from"][-5:]
             time = datetime.fromtimestamp(int(recent_tx["timeStamp"]))
-            now = datetime.now()
-            duration = now - time
-            days = duration.days
-            hours, remainder = divmod(duration.seconds, 3600)
-            minutes = (remainder % 3600) // 60
+            timestamp = recent_tx["timeStamp"]
+            when = api.get_time_difference(timestamp)
             recent_tx_text = (f"Last Claim: {time} UTC (by {by})\n"
-                             f"{days} days, {hours} hours and {minutes} minutes ago\n\n")
+                             f"{when}\n\n")
         else:
             recent_tx_text = 'Last Claim: Not Found\n\n'
 
@@ -2170,26 +2174,13 @@ async def timestamp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:  
             stamp = int(" ".join(context.args).lower())
             time = api.convert_timestamp_to_datetime(stamp)
-            current_time = datetime.now()
-            timestamp_time = datetime.fromtimestamp(stamp)
-            time_difference = current_time - timestamp_time
-            if time_difference.total_seconds() > 0:
-                time_message = "ago"
-            else:
-                time_message = "away"
-                time_difference = abs(time_difference)
-            years = time_difference.days // 365
-            months = (time_difference.days % 365) // 30
-            days = time_difference.days % 30
-            hours, remainder = divmod(time_difference.seconds, 3600)
-            minutes = remainder // 60
+            when = api.get_time_difference(stamp)
             await update.message.reply_photo(
                 photo=api.get_random_pioneer(),
                 caption=
                     f"*X7 Finance Timestamp Conversion*\n\n"
                     f"{stamp}\n{time} UTC\n\n"
-                    f"{years} years, {months} months, {days} days, "
-                    f"{hours} hours, {minutes} minutes {time_message}",
+                    f"{when}",
                 parse_mode="Markdown",
             )
     except Exception:
@@ -2600,15 +2591,8 @@ async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             recasters_text += f"\n...and {remaining_count} more"
     else:
         recasters_text = ""
-
     timestamp = str(last_cast[0].timestamp)[:10]
-    timestamp_int = int(timestamp)
-    current_time = datetime.now()
-    timestamp_time = datetime.fromtimestamp(timestamp_int)
-    time_difference = current_time - timestamp_time
-    days = time_difference.days % 30
-    hours, remainder = divmod(time_difference.seconds, 3600)
-    minutes = remainder // 60
+    when = api.get_time_difference(timestamp)
 
     if last_cast[0].embeds and last_cast[0].embeds.images:
         photo_url = last_cast[0].embeds.images[0].url
@@ -2619,7 +2603,7 @@ async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=photo_url,
         caption=
             f"*X7 Finance Warpcast*\n\n"
-            f"Latest Cast by {name}:\n{days} days, {hours} hours and {minutes} minutes ago\n\n{api.escape_markdown(last_cast[0].text)}\n\n"
+            f"Latest Cast by {name}:\n{when}\n\n{api.escape_markdown(last_cast[0].text)}\n\n"
             f"Likes: {likes}\n"
             f"Replies: {replies}\n"
             f"Recasts: {recasts}"

@@ -810,20 +810,6 @@ def format_schedule(schedule1, schedule2, native_token):
     return "\n".join(schedule_list)
 
 
-def get_duration_years(duration):
-    years = duration.days // 365
-    months = (duration.days % 365) // 30
-    weeks = ((duration.days % 365) % 30) // 7
-    days = ((duration.days % 365) % 30) % 7
-    return years, months, weeks, days
-
-
-def get_duration_days(duration):
-    days = duration.days
-    hours, remainder = divmod(duration.seconds, 3600)
-    minutes = (remainder % 3600) // 60
-    return days, hours, minutes
-
 
 def get_ill_number(term):
     for chain, addresses in ca.ILL_ADDRESSES.items():
@@ -833,18 +819,14 @@ def get_ill_number(term):
 
 
 def get_last_buyback(hub_address, chain):
-    now = datetime.now()
     chain_native = chains.CHAINS[chain].native
     hub = Etherscan().get_internal_tx(hub_address, chain)
     hub_filter = [d for d in hub["result"] if d["from"] in f"{hub_address}".lower()]
     value = round(int(hub_filter[0]["value"]) / 10**18, 3)
     dollar = float(value) * float(Etherscan.get_native_price(chain_native))
     time = datetime.fromtimestamp(int(hub_filter[0]["timeStamp"]))
-    duration = now - time
-    days = duration.days
-    hours, remainder = divmod(duration.seconds, 3600)
-    minutes = (remainder % 3600) // 60
-    return value, dollar, time, days, hours, minutes    
+    timestamp =int(hub_filter[0]["timeStamp"])
+    return value, dollar, time, timestamp
 
 
 def get_nft_data(nft, chain):
@@ -905,29 +887,38 @@ def get_snapshot():
     return response.json()
 
 
-def get_unlock_time(chain_w3, contract, token_pair, now):
-        timestamp = contract.functions.getTokenUnlockTimestamp(chain_w3.to_checksum_address(token_pair)).call()
-        unlock_datetime = datetime.fromtimestamp(timestamp)
-        time_remaining = unlock_datetime - now
+def get_time_difference(timestamp):
+    timestamp_int = int(timestamp)
+    current_time = datetime.now()
+    timestamp_time = datetime.fromtimestamp(timestamp_int)
 
-        if unlock_datetime > now:
-            time_remaining = unlock_datetime - now
-            prefix = "away"
-        else:
-            time_remaining = now - unlock_datetime
-            prefix = "ago"
+    time_difference = current_time - timestamp_time
+    is_future = time_difference.total_seconds() < 0
+    time_difference = abs(time_difference)
 
-        years = time_remaining.days // 365
-        months = (time_remaining.days % 365) // 30
-        days = (time_remaining.days % 365) % 30
-        hours, remainder = divmod(time_remaining.seconds, 3600)
-        weeks = days // 7
-        days = days % 7
+    days = time_difference.days
+    seconds = time_difference.seconds
 
-        remaining_time_str = f"{years} years, {months} months, {weeks} weeks, {days} days, and {hours} hours {prefix}"
-        unlock_datetime_str = unlock_datetime.strftime("%Y-%m-%d %H:%M:%S UTC")
+    months = days // 30
+    weeks = (days % 30) // 7
+    days = days % 7
+    hours, remainder = divmod(seconds, 3600)
+    minutes = remainder // 60
 
-        return remaining_time_str, unlock_datetime_str
+    suffix = "ago" if not is_future else "from now"
+
+    if months > 0:
+        return f"{months} month{'s' if months > 1 else ''} {suffix}"
+    elif weeks > 0:
+        return f"{weeks} week{'s' if weeks > 1 else ''} {suffix}"
+    elif days > 0:
+        return f"{days} day{'s' if days > 1 else ''} {suffix}"
+    elif hours > 0:
+        return f"{hours} hour{'s' if hours > 1 else ''} {suffix}"
+    elif minutes > 0:
+        return f"{minutes} minute{'s' if minutes > 1 else ''} {suffix}"
+    else:
+        return "just now" if not is_future else "in a moment"
 
 
 def is_eth(address):
