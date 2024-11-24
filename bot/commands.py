@@ -1718,11 +1718,15 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     pioneer_id = " ".join(context.args)
     chain = "eth"
-
+    chain_info, error_message = chains.get_info(chain)
+    contract = chain_info.w3.eth.contract(
+                address=chain_info.w3.to_checksum_address(ca.PIONEER),
+                abi=etherscan.get_abi(chain_info.w3.to_checksum_address(ca.PIONEER), chain),
+                )
+    native_price = etherscan.get_native_price("eth")
     if pioneer_id == "":
         floor_data = api.get_nft_data(ca.PIONEER, "eth")
         floor = floor_data["floor_price"]
-        native_price = etherscan.get_native_price("eth")
         if floor != "N/A":
             floor_round = round(floor, 2)
             floor_dollar = floor * float(native_price)
@@ -1730,12 +1734,15 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             floor_round = "N/A"
             floor_dollar = 0 
         pioneer_pool = float(etherscan.get_native_balance(ca.PIONEER, "eth"))
-        each = float(pioneer_pool) / 639
-        each_dollar = float(each) * float(native_price)
         total_dollar = float(pioneer_pool) * float(native_price)
         tx = etherscan.get_tx(ca.PIONEER, "eth")
         tx_filter = [d for d in tx["result"] if ca.PIONEER.lower() in d["to"].lower() and d.get("functionName", "") == "claimRewards(uint256[] _pids)"]
         recent_tx = max(tx_filter, key=lambda tx: int(tx["timeStamp"]), default=None)
+        unlock_fee = contract.functions.transferUnlockFee().call() / 10 ** 18
+        unlock_fee_dollar = float(unlock_fee) * float(native_price)
+
+        total_claimed = (contract.functions.totalRewards().call() - contract.functions.lastETHBalance().call()) / 10 ** 18
+        total_claimed_dollar = float(total_claimed) * float(native_price)
 
         if recent_tx:
             by = recent_tx["from"][-5:]
@@ -1752,8 +1759,9 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             caption=
                 f"*X7 Pioneer NFT Info*\n\n"
                 f"Floor Price: {floor_round} ETH (${'{:0,.0f}'.format(floor_dollar)})\n"
-                f"Pioneer Pool: {pioneer_pool:.3f} ETH (${'{:0,.0f}'.format(total_dollar)})\n"
-                f"Per Pioneer: {each:.3f} ETH (${each_dollar:,.2f})\n\n"
+                f"Total Unclaimed Rewards: {pioneer_pool:.3f} ETH (${'{:0,.0f}'.format(total_dollar)})\n"
+                f"Total Claimed Rewards: {total_claimed:.3f} ETH (${'{:0,.0f}'.format(total_claimed_dollar)})\n"
+                f"Unlock Fee: {unlock_fee:.2f} ETH (${'{:0,.0f}'.format(unlock_fee_dollar)})\n\n"
                 f"{recent_tx_text}",
             parse_mode="markdown",
             reply_markup=InlineKeyboardMarkup(
@@ -1784,13 +1792,19 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         if "nft" in data and data["nft"]:
             status = data["nft"]["traits"][0]["value"]
             image_url = data["nft"]["image_url"]
+            unclaimed = contract.functions.unclaimedRewards(int(pioneer_id)).call() / 10 ** 18
+            unclaimed_dollar = float(unclaimed) * float(native_price)
+            claimed = contract.functions.rewardsClaimed(int(pioneer_id)).call() / 10 ** 18
+            claimed_dollar = float(claimed) * float(native_price)
         else:
             await update.message.reply_text(f"Pioneer {pioneer_id} not found")
             return
         
         await update.message.reply_text(
             f"*X7 Pioneer {pioneer_id} NFT Info*\n\n"
-            f"Transfer Lock Status: {status}\n\n"
+            f"Transfer Lock Status: {status}\n"
+            f"Unclaimed Rewards: {unclaimed:.3f} (${'{:0,.0f}'.format(unclaimed_dollar)})\n"
+            f"Claimed Rewards: {claimed:.3f} (${'{:0,.0f}'.format(claimed_dollar)})\n\n"
             f"https://pro.opensea.io/nft/ethereum/{ca.PIONEER}/{pioneer_id}",
         parse_mode="markdown",
         reply_markup=InlineKeyboardMarkup(
