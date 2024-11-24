@@ -1803,8 +1803,8 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         await update.message.reply_text(
             f"*X7 Pioneer {pioneer_id} NFT Info*\n\n"
             f"Transfer Lock Status: {status}\n"
-            f"Unclaimed Rewards: {unclaimed:.3f} (${'{:0,.0f}'.format(unclaimed_dollar)})\n"
-            f"Claimed Rewards: {claimed:.3f} (${'{:0,.0f}'.format(claimed_dollar)})\n\n"
+            f"Unclaimed Rewards: {unclaimed:.3f} ETH (${'{:0,.0f}'.format(unclaimed_dollar)})\n"
+            f"Claimed Rewards: {claimed:.3f} ETH (${'{:0,.0f}'.format(claimed_dollar)})\n\n"
             f"https://pro.opensea.io/nft/ethereum/{ca.PIONEER}/{pioneer_id}",
         parse_mode="markdown",
         reply_markup=InlineKeyboardMarkup(
