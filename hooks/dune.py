@@ -11,6 +11,7 @@ BASE_URL = "https://api.dune.com/api/v1/"
 
 TOP_PAIRS_ID = "2970801"
 VOLUME_ID = "2972368"
+TIME_ALLOWED = 6 * 60 * 60
 
 VOLUME_TEXT = ""
 VOLUME_FLAG = False

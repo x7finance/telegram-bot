@@ -742,22 +742,19 @@ async def burn_x7r(amount, chain):
         return f'Error burning X7R: {e}'
 
 
-def convert_datetime_to_timestamp(datetime_str):
+def convert_datetime(input_value):
     try:
-        datetime_obj = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
-        timestamp = datetime_obj.timestamp()
-        return timestamp
+        if isinstance(input_value, str):
+            datetime_obj = datetime.strptime(input_value, '%Y-%m-%d %H:%M')
+            return datetime_obj.timestamp()
+        elif isinstance(input_value, (int, float)):
+            datetime_obj = datetime.fromtimestamp(input_value)
+            return datetime_obj.strftime('%Y-%m-%d %H:%M')
+        else:
+            return "Invalid input type. Provide a datetime string or a timestamp."
     except ValueError:
-        return "Invalid datetime format. Please use YYYY-MM-DD HH:MM."
+        return "Invalid input format. Ensure datetime strings use 'YYYY-MM-DD HH:MM'."
 
-
-def convert_timestamp_to_datetime(timestamp):
-    try:
-        datetime_obj = datetime.fromtimestamp(timestamp)
-        datetime_str = datetime_obj.strftime('%Y-%m-%d %H:%M')
-        return datetime_str
-    except ValueError:
-        return "Invalid timestamp."
 
 
 def escape_markdown(text):
@@ -808,7 +805,6 @@ def format_schedule(schedule1, schedule2, native_token):
         schedule_list.append(f"\nNext Payment Due:\n{next_payment_value} {native_token}\n{time_remaining_str}")
 
     return "\n".join(schedule_list)
-
 
 
 def get_ill_number(term):
