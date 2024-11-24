@@ -216,7 +216,7 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     burn = etherscan.get_token_balance(ca.DEAD, ca.X7R(chain), chain)
     percent = round(burn / ca.SUPPLY * 100, 2)
-    price,_ = dextools.get_price(ca.X7R(chain), "eth")
+    price,_ = dextools.get_price(ca.X7R(chain), chain)
     burn_dollar = float(price) * float(burn)
     native = burn_dollar / etherscan.get_native_price(chain)
     await update.message.reply_photo(
@@ -385,11 +385,11 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         token_market_cap = coingecko.get_mcap(token_id)
         if x7token == ca.X7R(chain):
-            x7_supply = etherscan.get_x7r_supply("eth")
+            x7_supply = etherscan.get_x7r_supply(chain)
         else:
             x7_supply = ca.SUPPLY
         token_info = token_names[x7token]
-        x7_price,_ = dextools.get_price(token_info["contract"], "eth")
+        x7_price,_ = dextools.get_price(token_info["contract"], chain)
         x7_market_cap = float(x7_price) * float(x7_supply)
         percent = ((token_market_cap - x7_market_cap) / x7_market_cap) * 100
         x = (token_market_cap - x7_market_cap) / x7_market_cap
@@ -1408,7 +1408,7 @@ async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     data = api.get_nft_data(ca.MAGISTER(chain), chain)
-    holders = data["holder_count"]
+    holders = data["total_tokens"]
     try:
         magisters = bitquery.get_nft_holder_list(ca.MAGISTER(chain), chain)
         address = "\n\n".join(map(lambda x: f"`{x}`", magisters))
@@ -1584,11 +1584,11 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
     borrow_floor = chain_data.get("borrow", {}).get("floor_price")
     magister_floor = chain_data.get("magister", {}).get("floor_price")
 
-    eco_count = chain_data.get("eco", {}).get("holder_count")
-    liq_count = chain_data.get("liq", {}).get("holder_count")
-    dex_count = chain_data.get("dex", {}).get("holder_count")
-    borrow_count = chain_data.get("borrow", {}).get("holder_count")
-    magister_count = chain_data.get("magister", {}).get("holder_count")
+    eco_count = chain_data.get("eco", {}).get("total_tokens")
+    liq_count = chain_data.get("liq", {}).get("total_tokens")
+    dex_count = chain_data.get("dex", {}).get("total_tokens")
+    borrow_count = chain_data.get("borrow", {}).get("total_tokens")
+    magister_count = chain_data.get("magister", {}).get("total_tokens")
 
     eco_discount = discount.get("eco", {})
     liq_discount = discount.get("liq", {})
@@ -1637,20 +1637,20 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=api.get_random_pioneer(),
         caption=
             f"*NFT Info ({chain_info.name})*\n\n"
-            f"*Ecosystem Maxi*\n{eco_price}\n"
-            f"Available - {500 - eco_count}\nFloor price - {eco_floor} {chain_info.native.upper()}\n"
+            f"*Ecosystem Maxi*\n"
+            f"Available - {500 - eco_count}\n{eco_price}\nFloor price - {eco_floor} {chain_info.native.upper()}\n"
             f"{eco_discount_text}\n\n"
-            f"*Liquidity Maxi*\n{liq_price}\n"
-            f"Available - {250 - liq_count}\nFloor price - {liq_floor} {chain_info.native.upper()}\n"
+            f"*Liquidity Maxi*\n"
+            f"Available - {250 - liq_count}\n{liq_price}\nFloor price - {liq_floor} {chain_info.native.upper()}\n"
             f"{liq_discount_text}\n\n"
-            f"*Dex Maxi*\n{dex_price}\n"
-            f"Available - {150 - dex_count}\nFloor price - {dex_floor} {chain_info.native.upper()}\n"
+            f"*Dex Maxi*\n"
+            f"Available - {150 - dex_count}\n{dex_price}\nFloor price - {dex_floor} {chain_info.native.upper()}\n"
             f"{dex_discount_text}\n\n"
-            f"*Borrow Maxi*\n{borrow_price}\n"
-            f"Available - {100 - borrow_count}\nFloor price - {borrow_floor} {chain_info.native.upper()}\n"
+            f"*Borrow Maxi*\n"
+            f"Available - {100 - borrow_count}\n{borrow_price}\nFloor price - {borrow_floor} {chain_info.native.upper()}\n"
             f"{borrow_discount_text}\n\n"
-            f"*Magister*\n{magister_price}\n"
-            f"Available - {49 - magister_count}\nFloor price - {magister_floor} {chain_info.native.upper()}\n"
+            f"*Magister*\n"
+            f"Available - {49 - magister_count}\n{magister_price}\nFloor price - {magister_floor} {chain_info.native.upper()}\n"
             f"{magister_discount_text}\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
@@ -1723,9 +1723,10 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
                 address=chain_info.w3.to_checksum_address(ca.PIONEER),
                 abi=etherscan.get_abi(chain_info.w3.to_checksum_address(ca.PIONEER), chain),
                 )
-    native_price = etherscan.get_native_price("eth")
+    native_price = etherscan.get_native_price(chain)
     if pioneer_id == "":
-        floor_data = api.get_nft_data(ca.PIONEER, "eth")
+        floor_data = api.get_nft_data(ca.PIONEER, chain)
+        print(floor_data)
         floor = floor_data["floor_price"]
         if floor != "N/A":
             floor_round = round(floor, 2)
@@ -1777,13 +1778,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
                             text="Opensea",
                             url=f"{urls.OS_LINK('pioneer')}",
                         )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text=chains.CHAINS[chain].scan_name,
-                            url=f"{chains.CHAINS[chain].scan_token}{ca.PIONEER}",
-                        )
-                    ],
+                    ]
                 ]
             ),
         )

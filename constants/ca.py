@@ -79,9 +79,9 @@ def DEX(chain):
 
 def BORROW(chain):
     map = {
-        "base": "0x7000D5d7707Bf86b317deC635e459E47b9aBD4F7",
+        "base": "0xE1c7244Cc32980Db8dB191FD87731E091057Dc6F",
     }
-    return map.get(chain, "0xE1c7244Cc32980Db8dB191FD87731E091057Dc6F")
+    return map.get(chain, "0x7000D5d7707Bf86b317deC635e459E47b9aBD4F7")
 
 def MAGISTER(chain):
     map = {
@@ -90,6 +90,11 @@ def MAGISTER(chain):
     return map.get(chain, "0x7dA0bb55E4097FC2d78a1822105057F36C5F360d")
 
 PIONEER = "0x70000299ee8910ccacd97b1bb560e34f49c9e4f7"
+
+def NFTS(chain):
+    contract_functions = [ECO, LIQ, DEX, BORROW, MAGISTER]
+    result = {func.__name__: func(chain) for func in contract_functions}
+    return result
 
 
 # SMART CA

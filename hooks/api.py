@@ -838,12 +838,13 @@ def get_nft_data(nft, chain):
             }
         )
         data = response.json()
+        print(data)
 
-        info = {"holder_count": 0, "floor_price": "N/A"}
+        info = {"total_tokens": 0, "floor_price": "N/A"}
 
-        holder_count = data.get("total_tokens", None)
-        if holder_count is not None:
-            info["holder_count"] = int(holder_count)
+        total_tokens = data.get("total_tokens", None)
+        if total_tokens is not None:
+            info["total_tokens"] = int(total_tokens)
 
         exchange_data = data.get("exchange_data")
         if exchange_data is not None:
@@ -857,7 +858,7 @@ def get_nft_data(nft, chain):
         return info
 
     except Exception:
-        return {"holder_count": 0, "floor_price": "N/A"}
+        return {"total_tokens": 0, "floor_price": "N/A"}
 
 
 def get_random_pioneer():
