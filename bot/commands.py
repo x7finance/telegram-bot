@@ -983,7 +983,7 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
-            caption=f"*X7 Finance Github Monorepo issues*\n\n{issue_chunks[0]}",
+            caption=f"*X7 Finance Github Monorepo Issues*\n\n{issue_chunks[0]}",
             parse_mode="Markdown"
         )
 
@@ -995,7 +995,7 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pr = github.get_pull_requests()
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
-            caption=f"*X7 Finance Github Monorepo issues*\n\n{pr}",
+            caption=f"*X7 Finance Github Monorepo Pull Requests*\n\n{pr}",
             parse_mode="Markdown"
         )
         return

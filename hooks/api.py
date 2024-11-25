@@ -695,7 +695,7 @@ class GitHub:
             if not data:
                 break
             
-            issues.extend(data)
+            issues.extend([issue for issue in data if "pull_request" not in issue])
             page += 1
 
         if not issues:
@@ -706,16 +706,15 @@ class GitHub:
             title = issue.get("title", "No Title")
             creator = issue.get("user", {}).get("login", "Unknown")
             created_at = issue.get("created_at", "Unknown")
-            labels = ", ".join([label.get("name", "Unknown") for label in issue.get("labels", [])])
+            labels = ", ".join([label.get("name", "") for label in issue.get("labels", [])])
             url = issue.get("html_url", "No URL")
             
             if created_at != "Unknown":
                 created_at = datetime.fromisoformat(created_at.replace("Z", "")).strftime("%Y-%m-%d %H:%M:%S")
             
             formatted_issues.append(
-                f"Issue: {title}\n"
+                f"{title} ({labels})\n"
                 f"Creator: {creator}\n"
-                f"Labels: {labels}\n"
                 f"Created At: {created_at}\n"
                 f"URL: {url}\n"
             )
@@ -755,7 +754,7 @@ class GitHub:
                 created_at = datetime.fromisoformat(created_at.replace("Z", "")).strftime("%Y-%m-%d %H:%M:%S")
             
             formatted_prs.append(
-                f"PR: {title}\n"
+                f"{title}\n"
                 f"Creator: {creator}\n"
                 f"Created At: {created_at}\n"
                 f"URL: {url}\n"
