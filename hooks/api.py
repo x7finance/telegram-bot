@@ -674,6 +674,97 @@ class WarpcastApi:
         return data.users
 
 
+class GitHub:
+    def __init__(self):
+        self.url = "https://api.github.com/repos/x7finance/monorepo/"
+        self.headers = {
+        "Authorization": f"token {os.getenv('GITHUB_PAT')}"
+    }
+
+    def get_issues(self):
+        endpoint = "issues"
+        issues = []
+        page = 1
+
+        while True:
+            response = requests.get(self.url + endpoint, headers=self.headers, params={"state": "open", "page": page, "per_page": 100})
+            if response.status_code != 200:
+                break
+
+            data = response.json()
+            if not data:
+                break
+            
+            issues.extend(data)
+            page += 1
+
+        if not issues:
+            return "No open issues found."
+
+        formatted_issues = []
+        for issue in issues:
+            title = issue.get("title", "No Title")
+            creator = issue.get("user", {}).get("login", "Unknown")
+            created_at = issue.get("created_at", "Unknown")
+            labels = ", ".join([label.get("name", "Unknown") for label in issue.get("labels", [])])
+            url = issue.get("html_url", "No URL")
+            
+            if created_at != "Unknown":
+                created_at = datetime.fromisoformat(created_at.replace("Z", "")).strftime("%Y-%m-%d %H:%M:%S")
+            
+            formatted_issues.append(
+                f"Issue: {title}\n"
+                f"Creator: {creator}\n"
+                f"Labels: {labels}\n"
+                f"Created At: {created_at}\n"
+                f"URL: {url}\n"
+            )
+        
+        issue_count = len(issues)
+        return f"Total Open Issues: {issue_count}\n\n" + "\n".join(formatted_issues)
+    
+
+    def get_pull_requests(self):
+        endpoint = "pulls"
+        pull_requests = []
+        page = 1
+
+        while True:
+            response = requests.get(self.url + endpoint, headers=self.headers, params={"state": "open", "page": page, "per_page": 100})
+            if response.status_code != 200:
+                break
+
+            data = response.json()
+            if not data:
+                break
+            
+            pull_requests.extend(data)
+            page += 1
+
+        if not pull_requests:
+            return "No open pull requests found."
+
+        formatted_prs = []
+        for pr in pull_requests:
+            title = pr.get("title", "No Title")
+            creator = pr.get("user", {}).get("login", "Unknown")
+            created_at = pr.get("created_at", "Unknown")
+            url = pr.get("html_url", "No URL")
+            
+            if created_at != "Unknown":
+                created_at = datetime.fromisoformat(created_at.replace("Z", "")).strftime("%Y-%m-%d %H:%M:%S")
+            
+            formatted_prs.append(
+                f"PR: {title}\n"
+                f"Creator: {creator}\n"
+                f"Created At: {created_at}\n"
+                f"URL: {url}\n"
+            )
+        
+        count = len(pull_requests)
+        return f"Total Open Pull Requests: {count}\n\n" + "\n".join(formatted_prs)
+
+
 class Opensea:
     def __init__(self):
         self.headers = {
@@ -838,7 +929,6 @@ def get_nft_data(nft, chain):
             }
         )
         data = response.json()
-        print(data)
 
         info = {"total_tokens": 0, "floor_price": "N/A"}
 
@@ -923,5 +1013,3 @@ def is_eth(address):
         return True
     else:
         return False
-
-

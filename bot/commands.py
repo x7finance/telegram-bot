@@ -14,9 +14,10 @@ bitquery = api.BitQuery()
 coingecko = api.CoinGecko()
 defined = api.Defined()
 dextools = api.Dextools()
+etherscan = api.Etherscan()
+github = api.GitHub()
 opensea = api.Opensea()
 warpcast = api.WarpcastApi()
-etherscan = api.Etherscan()
 
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -964,6 +965,58 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    type = " ".join(context.args).lower()
+    if type == "issues":
+        issues = github.get_issues()
+        issue_chunks = []
+        current_chunk = ""
+        
+        for issue in issues.split("\n\n"):
+            if len(current_chunk) + len(issue) + 2 > 1024:
+                issue_chunks.append(current_chunk.strip())
+                current_chunk = issue
+            else:
+                current_chunk += f"\n\n{issue}"
+        if current_chunk:
+            issue_chunks.append(current_chunk.strip())
+
+        await update.message.reply_photo(
+            photo=api.get_random_pioneer(),
+            caption=f"*X7 Finance Github Monorepo issues*\n\n{issue_chunks[0]}",
+            parse_mode="Markdown"
+        )
+
+        for chunk in issue_chunks[1:]:
+            await update.message.reply_text(chunk, parse_mode="Markdown")
+            return
+        
+    if type == "pr":
+        pr = github.get_pull_requests()
+        await update.message.reply_photo(
+            photo=api.get_random_pioneer(),
+            caption=f"*X7 Finance Github Monorepo issues*\n\n{pr}",
+            parse_mode="Markdown"
+        )
+        return
+    else:
+        await update.message.reply_photo(
+        photo=api.get_random_pioneer(),
+        caption=
+            f"",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        text=f"X7 Finance GitHub", url=urls.GITHUB
+                    )
+                ],
+            ]
+        ),
+    )
+
+
 async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not (1 <= len(context.args) <= 2):
         await update.message.reply_text("Please follow the command with token liquidity hub name")
@@ -1726,7 +1779,6 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     native_price = etherscan.get_native_price(chain)
     if pioneer_id == "":
         floor_data = api.get_nft_data(ca.PIONEER, chain)
-        print(floor_data)
         floor = floor_data["floor_price"]
         if floor != "N/A":
             floor_round = round(floor, 2)
