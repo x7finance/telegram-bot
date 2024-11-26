@@ -966,14 +966,15 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    type = " ".join(context.args).lower()
-    if type == "issues":
+    arg = " ".join(context.args).lower()
+    await context.bot.send_chat_action(update.effective_chat.id, "typing")
+    if arg == "issues":
         issues = github.get_issues()
         issue_chunks = []
         current_chunk = ""
         
         for issue in issues.split("\n\n"):
-            if len(current_chunk) + len(issue) + 2 > 1024:
+            if len(current_chunk) + len(issue) + 2 > 900:
                 issue_chunks.append(current_chunk.strip())
                 current_chunk = issue
             else:
@@ -983,7 +984,7 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
-            caption=f"*X7 Finance Github Monorepo Issues*\n\n{issue_chunks[0]}",
+            caption=f"*X7 Finance GitHub Monorepo Issues*\n\n{issue_chunks[0]}",
             parse_mode="Markdown"
         )
 
@@ -991,19 +992,21 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(chunk, parse_mode="Markdown")
             return
         
-    if type == "pr":
+    if arg == "pr":
         pr = github.get_pull_requests()
         await update.message.reply_photo(
             photo=api.get_random_pioneer(),
-            caption=f"*X7 Finance Github Monorepo Pull Requests*\n\n{pr}",
+            caption=f"*X7 Finance GitHub Monorepo Pull Requests*\n\n{pr}",
             parse_mode="Markdown"
         )
         return
     else:
+        latest = github.get_latest_commit()
         await update.message.reply_photo(
         photo=api.get_random_pioneer(),
         caption=
-            f"",
+            f"*X7 Finance GitHub*\n"
+            f"use `/github issues` or `pr` for more details \n\n{latest}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -1031,6 +1034,8 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if token in ca.HUBS(chain):
+        message = await update.message.reply_text("Getting Liquidity Hub data, Please wait...")
+        await context.bot.send_chat_action(update.effective_chat.id, "typing")
         if token.startswith("x710") and token in {f"x710{i}" for i in range(1, 6)}:
             token = "x7100"
         hub_address = ca.HUBS(chain)[token]
@@ -1038,8 +1043,6 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Please follow the command with X7 token name")
         return
-    message = await update.message.reply_text("Getting Liquidity Hub data, Please wait...")
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     try:
         (
@@ -1128,7 +1131,7 @@ async def links(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton(text="Warpcast", url=f"{urls.WARPCAST}"),
         ],
         [
-            InlineKeyboardButton(text="Github", url=f"{urls.GITHUB}"),
+            InlineKeyboardButton(text="GitHub", url=f"{urls.GITHUB}"),
             InlineKeyboardButton(text="Dune", url=f"{urls.DUNE}"),
         ],
     ]

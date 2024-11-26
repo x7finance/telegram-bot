@@ -723,6 +723,29 @@ class GitHub:
         return f"Total Open Issues: {issue_count}\n\n" + "\n".join(formatted_issues)
     
 
+    def get_latest_commit(self):
+        endpoint = "commits"
+
+        response = requests.get(self.url + endpoint, headers=self.headers)
+        if response.status_code != 200:
+            return f"Error fetching commits: {response.status_code}, {response.text}"
+
+        commits = response.json()
+        if not commits:
+            return "No commits found."
+
+        latest_commit = commits[0]
+        message = latest_commit.get("commit", {}).get("message", "No message")
+        created_by = latest_commit.get("commit", {}).get("author", {}).get("name", "Unknown author")
+        created_at = latest_commit.get("commit", {}).get("author", {}).get("date", "Unknown date")
+        url = latest_commit.get("html_url", "No URL")
+
+        if created_at != "Unknown":
+            created_at = datetime.fromisoformat(created_at.replace("Z", "")).strftime("%Y-%m-%d %H:%M:%S")
+            
+        return f"Latest Commit:\n{message}\nCreated By: {created_by}\nCreated At: {created_at}\nURL: {url}"
+
+
     def get_pull_requests(self):
         endpoint = "pulls"
         pull_requests = []
@@ -747,16 +770,16 @@ class GitHub:
         for pr in pull_requests:
             title = pr.get("title", "No Title")
             creator = pr.get("user", {}).get("login", "Unknown")
-            created_at = pr.get("created_at", "Unknown")
+            date = pr.get("created_at", "Unknown")
             url = pr.get("html_url", "No URL")
             
-            if created_at != "Unknown":
-                created_at = datetime.fromisoformat(created_at.replace("Z", "")).strftime("%Y-%m-%d %H:%M:%S")
+            if date != "Unknown":
+                date = datetime.fromisoformat(date.replace("Z", "")).strftime("%Y-%m-%d %H:%M:%S")
             
             formatted_prs.append(
                 f"{title}\n"
                 f"Creator: {creator}\n"
-                f"Created At: {created_at}\n"
+                f"Created At: {date}\n"
                 f"URL: {url}\n"
             )
         
