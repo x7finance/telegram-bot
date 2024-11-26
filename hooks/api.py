@@ -410,6 +410,22 @@ class CoinGecko:
         else:
             return None
 
+
+    def get_nft_floor(self, nft):
+        endpoint = (
+            f"nfts/ethereum/contract/{nft}"
+        )
+        response = requests.get(self.url + endpoint)
+        data = response.json()
+        if response.status_code == 200:
+            data = response.json()
+            floor_price = data["floor_price"]["native_currency"]
+            floor_price_usd = data["floor_price"]["usd"]
+
+            return {"floor_price": floor_price, "floor_price_usd": floor_price_usd}
+        else:
+            return "N/A"
+
     
     def get_price(self, token):
         coingecko = CoinGeckoAPI()

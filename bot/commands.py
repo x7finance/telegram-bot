@@ -1787,8 +1787,13 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             floor_round = round(floor, 2)
             floor_dollar = floor * float(native_price)
         else:
-            floor_round = "N/A"
-            floor_dollar = 0 
+            floor = coingecko.get_nft_floor(ca.PIONEER)
+            if floor != "N/A":
+                floor_round = floor["floor_price"]
+                floor_dollar = floor["floor_price_usd"]
+            else:
+                floor_round = "N/A"
+                floor_dollar = 0 
         pioneer_pool = float(etherscan.get_native_balance(ca.PIONEER, "eth"))
         total_dollar = float(pioneer_pool) * float(native_price)
         tx = etherscan.get_tx(ca.PIONEER, "eth")
