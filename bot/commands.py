@@ -943,15 +943,15 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     if chain == "eth": 
-        x7dao_proposers = bitquery.get_proposers(chain)
+        x7dao_proposers = bitquery.get_proposers(chain) or "N/A"
     else:
         x7dao_proposers = "N/A"
     x7dao_info = dextools.get_token_info(ca.X7DAO(chain), chain)
-    x7dao_holders = x7dao_info["holders"]
+    x7dao_holders = x7dao_info["holders"] or "N/A"
     x7r_info = dextools.get_token_info(ca.X7R(chain), chain)
-    x7r_holders = x7r_info["holders"]
+    x7r_holders = x7r_info["holders"] or "N/A"
     x7d_info = dextools.get_token_info(ca.X7D(chain), chain)
-    x7d_holders = x7d_info["holders"]
+    x7d_holders = x7d_info["holders"] or "N/A"
     
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
@@ -1166,54 +1166,51 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7r_liquidity_data = dextools.get_liquidity(x7r_pair, chain)
     
     x7r_text = "*X7R*\n"
-    token_liquidity = x7r_liquidity_data.get('token', 'N/A')
-    eth_liquidity = x7r_liquidity_data.get('eth', 'N/A')
-    total_liquidity = x7r_liquidity_data.get('total', 'N/A')
+    x7r_token_liquidity = x7r_liquidity_data.get('token')
+    x7r_eth_liquidity = x7r_liquidity_data.get('eth')
+    x7r_total_liquidity = x7r_liquidity_data.get('total')
 
-    if token_liquidity != 'N/A':
-        token_liquidity_float = float(token_liquidity.replace(',', ''))
-        total_x7r_supply += token_liquidity_float
-        percentage = (token_liquidity_float / ca.SUPPLY) * 100
-    else:
-        percentage = 'N/A'
-
-    if eth_liquidity != 'N/A':
-        total_x7r_eth += float(eth_liquidity.replace(',', ''))
-
-    x7r_text += (
-        f"{token_liquidity} X7R ({percentage:.2f}%)\n"
-        f"{eth_liquidity} {chain_info.native.upper()}\n{total_liquidity}\n\n"
+    x7r_percentage = (
+        (float(x7r_token_liquidity.replace(',', '')) / ca.SUPPLY) * 100
+        if x7r_token_liquidity and ca.SUPPLY
+        else 0
     )
 
-    if total_liquidity != 'N/A':
-        total_x7r_liquidity += float(total_liquidity.replace('$', '').replace(',', ''))
+    if x7r_eth_liquidity:
+        total_x7r_eth += float(x7r_eth_liquidity.replace(',', ''))
+
+    x7r_text += (
+        f"{x7r_token_liquidity} X7R ({x7r_percentage:.2f}%)\n"
+        f"{x7r_eth_liquidity} {chain_info.native.upper()}\n{x7r_total_liquidity}"
+    )
+
+    if x7r_total_liquidity:
+        total_x7r_liquidity += float(x7r_total_liquidity.replace('$', '').replace(',', ''))
 
     x7dao_liquidity_data = dextools.get_liquidity(x7dao_pair, chain)
     x7dao_text = "*X7DAO*\n"
-    token_liquidity = x7dao_liquidity_data.get('token', 'N/A')
-    eth_liquidity = x7dao_liquidity_data.get('eth', 'N/A')
-    total_liquidity = x7dao_liquidity_data.get('total', 'N/A')
+    x7dao_token_liquidity = x7dao_liquidity_data.get('token')
+    x7dao_eth_liquidity = x7dao_liquidity_data.get('eth',)
+    x7dao_total_liquidity = x7dao_liquidity_data.get('total')
 
-    if token_liquidity != 'N/A':
-        token_liquidity_float = float(token_liquidity.replace(',', ''))
-        total_x7dao_supply += token_liquidity_float
-        percentage = (token_liquidity_float / ca.SUPPLY) * 100
-    else:
-        percentage = 'N/A'
-
-    if eth_liquidity != 'N/A':
-        total_x7dao_eth += float(eth_liquidity.replace(',', ''))
-
-    x7dao_text += (
-        f"{token_liquidity} X7DAO ({percentage:.2f}%)\n"
-        f"{eth_liquidity} {chain_info.native.upper()}\n{total_liquidity}\n\n"
+    x7dao_percentage = (
+        (float(x7dao_token_liquidity.replace(',', '')) / ca.SUPPLY) * 100
+        if x7dao_token_liquidity and ca.SUPPLY
+        else 0
     )
 
-    if total_liquidity != 'N/A':
-        total_x7dao_liquidity += float(total_liquidity.replace('$', '').replace(',', ''))
+    if x7dao_eth_liquidity:
+        total_x7dao_eth += float(x7dao_eth_liquidity.replace(',', ''))
 
+    x7dao_text += (
+        f"{x7dao_token_liquidity} X7DAO ({x7dao_percentage:.2f}%)\n"
+        f"{x7dao_eth_liquidity} {chain_info.native.upper()}\n{x7dao_total_liquidity}"
+    )
 
-    final_text = f"{x7r_text}\n{x7dao_text}\n"
+    if x7dao_total_liquidity:
+        total_x7dao_liquidity += float(x7dao_total_liquidity.replace('$', '').replace(',', ''))
+
+    final_text = f"{x7r_text}\n\n{x7dao_text}"
     await message.delete()
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
@@ -1464,7 +1461,7 @@ async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     data = api.get_nft_data(ca.MAGISTER(chain), chain)
-    holders = data["total_tokens"]
+    holders = data["total_tokens"] or "N/A"
     try:
         magisters = bitquery.get_nft_holder_list(ca.MAGISTER(chain), chain)
         address = "\n\n".join(map(lambda x: f"`{x}`", magisters))
@@ -1511,7 +1508,7 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     total_mcap = 0
     for token, mcap in caps.items():
-        if mcap == 'N/A':
+        if not mcap:
             continue
         mcap_value = float(''.join(filter(str.isdigit, mcap)))
         total_mcap += mcap_value
@@ -1520,7 +1517,7 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for token, mcap in caps.items():
         if token in (ca.X7DAO(chain), ca.X7R(chain)):
             continue
-        if mcap == 'N/A':
+        if not mcap:
             continue
         cons_mcap_value = float(''.join(filter(str.isdigit, mcap)))
         total_cons += cons_mcap_value
@@ -1783,12 +1780,12 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     if pioneer_id == "":
         floor_data = api.get_nft_data(ca.PIONEER, chain)
         floor = floor_data["floor_price"]
-        if floor != "N/A":
+        if floor:
             floor_round = round(floor, 2)
             floor_dollar = floor * float(native_price)
         else:
             floor = coingecko.get_nft_floor(ca.PIONEER)
-            if floor != "N/A":
+            if floor:
                 floor_round = floor["floor_price"]
                 floor_dollar = floor["floor_price_usd"]
             else:
@@ -2844,7 +2841,7 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lpool_rounded = round(float(lpool), 2)
     lpool_reserve_rounded = round(float(lpool_reserve), 2)
     info = dextools.get_token_info(ca.X7D(chain), chain)
-    holders = info["holders"]
+    holders = info["holders"] or "N/A"
 
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
@@ -2885,14 +2882,12 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chain_pair = tokens.TOKENS["X7DAO"].get(chain).pairs
     info = dextools.get_token_info(ca.X7DAO(chain), chain)
-    holders = info["holders"]
-    market_cap = info["mcap"]
+    holders = info["holders"] or "N/A"
+    market_cap = info["mcap"] or "N/A"
     price, price_change = dextools.get_price(ca.X7DAO(chain), chain)
-    volume = defined.get_volume(chain_pair, chain)
+    volume = defined.get_volume(chain_pair, chain) or "N/A"
     liquidity_data = dextools.get_liquidity(chain_pair, chain)
-    liquidity = liquidity_data["total"]
-    if liquidity == "0":
-        liquidity = "N/A"
+    liquidity = liquidity_data["total"]  or "N/A"
     if chain == "eth":
         ath_data = coingecko.get_ath("x7dao")
         if ath_data:
@@ -2938,12 +2933,16 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chain_pair = tokens.TOKENS["X7R"].get(chain).pairs
     info = dextools.get_token_info(ca.X7R(chain), chain)
-    holders = info["holders"]
-    market_cap = info["mcap"]
+    holders = info["holders"] or "N/A"
+    market_cap = info["mcap"] or "N/A"
     price, price_change = dextools.get_price(ca.X7R(chain), chain)
-    volume = defined.get_volume(chain_pair, chain)
+    if price:
+        price = f"${price}"
+    else:
+        price = "N/A"
+    volume = defined.get_volume(chain_pair, chain) or "N/A"
     liquidity_data = dextools.get_liquidity(chain_pair, chain)
-    liquidity = liquidity_data["total"]
+    liquidity = liquidity_data["total"] or "N/A"
     if chain == "eth":
         ath_data = coingecko.get_ath("x7r")
         if ath_data:
@@ -2989,12 +2988,16 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chain_pair = tokens.TOKENS["X7101"].get(chain).pairs
     info = dextools.get_token_info(ca.X7101(chain), chain)
-    holders = info["holders"]
-    market_cap = info["mcap"]
+    holders = info["holders"] or "N/A"
+    market_cap = info["mcap"] or "N/A"
     price, price_change = dextools.get_price(ca.X7101(chain), chain)
-    volume = defined.get_volume(chain_pair, chain)
+    if price:
+        price = f"${price}"
+    else:
+        price = "N/A"
+    volume = defined.get_volume(chain_pair, chain) or "N/A"
     liquidity_data = dextools.get_liquidity(chain_pair, chain)
-    liquidity = liquidity_data["total"]
+    liquidity = liquidity_data["total"] or "N/A"
     if chain == "eth":
         ath_data = coingecko.get_ath("x7101")
         if ath_data:
@@ -3040,14 +3043,16 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     chain_pair = tokens.TOKENS["X7102"].get(chain).pairs
     info = dextools.get_token_info(ca.X7102(chain), chain)
-    holders = info["holders"]
-    market_cap = info["mcap"]
+    holders = info["holders"] or "N/A"
+    market_cap = info["mcap"] or "N/A"
     price, price_change = dextools.get_price(ca.X7102(chain), chain)
-    volume = defined.get_volume(chain_pair, chain)
+    if price:
+        price = f"${price}"
+    else:
+        price = "N/A"
+    volume = defined.get_volume(chain_pair, chain) or "N/A"
     liquidity_data = dextools.get_liquidity(chain_pair, chain)
-    liquidity = liquidity_data["total"]
-    if liquidity == "0":
-        liquidity = "N/A"
+    liquidity = liquidity_data["total"] or "N/A"
     if chain == "eth":
         ath_data = coingecko.get_ath("x7102")
         if ath_data:
@@ -3093,9 +3098,13 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     chain_pair = tokens.TOKENS["X7103"].get(chain).pairs
     info = dextools.get_token_info(ca.X7103(chain), chain)
-    holders = info["holders"]
-    market_cap = info["mcap"]
+    holders = info["holders"] or "N/A"
+    market_cap = info["mcap"] or "N/A"
     price, price_change = dextools.get_price(ca.X7103(chain), chain)
+    if price:
+        price = f"${price}"
+    else:
+        price = "N/A"
     volume = defined.get_volume(chain_pair, chain)
     liquidity_data = dextools.get_liquidity(chain_pair, chain)
     liquidity = liquidity_data["total"]
@@ -3144,10 +3153,14 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     chain_pair = tokens.TOKENS["X7104"].get(chain).pairs
     info = dextools.get_token_info(ca.X7104(chain), chain)
-    holders = info["holders"]
-    market_cap = info["mcap"]
+    holders = info["holders"] or "N/A"
+    market_cap = info["mcap"] or "N/A"
     price, price_change = dextools.get_price(ca.X7104(chain), chain)
-    volume = defined.get_volume(chain_pair, chain)
+    if price:
+        price = f"${price}"
+    else:
+        price = "N/A"
+    volume = defined.get_volume(chain_pair, chain) or "N/A"
     liquidity_data = dextools.get_liquidity(chain_pair, chain)
     liquidity = liquidity_data["total"]
     if chain == "eth":
@@ -3195,10 +3208,14 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     chain_pair = tokens.TOKENS["X7105"].get(chain).pairs
     info = dextools.get_token_info(ca.X7105(chain), chain)
-    holders = info["holders"]
-    market_cap = info["mcap"]
+    holders = info["holders"] or "N/A"
+    market_cap = info["mcap"] or "N/A"
     price, price_change = dextools.get_price(ca.X7105(chain), chain)
-    volume = defined.get_volume(chain_pair, chain)
+    if price:
+        price = f"${price}"
+    else:
+        price = "N/A"
+    volume = defined.get_volume(chain_pair, chain) or "N/A"
     liquidity_data = dextools.get_liquidity(chain_pair, chain)
     liquidity = liquidity_data["total"]
     if chain == "eth":

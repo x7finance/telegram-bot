@@ -159,16 +159,16 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             verified = "❓ Contract Verification - Unknown"
         status = f"{verified}\n{renounced}\n{tax}\n{sellable}\n{mint}\n{honey_pot}\n{blacklist}\n{owner_percent}\n{top_percent}"
         info = dextools.get_token_info(search, chain)
-        holders = info["holders"]
-        mcap = info["mcap"]
+        holders = info["holders"] or "N/A"
+        mcap = info["mcap"] or "N/A"
         dex = dextools.get_dex(pair, chain)
         price, price_change = dextools.get_price(search, chain)
         if price:
             price = f"${price}"
         else:
             price = "N/A"
-        volume = defined.get_volume(pair, chain)
-        liquidity = dextools.get_liquidity(pair, chain)['total']
+        volume = defined.get_volume(pair, chain) or "N/A"
+        liquidity = dextools.get_liquidity(pair, chain)['total'] or "N/A"
         await update.message.reply_text(
             f"*{token_name} {token_symbol}* - {chain_name}\n"
             f"`{search}`\n\n"

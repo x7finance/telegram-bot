@@ -75,10 +75,10 @@ class BitQuery:
                 number_of_holders = result.get('data', {}).get('EVM', {}).get('TokenHolders', [])[0].get('uniq', '0')
                 return int(number_of_holders)
             else:
-                return "N/A"
+                return None
 
         except requests.RequestException as e:
-            return "N/A"
+            return None
         
 
 class Etherscan:
@@ -282,13 +282,13 @@ class Dextools:
                 change = f"{one_hour}\n{six_hour}\n{one_day}"
 
             else:
-                price = "0"
+                price = None
                 change = f"📉 1HR Change: N/A\n📉 6HR Change: N/A\n📉 24HR Change: N/A"
 
             return price, change
         else:
             change = f"📉 1HR Change: N/A\n📉 6HR Change: N/A\n📉 24HR Change: N/A"
-            return 0, change
+            return None, change
         
 
     def get_token_info(self, pair, chain):
@@ -310,7 +310,7 @@ class Dextools:
                     if fdv is not None:
                         formatted_mcap = f'${fdv:,.0f} (FDV)'
                     else:
-                        formatted_mcap = "N/A"
+                        formatted_mcap = None
 
                 return {
                     "supply": total_supply,
@@ -319,15 +319,15 @@ class Dextools:
                 }
             else:
                 return {
-                    "total_supply": 0,
-                    "mcap": "N/A",
-                    "holders": "N/A"
+                    "total_supply": None,
+                    "mcap": None,
+                    "holders": None
                 }
         else:
             return {
-                "supply": 0,
-                "mcap": "N/A",
-                "holders": "N/A"
+                "supply": None,
+                "mcap": None,
+                "holders": None
             }
        
         
@@ -358,16 +358,13 @@ class Dextools:
 
 
     def get_liquidity(self, pair, chain):
-        if chain not in chains.CHAINS:
-            return {"total": "N/A", "token": "0", "eth": "0.00"}
-
         chain_info = chains.CHAINS[chain]
 
         endpoint = f'pool/{chain_info.dext}/{pair}/liquidity'
         response = requests.get(self.url + endpoint, headers=self.headers)
 
         liquidity_data = {
-            "total": "N/A",
+            "total": "0",
             "token": "0",
             "eth": "0.00"
         }
@@ -380,9 +377,9 @@ class Dextools:
                 eth = data['data']['reserves'].get('sideToken', 0)
 
                 liquidity_data = {
-                    "total": f"${'{:,.0f}'.format(total)}" if total else "N/A",
-                    "token": f"{'{:,.0f}'.format(token)}",
-                    "eth": f"{'{:,.2f}'.format(eth)}"
+                    "total": f"${'{:,.0f}'.format(total)}" if total else None,
+                    "token": f"{'{:,.0f}'.format(token)}" if token else None,
+                    "eth": f"{'{:,.2f}'.format(eth)}" if eth else None
                 }
 
         return liquidity_data
@@ -424,7 +421,7 @@ class CoinGecko:
 
             return {"floor_price": floor_price, "floor_price_usd": floor_price_usd}
         else:
-            return "N/A"
+            return None
 
     
     def get_price(self, token):
@@ -456,7 +453,7 @@ class CoinGecko:
             price_change = round(data[token]["usd_24h_change"], 2)
         market_cap = data[token]["usd_market_cap"]
         if market_cap is None or market_cap == 0:
-            market_cap_formatted = " N/A"
+            market_cap_formatted = None
         else:
             market_cap_formatted = "${:0,.0f}".format(float(market_cap))
 
@@ -572,9 +569,9 @@ class Defined:
                     image_url = token_info['imageLargeUrl']
                     return image_url
                 else:
-                    return "N/A"
+                    return None
         else:
-            return "N/A"
+            return None
 
 
     def get_pair(self, address, chain):
@@ -624,7 +621,7 @@ class Defined:
             current_value = data['data']['getDetailedPairStats']['stats_day1']['statsUsd']['volume']['currentValue']
             return "${:,.0f}".format(float(current_value))
         except Exception as e:
-            return "N/A"
+            return None
         
     def search(self, address, chain=None):
         if chain is not None:
@@ -968,7 +965,7 @@ def get_nft_data(nft, chain):
         )
         data = response.json()
 
-        info = {"total_tokens": 0, "floor_price": "N/A"}
+        info = {"total_tokens": 0, "floor_price": 0}
 
         total_tokens = data.get("total_tokens", None)
         if total_tokens is not None:
@@ -986,7 +983,7 @@ def get_nft_data(nft, chain):
         return info
 
     except Exception:
-        return {"total_tokens": 0, "floor_price": "N/A"}
+        return {"total_tokens": None, "floor_price": None}
 
 
 def get_random_pioneer():
