@@ -64,7 +64,11 @@ async def command(update, context):
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-        await auto.button_send(context)
+        if db.settings_get("click_me"):
+            await auto.button_send(context)
+        else:
+            await update.message.reply_text(f"Next Click Me:\n\nDisabled\n\n"
+                )
 
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):

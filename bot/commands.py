@@ -83,7 +83,7 @@ async def announcements(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) == 0:
-        await update.message.reply_text("Please follow the command with an X7 token name (e.g., X7DAO, X7R, X7101).")
+        await update.message.reply_text("Please follow the command with an X7 token name")
         return
 
     token = context.args[0].lower()
