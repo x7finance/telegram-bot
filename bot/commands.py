@@ -1383,13 +1383,17 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             try:
                 can = contract.functions.canLiquidate(int(loan_id)).call()
-            except ContractLogicError or can == 0:
+                if not can or can == 0:
+                    await update.message.reply_text(f"Loan {loan_id} is not eligible for liquidation")
+                    return
+            except ContractLogicError:
                 await update.message.reply_text(f"Loan {loan_id} is not eligible for liquidation")
-        except Exception as e:
-            if can > 0:
-                await update.message.reply_text(f"Attempting to liquidate Loan ID {loan_id} on {chain.upper()}...")
-                result = api.liquidate_loan(loan_id, chain)
-                await update.message.reply_text(f"Liquidation result:\n\n{result}")
+                return
+
+            await update.message.reply_text(f"Attempting to liquidate Loan ID {loan_id} on {chain.upper()}...")
+            result = api.liquidate_loan(loan_id, chain)
+            await update.message.reply_text(f"Liquidation result:\n\n{result}")
+
         except Exception as e:
             await update.message.reply_text(f"Error liquidating Loan ID {loan_id}: {e}")
 
