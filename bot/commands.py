@@ -3,6 +3,7 @@ from telegram.ext import *
 
 import asyncio, math, pytz, random, re, requests, time
 from datetime import datetime
+from web3.exceptions import ContractLogicError
 
 from PIL import Image, ImageDraw, ImageFont
 from constants import abis, ca, chains, dao, nfts, settings, splitters, tax, text, tokens, urls  
@@ -1321,7 +1322,6 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             loan_id = int(context.args[0])
             chain = chains.get_chain(update.effective_message.message_thread_id)
-            print(chain)
         except ValueError:
             chain = context.args[0].lower()
     elif len(context.args) == 2:
@@ -1338,14 +1338,15 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
+    chain_lpool = ca.LPOOL(chain)
+    contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool")
+    )
+
     if loan_id is None:
         message = await update.message.reply_text("Getting Liquidation Info, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-        chain_lpool = ca.LPOOL(chain)
-        contract = chain_info.w3.eth.contract(
-            address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool")
-        )
         num_loans = contract.functions.nextLoanID().call()
         liquidatable_loans = 0
         results = []
@@ -1380,14 +1381,15 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     else:
         try:
-            can = contract.functions.canLiquidate(int(loan_id)).call()
+            try:
+                can = contract.functions.canLiquidate(int(loan_id)).call()
+            except ContractLogicError or can == 0:
+                await update.message.reply_text(f"Loan {loan_id} is not eligible for liquidation")
+        except Exception as e:
             if can > 0:
                 await update.message.reply_text(f"Attempting to liquidate Loan ID {loan_id} on {chain.upper()}...")
-                
                 result = api.liquidate_loan(loan_id, chain)
                 await update.message.reply_text(f"Liquidation result:\n\n{result}")
-            else:
-                await update.message.reply_text(f"{loan_id} is not eligble for liquidation")
         except Exception as e:
             await update.message.reply_text(f"Error liquidating Loan ID {loan_id}: {e}")
 
