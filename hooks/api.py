@@ -383,6 +383,20 @@ class Dextools:
                 }
 
         return liquidity_data
+    
+    
+    def get_pool_price(self, chain, pair):
+        chain_info = chains.CHAINS[chain]
+        endpoint = f'pool/{chain_info.dext}/{pair}/price'
+        price = 0
+        
+        response = requests.get(self.url + endpoint, headers=self.headers)
+        if response.status_code == 200:
+            data = response.json()
+            if data and "data" in data:
+                price = data['data'].get('price', 0)
+
+        return price
 
 
 class CoinGecko:

@@ -79,6 +79,80 @@ async def announcements(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         ),
     )
+    
+
+async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) == 0:
+        await update.message.reply_text("Please follow the command with an X7 token name (e.g., X7DAO, X7R, X7101).")
+        return
+
+    token = context.args[0].lower()
+    chain = context.args[1].lower() if len(context.args) == 2 else chains.get_chain(update.effective_message.message_thread_id)
+
+    chain_info, error_message = chains.get_info(chain, token=True)
+    if error_message:
+        await update.message.reply_text(error_message)
+        return
+
+    pairs = ca.PAIRS(chain)
+    if token in pairs:
+        await context.bot.send_chat_action(update.effective_chat.id, "typing")
+        message = await update.message.reply_text("Getting Arbitrage Opportunities , Please wait...")
+        if token in ["x7dao", "x7r"]:
+            pair_x, pair_y = pairs[token]
+            price_x = dextools.get_pool_price(chain, pair_x)
+            price_y = dextools.get_pool_price(chain, pair_y)
+
+            if price_x and price_y:
+                price_diff = abs(price_x - price_y)
+                percentage_diff = (price_diff / price_x) * 100 if price_x != 0 else 0
+
+
+                comparison_text = (
+                    f"*{token.upper()} Arbitrage Opportunities*\n\n"
+                    f"Xchange: ${price_x:.6f}\n"
+                    f"Uniswap: ${price_y:.6f}\n"
+                    f"Difference: ${price_diff:.6f} ({percentage_diff:.2f}%)\n"
+                )
+
+                await update.message.reply_photo(
+                    photo=api.get_random_pioneer(),
+                    caption=comparison_text,
+                    parse_mode="Markdown"
+                )
+            else:
+                await update.message.reply_text("Unable to retrieve prices for Xchange or Uniswap. Please try again later.")
+
+        elif token in ["x7101", "x7102", "x7103", "x7104", "x7105"]:
+            pair = pairs[token]
+            price_x = dextools.get_pool_price(chain, pair)
+            prices = {t: dextools.get_pool_price(chain, pairs[t]) for t in ["x7101", "x7102", "x7103", "x7104", "x7105"]}
+
+            if price_x is not None:
+                comparison_text = f"*{token.upper()} Arbitrage Opportunities*\n\n"
+                comparison_text += f"{token.upper()}:\nPrice: ${price_x:.6f}\n\n"
+
+                for t, price in prices.items():
+                    if t == token:
+                        continue
+                    price_diff = abs(price_x - price)
+                    percentage_diff = (price_diff / price_x) * 100 if price_x != 0 else 0
+                    comparison_text += (
+                        f"{t.upper()}:\n"
+                        f"Price: ${price:.6f}\n"
+                        f"Difference: ${price_diff:.6f} ({percentage_diff:.2f}%)\n\n"
+                    )
+
+                await update.message.reply_photo(
+                    photo=api.get_random_pioneer(),
+                    caption=comparison_text,
+                    parse_mode="Markdown"
+                )
+            else:
+                await update.message.reply_text("Unable to retrieve price for the requested token. Please try again later.")
+        await message.delete()
+    else:
+        await update.message.reply_text("Invalid token name. Please provide a valid X7 token.")
 
 
 async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -68,6 +68,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("admins", commands.admins))
     application.add_handler(CommandHandler("alerts", commands.alerts))
     application.add_handler(CommandHandler("announcements", commands.announcements))
+    application.add_handler(CommandHandler(["arb", "arbitrage"], commands.arb))
     application.add_handler(CommandHandler("blocks", commands.blocks))
     application.add_handler(CommandHandler("blog", commands.blog))
     application.add_handler(CommandHandler("borrow", commands.borrow))
