@@ -72,7 +72,6 @@ async def member(chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, 
 
 
 async def message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handles welcoming new members in the main channel."""
     channel_id = update.effective_chat.id
     result = await member(update.chat_member)
     if result is None:

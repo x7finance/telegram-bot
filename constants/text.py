@@ -33,7 +33,8 @@ CONTRIBUTE = (
     "Shoot over those details by DM or Email and let's push the boundaries of what's possible in DeFi together.\n\n"
     "tech@x7finance.org\n"
     "https://t.me/Cryptod0c\n"
-    "https://t.me/MikeMurpher"  
+    "https://t.me/MikeMurpher\n"
+    "https://t.me/Adz1DoubleD"  
 )
 
 

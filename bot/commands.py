@@ -73,7 +73,7 @@ async def announcements(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="X7 Announcement Channel",
-                        url="https://t.me/X7announcements",
+                        url=urls.TG_ANNOUNCEMENTS,
                     )
                 ],
             ]
@@ -94,19 +94,20 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
-    pairs = ca.PAIRS(chain)
-    if token in pairs:
+    if token.upper() in tokens.TOKENS:
+        pairs = tokens.TOKENS[token.upper()][chain].pairs
+
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
-        message = await update.message.reply_text("Getting Arbitrage Opportunities , Please wait...")
+        message = await update.message.reply_text("Getting Arbitrage Opportunities, please wait...")
+
         if token in ["x7dao", "x7r"]:
-            pair_x, pair_y = pairs[token]
+            pair_x, pair_y = pairs[0], pairs[1]
             price_x = dextools.get_pool_price(chain, pair_x)
             price_y = dextools.get_pool_price(chain, pair_y)
 
             if price_x and price_y:
                 price_diff = abs(price_x - price_y)
                 percentage_diff = (price_diff / price_x) * 100 if price_x != 0 else 0
-
 
                 comparison_text = (
                     f"*{token.upper()} Arbitrage Opportunities*\n\n"
@@ -124,9 +125,12 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("Unable to retrieve prices for Xchange or Uniswap. Please try again later.")
 
         elif token in ["x7101", "x7102", "x7103", "x7104", "x7105"]:
-            pair = pairs[token]
-            price_x = dextools.get_pool_price(chain, pair)
-            prices = {t: dextools.get_pool_price(chain, pairs[t]) for t in ["x7101", "x7102", "x7103", "x7104", "x7105"]}
+            price_x = dextools.get_pool_price(chain, pairs)
+            prices = {
+                t: dextools.get_pool_price(chain, tokens.TOKENS[t.upper()][chain].pairs)
+                for t in ["x7101", "x7102", "x7103", "x7104", "x7105"]
+                if chain in tokens.TOKENS[t.upper()]
+            }
 
             if price_x is not None:
                 comparison_text = f"*{token.upper()} Arbitrage Opportunities*\n\n"
@@ -150,6 +154,7 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             else:
                 await update.message.reply_text("Unable to retrieve price for the requested token. Please try again later.")
+
         await message.delete()
     else:
         await update.message.reply_text("Invalid token name. Please provide a valid X7 token.")
@@ -1227,13 +1232,11 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     message = await update.message.reply_text("Getting Liquidity data, Please wait...")
 
-    x7r_pair = tokens.TOKENS["X7R"].get(chain).pairs
-    x7dao_pair = tokens.TOKENS["X7DAO"].get(chain).pairs
+    x7r_pair = tokens.TOKENS["X7R"].get(chain).pairs[0]
+    x7dao_pair = tokens.TOKENS["X7DAO"].get(chain).pairs[0]
 
     total_x7r_liquidity = 0
     total_x7dao_liquidity = 0
-    total_x7r_supply = 0
-    total_x7dao_supply = 0
     total_x7r_eth = 0
     total_x7dao_eth = 0
 
@@ -1481,15 +1484,17 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
         abi=etherscan.get_abi(ca.TIME_LOCK(chain), chain)
     )
 
+    x7r_pair = ca.X7R_PAIR(chain)[0]
     x7r_timestamp = contract.functions.getTokenUnlockTimestamp(
-        chain_info.w3.to_checksum_address(ca.X7R_PAIR(chain))
+        chain_info.w3.to_checksum_address(x7r_pair)
     ).call()
     x7r_remaining_time = api.get_time_difference(x7r_timestamp)
     x7r_date = datetime.fromtimestamp(x7r_timestamp)
     x7r_date_str = x7r_date.strftime('%Y-%m-%d %H:%M')
-
+    
+    x7dao_pair = ca.X7DAO_PAIR(chain)[0]
     x7dao_timestamp = contract.functions.getTokenUnlockTimestamp(
-        chain_info.w3.to_checksum_address(ca.X7DAO_PAIR(chain))
+        chain_info.w3.to_checksum_address(x7dao_pair)
     ).call()
     x7dao_remaining_time = api.get_time_difference(x7dao_timestamp)
     x7dao_date = datetime.fromtimestamp(x7dao_timestamp)
@@ -2954,13 +2959,13 @@ async def x7dao(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    chain_pair = tokens.TOKENS["X7DAO"].get(chain).pairs
+    pair = tokens.TOKENS["X7DAO"].get(chain).pairs[0]
     info = dextools.get_token_info(ca.X7DAO(chain), chain)
     holders = info["holders"] or "N/A"
     market_cap = info["mcap"] or "N/A"
     price, price_change = dextools.get_price(ca.X7DAO(chain), chain)
-    volume = defined.get_volume(chain_pair, chain) or "N/A"
-    liquidity_data = dextools.get_liquidity(chain_pair, chain)
+    volume = defined.get_volume(pair, chain) or "N/A"
+    liquidity_data = dextools.get_liquidity(pair, chain)
     liquidity = liquidity_data["total"]  or "N/A"
     if chain == "eth":
         ath_data = coingecko.get_ath("x7dao")
@@ -3005,7 +3010,7 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    chain_pair = tokens.TOKENS["X7R"].get(chain).pairs
+    pair = tokens.TOKENS["X7R"].get(chain).pairs[0]
     info = dextools.get_token_info(ca.X7R(chain), chain)
     holders = info["holders"] or "N/A"
     market_cap = info["mcap"] or "N/A"
@@ -3014,8 +3019,8 @@ async def x7r(update: Update, context: ContextTypes.DEFAULT_TYPE):
         price = f"${price}"
     else:
         price = "N/A"
-    volume = defined.get_volume(chain_pair, chain) or "N/A"
-    liquidity_data = dextools.get_liquidity(chain_pair, chain)
+    volume = defined.get_volume(pair, chain) or "N/A"
+    liquidity_data = dextools.get_liquidity(pair, chain)
     liquidity = liquidity_data["total"] or "N/A"
     if chain == "eth":
         ath_data = coingecko.get_ath("x7r")
@@ -3060,7 +3065,7 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    chain_pair = tokens.TOKENS["X7101"].get(chain).pairs
+    pair = tokens.TOKENS["X7101"].get(chain).pairs
     info = dextools.get_token_info(ca.X7101(chain), chain)
     holders = info["holders"] or "N/A"
     market_cap = info["mcap"] or "N/A"
@@ -3069,8 +3074,8 @@ async def x7101(update: Update, context: ContextTypes.DEFAULT_TYPE):
         price = f"${price}"
     else:
         price = "N/A"
-    volume = defined.get_volume(chain_pair, chain) or "N/A"
-    liquidity_data = dextools.get_liquidity(chain_pair, chain)
+    volume = defined.get_volume(pair, chain) or "N/A"
+    liquidity_data = dextools.get_liquidity(pair, chain)
     liquidity = liquidity_data["total"] or "N/A"
     if chain == "eth":
         ath_data = coingecko.get_ath("x7101")
@@ -3115,7 +3120,7 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
-    chain_pair = tokens.TOKENS["X7102"].get(chain).pairs
+    pair = tokens.TOKENS["X7102"].get(chain).pairs
     info = dextools.get_token_info(ca.X7102(chain), chain)
     holders = info["holders"] or "N/A"
     market_cap = info["mcap"] or "N/A"
@@ -3124,8 +3129,8 @@ async def x7102(update: Update, context: ContextTypes.DEFAULT_TYPE):
         price = f"${price}"
     else:
         price = "N/A"
-    volume = defined.get_volume(chain_pair, chain) or "N/A"
-    liquidity_data = dextools.get_liquidity(chain_pair, chain)
+    volume = defined.get_volume(pair, chain) or "N/A"
+    liquidity_data = dextools.get_liquidity(pair, chain)
     liquidity = liquidity_data["total"] or "N/A"
     if chain == "eth":
         ath_data = coingecko.get_ath("x7102")
@@ -3170,7 +3175,7 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
-    chain_pair = tokens.TOKENS["X7103"].get(chain).pairs
+    pair = tokens.TOKENS["X7103"].get(chain).pairs
     info = dextools.get_token_info(ca.X7103(chain), chain)
     holders = info["holders"] or "N/A"
     market_cap = info["mcap"] or "N/A"
@@ -3179,8 +3184,8 @@ async def x7103(update: Update, context: ContextTypes.DEFAULT_TYPE):
         price = f"${price}"
     else:
         price = "N/A"
-    volume = defined.get_volume(chain_pair, chain)
-    liquidity_data = dextools.get_liquidity(chain_pair, chain)
+    volume = defined.get_volume(pair, chain)
+    liquidity_data = dextools.get_liquidity(pair, chain)
     liquidity = liquidity_data["total"]
     if chain == "eth":
         ath_data = coingecko.get_ath("x7103")
@@ -3225,7 +3230,7 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
-    chain_pair = tokens.TOKENS["X7104"].get(chain).pairs
+    pair = tokens.TOKENS["X7104"].get(chain).pairs
     info = dextools.get_token_info(ca.X7104(chain), chain)
     holders = info["holders"] or "N/A"
     market_cap = info["mcap"] or "N/A"
@@ -3234,8 +3239,8 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
         price = f"${price}"
     else:
         price = "N/A"
-    volume = defined.get_volume(chain_pair, chain) or "N/A"
-    liquidity_data = dextools.get_liquidity(chain_pair, chain)
+    volume = defined.get_volume(pair, chain) or "N/A"
+    liquidity_data = dextools.get_liquidity(pair, chain)
     liquidity = liquidity_data["total"]
     if chain == "eth":
         ath_data = coingecko.get_ath("x7104")
@@ -3280,7 +3285,7 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
-    chain_pair = tokens.TOKENS["X7105"].get(chain).pairs
+    pair = tokens.TOKENS["X7105"].get(chain).pairs
     info = dextools.get_token_info(ca.X7105(chain), chain)
     holders = info["holders"] or "N/A"
     market_cap = info["mcap"] or "N/A"
@@ -3289,8 +3294,8 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
         price = f"${price}"
     else:
         price = "N/A"
-    volume = defined.get_volume(chain_pair, chain) or "N/A"
-    liquidity_data = dextools.get_liquidity(chain_pair, chain)
+    volume = defined.get_volume(pair, chain) or "N/A"
+    liquidity_data = dextools.get_liquidity(pair, chain)
     liquidity = liquidity_data["total"]
     if chain == "eth":
         ath_data = coingecko.get_ath("x7105")

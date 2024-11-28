@@ -288,16 +288,13 @@ def TEMP_HUBS(token):
 # PAIRS
 
 def X7R_PAIR(chain):
-    return "0x8e0D035787e7083D4292536005dD6A69682e4f64"
+    return ["0x8e0D035787e7083D4292536005dD6A69682e4f64",
+            "0x6139240a5907e4ce74673257c320ea366c521aea"]
 
-def X7R_PAIR_UNI(chain):
-    return "0x6139240a5907e4ce74673257c320ea366c521aea"
 
 def X7DAO_PAIR(chain):
-    return "0xb8dE6270640092463988B6860d68CA63dC7cF700"
-
-def X7DAO_PAIR_UNI(chain):
-    return "0x75311ee016c82e7770e4aca73a0d142f96ddb969"
+    return ["0xb8dE6270640092463988B6860d68CA63dC7cF700",
+            "0x75311ee016c82e7770e4aca73a0d142f96ddb969"]
 
 def X7101_PAIR(chain):
     return "0x63deeba8d883bc820bfaab547c7ea26da289ca3e"
@@ -313,17 +310,6 @@ def X7104_PAIR(chain):
 
 def X7105_PAIR(chain):
     return "0x6ea054f8538f56437981a46b30406c5cbb09e97f"
-
-def PAIRS(chain):
-    return {
-        "x7r": (X7R_PAIR(chain), X7R_PAIR_UNI(chain)),
-        "x7dao": (X7DAO_PAIR(chain), X7DAO_PAIR_UNI(chain)),
-        "x7101": (X7101_PAIR(chain)),
-        "x7102": (X7102_PAIR(chain)),
-        "x7103": (X7103_PAIR(chain)),
-        "x7104": (X7104_PAIR(chain)),
-        "x7105": (X7105_PAIR(chain))
-    }
 
 
 # WALLETS
