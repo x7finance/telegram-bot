@@ -1,11 +1,10 @@
 import random, requests, os, time, json
 
-from typing import Union
 from farcaster import Warpcast
 from datetime import datetime, timedelta
 from pycoingecko import CoinGeckoAPI
 
-from constants import ca, chains, urls
+from constants import abis, ca, chains, urls
 
 
 class BitQuery:
@@ -880,6 +879,44 @@ async def burn_x7r(amount, chain):
         return f"{amount} X7R Burnt\n\n{chain_info.scan_tx}{tx_hash.hex()}"
     except Exception as e:
         return f'Error burning X7R: {e}'
+    
+
+def liquidate_loan(loan_id, chain):
+    try:
+        chain_info, _ = chains.get_info(chain)
+        sender_address = os.getenv("BURN_WALLET")
+        sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
+        chain_lpool = ca.LPOOL(chain)
+
+        contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool")
+        )
+
+        liquidate_function_selector = '0xf5aa928f'
+        loan_id_hex = hex(loan_id)[2:].rjust(64, '0')
+        transaction_data = liquidate_function_selector + loan_id_hex
+
+        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+        gas_estimate = contract.functions.liquidate(loan_id).estimate_gas({"from": sender_address})
+        gas_price = chain_info.w3.eth.gas_price
+
+        transaction = {
+            'from': sender_address,
+            'to': chain_info.w3.to_checksum_address(chain_lpool),
+            'data': transaction_data,
+            'gas': gas_estimate * 1.5,
+            'gasPrice': gas_price,
+            'nonce': nonce,
+            'chainId': chain_info.id
+        }
+
+        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+
+        return f"Loan {loan_id} liquidated successfully.\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+
+    except Exception as e:
+        return f"Error liquidating Loan ID {loan_id}: {e}"
 
 
 def convert_datetime(input_value):

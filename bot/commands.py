@@ -1314,52 +1314,82 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
+    loan_id = None
+    chain = None
+
+    if len(context.args) == 1:
+        try:
+            loan_id = int(context.args[0])
+            chain = chains.get_chain(update.effective_message.message_thread_id)
+            print(chain)
+        except ValueError:
+            chain = context.args[0].lower()
+    elif len(context.args) == 2:
+        try:
+            loan_id = int(context.args[0])
+            chain = context.args[1].lower()
+        except ValueError:
+            await update.message.reply_text("Invalid Loan ID. Please provide a valid number.")
+            return
+    else:
+        chain = chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
-    
-    message = await update.message.reply_text("Getting Liquidation Info, Please wait...")
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    chain_lpool = ca.LPOOL(chain)
-    contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool")
-    )
-    num_loans = contract.functions.nextLoanID().call()
-    liquidatable_loans = 0
-    results = []
-    for loan_id in range(num_loans):
-        try:
-            result = contract.functions.canLiquidate(int(loan_id)).call()
-            if result > 0:
-                liquidatable_loans += 1
-                results.append(f"Loan ID {loan_id}")
-        except Exception:
-            continue
+    if loan_id is None:
+        message = await update.message.reply_text("Getting Liquidation Info, Please wait...")
+        await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    liquidatable_loans_text = f"Total liquidatable loans: {liquidatable_loans}"
-    output = "\n".join([liquidatable_loans_text] + results) 
-    await message.delete()
-    await update.message.reply_photo(
-        photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Loan Liquidations ({chain_info.name})*\n\n"
-            f"{output}",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
+        chain_lpool = ca.LPOOL(chain)
+        contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool")
+        )
+        num_loans = contract.functions.nextLoanID().call()
+        liquidatable_loans = 0
+        results = []
+        for loan in range(num_loans):
+            try:
+                result = contract.functions.canLiquidate(int(loan)).call()
+                if result > 0:
+                    liquidatable_loans += 1
+                    results.append(f"Loan ID {loan}")
+            except Exception:
+                continue
+
+        liquidatable_loans_text = f"Total liquidatable loans: {liquidatable_loans}"
+        output = "\n".join([liquidatable_loans_text] + results)
+        await message.delete()
+        await update.message.reply_photo(
+            photo=api.get_random_pioneer(),
+            caption=
+                f"*X7 Finance Loan Liquidations ({chain_info.name})*\n\n"
+                f"{output}",
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
                 [
-                    InlineKeyboardButton(
-                        text="Lending Dashboard",
-                        url=f"{urls.XCHANGE}lending",
-                    )
-                ],
-            ]
-        ),
-    )
-
+                    [
+                        InlineKeyboardButton(
+                            text="Lending Dashboard",
+                            url=f"{urls.XCHANGE}lending",
+                        )
+                    ],
+                ]
+            ),
+        )
+    else:
+        try:
+            can = contract.functions.canLiquidate(int(loan_id)).call()
+            if can > 0:
+                await update.message.reply_text(f"Attempting to liquidate Loan ID {loan_id} on {chain.upper()}...")
+                
+                result = api.liquidate_loan(loan_id, chain)
+                await update.message.reply_text(f"Liquidation result:\n\n{result}")
+            else:
+                await update.message.reply_text(f"{loan_id} is not eligble for liquidation")
+        except Exception as e:
+            await update.message.reply_text(f"Error liquidating Loan ID {loan_id}: {e}")
 
 
 async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):

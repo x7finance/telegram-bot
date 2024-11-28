@@ -158,7 +158,8 @@ def LPOOL(chain, loan_id=None):
         "bsc": "0x6396898c25b2bbF824DcdEc99A6F4061CC12f573",
         "poly": "0xF57C56270E9FbF18B254E05168C632c9f3D9a442",
         "arb": "0x7F3F8bcF93e17734AEec765128156690e8c7e8d3",
-        "op": "0x94ada63c4B836AbBA14D2a20624bDF39b9DD5Ed5"
+        "op": "0x94ada63c4B836AbBA14D2a20624bDF39b9DD5Ed5",
+        "eth-sepolia": "0xcad129C25D092a48bAC897CfbA887F16762E139f"
     }
     if chain == "eth":
         return map["eth"](loan_id)

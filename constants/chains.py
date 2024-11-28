@@ -68,6 +68,26 @@ CHAINS = {
         ca.COM_MULTI("eth"),
         ca.DAO_MULTI("eth")
     ),
+    "eth-sepolia": ChainInfo(
+        False,
+        False,
+        "ETH",
+        "Etherscan",
+        "11155111",
+        "eth",
+        media.ETH_LOGO,
+        urls.SCAN_TOKEN("eth-sepolia"),
+        urls.SCAN_ADDRESS("eth-sepolia"),
+        urls.SCAN_TX("eth=sepolia"),
+        urls.SCAN_GAS("eth"),
+        "ether",
+        "",
+        "eth-main",
+        5,
+        urls.RPC("eth-sepolia"),
+        ca.COM_MULTI("eth"),
+        ca.DAO_MULTI("eth")
+    ),
     "base": ChainInfo(
         True,
         False,
