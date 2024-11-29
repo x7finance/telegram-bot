@@ -69,7 +69,7 @@ def liquidate_loan(loan_id, chain):
             'from': sender_address,
             'to': chain_info.w3.to_checksum_address(chain_lpool),
             'data': transaction_data,
-            'gas': gas_estimate * 1.5,
+            'gas': gas_estimate,
             'gasPrice': gas_price,
             'nonce': nonce,
             'chainId': chain_info.id
@@ -88,14 +88,15 @@ def splitter_push(splitter_address, chain):
     chain_info, error_message = chains.get_info(chain)
     try:
         push_all_function_selector = "0x11ec9d34"
+        from_wallet = os.getenv("BURN_WALLET")
 
         transaction = {
-            'from': os.getenv("BURN_WALLET"),
+            'from': from_wallet,
             'to': splitter_address,
             'data': push_all_function_selector,
             'gas': 0,
             'gasPrice': chain_info.w3.eth.gas_price,
-            'nonce': chain_info.w3.eth.get_transaction_count(os.getenv("BURN_WALLET_PRIVATE_KEY")),
+            'nonce': chain_info.w3.eth.get_transaction_count(from_wallet),
             'chainId': int(chain_info.id),
         }
         transaction['gas'] = chain_info.w3.eth.estimate_gas(transaction)
@@ -111,4 +112,4 @@ def splitter_push(splitter_address, chain):
             f"{chain_info.name} Splitter Push Failed"
     
     except Exception as e:
-       return f"`{chain_info.name}:` Splitter Push Error: {str(e)}"
+       return f"{chain_info.name} Splitter Push Error: {str(e)}"
