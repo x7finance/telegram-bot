@@ -28,10 +28,10 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
             pass
 
     current_button_data = str(random.randint(1, 100000000))
-    context.bot_data["current_button_data"] = current_button_data
+    context.bot_data["current_button_data"] = f"click_button:{current_button_data}"
 
     keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Click Me!", callback_data=f"click_button:{current_button_data}")]]
+        [[InlineKeyboardButton("Click Me!", callback_data=current_button_data)]]
     )
     click_me = await context.bot.send_photo(
         photo=api.get_random_pioneer(),
@@ -126,7 +126,7 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
 
             if db.settings_get('burn') and total_click_count % settings.CLICK_ME_BURN == 0:
-                burn_message = await api.burn_x7r(settings.burn_amount(), "eth")
+                burn_message = await functions.burn_x7r(settings.burn_amount(), "eth")
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
                     text=f"🔥🔥🔥🔥🔥🔥🔥🔥\n\nThe button has been clicked a total of {total_click_count} times by all Pioneers!\n\n{burn_message}"
