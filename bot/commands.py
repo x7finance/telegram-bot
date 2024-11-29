@@ -7,7 +7,7 @@ from web3.exceptions import ContractLogicError
 
 from PIL import Image, ImageDraw, ImageFont
 from constants import abis, ca, chains, dao, nfts, settings, splitters, tax, text, tokens, urls  
-from hooks import api, db, dune 
+from hooks import api, db, dune, functions
 import pricebot
 import media
 
@@ -1391,7 +1391,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
 
             await update.message.reply_text(f"Attempting to liquidate Loan ID {loan_id} on {chain.upper()}...")
-            result = api.liquidate_loan(loan_id, chain)
+            result = functions.liquidate_loan(loan_id, chain)
             await update.message.reply_text(f"Liquidation result:\n\n{result}")
 
         except Exception as e:
@@ -2290,9 +2290,10 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if error_message:
         await update.message.reply_text(error_message)
         return
-    
+
     message = await update.message.reply_text("Getting Splitter Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+    
     treasury_eth = float(etherscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain))
     eco_eth = float(etherscan.get_native_balance(ca.ECO_SPLITTER(chain), chain))
     native_price = etherscan.get_native_price(chain)
@@ -2308,23 +2309,26 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     treasury_distribution = splitters.generate_treasury_split(chain, treasury_eth)
     for location, (share, percentage) in treasury_distribution.items():
         treasury_splitter_text += f"{location}: {share:.2f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
-    
+
+    buttons = [
+        [InlineKeyboardButton(text="Push Ecosystem Splitter", callback_data=f"push_eco:{chain}")],
+        [InlineKeyboardButton(text="Push Treasury Splitter", callback_data=f"push_treasury:{chain}")],
+    ]
+
+    caption = (
+        f"*X7 Finance Ecosystem Splitters ({chain_info.name})*\n\n"
+        f"Ecosystem Splitter\n{eco_eth:.2f} {chain_info.native.upper()} (${'{:0,.0f}'.format(eco_dollar)})\n"
+        f"{eco_splitter_text}\n"
+        f"Treasury Splitter\n{treasury_eth:.2f} {chain_info.native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
+        f"{treasury_splitter_text}"
+    )
+
     await message.delete()
     await update.message.reply_photo(
         photo=api.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Ecosystem Splitters ({chain_info.name})*\n\n"
-            f"Ecosystem Splitter\n{eco_eth:.2f} {chain_info.native.upper()} (${'{:0,.0f}'.format(eco_dollar)})\n"
-            f"{eco_splitter_text}\n"
-            f"Treasury Splitter\n{treasury_eth:.2f} {chain_info.native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
-            f"{treasury_splitter_text}",
+        caption=caption,
         parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton(text="Ecosystem Splitter", url=f"{chain_info.scan_address}{ca.ECO_SPLITTER(chain)}")],
-                [InlineKeyboardButton(text="Treasury Splitter", url=f"{chain_info.scan_address}{ca.TREASURY_SPLITTER(chain)}")],
-            ]
-        ),
+        reply_markup=InlineKeyboardMarkup(buttons),
     )
 
 

@@ -5,7 +5,7 @@ import random, time
 from datetime import datetime
 
 import media
-from hooks import api, db
+from hooks import api, db, functions
 from constants import settings, text, urls
 from main import application
 
@@ -31,7 +31,7 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
     context.bot_data["current_button_data"] = current_button_data
 
     keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Click Me!", callback_data=current_button_data)]]
+        [[InlineKeyboardButton("Click Me!", callback_data=f"click_button:{current_button_data}")]]
     )
     click_me = await context.bot.send_photo(
         photo=api.get_random_pioneer(),
@@ -47,9 +47,12 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
     button_click_timestamp = time.time()
 
     current_button_data = context.bot_data.get("current_button_data")
-    button_generation_timestamp = context.bot_data.get("button_generation_timestamp")
+    if not current_button_data or update.callback_query.data != current_button_data:
+        return
 
-    if not current_button_data:
+    button_generation_timestamp = context.bot_data.get("button_generation_timestamp")
+    if not button_generation_timestamp:
+        await update.callback_query.answer("Too slow!", show_alert=True)
         return
 
     button_data = update.callback_query.data
@@ -59,6 +62,7 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.setdefault("clicked_buttons", set())
 
     if button_data in context.user_data["clicked_buttons"]:
+        await update.callback_query.answer("You have already clicked this button.", show_alert=True)
         return
 
     context.user_data["clicked_buttons"].add(button_data)
@@ -75,16 +79,15 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
             clicks = user_data[0]
             streak = user_data[2]
             total_click_count = db.clicks_get_total()
-            if clicks == 1:
-                click_message = f"🎉🎉 This is their first button click! 🎉🎉"
 
+            if clicks == 1:
+                click_message = "🎉🎉 This is their first button click! 🎉🎉"
             elif clicks % 10 == 0:
                 click_message = f"🎉🎉 They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak! 🎉🎉"
             else:
                 click_message = f"They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak!"
 
-            check_time = db.clicks_check_is_fastest(time_taken)
-            if check_time:
+            if db.clicks_check_is_fastest(time_taken):
                 click_message += f"\n\n🎉🎉 {time_taken:.3f} seconds is the new fastest time! 🎉🎉"
 
             if db.settings_get('burn'):
@@ -140,8 +143,6 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 chat_id=urls.TG_MAIN_CHANNEL_ID,
                 name="Click Me",
             )
-
-            return settings.BUTTON_TIME
 
 
 async def replies(update: Update, context: ContextTypes.DEFAULT_TYPE):

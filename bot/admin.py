@@ -5,10 +5,12 @@ import os, requests
 from datetime import datetime, timedelta
 
 from bot import auto
-from constants import ca, settings
-from hooks import  db, api
+from constants import ca, chains, settings
+from hooks import  db, api, functions
 
 defined = api.Defined()
+etherscan = api.Etherscan()
+
 
 async def command(update, context):
     user_id = update.effective_user.id
@@ -166,6 +168,40 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "*X7 Finance Telegram Bot API Status*\n\n" + "\n".join(status),
             parse_mode="Markdown")
+
+
+async def pushall_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    query = update.callback_query
+    
+    is_admin = user_id == int(os.getenv("TELEGRAM_ADMIN_ID"))
+    if not is_admin:
+        await query.answer("Admin only.", show_alert=True)
+        return
+
+    action, chain = query.data.split(":")
+    chain_info, error_message = chains.get_info(chain)
+
+    if action == "push_eco":
+        splitter_address = ca.ECO_SPLITTER(chain)
+        splitter_name = "Ecosystem Splitter"
+    elif action == "push_treasury":
+        splitter_address = ca.TREASURY_SPLITTER(chain)
+        splitter_name = "Treasury Splitter"
+    else:
+        await query.answer("Invalid action.", show_alert=True)
+        return
+
+    splitter_balance = float(etherscan.get_native_balance(splitter_address, chain))
+    if splitter_balance <= 0:
+        await query.answer(f"{chain_info.name} {splitter_name} has no balance to push.", show_alert=True)
+        return
+
+    try:
+        result = functions.splitter_push(splitter_address, chain)
+        await query.answer(result, show_alert=True)
+    except Exception as e:
+        await query.answer(f"Error during {splitter_name} push: {str(e)}", show_alert=True)
 
 
 async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
