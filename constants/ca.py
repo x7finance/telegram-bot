@@ -159,7 +159,8 @@ def LPOOL(chain, loan_id=None):
         "poly": "0xF57C56270E9FbF18B254E05168C632c9f3D9a442",
         "arb": "0x7F3F8bcF93e17734AEec765128156690e8c7e8d3",
         "op": "0x94ada63c4B836AbBA14D2a20624bDF39b9DD5Ed5",
-        "eth-sepolia": "0xcad129C25D092a48bAC897CfbA887F16762E139f"
+        "eth-sepolia": "0xcad129C25D092a48bAC897CfbA887F16762E139f",
+        "base-sepolia": "0x0E2F369Fdc070521ae23A8BcB4Bad0310044a1e8"
     }
     if chain == "eth":
         return map["eth"](loan_id)
@@ -172,7 +173,9 @@ def LPOOL_RESERVE(chain):
         "bsc": "0x3dE169E39A91519C16497C60510d7AE1ddf443B",
         "poly": "0x6e77E844CDac13698d06a00a9Ddb0465c5a78429",
         "arb": "0xB9a7346CeFc95aE5C4105c31453824A737Cd2760",
-        "op": "0xb71016b5BdbbAB0f8d1A50e66B6a757D1Dcd1Db2"
+        "op": "0xb71016b5BdbbAB0f8d1A50e66B6a757D1Dcd1Db2",
+        "eth-sepolia": "0xeEa4C68B1424cF566c2Ce7F4479fB6dbE79f53Fe",
+        "base-sepolia": "0xbae3a19E9a4644a5bb98Af0eddD42533C38E3785"
     }
     return map.get(chain)
 

@@ -4,7 +4,7 @@ from telegram.ext import *
 import os, sys, sentry_sdk, subprocess
 
 from bot import admin, auto, commands, welcome
-from constants import settings, urls
+from constants import chains, settings, urls
 from hooks import db
 
 
@@ -156,6 +156,7 @@ if __name__ == "__main__":
 
         scanners()
     else:
+        chains.CHAINS = {**chains.MAINNETS, **chains.TESTNETS} 
         application.add_handler(CommandHandler("test", test_command))
         print("Running Bot locally for testing")
 

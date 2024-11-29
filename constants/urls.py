@@ -23,12 +23,13 @@ def OS_LINK(nft):
 def RPC(chain):
     map = {
         "eth": f"https://lb.drpc.org/ogrpc?network=ethereum&dkey={os.getenv('DRPC_API_KEY')}",
-        "eth-sepolia": f"https://lb.drpc.org/ogrpc?network=sepolia&dkey={os.getenv('DRPC_API_KEY')}",
         "bsc": f"https://lb.drpc.org/ogrpc?network=bsc&dkey={os.getenv('DRPC_API_KEY')}",
         "poly": f"https://lb.drpc.org/ogrpc?network=polygon&dkey={os.getenv('DRPC_API_KEY')}",
         "arb": f"https://lb.drpc.org/ogrpc?network=arbitrum&dkey={os.getenv('DRPC_API_KEY')}",
         "op": f"https://lb.drpc.org/ogrpc?network=optimism&dkey={os.getenv('DRPC_API_KEY')}",
-        "base": f"https://lb.drpc.org/ogrpc?network=base&dkey={os.getenv('DRPC_API_KEY')}"
+        "base": f"https://lb.drpc.org/ogrpc?network=base&dkey={os.getenv('DRPC_API_KEY')}",
+        "eth-sepolia": f"https://lb.drpc.org/ogrpc?network=sepolia&dkey={os.getenv('DRPC_API_KEY')}",
+        "base-sepolia": f"https://lb.drpc.org/ogrpc?network=base-sepolia&dkey={os.getenv('DRPC_API_KEY')}"
     }
     return map.get(chain)
 
@@ -36,12 +37,13 @@ def RPC(chain):
 def SCAN_ADDRESS(chain):
     map = {
         "eth": "https://etherscan.io/address/",
-        "eth": "https://sepoloia.etherscan.io/address/",
         "bsc": "https://bscscan.com/address/",
         "poly": "https://polygonscan.com/address/",
         "arb": "https://arbiscan.io/address/",
         "op": "https://optimistic.etherscan.io/address/",
-        "base": "https://basescan.org/address/"
+        "base": "https://basescan.org/address/",
+        "eth-sepolia": "https://sepolia.etherscan.io/address/",
+        "base-sepolia": "https://sepolia.basescan.org/address/"
     }
     return map.get(chain)
 
@@ -59,12 +61,13 @@ def SCAN_GAS(chain):
 def SCAN_TOKEN(chain):
     map = {
         "eth": "https://etherscan.io/token/",
-        "eth-sepolia": "https://sepolia.etherscan.io/token/",
         "bsc": "https://bscscan.com/token/",
         "poly": "https://polygonscan.com/token/",
         "arb": "https://arbiscan.io/token/",
         "op": "https://optimistic.etherscan.io/token/",
-        "base": "https://basescan.org/token/"
+        "base": "https://basescan.org/token/",
+        "eth-sepolia": "https://sepolia.etherscan.io/token/",
+        "base-sepolia": "https://sepolia.basescan.org/token/"
     }
     return map.get(chain)
 
@@ -72,12 +75,13 @@ def SCAN_TOKEN(chain):
 def SCAN_TX(chain):
     map = {
         "eth": "https://etherscan.io/tx/",
-        "eth-sepolia": "https://sepolia.etherscan.io/tx/",
         "bsc": "https://bscscan.com/tx/",
         "poly": "https://polygonscan.com/tx/",
         "arb": "https://arbiscan.io/tx/",
         "op": "https://optimistic.etherscan.io/tx/",
-        "base": "https://basescan.org/tx/"
+        "base": "https://basescan.org/tx/",
+        "eth-sepolia": "https://sepolia.etherscan.io/tx/",
+        "base-sepolia": "https://sepolia.basescan.org/tx/"
     }
     return map.get(chain)
 

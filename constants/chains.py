@@ -47,7 +47,7 @@ class ChainInfo:
         self.com_multi = com_multi
         self.dao_multi = dao_multi
 
-CHAINS = {
+MAINNETS = {
     "eth": ChainInfo(
         True,
         True,
@@ -65,26 +65,6 @@ CHAINS = {
         "eth-main",
         5,
         urls.RPC("eth"),
-        ca.COM_MULTI("eth"),
-        ca.DAO_MULTI("eth")
-    ),
-    "eth-sepolia": ChainInfo(
-        False,
-        False,
-        "ETH",
-        "Etherscan",
-        "11155111",
-        "eth",
-        media.ETH_LOGO,
-        urls.SCAN_TOKEN("eth-sepolia"),
-        urls.SCAN_ADDRESS("eth-sepolia"),
-        urls.SCAN_TX("eth=sepolia"),
-        urls.SCAN_GAS("eth"),
-        "ether",
-        "",
-        "eth-main",
-        5,
-        urls.RPC("eth-sepolia"),
         ca.COM_MULTI("eth"),
         ca.DAO_MULTI("eth")
     ),
@@ -190,6 +170,50 @@ CHAINS = {
     )
 }
 
+TESTNETS = {
+    "eth-sepolia": ChainInfo(
+        False,
+        False,
+        "ETH Sepolia",
+        "Etherscan Sepolia",
+        "11155111",
+        "eth",
+        media.ETH_LOGO,
+        urls.SCAN_TOKEN("eth-sepolia"),
+        urls.SCAN_ADDRESS("eth-sepolia"),
+        urls.SCAN_TX("eth-sepolia"),
+        urls.SCAN_GAS("eth"),
+        "ether",
+        "",
+        "eth-main",
+        5,
+        urls.RPC("eth-sepolia"),
+        ca.COM_MULTI("eth-sepolia"),
+        ca.DAO_MULTI("eth-sepolia")
+    ),
+    "base-sepolia": ChainInfo(
+        True,
+        False,
+        "Base Sepolia",
+        "Basescan Sepolia",
+        "84532",
+        "eth",
+        media.BASE_LOGO,
+        urls.SCAN_TOKEN("base-sepolia"),
+        urls.SCAN_ADDRESS("base-sepolia"),
+        urls.SCAN_TX("base"),
+        urls.SCAN_GAS("eth"),
+        "base-testnet",
+        "-base-testnet",
+        "base-testnet",
+        2,
+        urls.RPC("base-sepolia"),
+        ca.COM_MULTI("base-sepolia"),
+        ca.DAO_MULTI("base-sepolia")
+    ),
+}
+
+CHAINS  = MAINNETS
 
 GAS_CHAINS = ["eth", "poly", "bsc"]
 
