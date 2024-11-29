@@ -8,7 +8,7 @@ from constants import chains, settings, urls
 from hooks import db
 
 
-LOCAL = True
+LOCAL = False
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
 
