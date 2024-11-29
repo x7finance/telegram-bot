@@ -8,7 +8,7 @@ from constants import chains, settings, urls
 from hooks import db
 
 
-LOCAL = False
+LOCAL = True
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
 
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("ping", admin.ping))
     application.add_handler(CommandHandler("wen", admin.wen))
 
-    application.add_handler(CallbackQueryHandler(auto.button_function, pattern="^click_button:"))
+    application.add_handler(CallbackQueryHandler(auto.button_function, pattern="^click_button:\d+$"))
     application.add_handler(CallbackQueryHandler(admin.pushall_callback, pattern="^push_(eco|treasury):"))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies))
 
