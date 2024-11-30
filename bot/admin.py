@@ -23,7 +23,7 @@ async def command(update, context):
         keyboard = [
             [
                 InlineKeyboardButton(
-                    f"{setting.replace("_", " ").title()}: {'ON' if status else 'OFF'}",
+                    f"{setting.replace('_', ' ').title()}: {'ON' if status else 'OFF'}",
                     callback_data=f"toggle_{setting}"
                 )
             ]
@@ -73,7 +73,7 @@ async def command_toggle(update, context):
         keyboard = [
             [
                 InlineKeyboardButton(
-                    f"{s.replace("_", " ").title()}: {'ON' if v else 'OFF'}",
+                    f"{s.replace('_', ' ').title()}: {'ON' if v else 'OFF'}",
                     callback_data=f"toggle_{s}"
                 )
             ]
