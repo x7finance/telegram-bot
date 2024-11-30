@@ -167,7 +167,7 @@ async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     when = round(time.time())
     try:
-        blocks = {chain: etherscan.get_block(chain, when) for chain in chains.CHAINS}
+        blocks = {chain: etherscan.get_block(chain, when) for chain in chains.active_chains()}
     except Exception:
         blocks = 0
     blocks_text = "\n".join([f"{block_type.upper()}: `{block}`" for block_type, block in blocks.items()])
@@ -585,7 +585,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
             
     elif token.upper() == "X7D":
-        token_info = chains.CHAINS[chain]
+        token_info = chains.active_chains()[chain]
         price = etherscan.get_native_price(chain)
     else:
         await update.message.reply_text("Token not found, please use X7 tokens only")
@@ -775,10 +775,10 @@ async def ecosystem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def factory(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
-    for chain in chains.CHAINS:
+    for chain in chains.active_chains():
         buttons_row = []
-        name = chains.CHAINS[chain].name
-        address = chains.CHAINS[chain].scan_address
+        name = chains.active_chains()[chain].name
+        address = chains.active_chains()[chain].scan_address
         buttons_row.append(
                 InlineKeyboardButton(
                     text=name,
@@ -1832,7 +1832,7 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     pair_text = ""
     total = 0
-    for chain in chains.CHAINS:
+    for chain in chains.active_chains():
         chain_info, error_message = chains.get_info(chain)
         contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(ca.FACTORY(chain)),
@@ -2004,9 +2004,9 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         total_lpool_reserve_dollar = 0
         total_lpool_dollar = 0
         total_dollar = 0
-        for chain in chains.CHAINS:
-            native = chains.CHAINS[chain].native.lower()
-            chain_name = chains.CHAINS[chain].name
+        for chain in chains.active_chains():
+            native = chains.active_chains()[chain].native.lower()
+            chain_name = chains.active_chains()[chain].name
             chain_lpool = ca.LPOOL(chain)
             try:
                 price = etherscan.get_native_price(chain)
@@ -2149,10 +2149,10 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
-    for chain in chains.CHAINS:
+    for chain in chains.active_chains():
         buttons_row = []
-        name = chains.CHAINS[chain].name
-        address = chains.CHAINS[chain].scan_address
+        name = chains.active_chains()[chain].name
+        address = chains.active_chains()[chain].scan_address
         buttons_row.append(
                 InlineKeyboardButton(
                     text=name,
@@ -3376,8 +3376,8 @@ async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
             search = " ".join(context.args[:-1])
             chain_name = context.args[-1].lower()
         
-            if chain_name in chains.CHAINS:
-                chain = chains.CHAINS[chain_name].name.lower()
+            if chain_name in chains.active_chains():
+                chain = chains.active_chains()[chain_name].name.lower()
             else:
                 search = " ".join(context.args)
                 chain = None

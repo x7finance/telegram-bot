@@ -37,7 +37,7 @@ async def command(update, context):
         )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text("Current Bot Settings:", reply_markup=reply_markup)
+        await update.message.reply_text("Bot Settings", reply_markup=reply_markup)
 
 
 async def command_toggle(update, context):
@@ -84,7 +84,7 @@ async def command_toggle(update, context):
         )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("Current Bot Settings:", reply_markup=reply_markup)
+        await query.edit_message_text("Bot Settings", reply_markup=reply_markup)
 
     except Exception as e:
         await query.answer(

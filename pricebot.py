@@ -29,7 +29,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             
     if tools.is_eth(search):
         if chain == None:
-            for chain in chains.CHAINS:
+            for chain in chains.active_chains():
                 scan = tools.get_scan(search, chain)
                 if scan:
                     break
@@ -40,7 +40,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 return
         else:
             scan = tools.get_scan(search, chain)
-        chain_id = chains.CHAINS[chain].id
+        chain_id = chains.active_chains()[chain].id
         token_address = str(search.lower())
         if token_address in scan:
             
@@ -147,8 +147,8 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             top_percent = "❓ Top Holder - Unknown"
             
 
-        chain_name = chains.CHAINS[chain].name
-        chain_dext = chains.CHAINS[chain].dext
+        chain_name = chains.active_chains()[chain].name
+        chain_dext = chains.active_chains()[chain].dext
         dex_tools = urls.DEX_TOOLS(chain_dext)
         try:
             if etherscan.get_verified(token_address, chain):

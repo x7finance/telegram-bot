@@ -37,7 +37,7 @@ async def error(context):
 
 async def log_loop(chain, poll_interval):
     try:
-        w3 = chains.CHAINS[chain].w3
+        w3 = chains.active_chains()[chain].w3
         factory = w3.eth.contract(address=ca.FACTORY(chain), abi=abis.read("factory"))
         pair_filter = factory.events.PairCreated.create_filter(fromBlock="latest")
 
@@ -336,7 +336,7 @@ async def main():
     while True:
     
         tasks = []
-        for chain, chain_info in chains.CHAINS.items():
+        for chain, chain_info in chains.active_chains().items():
             if chain_info.live:
                 task = log_loop(chain, 20)
                 tasks.append(task)

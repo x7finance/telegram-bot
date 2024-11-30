@@ -214,30 +214,30 @@ TESTNETS = {
     ),
 }
 
-CHAINS  = {**MAINNETS, **TESTNETS} if db.settings_get("testnets") else MAINNETS
+
 GAS_CHAINS = ["eth", "poly", "bsc"]
 
 
+def active_chains():
+    return {**MAINNETS, **TESTNETS} if db.settings_get("testnets") else MAINNETS
+
+
 def full_names():
-    chain_names = [chain.name for chain in CHAINS.values()]
+    chain_names = [chain.name for chain in active_chains().values()]
     return "\n".join(chain_names)
 
 
-def short_names():
-    chain_list = [key.upper() for key in CHAINS.keys()]
-    return "\n".join(chain_list)
-
 
 def get_chain(chat_id):
-    for chain_name, chain_info in CHAINS.items():
+    for chain_name, chain_info in active_chains().items():
         if chat_id == chain_info.tg:
             return chain_name
     return "eth"
 
 
 def get_info(chain, token=None):
-    if chain in CHAINS:
-        chain_info = CHAINS[chain]
+    if chain in active_chains():
+        chain_info = active_chains()[chain]
 
         if token and not chain_info.trading:
             return None, f"{chain_info.name} tokens not launched yet!"
@@ -245,3 +245,8 @@ def get_info(chain, token=None):
         return chain_info, None
     else:
         return None, f'Chain not recognised, Please use one of the following abbreviations:\n\n{short_names()}'
+
+
+def short_names():
+    chain_list = [key.upper() for key in active_chains().keys()]
+    return "\n".join(chain_list)

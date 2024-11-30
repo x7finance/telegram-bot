@@ -18,7 +18,7 @@ class BitQuery:
 
 
     def get_nft_holder_list(self, nft, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         query = f'''
         {{
         EVM(dataset: archive, network: {chain_info.name.lower()}) {{
@@ -50,7 +50,7 @@ class BitQuery:
 
 
     def get_proposers(self, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         query = f'''
         {{
         EVM(dataset: archive, network: {chain_info.name.lower()}) {{
@@ -92,7 +92,7 @@ class Blockspan:
 
     def get_nft_data(self, nft, chain):
         try:
-            chain_info = chains.CHAINS[chain]
+            chain_info = chains.active_chains()[chain]
             endpoint = f"collections/contract/{nft}?chain={chain_info.blockspan}"
             response = requests.get(
                 self.url + endpoint,
@@ -128,7 +128,7 @@ class Etherscan:
         
 
     def get_abi(self, contract: str, chain: str) -> str:
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=contract&action=getsourcecode&address={contract}&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
@@ -136,7 +136,7 @@ class Etherscan:
 
 
     def get_block(self, chain: str, time: "int") -> str:
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=block&action=getblocknobytime&timestamp={time}&closest=before&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
@@ -144,7 +144,7 @@ class Etherscan:
 
 
     def get_daily_tx_count(self, contract: str, chain: str, ) -> int:
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         yesterday = int(time.time()) - 86400
         block_yesterday = self.get_block(chain, yesterday)
         block_now = self.get_block(chain, int(time.time()))
@@ -167,14 +167,14 @@ class Etherscan:
 
 
     def get_gas(self, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=gastracker&action=gasoracle&apikey={self.key}"
         response = requests.get(url)
         return response.json()
 
 
     def get_native_balance(self, wallet, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=account&action=balancemulti&address={wallet}&tag=latest&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
@@ -182,7 +182,7 @@ class Etherscan:
 
 
     def get_native_price(self, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
 
         if chain == "poly":
             field = "maticusd"
@@ -199,7 +199,7 @@ class Etherscan:
 
     def get_stables_balance(self, wallet, token, chain):
         try:
-            chain_info = chains.CHAINS[chain]
+            chain_info = chains.active_chains()[chain]
             url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={self.key}"
             response = requests.get(url)
             data = response.json()
@@ -209,7 +209,7 @@ class Etherscan:
 
 
     def get_supply(self, token, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=stats&action=tokensupply&contractaddress={token}&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
@@ -218,7 +218,7 @@ class Etherscan:
 
     def get_token_balance(self, wallet, token, chain):
         try:
-            chain_info = chains.CHAINS[chain]
+            chain_info = chains.active_chains()[chain]
             url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={self.key}"
             response = requests.get(url)
             data = response.json()
@@ -228,28 +228,28 @@ class Etherscan:
 
 
     def get_tx_from_hash(self, tx, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=proxy&action=eth_getTransactionByHash&txhash={tx}&apikey={self.key}"
         response = requests.get(url)
         return response.json()
 
 
     def get_tx(self, address, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlist&sort=desc&address={address}&apikey={self.key}"
         response = requests.get(url)
         return response.json()
 
 
     def get_internal_tx(self, address, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlistinternal&sort=desc&address={address}&apikey={self.key}"
         response = requests.get(url)
         return response.json()
 
 
     def get_verified(self, contract, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=contract&action=getsourcecode&address={contract}&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
@@ -257,7 +257,7 @@ class Etherscan:
 
 
     def get_x7r_supply(self, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={ca.X7R(chain)}&address={ca.DEAD}&tag=latest&apikey={self.key}"
         response = requests.get(url)
         data = response.json()
@@ -275,7 +275,7 @@ class Dextools:
 
 
     def get_dex(self, pair, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         endpoint = f'pool/{chain_info.dext}/{pair}'
 
         response = requests.get(self.url + endpoint, headers=self.headers)
@@ -293,7 +293,7 @@ class Dextools:
     
 
     def get_price(self, token, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         endpoint = f'token/{chain_info.dext}/{token.lower()}/price'
 
         response = requests.get(self.url + endpoint, headers=self.headers)
@@ -331,7 +331,7 @@ class Dextools:
         
 
     def get_token_info(self, pair, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         endpoint = f"token/{chain_info.dext}/{pair}/info"
         response = requests.get(self.url + endpoint, headers=self.headers)
 
@@ -371,7 +371,7 @@ class Dextools:
        
         
     def get_token_name(self, address, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         endpoint = f"token/{chain_info.dext}/{address.lower()}"
         response = requests.get(self.url + endpoint, headers=self.headers)
         if response.status_code == 200:
@@ -397,7 +397,7 @@ class Dextools:
 
 
     def get_liquidity(self, pair, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
 
         endpoint = f'pool/{chain_info.dext}/{pair}/liquidity'
         response = requests.get(self.url + endpoint, headers=self.headers)
@@ -425,7 +425,7 @@ class Dextools:
     
     
     def get_pool_price(self, chain, pair):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         endpoint = f'pool/{chain_info.dext}/{pair}/price'
         price = 0
         
@@ -536,7 +536,7 @@ class Defined:
 
 
     def get_price_change(self, address, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
 
         current_timestamp = int(datetime.now().timestamp()) - 300
         one_hour_ago_timestamp = int((datetime.now() - timedelta(hours=1)).timestamp())
@@ -603,7 +603,7 @@ class Defined:
 
 
     def get_token_image(self, token, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
 
         image = f'''
             query {{
@@ -628,7 +628,7 @@ class Defined:
 
 
     def get_pair(self, address, chain):
-        chain_info = chains.CHAINS[chain]
+        chain_info = chains.active_chains()[chain]
         
         pair_query = f"""query {{
             listPairsWithMetadataForToken (tokenAddress: "{address}" networkId: {chain_info.id}) {{
@@ -652,7 +652,7 @@ class Defined:
 
     def get_volume(self, pair, chain):
         try:
-            chain_info = chains.CHAINS[chain]
+            chain_info = chains.active_chains()[chain]
 
             volume = f'''
                 query {{
@@ -679,7 +679,7 @@ class Defined:
 
     def search(self, address, chain=None):
         if chain is not None:
-            chain_info = chains.CHAINS[chain]
+            chain_info = chains.active_chains()[chain]
             search_query = f"""query {{
                 filterTokens(phrase:"{address}", rankings: {{attribute:liquidity}} limit:1, filters: {{network:[{chain_info.id}]}}) {{
                     results{{

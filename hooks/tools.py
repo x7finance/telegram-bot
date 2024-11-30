@@ -79,7 +79,7 @@ def get_ill_number(term):
 
 
 def get_last_buyback(hub_address, chain):
-    chain_native = chains.CHAINS[chain].native
+    chain_native = chains.active_chains()[chain].native
     hub = etherscan.get_internal_tx(hub_address, chain)
     hub_filter = [d for d in hub["result"] if d["from"] in f"{hub_address}".lower()]
     value = round(int(hub_filter[0]["value"]) / 10**18, 3)
@@ -95,7 +95,7 @@ def get_random_pioneer():
 
 
 def get_scan(token: str, chain: str) -> dict:
-    chain_info = chains.CHAINS[chain]
+    chain_info = chains.active_chains()[chain]
     url = f"https://api.gopluslabs.io/api/v1/token_security/{chain_info.id}?contract_addresses={token}"
     response = requests.get(url)
     return response.json()["result"]
