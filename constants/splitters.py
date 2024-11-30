@@ -1,5 +1,3 @@
-# SPLITTERS
-
 from constants import ca, chains, tokens
 from hooks import api
 

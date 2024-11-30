@@ -1,16 +1,16 @@
-# NFTS
-
 from constants import ca
 from hooks import api
+
+blockspan = api.Blockspan()
 
 
 def data(chain):
     return {
-        "eco": api.get_nft_data(ca.ECO(chain), chain),
-        "liq": api.get_nft_data(ca.LIQ(chain), chain),
-        "dex": api.get_nft_data(ca.DEX(chain), chain),
-        "borrow": api.get_nft_data(ca.BORROW(chain), chain),
-        "magister": api.get_nft_data(ca.MAGISTER(chain), chain),
+        "eco": blockspan.get_nft_data(ca.ECO(chain), chain),
+        "liq": blockspan.get_nft_data(ca.LIQ(chain), chain),
+        "dex": blockspan.get_nft_data(ca.DEX(chain), chain),
+        "borrow": blockspan.get_nft_data(ca.BORROW(chain), chain),
+        "magister": blockspan.get_nft_data(ca.MAGISTER(chain), chain),
     }
 
 

@@ -1,5 +1,3 @@
-# SETTINGS
-
 import random
 from datetime import datetime
 
@@ -7,6 +5,7 @@ from datetime import datetime
 def random_button_time():
     time = random.randint(3600, 86400)
     return time
+
 
 def burn_amount():
     amounts = [777, 1000, 1500, 2000]

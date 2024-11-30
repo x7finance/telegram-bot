@@ -1,5 +1,3 @@
-# CHAINS
-
 from constants import ca, urls
 import media
 
@@ -46,6 +44,7 @@ class ChainInfo:
         self.w3 = Web3(Web3.HTTPProvider(w3))
         self.com_multi = com_multi
         self.dao_multi = dao_multi
+
 
 MAINNETS = {
     "eth": ChainInfo(
@@ -170,6 +169,7 @@ MAINNETS = {
     )
 }
 
+
 TESTNETS = {
     "eth-sepolia": ChainInfo(
         False,
@@ -214,7 +214,6 @@ TESTNETS = {
 }
 
 CHAINS  = MAINNETS
-
 GAS_CHAINS = ["eth", "poly", "bsc"]
 
 

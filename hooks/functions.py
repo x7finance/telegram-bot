@@ -1,5 +1,3 @@
-# FUNCTIONS
-
 import  os
 from constants import abis, ca, chains
 

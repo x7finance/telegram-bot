@@ -1,10 +1,9 @@
-# TOKEN CA
-
 def X7R(chain):
     map = {
         "base": "0xEe6bA04895613b20a9B200e9EB25293576f8F1e4",
     }
     return map.get(chain, "0x70008F18Fc58928dcE982b0A69C2c21ff80Dca54")
+
 
 def X7DAO(chain):
     map = {
@@ -12,11 +11,13 @@ def X7DAO(chain):
     }
     return map.get(chain, "0x7105E64bF67ECA3Ae9b123F0e5Ca2b83b2eF2dA0")
 
+
 def X7101(chain):
     map = {
         "base": "0x6b7B78552aCB26B161f39E5731B1A2ebc2436253",
     }
     return map.get(chain, "0x7101a9392eac53b01e7c07ca3baca945a56ee105")
+
 
 def X7102(chain):
     map = {
@@ -24,11 +25,13 @@ def X7102(chain):
     }
     return map.get(chain, "0x7102dc82ef61bfb0410b1b1bf8ea74575bf0a105")
 
+
 def X7103(chain):
     map = {
         "base": "0xfF3a265b30450b41BaCf1B2413792da4769C7003",
     }
     return map.get(chain, "0x7103eBdbF1f89be2d53EFF9B3CF996C9E775c105")
+
 
 def X7104(chain):
     map = {
@@ -36,12 +39,14 @@ def X7104(chain):
     }
     return map.get(chain, "0x7104D1f179Cc9cc7fb5c79Be6Da846E3FBC4C105")
 
+
 def X7105(chain):
     map = {
         "base": "0x941d37f4BCc92236ebE5aF46777b7E816d6d418A",
     }
     return map.get(chain, "0x7105FAA4a26eD1c67B8B2b41BEc98F06Ee21D105")
-    
+
+
 def X7100(chain):
     return [
         X7101(chain), 
@@ -51,11 +56,13 @@ def X7100(chain):
         X7105(chain)
     ]
 
+
 def X7D(chain):
     map = {
         "base": "0x446906ed090364EC7d1b16cA8Fb6D0fFC50854bD",
     }
     return map.get(chain, "0x7D000a1B9439740692F8942A296E1810955F5000")
+
 
 # NFTS
 
@@ -65,11 +72,13 @@ def ECO(chain):
     }
     return map.get(chain, "0x7000cae2c1016e7de45ec9b54f1835b966bca4f7")
 
+
 def LIQ(chain):
     map = {
         "base": "0xEe6bA04895613b20a9B200e9EB25293576f8F1e4",
     }
     return map.get(chain, "0x7000f8270b955377e047da8202ae3c408186b4f7")
+
 
 def DEX(chain):
     map = {
@@ -77,11 +86,13 @@ def DEX(chain):
     }
     return map.get(chain, "0x7000b3B5e4e126610A7b7d1Af2D2DE8685c7C4f7")
 
+
 def BORROW(chain):
     map = {
         "base": "0xE1c7244Cc32980Db8dB191FD87731E091057Dc6F",
     }
     return map.get(chain, "0x7000D5d7707Bf86b317deC635e459E47b9aBD4F7")
+
 
 def MAGISTER(chain):
     map = {
@@ -89,7 +100,9 @@ def MAGISTER(chain):
     }
     return map.get(chain, "0x7dA0bb55E4097FC2d78a1822105057F36C5F360d")
 
+
 PIONEER = "0x70000299ee8910ccacd97b1bb560e34f49c9e4f7"
+
 
 def NFTS(chain):
     contract_functions = [ECO, LIQ, DEX, BORROW, MAGISTER]
@@ -110,11 +123,14 @@ def BURNER(chain):
     }
     return map.get(chain)
 
+
 def DEFAULT_TOKEN_LIST(chain):
     return "0x7deF192aDB727777c5f24c05018cfbaFDFaD805a"
 
+
 def DISCOUNT_ROUTER(chain):
     return "0x7de8dd6146aa8b4a2ed8343aa83bc8874fb17000"
+
 
 def ECO_SPLITTER(chain):
     map = {
@@ -122,7 +138,9 @@ def ECO_SPLITTER(chain):
     }
     return map.get(chain, "0xA65DF22BC2ec986859B43D1803b75D48232f2902")
 
+
 def FACTORY(chain):
+ 
     return "0x8B76C05676D205563ffC1cbd11c0A6e3d83929c5"
 
 def LENDING_DISCOUNT(chain):
@@ -136,6 +154,7 @@ def LENDING_DISCOUNT(chain):
     }
     return map.get(chain)
 
+
 def LIQUIDITY_TREASURY(chain):
     map = {
         "arb": "0xA9570aDDC58A86C44A50401c03d40418BAe76F5B",
@@ -146,6 +165,7 @@ def LIQUIDITY_TREASURY(chain):
         "poly": "0xa413f4d546321407D4e809d681094be31d4a70d2"
     }
     return map.get(chain) 
+
 
 def LPOOL(chain, loan_id=None):
     eth_map = {
@@ -166,6 +186,7 @@ def LPOOL(chain, loan_id=None):
         return map["eth"](loan_id)
     return map.get(chain)
 
+
 def LPOOL_RESERVE(chain):
     map = {
         "eth": "0x7Ca54e9Aa3128bF15f764fa0f0f93e72b5267000",
@@ -179,6 +200,7 @@ def LPOOL_RESERVE(chain):
     }
     return map.get(chain)
 
+
 def ROUTER(chain):
     map = {
         "arb": "0x7C79C9483Ee518783b31C78920f73D0fDeabe246",
@@ -190,6 +212,7 @@ def ROUTER(chain):
     }
     return map.get(chain) 
 
+
 def TIME_LOCK(chain):
     map = {
         "eth": "0x7000F4Cddca46FB77196466C3833Be4E89ab810C",
@@ -200,7 +223,8 @@ def TIME_LOCK(chain):
         "base": "0xeB108169a1962874A02bbBBAE8F123C97EA297dA"
     }
     return map.get(chain)
-    
+
+  
 def TREASURY_SPLITTER(chain):
     map = {
         "eth": "0x7000706E2727686eDF46cA0E42690F87b9de1999",
@@ -212,12 +236,14 @@ def TREASURY_SPLITTER(chain):
     }
     return map.get(chain)
 
+
 def X7100_DISCOUNT(chain):
     map = {
         "eth": "0x7100AAcC6047281b105201cb9e0DEcF9Ae5431DA",
     }
     return map.get(chain, "0x383f768222818aE9C391600913DD8Ab309254F39")
     
+
 def X7100_LIQ_HUB(chain):
     map = {
         "eth": "0x1df9B4aC212ef4d8DbEc7Fb5623c33E04970Db3f",
@@ -229,11 +255,13 @@ def X7100_LIQ_HUB(chain):
     }
     return map.get(chain)
 
+
 def X7DAO_DISCOUNT(chain):
     map = {
         "eth": "0x7da05D75f51056f3B83b43F397668Cf6A5051cDa",
     }
     return map.get(chain, "0x864C53A08A99DaDc219b309Aa867c45D222d0938")
+
 
 def X7DAO_LIQ_HUB(chain):
     map = {
@@ -244,12 +272,14 @@ def X7DAO_LIQ_HUB(chain):
         "arb": "0x22B31DC2D1cD37788202a4b9AbFfd17b56b186aa"
     }
     return map.get(chain)
-    
+
+
 def X7R_DISCOUNT(chain):
     map = {
         "eth": "0x712bC6ddcd97A776B2482531058C629456B93eda",
     }
     return map.get(chain, "0xdd2cD5fe4248FD5656d3240EB7FdbD5c9930a686")
+
 
 def X7R_LIQ_HUB(chain):
     map = {
@@ -262,6 +292,7 @@ def X7R_LIQ_HUB(chain):
     }
     return map.get(chain)
 
+
 def XCHANGE_DISCOUNT(chain):
     map = {
         "eth": "0x6377c6219c7Ab053F17cA9E3D823e63473e669A2",
@@ -273,12 +304,14 @@ def XCHANGE_DISCOUNT(chain):
     }
     return map.get(chain)
 
+
 def HUBS(chain):
     return {
         "x7r": X7R_LIQ_HUB(chain),
         "x7dao": X7DAO_LIQ_HUB(chain),
         **{f"x710{i}": X7100_LIQ_HUB(chain) for i in range(6)},
     }
+
 
 def TEMP_HUBS(token):
     map = {
@@ -300,17 +333,22 @@ def X7DAO_PAIR(chain):
     return ["0xb8dE6270640092463988B6860d68CA63dC7cF700",
             "0x75311ee016c82e7770e4aca73a0d142f96ddb969"]
 
+
 def X7101_PAIR(chain):
     return "0x63deeba8d883bc820bfaab547c7ea26da289ca3e"
+
 
 def X7102_PAIR(chain):
     return "0xf54110316d169ede3ac6becbcd98beaf884ac524"
 
+
 def X7103_PAIR(chain):
     return "0x4d5eb653e06138ab001db55478bbf8d6fb750ea5"
 
+
 def X7104_PAIR(chain):
     return "0x27fd46c6af01a7221e61b88f47546a10d34a7c4e"
+
 
 def X7105_PAIR(chain):
     return "0x6ea054f8538f56437981a46b30406c5cbb09e97f"
@@ -321,8 +359,10 @@ def X7105_PAIR(chain):
 def DAO_MULTI(chain): 
     return "0x7dcb82DecBEb1f41BC9eb00a552B085ba356a256"
 
+
 def COM_MULTI(chain): 
     return "0x7063E83dF5349833A21f744398fD39D42fbC00f8"
+
 
 DEPLOYER = "0x7000a09c425abf5173ff458df1370c25d1c58105"
 

@@ -1,7 +1,7 @@
 from telegram import *
 from telegram.ext import *
 
-from hooks import api
+from hooks import api, tools
 from constants import ca, chains, tokens, urls
 
 coingecko = api.CoinGecko()
@@ -12,7 +12,7 @@ etherscan = api.Etherscan()
 
 async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, chain):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    if not api.is_eth(search):
+    if not tools.is_eth(search):
         if search.lower() in tokens.BLUE_CHIPS:
             token = coingecko.search(search)
             if token['coins'] != []:
@@ -27,10 +27,10 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 )
                 return
             
-    if api.is_eth(search):
+    if tools.is_eth(search):
         if chain == None:
             for chain in chains.CHAINS:
-                scan = api.get_scan(search, chain)
+                scan = tools.get_scan(search, chain)
                 if scan:
                     break
             else:
@@ -39,7 +39,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 )
                 return
         else:
-            scan = api.get_scan(search, chain)
+            scan = tools.get_scan(search, chain)
         chain_id = chains.CHAINS[chain].id
         token_address = str(search.lower())
         if token_address in scan:

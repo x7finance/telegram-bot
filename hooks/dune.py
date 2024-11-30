@@ -1,5 +1,3 @@
-# DUNE
-
 import os
 from datetime import datetime
 from requests import get, post

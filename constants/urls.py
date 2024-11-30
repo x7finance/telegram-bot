@@ -1,5 +1,3 @@
-# URLS
-
 import os
 
 

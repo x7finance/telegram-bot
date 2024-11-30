@@ -1,5 +1,3 @@
-# TAX
-
 SWAP_GAS = 356190
 
 INFO = {
@@ -35,6 +33,7 @@ INFO = {
     },
 }
 
+
 DISCOUNTS = {
     "x7dao_discount_x7100": 50,
     "liq_discount_x7r": 25,
@@ -45,6 +44,7 @@ DISCOUNTS = {
     "eco_discount_x7100": 25,
     "magister_discount": 25,
 }
+
 
 def generate_info(chain):
     chain_info = INFO.get(chain)

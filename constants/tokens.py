@@ -1,5 +1,3 @@
-# TOKENS
-
 from constants import ca, chains
 from typing import Union
 
@@ -14,6 +12,7 @@ class TokensInfo:
         self.name = name
         self.ca = ca
         self.pairs = pairs
+
 
 TOKENS = {
     "X7DAO": {chain: TokensInfo("X7DAO", ca.X7DAO(chain), ca.X7DAO_PAIR(chain)) for chain in chains.CHAINS},

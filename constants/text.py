@@ -1,6 +1,4 @@
-# TEXT
-
-from hooks import api
+from hooks import tools
 from constants import chains
 
 
@@ -448,7 +446,7 @@ QUOTES = [
 
 def welcome(user):
     return (
-        f"Welcome {api.escape_markdown(user)} to X7 Finance\n\n"
+        f"Welcome {tools.escape_markdown(user)} to X7 Finance\n\n"
         f"Home of Xchange - A censorship resistant DEX offering initial loaned liquidity on\n\n"
         f"{chains.full_names()}"
     )

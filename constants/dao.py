@@ -1,5 +1,3 @@
-# DAO
-
 from constants import ca
 
 

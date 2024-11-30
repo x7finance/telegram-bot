@@ -1,10 +1,10 @@
-import random, requests, os, time, json
+import requests, os, time, json
 
 from farcaster import Warpcast
 from datetime import datetime, timedelta
 from pycoingecko import CoinGeckoAPI
 
-from constants import ca, chains, urls
+from constants import ca, chains
 
 
 class BitQuery:
@@ -80,6 +80,47 @@ class BitQuery:
             return None
         
 
+class Blockspan:
+    def __init__(self):
+        self.today = datetime.now().strftime("%Y-%m-%d")
+        self.url = "https://api.blockspan.com/v1/"
+        self.headers = {
+                    "accept": "application/json",
+                    "X-API-KEY": os.getenv("BLOCKSPAN_API_KEY"),
+                }
+
+
+    def get_nft_data(self, nft, chain):
+        try:
+            chain_info = chains.CHAINS[chain]
+            endpoint = f"collections/contract/{nft}?chain={chain_info.blockspan}"
+            response = requests.get(
+                self.url + endpoint,
+                headers=self.headers
+            )
+            data = response.json()
+
+            info = {"total_tokens": 0, "floor_price": 0}
+
+            total_tokens = data.get("total_tokens", None)
+            if total_tokens is not None:
+                info["total_tokens"] = int(total_tokens)
+
+            exchange_data = data.get("exchange_data")
+            if exchange_data is not None:
+                for item in exchange_data:
+                    stats = item.get("stats")
+                    if stats is not None:
+                        floor_price = stats.get("floor_price")
+                        if floor_price is not None:
+                            info["floor_price"] = floor_price
+                            break
+            return info
+
+        except Exception:
+            return {"total_tokens": None, "floor_price": None}        
+
+
 class Etherscan:
     def __init__(self):
         self.url = "https://api.etherscan.io/v2/api"
@@ -154,7 +195,6 @@ class Etherscan:
         response = requests.get(url)
         data = response.json()
         return float(data["result"][field]) / 1**18
-
 
 
     def get_stables_balance(self, wallet, token, chain):
@@ -635,7 +675,8 @@ class Defined:
             return "${:,.0f}".format(float(current_value))
         except Exception as e:
             return None
-        
+
+
     def search(self, address, chain=None):
         if chain is not None:
             chain_info = chains.CHAINS[chain]
@@ -706,6 +747,7 @@ class GitHub:
         self.headers = {
         "Authorization": f"token {os.getenv('GITHUB_PAT')}"
     }
+
 
     def get_issues(self):
         endpoint = "issues"
@@ -836,184 +878,20 @@ class Opensea:
         return data
 
 
-# OTHER
-
-def convert_datetime(input_value):
-    try:
-        if isinstance(input_value, str):
-            datetime_obj = datetime.strptime(input_value, '%Y-%m-%d %H:%M')
-            return datetime_obj.timestamp()
-        elif isinstance(input_value, (int, float)):
-            datetime_obj = datetime.fromtimestamp(input_value)
-            return datetime_obj.strftime('%Y-%m-%d %H:%M')
-        else:
-            return "Invalid input type. Provide a datetime string or a timestamp."
-    except ValueError:
-        return "Invalid input format. Ensure datetime strings use 'YYYY-MM-DD HH:MM'."
+class Snapshot:
+    def __init__(self):
+        self.headers = {
+            "accept": "application/json",
+            "X-API-KEY": os.getenv("OPENSEA_API_KEY")
+        }
+        self.url = f"https://hub.snapshot.org/graphql"
 
 
-def escape_markdown(text):
-    characters_to_escape = ['*', '_', '`']
-    for char in characters_to_escape:
-        text = text.replace(char, '\\' + char)
-    return text
-
-
-def format_schedule(schedule1, schedule2, native_token):
-    current_datetime = datetime.now()
-    next_payment_datetime = None
-    next_payment_value = None
-
-    def format_date(date):
-        return datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S")
-
-    def calculate_time_remaining_str(time_remaining):
-        days, seconds = divmod(time_remaining.total_seconds(), 86400)
-        hours, seconds = divmod(seconds, 3600)
-        minutes, seconds = divmod(seconds, 60)
-        return f"{int(days)} days, {int(hours)} hours, {int(minutes)} minutes"
-
-    all_dates = sorted(set(schedule1[0] + schedule2[0]))
-
-    schedule_list = []
-
-    for date in all_dates:
-        value1 = next((v for d, v in zip(schedule1[0], schedule1[1]) if d == date), 0)
-        value2 = next((v for d, v in zip(schedule2[0], schedule2[1]) if d == date), 0)
-
-        total_value = value1 + value2
-
-        formatted_date = format_date(date)
-        formatted_value = total_value / 10**18
-        sch = f"{formatted_date} - {formatted_value:.3f} {native_token}"
-        schedule_list.append(sch)
-
-        if datetime.fromtimestamp(date) > current_datetime:
-            if next_payment_datetime is None or datetime.fromtimestamp(date) < next_payment_datetime:
-                next_payment_datetime = datetime.fromtimestamp(date)
-                next_payment_value = formatted_value
-
-    if next_payment_datetime:
-        time_until_next_payment = next_payment_datetime - current_datetime
-        time_remaining_str = calculate_time_remaining_str(time_until_next_payment)
-
-        schedule_list.append(f"\nNext Payment Due:\n{next_payment_value} {native_token}\n{time_remaining_str}")
-
-    return "\n".join(schedule_list)
-
-
-def get_ill_number(term):
-    for chain, addresses in ca.ILL_ADDRESSES.items():
-        for ill_number, contract_address in addresses.items():
-            if term.lower() == contract_address.lower():
-                return ill_number
-
-
-def get_last_buyback(hub_address, chain):
-    chain_native = chains.CHAINS[chain].native
-    hub = Etherscan().get_internal_tx(hub_address, chain)
-    hub_filter = [d for d in hub["result"] if d["from"] in f"{hub_address}".lower()]
-    value = round(int(hub_filter[0]["value"]) / 10**18, 3)
-    dollar = float(value) * float(Etherscan.get_native_price(chain_native))
-    time = datetime.fromtimestamp(int(hub_filter[0]["timeStamp"]))
-    timestamp =int(hub_filter[0]["timeStamp"])
-    return value, dollar, time, timestamp
-
-
-def get_nft_data(nft, chain):
-    try:
-
-        chain_info = chains.CHAINS[chain]
-        url = f"https://api.blockspan.com/v1/collections/contract/{nft}?chain={chain_info.blockspan}"
-        response = requests.get(
-            url,
-            headers={
-                "accept": "application/json",
-                "X-API-KEY": os.getenv("BLOCKSPAN_API_KEY"),
-            }
-        )
-        data = response.json()
-
-        info = {"total_tokens": 0, "floor_price": 0}
-
-        total_tokens = data.get("total_tokens", None)
-        if total_tokens is not None:
-            info["total_tokens"] = int(total_tokens)
-
-        exchange_data = data.get("exchange_data")
-        if exchange_data is not None:
-            for item in exchange_data:
-                stats = item.get("stats")
-                if stats is not None:
-                    floor_price = stats.get("floor_price")
-                    if floor_price is not None:
-                        info["floor_price"] = floor_price
-                        break
-        return info
-
-    except Exception:
-        return {"total_tokens": None, "floor_price": None}
-
-
-def get_random_pioneer():
-    number = f"{random.randint(1, 12)}".zfill(4)
-    return f"{urls.PIONEERS}{number}.png"
-
-
-def get_scan(token: str, chain: str) -> dict:
-    chain_info = chains.CHAINS[chain]
-    url = f"https://api.gopluslabs.io/api/v1/token_security/{chain_info.id}?contract_addresses={token}"
-    response = requests.get(url)
-    return response.json()["result"]
-
-
-def get_snapshot():
-    url = "https://hub.snapshot.org/graphql"
-    query = {
-        "query": 'query { proposals ( first: 1, skip: 0, where: { space_in: ["x7finance.eth"]}, '
-                 'orderBy: "created", orderDirection: desc ) { id title start end snapshot state choices '
-                 "scores scores_total author }}"
-    }
-    response = requests.get(url, query)
-    return response.json()
-
-
-def get_time_difference(timestamp):
-    timestamp_int = int(timestamp)
-    current_time = datetime.now()
-    timestamp_time = datetime.fromtimestamp(timestamp_int)
-
-    time_difference = current_time - timestamp_time
-    is_future = time_difference.total_seconds() < 0
-    time_difference = abs(time_difference)
-
-    days = time_difference.days
-    seconds = time_difference.seconds
-
-    months = days // 30
-    weeks = (days % 30) // 7
-    days = days % 7
-    hours, remainder = divmod(seconds, 3600)
-    minutes = remainder // 60
-
-    suffix = "ago" if not is_future else "from now"
-
-    if months > 0:
-        return f"{months} month{'s' if months > 1 else ''} {suffix}"
-    elif weeks > 0:
-        return f"{weeks} week{'s' if weeks > 1 else ''} {suffix}"
-    elif days > 0:
-        return f"{days} day{'s' if days > 1 else ''} {suffix}"
-    elif hours > 0:
-        return f"{hours} hour{'s' if hours > 1 else ''} {suffix}"
-    elif minutes > 0:
-        return f"{minutes} minute{'s' if minutes > 1 else ''} {suffix}"
-    else:
-        return "just now" if not is_future else "in a moment"
-
-
-def is_eth(address):
-    if address.startswith("0x") and len(address) == 42:
-        return True
-    else:
-        return False
+    def get_latest(self):
+        query = {
+            "query": 'query { proposals ( first: 1, skip: 0, where: { space_in: ["x7finance.eth"]}, '
+                    'orderBy: "created", orderDirection: desc ) { id title start end snapshot state choices '
+                    "scores scores_total author }}"
+        }
+        response = requests.get(self.url, query)
+        return response.json()

@@ -5,7 +5,7 @@ import random, time
 from datetime import datetime
 
 import media
-from hooks import api, db, functions
+from hooks import api, db, functions, tools
 from constants import settings, text, urls
 from main import application
 
@@ -34,7 +34,7 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
         [[InlineKeyboardButton("Click Me!", callback_data=context.bot_data["current_button_data"])]]
     )
     click_me = await context.bot.send_photo(
-        photo=api.get_random_pioneer(),
+        photo=tools.get_random_pioneer(),
         chat_id=urls.TG_MAIN_CHANNEL_ID,
         reply_markup=keyboard,
     )
@@ -92,7 +92,7 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if db.settings_get('burn'):
                 clicks_needed = settings.CLICK_ME_BURN - (total_click_count % settings.CLICK_ME_BURN)
                 message_text = (
-                    f"{api.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
+                    f"{tools.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
                     f"{click_message}\n\n"
                     f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
                     f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
@@ -100,7 +100,7 @@ async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             else:
                 message_text = (
-                    f"{api.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
+                    f"{tools.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
                     f"{click_message}\n\n"
                     f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
                     f"use `/leaderboard` to see the fastest Pioneers!\n\n"

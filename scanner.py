@@ -5,7 +5,7 @@ import asyncio, os, requests, random, sentry_sdk, traceback
 from PIL import Image, ImageDraw, ImageFont
 
 from constants import abis, ca, urls, chains
-from hooks import api
+from hooks import api, tools
 import media
 
 defined = api.Defined()
@@ -92,7 +92,7 @@ async def loan_alert(event, chain):
         liability = contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
         schedule1 = contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
         schedule2 = contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
-        schedule_str = api.format_schedule(schedule1, schedule2, chain_info.native.upper())
+        schedule_str = tools.format_schedule(schedule1, schedule2, chain_info.native.upper())
 
         index, token_by_id = 0, None
         while True:
@@ -105,7 +105,7 @@ async def loan_alert(event, chain):
             except Exception:
                 break
 
-        ill_number = api.get_ill_number(contract_address)
+        ill_number = tools.get_ill_number(contract_address)
 
         im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")
         im2 = Image.open(chain_info.logo).convert("RGBA")
@@ -147,7 +147,7 @@ async def loan_alert(event, chain):
                 send_params = {
                     "chat_id": channel,
                     "photo": photo,
-                    "caption": f"{caption}{api.escape_markdown(link)}",
+                    "caption": f"{caption}{tools.escape_markdown(link)}",
                     "parse_mode": "Markdown",
                     "reply_markup": button
                 }
@@ -192,7 +192,7 @@ async def pair_alert(event, chain):
         renounced = ""
         tax = ""
         try:
-            scan = api.get_scan(token_address, chain)
+            scan = tools.get_scan(token_address, chain)
             token_address_str  = str(token_address).lower()
             if "owner_address" in scan[token_address_str]:
                 if scan[token_address_str]["owner_address"] == "0x0000000000000000000000000000000000000000":
@@ -263,7 +263,7 @@ async def pair_alert(event, chain):
                 send_params = {
                     "chat_id": channel,
                     "photo": photo,
-                    "caption": f"{caption}{api.escape_markdown(link)}",
+                    "caption": f"{caption}{tools.escape_markdown(link)}",
                     "parse_mode": "Markdown",
                     "reply_markup": buttons
                 }
@@ -319,7 +319,7 @@ async def nft_mint_alert(event, contract_type, chain):
                 send_params = {
                     "chat_id": channel,
                     "photo": photo,
-                    "caption": f"{caption}\n{api.escape_markdown(link)}",
+                    "caption": f"{caption}\n{tools.escape_markdown(link)}",
                     "parse_mode": "Markdown"
                 }
 
