@@ -144,6 +144,10 @@ if __name__ == "__main__":
 
     application.add_handler(CallbackQueryHandler(auto.button_function, pattern=r"^click_button:\d+$"))
     application.add_handler(CallbackQueryHandler(admin.pushall_callback, pattern="^push_(eco|treasury):"))
+    application.add_handler(CallbackQueryHandler(admin.command_toggle, pattern="^toggle_"))
+    application.add_handler(CallbackQueryHandler(admin.reset_start, pattern="^reset_start$"))
+    application.add_handler(CallbackQueryHandler(admin.reset_yes, pattern="^reset_yes$"))
+    application.add_handler(CallbackQueryHandler(admin.reset_no, pattern="^reset_no$"))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies))
 
     if not LOCAL:
@@ -157,7 +161,6 @@ if __name__ == "__main__":
 
         scanners()
     else:
-        chains.CHAINS = {**chains.MAINNETS, **chains.TESTNETS} 
         application.add_handler(CommandHandler("test", test_command))
         print("Running Bot locally for testing")
 

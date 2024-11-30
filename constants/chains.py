@@ -1,3 +1,4 @@
+from hooks import db
 from constants import ca, urls
 import media
 
@@ -213,7 +214,7 @@ TESTNETS = {
     ),
 }
 
-CHAINS  = MAINNETS
+CHAINS  = {**MAINNETS, **TESTNETS} if db.settings_get("testnets") else MAINNETS
 GAS_CHAINS = ["eth", "poly", "bsc"]
 
 

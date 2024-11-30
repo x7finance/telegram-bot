@@ -232,3 +232,20 @@ def settings_get(setting_name: str) -> bool:
         return result[0] == 1 if result else False
     except mysql.connector.Error as e:
         return False
+    
+
+def settings_get_all():
+    try:
+        db_connection = create_db_connection()
+        cursor = db_connection.cursor()
+
+        cursor.execute("SELECT setting_name, value FROM settings")
+        results = cursor.fetchall()
+
+        cursor.close()
+        db_connection.close()
+
+        return {setting: value == 1 for setting, value in results}
+    except mysql.connector.Error as e:
+        return {}
+

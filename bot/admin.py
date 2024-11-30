@@ -14,53 +14,85 @@ etherscan = api.Etherscan()
 
 async def command(update, context):
     user_id = update.effective_user.id
+    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+        settings = db.settings_get_all()
+        if not settings:
+            await update.message.reply_text("Error fetching settings.")
+            return
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    f"{setting.replace("_", " ").title()}: {'ON' if status else 'OFF'}",
+                    callback_data=f"toggle_{setting}"
+                )
+            ]
+            for setting, status in settings.items()
+        ]
+
+        keyboard.append(
+            [
+                InlineKeyboardButton("Reset Clicks", callback_data="reset_clicks_prompt")
+            ]
+        )
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text("Current Bot Settings:", reply_markup=reply_markup)
+
+
+async def command_toggle(update, context):
+    query = update.callback_query
+    user_id = query.from_user.id
+
     if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
-        await update.message.reply_text("You are not authorized to use this command.")
-        return
-
-    valid_settings = ['click_me', 'welcome_restrictions', 'burn']
-
-    if len(context.args) == 0:
-        click_me_status = "ON" if db.settings_get('click_me') else "OFF"
-        restrictions_status = "ON" if db.settings_get('welcome_restrictions') else "OFF"
-        burn_status = "ON" if db.settings_get('burn') else "OFF"
-
-        await update.message.reply_text(
-            f"Click Me: {click_me_status}\n"
-            f"Burn: {burn_status}\n"
-            f"Welcome Restrictions: {restrictions_status}"
-            
+        await query.answer(
+            text="Admin only.",
+            show_alert=True
         )
         return
 
-    setting = context.args[0].lower()
-
-    if setting == 'reset':
-        reset_text = db.clicks_reset()
-        await update.message.reply_text(f"{reset_text}")
+    callback_data = query.data
+    if not callback_data.startswith("toggle_"):
         return
 
-    if len(context.args) == 2:
-        value = context.args[1].lower()
+    setting = callback_data.replace("toggle_", "")
 
-        if setting not in valid_settings:
-            formatted_settings = "\n".join([setting for setting in valid_settings])
-            
-            await update.message.reply_text(
-                f"Error: '{setting}' is not a valid setting. Please use one of the following:\n\n{formatted_settings}"
-            )
-            return
+    try:
+        current_status = db.settings_get(setting)
+        new_status = not current_status
 
-        if value not in ['on', 'off']:
-            await update.message.reply_text("Error: Value must be 'on' or 'off'.")
-            return
+        db.settings_set(setting, new_status)
 
-        value_bool = value == 'on'
-        
-        db.settings_set(setting, value_bool)
-        await update.message.reply_text(f"Setting '{setting}' updated to {value.upper()}.")
-    else:
-        await update.message.reply_text("Invalid usage. Use '/admin <setting> <on/off>' or '/admin reset'.")
+        formatted_setting = setting.replace("_", " ").title()
+        await query.edit_message_text(
+            text=f"{formatted_setting} updated to {'ON' if new_status else 'OFF'}."
+        )
+
+
+        settings = db.settings_get_all()
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    f"{s.replace("_", " ").title()}: {'ON' if v else 'OFF'}",
+                    callback_data=f"toggle_{s}"
+                )
+            ]
+            for s, v in settings.items()
+        ]
+        keyboard.append(
+            [
+                InlineKeyboardButton("Reset Clicks", callback_data="reset_start")
+            ]
+        )
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.message.reply_text("Current Bot Settings:", reply_markup=reply_markup)
+
+    except Exception as e:
+        await query.answer(
+            text=f"An error occurred: {str(e)}",
+            show_alert=True
+        )
 
 
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -202,6 +234,61 @@ async def pushall_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer(result, show_alert=True)
     except Exception as e:
         await query.answer(f"Error during {splitter_name} push: {str(e)}", show_alert=True)
+
+
+async def reset_no(update, context):
+    query = update.callback_query
+
+    await query.edit_message_text(
+        text="Action canceled. No changes were made."
+    )
+
+
+async def reset_yes(update, context):
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
+        await query.answer(
+            text="Admin only.",
+            show_alert=True
+        )
+        return
+
+    try:
+        result_text = db.clicks_reset()
+        await query.edit_message_text(
+            text=f"Clicks have been reset. {result_text}"
+        )
+    except Exception as e:
+        await query.answer(
+            text=f"An error occurred: {str(e)}",
+            show_alert=True
+        )
+
+
+async def reset_start(update, context):
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
+        await query.answer(
+            text="Admin only.",
+            show_alert=True
+        )
+        return
+
+    keyboard = [
+        [
+            InlineKeyboardButton("Yes", callback_data="reset_yes"),
+            InlineKeyboardButton("No", callback_data="reset_no")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_message_text(
+        text="Are you sure you want to reset clicks?",
+        reply_markup=reply_markup
+    )
 
 
 async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
