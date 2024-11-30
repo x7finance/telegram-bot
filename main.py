@@ -142,7 +142,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("ping", admin.ping))
     application.add_handler(CommandHandler("wen", admin.wen))
 
-    application.add_handler(CallbackQueryHandler(auto.button_function, pattern="^click_button:\d+$"))
+    application.add_handler(CallbackQueryHandler(auto.button_function, pattern=r"^click_button:\d+$"))
     application.add_handler(CallbackQueryHandler(admin.pushall_callback, pattern="^push_(eco|treasury):"))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies))
 
