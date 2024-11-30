@@ -1,7 +1,7 @@
 from telegram import *
 from telegram.ext import *
 
-import asyncio, math, pytz, random, re, requests, time
+import asyncio, math, os, pytz, random, re, requests, time
 from datetime import datetime
 from web3.exceptions import ContractLogicError
 
@@ -2821,38 +2821,32 @@ async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
 
-    if not (1 <= len(args) <= 2):
-        await update.message.reply_text(
-            "Please follow command with wallet address",
-            parse_mode="Markdown"
-        )
-        return
-    
-    wallet = args[0].lower()
     chain = args[1].lower() if len(args) == 2 else chains.get_chain(update.effective_message.message_thread_id)
+    wallet = args[0].lower() if len(args) >= 1 else  os.getenv("BURN_WALLET")
 
     if not re.match(r'^0x[a-fA-F0-9]{40}$', wallet):
         await update.message.reply_text(
-            "Please follow command with wallet address",
+            "Please provide a valid wallet address.",
             parse_mode="Markdown"
         )
         return
+
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
-    
+
     message = await update.message.reply_text("Getting Wallet Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
     native_price = etherscan.get_native_price(chain)
     eth = etherscan.get_native_balance(wallet, chain)
     dollar = float(eth) * float(native_price)
-    x7r,_ = dextools.get_price(ca.X7R(chain), chain)
-    x7dao,_ = dextools.get_price(ca.X7DAO(chain), chain)
+    x7r, _ = dextools.get_price(ca.X7R(chain), chain)
+    x7dao, _ = dextools.get_price(ca.X7DAO(chain), chain)
 
     x7r_balance = etherscan.get_token_balance(wallet, ca.X7R(chain), chain)
     x7r_price = float(x7r_balance) * float(x7r)
-    
     x7dao_balance = etherscan.get_token_balance(wallet, ca.X7DAO(chain), chain)
     x7dao_price = float(x7dao_balance) * float(x7dao)
 
@@ -2873,12 +2867,16 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         x7r_percent = round(x7r_balance / etherscan.get_x7r_supply(chain) * 100, 2)
     txs = etherscan.get_daily_tx_count(wallet, chain)
-    
+
+    if wallet == os.getenv("BURN_WALLET"):
+        header = f"*X7 Finance Bot Wallet Info ({chain_info.name})*"
+    else:
+        header = f"*X7 Finance Wallet Tracker Info ({chain_info.name})*"
     await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
-            f"*X7 Finance Wallet Info ({chain_info.name})*\n\n"
+            f"{header}\n\n"
             f"`{wallet}`\n\n"
             f"{float(eth):.3f} {chain_info.native.upper()} (${'{:0,.0f}'.format(dollar)})\n\n"
             f"{x7r_balance:,.0f} X7R {x7r_percent}% (${'{:0,.0f}'.format(x7r_price)})\n"
