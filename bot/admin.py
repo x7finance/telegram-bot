@@ -32,7 +32,7 @@ async def command(update, context):
 
         keyboard.append(
             [
-                InlineKeyboardButton("Reset Clicks", callback_data="reset_clicks_prompt")
+                InlineKeyboardButton("Reset Clicks", callback_data="reset_start")
             ]
         )
 
@@ -60,14 +60,12 @@ async def command_toggle(update, context):
     try:
         current_status = db.settings_get(setting)
         new_status = not current_status
-
         db.settings_set(setting, new_status)
 
         formatted_setting = setting.replace("_", " ").title()
-        await query.edit_message_text(
+        await query.answer(
             text=f"{formatted_setting} updated to {'ON' if new_status else 'OFF'}."
         )
-
 
         settings = db.settings_get_all()
         keyboard = [
@@ -86,7 +84,7 @@ async def command_toggle(update, context):
         )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.message.reply_text("Current Bot Settings:", reply_markup=reply_markup)
+        await query.edit_message_text("Current Bot Settings:", reply_markup=reply_markup)
 
     except Exception as e:
         await query.answer(
@@ -238,6 +236,11 @@ async def pushall_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def reset_no(update, context):
     query = update.callback_query
+    user_id = query.from_user.id
+
+    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
+        await query.answer(text="Admin only.", show_alert=True)
+        return
 
     await query.edit_message_text(
         text="Action canceled. No changes were made."
