@@ -201,7 +201,7 @@ TESTNETS = {
         media.BASE_LOGO,
         urls.SCAN_TOKEN("base-sepolia"),
         urls.SCAN_ADDRESS("base-sepolia"),
-        urls.SCAN_TX("base"),
+        urls.SCAN_TX("base-sepolia"),
         urls.SCAN_GAS("eth"),
         "base-testnet",
         "-base-testnet",

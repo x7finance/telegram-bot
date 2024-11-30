@@ -34,7 +34,7 @@ async def burn_x7r(amount, chain):
             'gasPrice': gas_price,
             'gas': gas,
             'nonce': nonce,
-            'chainId': chain_info.id
+            'chainId': int(chain_info.id)
         }
 
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
@@ -55,7 +55,7 @@ def liquidate_loan(loan_id, chain):
             address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool")
         )
 
-        liquidate_function_selector = '0xf5aa928f'
+        liquidate_function_selector = '0x415f1240'
         loan_id_hex = hex(loan_id)[2:].rjust(64, '0')
         transaction_data = liquidate_function_selector + loan_id_hex
 
@@ -70,7 +70,7 @@ def liquidate_loan(loan_id, chain):
             'gas': gas_estimate,
             'gasPrice': gas_price,
             'nonce': nonce,
-            'chainId': chain_info.id
+            'chainId': int(chain_info.id)
         }
 
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
