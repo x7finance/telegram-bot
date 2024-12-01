@@ -430,83 +430,102 @@ async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
+    chain = (
+        context.args[2].lower()
+        if len(context.args) > 2
+        else chains.get_chain(update.effective_message.message_thread_id)
+    )
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
-    
+
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    
-    try:
-        token_names = {
-            "x7r": {"contract": ca.X7R(chain), "image": media.X7R_LOGO},
-            "x7dao": {"contract": ca.X7DAO(chain), "image": media.X7DAO_LOGO},
-            "x7101": {"contract": ca.X7101(chain), "image": media.X7101_LOGO},
-            "x7102": {"contract": ca.X7102(chain), "image": media.X7102_LOGO},
-            "x7103": {"symbol": ca.X7103(chain), "image": media.X7103_LOGO},
-            "x7104": {"contract": ca.X7104(chain), "image": media.X7104_LOGO},
-            "x7105": {"contract": ca.X7105(chain), "image": media.X7105_LOGO},
-        }
 
-        x7token = context.args[0].lower()
-        if x7token not in token_names:
-            await update.message.reply_photo(
-                photo=tools.get_random_pioneer(),
-                caption=
-                    f"*X7 Finance Market Cap Comparison*\n\n"
-                    f"Please enter X7 token first followed by token to compare\n\n"
-                    f"ie. `/compare x7r uni`",
-                parse_mode="Markdown",
-            )
-            return
-        
-        token2 = context.args[1].lower()
-        search = coingecko.search(token2)
-        if "coins" in search and search["coins"]:
-            token_id = search["coins"][0]["api_symbol"]
+    token_names = {
+        "x7r": {"contract": ca.X7R(chain), "image": media.X7R_LOGO},
+        "x7dao": {"contract": ca.X7DAO(chain), "image": media.X7DAO_LOGO},
+        "x7101": {"contract": ca.X7101(chain), "image": media.X7101_LOGO},
+        "x7102": {"contract": ca.X7102(chain), "image": media.X7102_LOGO},
+        "x7103": {"contract": ca.X7103(chain), "image": media.X7103_LOGO},
+        "x7104": {"contract": ca.X7104(chain), "image": media.X7104_LOGO},
+        "x7105": {"contract": ca.X7105(chain), "image": media.X7105_LOGO},
+    }
 
-        token_market_cap = coingecko.get_mcap(token_id)
-        if x7token == ca.X7R(chain):
-            x7_supply = etherscan.get_x7r_supply(chain)
-        else:
-            x7_supply = ca.SUPPLY
-        token_info = token_names[x7token]
-        x7_price,_ = dextools.get_price(token_info["contract"], chain)
-        x7_market_cap = float(x7_price) * float(x7_supply)
-        percent = ((token_market_cap - x7_market_cap) / x7_market_cap) * 100
-        x = (token_market_cap - x7_market_cap) / x7_market_cap
-        token_value = token_market_cap / x7_supply
+    if len(context.args) < 1:
+        await update.message.reply_photo(
+            photo=tools.get_random_pioneer(),
+            caption=(
+                f"*X7 Finance Market Cap Comparison*\n\n"
+                f"Please enter X7 token first followed by token to compare\n\n"
+                f"ie. `/compare x7r uni`"
+            ),
+            parse_mode="Markdown",
+        )
+        return
+
+    x7token = context.args[0].lower()
+    if x7token not in token_names:
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=
                 f"*X7 Finance Market Cap Comparison*\n\n"
-                f"{context.args[1].upper()} Market Cap:\n"
-                f'${"{:,.0f}".format(token_market_cap)}\n\n'
-                f'Token value of {context.args[0].upper()} at {context.args[1].upper()} Market Cap:\n'
-                f'${"{:,.2f}".format(token_value)}\n'
-                f'{"{:,.0f}%".format(percent)}\n'
-                f'{"{:,.0f}x".format(x)}',
+                f"Please enter X7 token first followed by token to compare\n\n"
+                f"ie. `/compare x7r uni`",
             parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text=f"{context.args[1].upper()} Chart",
-                            url=f"https://www.coingecko.com/en/coins/{token_id}",
-                        )
-                    ],
-                ]
-            ),
         )
-    except Exception:
-        await update.message.reply_photo(
-                photo=tools.get_random_pioneer(),
-                caption=
-                    f"*X7 Finance Market Cap Comparison*\n\n"
-                    f"Comparison not avaliable",
-                parse_mode="Markdown",
-            )
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "Please provide a token to compare, e.g., `/compare x7r uni`."
+        )
+        return
+
+    token2 = context.args[1].lower()
+    search = coingecko.search(token2)
+    if "coins" not in search or not search["coins"]:
+        await update.message.reply_text(f"Comparison with `{token2}` is not available.")
+        return
+
+    token_id = search["coins"][0]["api_symbol"]
+
+    token_market_cap = coingecko.get_mcap(token_id)
+    if x7token == "x7r":
+        x7_supply = etherscan.get_x7r_supply(chain)
+    else:
+        x7_supply = ca.SUPPLY
+
+    token_info = token_names[x7token]
+    x7_price, _ = dextools.get_price(token_info["contract"], chain)
+    x7_market_cap = float(x7_price) * float(x7_supply)
+
+    percent = ((token_market_cap - x7_market_cap) / x7_market_cap) * 100
+    x = (token_market_cap - x7_market_cap) / x7_market_cap
+    token_value = token_market_cap / x7_supply
+
+    await update.message.reply_photo(
+        photo=tools.get_random_pioneer(),
+        caption=
+            f"*X7 Finance Market Cap Comparison*\n\n"
+            f"{token2.upper()} Market Cap:\n"
+            f'${"{:,.0f}".format(token_market_cap)}\n\n'
+            f'Token value of {x7token.upper()} at {token2.upper()} Market Cap:\n'
+            f'${"{:,.2f}".format(token_value)}\n'
+            f'{"{:,.0f}%".format(percent)}\n'
+            f'{"{:,.0f}x".format(x)}',
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        text=f"{token2.upper()} Chart",
+                        url=f"https://www.coingecko.com/en/coins/{token_id}",
+                    )
+                ],
+            ]
+        ),
+    )
 
 
 async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
