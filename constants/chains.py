@@ -223,9 +223,8 @@ def active_chains():
 
 
 def full_names():
-    chain_names = [chain.name for chain in active_chains().values()]
+    chain_names = [chain.name for chain in MAINNETS.values()]
     return "\n".join(chain_names)
-
 
 
 def get_chain(chat_id):

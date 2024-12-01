@@ -63,21 +63,21 @@ async def loan_alert(event, chain):
     try:
         chain_info, error_message = chains.get_info(chain)
         loan_id = event["args"]["loanID"]
-        contract_address = event["address"]
-        contract = chain_info.w3.eth.contract(
-            address=chain_info.w3.to_checksum_address(contract_address),
-            abi=etherscan.get_abi(contract_address, chain)
+        term_contract_address = event["address"]
+        term_contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(term_contract_address),
+            abi=etherscan.get_abi(term_contract_address, chain)
         )
 
-        liability = contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
-        schedule1 = contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
-        schedule2 = contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
+        liability = term_contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
+        schedule1 = term_contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
+        schedule2 = term_contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
         schedule_str = tools.format_schedule(schedule1, schedule2, chain_info.native.upper())
 
         index, token_by_id = 0, None
         while True:
             try:
-                token_id = contract.functions.tokenByIndex(index).call()
+                token_id = term_contract.functions.tokenByIndex(index).call()
                 if token_id == int(loan_id):
                     token_by_id = index
                     break
@@ -85,14 +85,27 @@ async def loan_alert(event, chain):
             except Exception:
                 break
 
-        ill_number = tools.get_ill_number(contract_address)
+        pool_contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)),
+            abi=etherscan.get_abi(ca.LPOOL(chain), chain)
+        )
+
+        token = pool_contract.functions.loanToken(int(token_by_id)).call()
+        pair = pool_contract.functions.loanPair(int(token_by_id)).call()
+        token_info = dextools.get_token_name(token, chain)
+        token_name = token_info["name"]
+        token_symbol = token_info["symbol"]
+
+        ill_number = tools.get_ill_number(term_contract_address)
 
         im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")
         im2 = Image.open(chain_info.logo).convert("RGBA")
         im1.paste(im2, (700, 20), im2)
 
         message = (
+            f"{token_name} ({token_symbol})\n\n"
             f"{liability} {chain_info.native.upper()}\n\n"
+            f"Loan ID: {loan_id}\n\n"
             f"Payment Schedule UTC:\n{schedule_str}"
         )
 
@@ -117,6 +130,18 @@ async def loan_alert(event, chain):
                     InlineKeyboardButton(
                         text="View Loan",
                         url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="Buy",
+                        url=urls.XCHANGE_BUY(chain_info.id, token)
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="Chart",
+                        url=f"{urls.DEX_TOOLS(chain_info.dext)}{pair}"
                     )
                 ]
             ]
