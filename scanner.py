@@ -18,14 +18,6 @@ channels = [
     (urls.TG_ALERTS_CHANNEL_ID, None, urls.TG_PORTAL)
 ]
 
-nft_names = {
-    "ECO": "Ecosystem Maxi",
-    "LIQ": "Liquidity Maxi",
-    "DEX": "DEX Maxi",
-    "BORROW": "Borrowing Maxi",
-    "MAGISTER": "Magister",
-}
-
 
 async def error(context):
     sentry_sdk.capture_exception(
@@ -48,13 +40,6 @@ async def log_loop(chain, poll_interval):
             contract = w3.eth.contract(address=ill_address, abi=etherscan.get_abi(ill_address, chain))
             loan_filters[ill_key] = contract.events.LoanOriginated.create_filter(fromBlock="latest")
 
-        nft_contracts = ca.NFTS(chain)
-        nft_filters = {}
-        for contract_type, nft_address in nft_contracts.items():
-            contract = w3.eth.contract(address=w3.to_checksum_address(nft_address), abi=etherscan.get_abi(nft_address, chain))
-            nft_filters[contract_type] = contract.events.Transfer.create_filter(fromBlock="latest")
-
-        
         while True:
             try:
                 for PairCreated in pair_filter.get_new_entries():
@@ -63,11 +48,6 @@ async def log_loop(chain, poll_interval):
                 for ill_key, loan_filter in loan_filters.items():
                     for LoanOriginated in loan_filter.get_new_entries():
                         await loan_alert(LoanOriginated, chain)
-
-                for contract_type, nft_filter in nft_filters.items():
-                    for event in nft_filter.get_new_entries():
-                        if event["args"]["from"] == "0x0000000000000000000000000000000000000000":
-                            await nft_mint_alert(event, contract_type, chain)
 
                 await asyncio.sleep(poll_interval)
 
@@ -274,62 +254,6 @@ async def pair_alert(event, chain):
                 await application.bot.send_photo(**send_params)
     except Exception as e:
         await error(f"Error in pair alert for chain {chain}: {e}")
-
-
-async def nft_mint_alert(event, contract_type, chain):
-    try:
-        chain_info, error_message = chains.get_info(chain)
-        to_address = event["args"]["to"]
-        token_id = event["args"]["tokenId"]
-        transaction_hash = event["transactionHash"].hex()
-        transaction = chain_info.w3.eth.get_transaction(transaction_hash)
-        value_wei = transaction["value"]
-        value = chain_info.w3.from_wei(value_wei, 'ether')
-
-        contract_name = nft_names.get(contract_type, contract_type)
-
-        message = (
-            f"{contract_name} ({token_id})\n"
-            f"Mint Price: {value} {chain_info.native.upper()}\n"
-        )
-
-        im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")
-        im2 = Image.open(chain_info.logo).convert("RGBA")
-        im1.paste(im2, (700, 20), im2)
-
-        i1 = ImageDraw.Draw(im1)
-        i1.text(
-            (26, 30),
-            f"New NFT Mint ({chain_info.name.upper()})\n\n{message}",
-            font=ImageFont.truetype(media.FONT, 26),
-            fill=(255, 255, 255),
-        )
-        image_path = r"media/blackhole.png"
-        im1.save(image_path)
-
-        caption = (
-            f"*New NFT Mint ({chain_info.name.upper()})*\n\n"
-            f"{contract_name} ({token_id})\n"
-            f"Minter: `{to_address}`\n"
-            f"Mint Price: {value} {chain_info.native.upper()}\n"
-        )
-
-        for channel, thread_id, link in channels:
-            with open(image_path, "rb") as photo:
-                send_params = {
-                    "chat_id": channel,
-                    "photo": photo,
-                    "caption": f"{caption}\n{tools.escape_markdown(link)}",
-                    "parse_mode": "Markdown"
-                }
-
-                if thread_id:
-                    send_params["message_thread_id"] = thread_id
-
-                await application.bot.send_photo(**send_params)
-
-    except Exception as e:
-        await error(f"Error in NFT mint alert for chain {chain}: {e}")
 
 
 async def main():
