@@ -1364,6 +1364,9 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool")
     )
 
+    reward = contract.functions.liquidationReward().call() / 10 ** 18
+    escrow = contract.functions.liquidationEscrow().call() / 10 ** 18
+
     if loan_id is None:
         message = await update.message.reply_text("Getting Liquidation Info, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
@@ -1380,8 +1383,18 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception:
                 continue
 
-        liquidatable_loans_text = f"Total liquidatable loans: {liquidatable_loans}"
-        output = "\n".join([liquidatable_loans_text] + results)
+        liquidatable_loans_text = (
+            f"Liquidation reward per loan: {reward} {chain_info.native.upper()}\n"
+            f"Current liquidation escrow: {escrow} {chain_info.native.upper()}\n"
+            f"Current liquidatable loans: {liquidatable_loans}"
+        )
+
+        if liquidatable_loans > 0:
+            liquidation_instructions = "To liquidate use `/liquidate loanID`"
+            output = f"{liquidatable_loans_text}\n\n{'\n'.join(results)}\n\n{liquidation_instructions}"
+        else:
+            output = liquidatable_loans_text
+
         await message.delete()
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
