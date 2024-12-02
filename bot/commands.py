@@ -2149,14 +2149,20 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             contract = chain_info.w3.eth.contract(
                 address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)),
                 abi=abis.read("lendingpool"),
-                )
+            )
             count = contract.functions.nextLoanID().call()
             total_borrowed = 0
+
+            ignored_loans = range(21, 25)
+
             for loan_id in range(21, count):
-                borrowed = contract.functions.getRemainingLiability(loan_id).call() / 10 ** 18
+                if chain == "eth-sepolia" and loan_id in ignored_loans:
+                    continue
+
+                borrowed = contract.functions.getRemainingLiability(loan_id).call() / 10**18
                 total_borrowed += borrowed
-            
-            total_borrowed_dollar = (float(total_borrowed) * float(native_price))
+
+            total_borrowed_dollar = float(total_borrowed) * float(native_price)
 
         except Exception as e:
             total_borrowed = 0
