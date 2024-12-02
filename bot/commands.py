@@ -113,7 +113,7 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 percentage_diff = (price_diff / price_x) * 100 if price_x != 0 else 0
 
                 comparison_text = (
-                    f"*{token.upper()} Arbitrage Opportunities*\n\n"
+                    f"*{token.upper()} ({chain_info.name}) Arbitrage Opportunities*\n\n"
                     f"Xchange: ${price_x:.6f}\n"
                     f"Uniswap: ${price_y:.6f}\n"
                     f"Difference: ${price_diff:.6f} ({percentage_diff:.2f}%)\n"
@@ -1439,6 +1439,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
         loan_text = ""
         total = 0
+
         for chain in chains.active_chains():
             chain_info, error_message = chains.get_info(chain)
             contract = chain_info.w3.eth.contract(
@@ -1446,16 +1447,28 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 abi=abis.read("lendingpool"),
             )
             amount = contract.functions.nextLoanID().call() - 1
-            if not chain in ["eth", "base"]:
-                amount -= 20
-            loan_text += f"`{chain_info.name}:`   {amount}\n"
+            latest_loan_text = ""
+
+            if chain != "eth":
+                adjusted_amount = max(0, amount - 20)
+                latest_loan = amount
+                amount = adjusted_amount
+            else:
+                latest_loan = amount
+
+            if amount != 0:
+                latest_loan_text = f"- Latest loanID:   `{latest_loan}`"
+
+            loan_text += f"{chain_info.name}:   `{amount}`  {latest_loan_text}\n"
             total += amount
+
+        await message.delete()
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=
                 f"*X7 Finance Loan Count*\n\n"
                 f"{loan_text}\n"
-                f"`TOTAL:`  {total}",
+                f"TOTAL:  `{total}`",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -1907,14 +1920,14 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
         amount = contract.functions.allPairsLength().call()
         if chain == "eth":
             amount += 141
-        pair_text += f"`{chain_info.name}:`   {amount}\n"
+        pair_text += f"{chain_info.name}:   `{amount}`\n"
         total += amount
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
             f"*X7 Finance Pair Count*\n\n"
             f"{pair_text}\n"
-            f"`TOTAL:`  {total}",
+            f"TOTAL:    `{total}`",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2085,7 +2098,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             lpool_dollar = (float(lpool) * float(price))
             pool = round(float(lpool_reserve) + float(lpool), 2)
             dollar = lpool_reserve_dollar + lpool_dollar
-            pool_text += f'`{chain_name}:`   {pool} {native.upper()} (${"{:0,.0f}".format(dollar)})\n'
+            pool_text += f'{chain_name}:   {pool} {native.upper()} (${"{:0,.0f}".format(dollar)})\n'
             total_lpool_reserve_dollar += lpool_reserve_dollar
             total_lpool_dollar += lpool_dollar
             total_dollar += dollar 
@@ -2094,7 +2107,6 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             photo=tools.get_random_pioneer(),
             caption=
                 f"*X7 Finance Lending Pool Info*\n"
-                f"use `/loans all` for all chains\n\n"
                 f"{pool_text}\n"
                 f'Lending Pool: ${"{:0,.0f}".format(total_lpool_dollar)}\n'
                 f'Lending Pool Reserve: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
@@ -2150,7 +2162,8 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=
-                f"*X7 Finance Lending Pool Info ({chain_info.name})*\n\n"
+                f"*X7 Finance Lending Pool Info ({chain_info.name})*\n"
+                f"use `/loans all` for all chains\n\n"
                 f"Lending Pool:\n"
                 f'{lpool} {chain_info.native.upper()} (${"{:0,.0f}".format(lpool_dollar)})\n\n'
                 f"Lending Pool Reserve:\n"
