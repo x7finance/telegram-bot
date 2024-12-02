@@ -29,7 +29,7 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton(text="X7Finance.org", url=f"{urls.XCHANGE}")],
+                [InlineKeyboardButton(text="X7Finance.org", url=urls.XCHANGE)],
             ]
         ),
     )
@@ -757,20 +757,22 @@ async def onchains(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def docs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
-        [
-            InlineKeyboardButton(text="Get Started", url=f"{urls.XCHANGE}getstarted/"),
-            InlineKeyboardButton(text="Trader", url=f"{urls.XCHANGE}docs/guides/trade/"),
-        ],
-        [
-            InlineKeyboardButton(text="Liquidity Provider", url=f"{urls.XCHANGE}docs/guides/liquidity-provider/"),
-            InlineKeyboardButton(text="Capital Allocator", url=f"{urls.XCHANGE}docs/guides/lending/"),
-        ],
-        [
-            InlineKeyboardButton(text="Project Engineer", url=f"{urls.XCHANGE}docs/guides/integrate-ui/"),
-            InlineKeyboardButton(text="Project Launcher", url=f"{urls.XCHANGE}docs/guides/launch/"),
-
-        ],
+    [
+        InlineKeyboardButton(text="Get Started", url=f"{urls.XCHANGE}getstarted"),
+    ],
+    [
+        InlineKeyboardButton(text="How to - Create Pair", url=f"{urls.XCHANGE}docs/guides/liquidity-provider"),
+        InlineKeyboardButton(text="How to - Initiate Loan", url=f"{urls.XCHANGE}docs/guides/initiate-loan"),
+    ],
+    [
+        InlineKeyboardButton(text="Trader", url=f"{urls.XCHANGE}docs/guides/trade"),
+        InlineKeyboardButton(text="Capital Allocator", url=f"{urls.XCHANGE}docs/guides/lending"),
+    ],
+    [
+        InlineKeyboardButton(text="Project Engineer", url=f"{urls.XCHANGE}docs/guides/integrate"),
+        InlineKeyboardButton(text="Project Launcher", url=f"{urls.XCHANGE}docs/guides/launch"),
     ]
+]
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
@@ -1221,19 +1223,19 @@ async def leaderboard(update: Update, context: CallbackContext):
 async def links(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
         [
-            InlineKeyboardButton(text="X7Finance.org", url=f"{urls.XCHANGE}"),
+            InlineKeyboardButton(text="X7Finance.org", url=urls.XCHANGE),
         ],
         [
-            InlineKeyboardButton(text="Snapshot", url=f"{urls.SNAPSHOT}"),
-            InlineKeyboardButton(text="Twitter", url=f"{urls.TWITTER}"),
+            InlineKeyboardButton(text="Snapshot", url=urls.SNAPSHOT),
+            InlineKeyboardButton(text="Twitter", url=urls.TWITTER),
         ],
         [
-            InlineKeyboardButton(text="Reddit", url=f"{urls.REDDIT}"),
-            InlineKeyboardButton(text="Warpcast", url=f"{urls.WARPCAST}"),
+            InlineKeyboardButton(text="Reddit", url=urls.REDDIT),
+            InlineKeyboardButton(text="Warpcast", url=urls.WARPCAST),
         ],
         [
-            InlineKeyboardButton(text="GitHub", url=f"{urls.GITHUB}"),
-            InlineKeyboardButton(text="Dune", url=f"{urls.DUNE}"),
+            InlineKeyboardButton(text="GitHub", url=urls.GITHUB),
+            InlineKeyboardButton(text="Dune", url=urls.DUNE),
         ],
     ]
 
@@ -1939,7 +1941,7 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="Xchange Pairs Dashboard",
-                        url=f"{urls.XCHANGE}/liquidity?=all-pools",
+                        url=f"{urls.XCHANGE}liquidity?=all-pools",
                     )
                 ],
             ]
@@ -2122,7 +2124,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         InlineKeyboardButton(
                             text=f"Lending Pool Dashboard",
-                            url=f"{urls.XCHANGE}/lending",
+                            url=f"{urls.XCHANGE}lending",
                         )
                     ]
                 ]
@@ -2189,7 +2191,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         InlineKeyboardButton(
                             text=f"Lending Pool Dashboard",
-                            url=f"{urls.XCHANGE}/lending",
+                            url=f"{urls.XCHANGE}lending",
                         )
                     ]
                 ]
@@ -2998,7 +3000,7 @@ async def website(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="X7Finance.org",
-                        url=f"{urls.XCHANGE}",
+                        url=urls.XCHANGE,
                     )
                 ],
             ]
@@ -3023,8 +3025,8 @@ async def wp(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton(text="Website", url=f"{urls.XCHANGE}")],
-                [InlineKeyboardButton(text="Full WP", url=f"{urls.WP_LINK}")],
+                [InlineKeyboardButton(text="Website", url=urls.XCHANGE)],
+                [InlineKeyboardButton(text="Full WP", url=urls.WP_LINK)],
             ]
         ),
     )
