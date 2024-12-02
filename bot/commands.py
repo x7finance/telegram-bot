@@ -1374,7 +1374,12 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         num_loans = contract.functions.nextLoanID().call()
         liquidatable_loans = 0
         results = []
+
+        ignored_loans = range(21, 25)
+
         for loan in range(num_loans):
+            if chain == "eth-sepolia" and loan in ignored_loans:
+                continue
             try:
                 result = contract.functions.canLiquidate(int(loan)).call()
                 if result > 0:
