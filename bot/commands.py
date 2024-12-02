@@ -1390,7 +1390,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         if liquidatable_loans > 0:
-            liquidation_instructions = "To liquidate use /liquidate loanID"
+            liquidation_instructions = "To liquidate use `/liquidate loanID`"
             results_text = "\n".join(results)
             output = f"{liquidatable_loans_text}\n\n{results_text}\n\n{liquidation_instructions}"
         else:
@@ -1435,39 +1435,73 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) < 1:
-        await update.message.reply_text(
-            "Please follow command with loan ID number\n",
+        message = await update.message.reply_text("Getting Loan Info, Please wait...")
+        await context.bot.send_chat_action(update.effective_chat.id, "typing")
+        loan_text = ""
+        total = 0
+        for chain in chains.active_chains():
+            chain_info, error_message = chains.get_info(chain)
+            contract = chain_info.w3.eth.contract(
+                address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)),
+                abi=abis.read("lendingpool"),
+            )
+            amount = contract.functions.nextLoanID().call() - 1
+            if not chain in ["eth", "base"]:
+                amount -= 20
+            loan_text += f"`{chain_info.name}:`   {amount}\n"
+            total += amount
+        await update.message.reply_photo(
+            photo=tools.get_random_pioneer(),
+            caption=
+                f"*X7 Finance Loan Count*\n\n"
+                f"{loan_text}\n"
+                f"`TOTAL:`  {total}",
             parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            text=f"Loans Dashboard",
+                            url=f"{urls.XCHANGE}lending",
+                        )
+                    ]
+                ]
+            )
         )
         return
+    
+    loan_id = None
+    chain = None
 
-    loan_id = context.args[0]
-    chain = context.args[1].lower() if len(context.args) > 1 else chains.get_chain(update.effective_message.message_thread_id)
+    if len(context.args) == 1 and context.args[0].isdigit():
+        loan_id = int(context.args[0])
+        chain = chains.get_chain(update.effective_message.message_thread_id)
+    elif len(context.args) > 1:
+        if context.args[0].isdigit():
+            loan_id = int(context.args[0])
+            chain = context.args[1].lower()
+        else:
+            await update.message.reply_text("Loan ID should be a number")
+            return
+    else:
+        chain = chains.get_chain(update.effective_message.message_thread_id)
+
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
 
+    if loan_id is None:
+        await update.message.reply_text("Loan ID is required and should be a number")
+        return
+
+    message = await update.message.reply_text("Getting Loan Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     chain_lpool = ca.LPOOL(chain, int(loan_id))
-    price = etherscan.get_native_price(chain)
     contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool"))
-    liquidation_status = ""
-    
-    try:
-        liquidation = contract.functions.canLiquidate(int(loan_id)).call()
-        if liquidation != 0:
-            reward = contract.functions.liquidationReward().call() / 10**18
-            liquidation_status = (
-                f"\n\n*Eligible For Liquidation*\n"
-                f"Cost: {liquidation / 10 ** 18} {chain_info.native.upper()} "
-                f'(${"{:0,.0f}".format(price * liquidation / 10 ** 18)})\n'
-                f'Reward: {reward} {chain_info.native.upper()} (${"{:0,.0f}".format(price * reward)})'
-            )
-    except Exception:
-        pass
 
     try:
+        price = etherscan.get_native_price(chain)
         liability = contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
         remaining = f'Remaining Liability:\n{liability} {chain_info.native.upper()} (${"{:0,.0f}".format(price * liability)})'
         schedule1 = contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
@@ -1494,6 +1528,22 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
         ill_number = tools.get_ill_number(term)
 
+        liquidation_status = ""
+    
+        try:
+            liquidation = contract.functions.canLiquidate(int(loan_id)).call()
+            if liquidation != 0:
+                reward = contract.functions.liquidationReward().call() / 10**18
+                liquidation_status = (
+                    f"\n\n*Eligible For Liquidation*\n"
+                    f"Cost: {liquidation / 10 ** 18} {chain_info.native.upper()} "
+                    f'(${"{:0,.0f}".format(price * liquidation / 10 ** 18)})\n'
+                    f'Reward: {reward} {chain_info.native.upper()} (${"{:0,.0f}".format(price * reward)})'
+                )
+        except Exception:
+            pass
+
+        await message.delete()
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=
@@ -1521,24 +1571,8 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
         )
     except Exception:
+        await message.delete()
         await update.message.reply_text(f"Loan ID {loan_id} on {chain_info.name} not found")
-
-
-async def loans_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
-        caption= text.LOANS,
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="X7 Finance Whitepaper", url=f"{urls.WP_LINK}"
-                    )
-                ],
-            ]
-        ),
-    )
 
 
 async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1861,7 +1895,6 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = await update.message.reply_text("Getting Pair Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     pair_text = ""
     total = 0
@@ -1876,7 +1909,6 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
             amount += 141
         pair_text += f"`{chain_info.name}:`   {amount}\n"
         total += amount
-    await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
@@ -2061,7 +2093,8 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=
-                f"*X7 Finance Lending Pool Info *\n\n"
+                f"*X7 Finance Lending Pool Info*\n"
+                f"use `/loans all` for all chains\n\n"
                 f"{pool_text}\n"
                 f'Lending Pool: ${"{:0,.0f}".format(total_lpool_dollar)}\n'
                 f'Lending Pool Reserve: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
