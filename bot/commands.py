@@ -1390,8 +1390,9 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         if liquidatable_loans > 0:
-            liquidation_instructions = "To liquidate use `/liquidate loanID`"
-            output = f"{liquidatable_loans_text}\n\n{'\n'.join(results)}\n\n{liquidation_instructions}"
+            liquidation_instructions = "To liquidate use /liquidate loanID"
+            results_text = "\n".join(results)
+            output = f"{liquidatable_loans_text}\n\n{results_text}\n\n{liquidation_instructions}"
         else:
             output = liquidatable_loans_text
 
