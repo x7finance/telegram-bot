@@ -90,8 +90,8 @@ async def loan_alert(event, chain):
             abi=etherscan.get_abi(ca.LPOOL(chain), chain)
         )
 
-        token = pool_contract.functions.loanToken(int(token_by_id)).call()
-        pair = pool_contract.functions.loanPair(int(token_by_id)).call()
+        token = pool_contract.functions.loanToken(int(loan_id)).call()
+        pair = pool_contract.functions.loanPair(int(loan_id)).call()
         token_info = dextools.get_token_name(token, chain)
         token_name = token_info["name"]
         token_symbol = token_info["symbol"]
