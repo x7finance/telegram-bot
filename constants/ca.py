@@ -305,6 +305,15 @@ def XCHANGE_DISCOUNT(chain):
     return map.get(chain)
 
 
+def XCHANGE_CREATE(chain):
+    map = {
+        "eth": "0xfD392Fc17fcCe76b41d9ab4Ea72943bc5e244F6e",
+        "base": "0xd9511408f0042b75D2Be3Bfe9d9e9df7624AFcc1",
+
+    }
+    return map.get(chain)
+
+
 def HUBS(chain):
     return {
         "x7r": X7R_LIQ_HUB(chain),

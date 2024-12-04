@@ -31,12 +31,15 @@ async def log_loop(chain, poll_interval):
     try:
         w3 = chains.MAINNETS[chain].w3
         factory = w3.eth.contract(address=ca.FACTORY(chain), abi=abis.read("factory"))
+        xchange_create = w3.eth.contract(address=ca.XCHANGE_CREATE(chain), abi=etherscan.get_abi(ca.XCHANGE_CREATE(chain), chain))
+        
         pair_filter = factory.events.PairCreated.create_filter(fromBlock="latest")
-
+        token_filter = xchange_create.events.TokenDeployed.create_filter(fromBlock="latest")
+        
         loan_filters = {}
-        chain_addresses = ca.ILL_ADDRESSES.get(chain, {})
+        ill_addresses = ca.ILL_ADDRESSES.get(chain, {})
 
-        for ill_key, ill_address in chain_addresses.items():
+        for ill_key, ill_address in ill_addresses.items():
             contract = w3.eth.contract(address=ill_address, abi=etherscan.get_abi(ill_address, chain))
             loan_filters[ill_key] = contract.events.LoanOriginated.create_filter(fromBlock="latest")
 
@@ -44,6 +47,9 @@ async def log_loop(chain, poll_interval):
             try:
                 for PairCreated in pair_filter.get_new_entries():
                     await pair_alert(PairCreated, chain)
+
+                for TokenDeployed in token_filter.get_new_entries():
+                    await token_alert(TokenDeployed, chain)
 
                 for ill_key, loan_filter in loan_filters.items():
                     for LoanOriginated in loan_filter.get_new_entries():
@@ -258,7 +264,7 @@ async def pair_alert(event, chain):
 
         buttons = InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton("Buy On Xchange", url=f"{urls.XCHANGE_BUY(chain_info.id, token_address)}")],
+                [InlineKeyboardButton("Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, token_address)}")],
                 [InlineKeyboardButton("Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{event['args']['pair']}")]
             ]
         )
@@ -277,6 +283,77 @@ async def pair_alert(event, chain):
                     send_params["message_thread_id"] = thread_id
 
                 await application.bot.send_photo(**send_params)
+    except Exception as e:
+        await error(f"Error in pair alert for chain {chain}: {e}")
+
+
+async def token_alert(event, chain):
+    try:
+        chain_info, error_message = chains.get_info(chain)
+
+        args = event["args"]
+        token_address = args["tokenAddress"]
+        token_name = args["name"]
+        token_symbol = args["symbol"]
+        description = args["description"]
+        token_uri = args["tokenURI"]
+        twitter_link = args["twitterLink"]
+        telegram_link = args["telegramLink"]
+        website_link = args["websiteLink"]
+
+        im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")
+        try:
+            im2 = Image.open(requests.get(token_uri, stream=True).raw).convert("RGBA")
+        except:
+            im2 = Image.open(chain_info.logo).convert("RGBA")
+
+        im1.paste(im2, (700, 20), im2)
+
+        message = (
+            f"{token_name} ({token_symbol})\n\n"
+            f"{description}\n\n"
+        )
+
+        i1 = ImageDraw.Draw(im1)
+        i1.text(
+            (26, 30),
+            f"New Token Deployed ({chain_info.name.upper()})\n\n{message}",
+            font=ImageFont.truetype(media.FONT, 26),
+            fill=(255, 255, 255)
+        )
+        image_path = r"media/blackhole.png"
+        im1.save(image_path)
+
+        caption = (
+            f"*New Token Deployed ({chain_info.name.upper()})*\n\n"
+            f"{message}\n\n"
+            f"Token Address:\n`{token_address}`"
+        )
+
+        buttons = [
+            [InlineKeyboardButton(text="Buy", url=urls.XCHANGE_BUY(chain_info.id, token_address))],
+            [InlineKeyboardButton(text="Chart", url=f"{chain_info.dext}/{token_address}")],
+        ]
+
+        if twitter_link:
+            buttons.append([InlineKeyboardButton(text="Twitter", url=twitter_link)])
+        if telegram_link:
+            buttons.append([InlineKeyboardButton(text="Telegram", url=telegram_link)])
+        if website_link:
+            buttons.append([InlineKeyboardButton(text="Website", url=website_link)])
+
+        inline_markup = InlineKeyboardMarkup(buttons)
+
+        for channel in channels:
+            with open(image_path, "rb") as photo:
+                application.bot.send_photo(
+                    chat_id=channel,
+                    photo=photo,
+                    caption=caption,
+                    parse_mode="Markdown",
+                    reply_markup=inline_markup
+                )
+
     except Exception as e:
         await error(f"Error in pair alert for chain {chain}: {e}")
 

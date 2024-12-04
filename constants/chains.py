@@ -89,7 +89,7 @@ MAINNETS = {
         ca.DAO_MULTI("base")
     ),
     "bsc": ChainInfo(
-        True,
+        False,
         False,
         "BSC",
         "BSCscan",
@@ -109,7 +109,7 @@ MAINNETS = {
         ca.DAO_MULTI("bsc")
     ),
     "arb": ChainInfo(
-        True,
+        False,
         False,
         "Arbitrum",
         "Arbiscan",
@@ -129,7 +129,7 @@ MAINNETS = {
         ca.DAO_MULTI("arb")
     ),
     "op": ChainInfo(
-        True,
+        False,
         False,
         "Optimism",
         "Optimisticscan",
@@ -149,7 +149,7 @@ MAINNETS = {
         ca.DAO_MULTI("op")
     ),
     "poly": ChainInfo(
-        True,
+        False,
         False,
         "Polygon",
         "Polygonscan",
@@ -173,7 +173,7 @@ MAINNETS = {
 
 TESTNETS = {
     "eth-sepolia": ChainInfo(
-        False,
+        True,
         False,
         "ETH Sepolia",
         "Etherscan Sepolia",
