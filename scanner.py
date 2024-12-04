@@ -344,15 +344,18 @@ async def token_alert(event, chain):
 
         inline_markup = InlineKeyboardMarkup(buttons)
 
-        for channel in channels:
+        for channel, thread_id, link in channels:
             with open(image_path, "rb") as photo:
-                application.bot.send_photo(
-                    chat_id=channel,
-                    photo=photo,
-                    caption=caption,
-                    parse_mode="Markdown",
-                    reply_markup=inline_markup
-                )
+                send_params = {
+                    "chat_id": channel,
+                    "photo": photo,
+                    "caption": f"{caption}{tools.escape_markdown(link)}",
+                    "parse_mode": "Markdown",
+                    "reply_markup": buttons
+                }
+
+                if thread_id is not None:
+                    send_params["message_thread_id"] = thread_id
 
     except Exception as e:
         await error(f"Error in pair alert for chain {chain}: {e}")
