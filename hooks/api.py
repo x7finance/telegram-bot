@@ -3,6 +3,7 @@ import requests, os, time, json
 from farcaster import Warpcast
 from datetime import datetime, timedelta
 from pycoingecko import CoinGeckoAPI
+import tweepy
 
 from constants import ca, chains
 
@@ -895,3 +896,29 @@ class Snapshot:
         }
         response = requests.get(self.url, query)
         return response.json()
+
+
+class Twitter:
+    def __init__(self):
+        auth = tweepy.OAuthHandler(os.getenv("TWITTER_API_KEY"), os.getenv("TWITTER_API_SECRET"))
+        auth.set_access_token(os.getenv("TWITTER_ACCESS_TOKEN"), os.getenv("TWITTER_ACCESS_TOKEN_SECRET"))
+        self.api = tweepy.API(auth)
+
+
+    def fetch_latest_tweet(self, username):
+        try:
+            tweets = self.api.user_timeline(screen_name=username, count=1, tweet_mode="extended")
+            if tweets:
+                tweet = tweets[0]
+                return {
+                    "text": tweet.full_text,
+                    "id": tweet.id,
+                    "likes": tweet.favorite_count,
+                    "retweets": tweet.retweet_count,
+                    "replies": tweet.reply_count if hasattr(tweet, "reply_count") else "0",
+                    "created_at": tweet.created_at,
+                }
+            else:
+                return {"error": "No tweets found for this user."}
+        except Exception as e:
+            return {"error": str(e)}

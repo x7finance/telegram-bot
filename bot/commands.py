@@ -60,7 +60,7 @@ async def alerts(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton(text="XChange Alerts", url=f"{urls.TG_ALERTS}")],
+                [InlineKeyboardButton(text="XChange Alerts", url=urls.TG_ALERTS)],
             ]
         ),
     )
@@ -355,23 +355,24 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
         [
             InlineKeyboardButton(
-                text="X7 Portal", url=f"{urls.TG_PORTAL}",
+                text="X7 Portal", url=urls.TG_PORTAL
             ),
         ],
         [
             InlineKeyboardButton(
-                text="Xchange Alerts", url=f"{urls.TG_ALERTS}"
+                text="Xchange Alerts", url=urls.TG_ALERTS
             ),
         ],
         [
             InlineKeyboardButton(
-                text="DAO Chat", url=f"{urls.TG_DAO}",
+                text="DAO Chat", url=urls.TG_DAO
             ),
         ],
 
         [
             InlineKeyboardButton(
-                text="Xchange Create Bot", url=f"{urls.TG_XCHANGE_CREATE}")
+                text="Xchange Create Bot", url=urls.TG_XCHANGE_CREATE
+            )
         ],
     ]
     await update.message.reply_photo(
@@ -656,7 +657,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ],
             [InlineKeyboardButton(
                     text="DAO Chat",
-                    url=f"{urls.TG_DAO}")
+                    url=urls.TG_DAO)
             ]
             ])
         else:
@@ -665,11 +666,11 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             buttons.extend([
             [InlineKeyboardButton(
                 text="X7 Finance DAO",
-                url=f"{urls.SNAPSHOT}")
+                url=urls.SNAPSHOT)
             ],
             [InlineKeyboardButton(
                 text="DAO Chat",
-                url=f"{urls.TG_DAO}")
+                url=urls.TG_DAO)
             ]
             ])
 
@@ -788,7 +789,7 @@ async def ecosystem(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton(text="X7Finance.org", url=f"{urls.XCHANGE}")],
+                [InlineKeyboardButton(text="X7Finance.org", url=urls.XCHANGE)],
             ]
         ),
     )
@@ -2739,8 +2740,8 @@ async def twitter(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 [
                     InlineKeyboardButton(
-                        text=f"{urls.TWITTER}",
-                        url=f"{urls.TWITTER}",
+                        text=urls.TWITTER,
+                        url=urls.TWITTER,
                     )
                 ],
             ]
@@ -2760,7 +2761,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     [
                         InlineKeyboardButton(
-                            text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                            text="X7 Dune Dashboard", url=urls.DUNE
                         )
                     ],
                 ]
@@ -2780,7 +2781,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     [
                         InlineKeyboardButton(
-                            text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                            text="X7 Dune Dashboard", url=urls.DUNE
                         )
                     ],
                 ]
@@ -2835,7 +2836,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     [
                         InlineKeyboardButton(
-                            text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                            text="X7 Dune Dashboard", url=urls.DUNE
                         )
                     ],
                 ]
