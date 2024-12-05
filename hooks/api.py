@@ -372,7 +372,7 @@ class CoinGecko:
 
     def get_ath(self, token):
         endpoint = (
-            f"coins/{token}?localization=false&tickers=false&market_data="
+            f"coins/{token.lower()}?localization=false&tickers=false&market_data="
             "true&community_data=false&developer_data=false&sparkline=false"
         )
         response = requests.get(self.url + endpoint)
