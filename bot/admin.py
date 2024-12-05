@@ -1,7 +1,7 @@
 from telegram import *
 from telegram.ext import *
 
-import os, requests
+import os, requests, tweepy
 from datetime import datetime, timedelta
 
 from bot import auto
@@ -108,17 +108,6 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
         status = []
 
-        bitquery_url = "https://streaming.bitquery.io/graphql"
-        bitquery_headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {os.getenv("BITQUERY_API_KEY")}'
-        }
-        bitquery_response = requests.post(bitquery_url, headers=bitquery_headers)
-        if bitquery_response.status_code == 200:
-            status.append("🟢 BitQuery: Connected Successfully")
-        else:
-            status.append(f"🔴 BitQuery: Connection failed with status {bitquery_response.status_code}")
-
         blockspan_url = f"https://api.blockspan.com/v1/collections/contract/{ca.PIONEER}?chain=eth-main"
         blockspan_headers={
                 "accept": "application/json",
@@ -129,17 +118,6 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
             status.append("🟢 Blockspan: Connected Successfully")
         else:
             status.append(f"🔴 Blockspan: Connection failed with status {blockspan_response.status_code}")
-
-        dextools_url = "http://public-api.dextools.io/trial/v2/token/ethereum/TOKEN_ADDRESS/price"
-        dextools_headers = {
-            'accept': 'application/json',
-            'x-api-key': os.getenv("DEXTOOLS_API_KEY")
-        }
-        dextools_response = requests.get(dextools_url, headers=dextools_headers)
-        if dextools_response.status_code == 200:
-            status.append("🟢 Dextools: Connected Successfully")
-        else:
-            status.append(f"🔴 Dextools: Connection failed with status {dextools_response.status_code}")
 
         cg_url = "https://api.coingecko.com/api/v3/ping"
         cg_response = requests.get(cg_url)
@@ -167,16 +145,16 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             status.append(f"🔴 Defined: Connection failed with status {defined_response.status_code}")
 
-        opensea_url = f"https://api.opensea.io/v2/chain/ethereum/contract/{ca.PIONEER}/nfts/2"
-        opensea_headers = {
-            "accept": "application/json",
-            "X-API-KEY": os.getenv("OPENSEA_API_KEY")
+        dextools_url = "http://public-api.dextools.io/trial/v2/token/ethereum/TOKEN_ADDRESS/price"
+        dextools_headers = {
+            'accept': 'application/json',
+            'x-api-key': os.getenv("DEXTOOLS_API_KEY")
         }
-        opensea_response = requests.get(opensea_url, headers=opensea_headers)
-        if opensea_response.status_code == 200:
-            status.append("🟢 Opensea: Connected Successfully")
+        dextools_response = requests.get(dextools_url, headers=dextools_headers)
+        if dextools_response.status_code == 200:
+            status.append("🟢 Dextools: Connected Successfully")
         else:
-            status.append(f"🔴 Opensea: Connection failed with status {opensea_response.status_code}")
+            status.append(f"🔴 Dextools: Connection failed with status {dextools_response.status_code}")
 
         etherscan_url = "https://api.etherscan.io/v2/api"
         etherscan_key = os.getenv('ETHERSCAN_API_KEY')
@@ -195,6 +173,27 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             status.append(f"🔴 DRPC: Connection failed with status {rpc_response.status_code}")
 
+        opensea_url = f"https://api.opensea.io/v2/chain/ethereum/contract/{ca.PIONEER}/nfts/2"
+        opensea_headers = {
+            "accept": "application/json",
+            "X-API-KEY": os.getenv("OPENSEA_API_KEY")
+        }
+        opensea_response = requests.get(opensea_url, headers=opensea_headers)
+        if opensea_response.status_code == 200:
+            status.append("🟢 Opensea: Connected Successfully")
+        else:
+            status.append(f"🔴 Opensea: Connection failed with status {opensea_response.status_code}")
+
+        try:
+            auth = tweepy.OAuthHandler(os.getenv("TWITTER_API_KEY"), os.getenv("TWITTER_API_SECRET"))
+            auth.set_access_token(os.getenv("TWITTER_ACCESS_TOKEN"), os.getenv("TWITTER_ACCESS_TOKEN_SECRET"))
+            api = tweepy.API(auth)
+            api.verify_credentials()
+            status.append("🟢 Twitter: Connected Successfully")
+        except Exception as e:
+            error_code = e.response.status_code if e.response else "Unknown"
+            status.append(f"🔴 Twitter: Connection failed with status {error_code}")
+        
         await update.message.reply_text(
             "*X7 Finance Telegram Bot API Status*\n\n" + "\n".join(status),
             parse_mode="Markdown")

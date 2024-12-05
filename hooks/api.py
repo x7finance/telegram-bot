@@ -1,84 +1,10 @@
-import requests, os, time, json
+import requests, os, time, tweepy
 
 from farcaster import Warpcast
 from datetime import datetime, timedelta
 from pycoingecko import CoinGeckoAPI
-import tweepy
 
 from constants import ca, chains
-
-
-class BitQuery:
-    def __init__(self):
-        self.today = datetime.now().strftime("%Y-%m-%d")
-        self.url = "https://streaming.bitquery.io/graphql"
-        self.headers = {
-            'Content-Type': 'application/json',
-            'Authorization': f'Bearer {os.getenv("BITQUERY_API_KEY")}'
-        }
-
-
-    def get_nft_holder_list(self, nft, chain):
-        chain_info = chains.active_chains()[chain]
-        query = f'''
-        {{
-        EVM(dataset: archive, network: {chain_info.name.lower()}) {{
-            TokenHolders(
-            date: "{self.today}"
-            tokenSmartContract: "{nft}"
-            ) {{
-                Holder {{
-                    Address
-                }}
-            }}
-            }}
-        }}
-        '''
-        payload = json.dumps({'query': query})
-
-        try:
-            response_graphql = requests.post(self.url, headers=self.headers, data=payload)
-            if response_graphql.status_code == 200:
-                result = response_graphql.json()
-                holders_data = result.get('data', {}).get('EVM', {}).get('TokenHolders', [])
-                holders_list = [holder['Holder']['Address'] for holder in holders_data if holder['Holder']['Address'] != '0x0000000000000000000000000000000000000000']
-                return holders_list
-            else:
-                return []
-
-        except requests.RequestException as e:
-            return []
-
-
-    def get_proposers(self, chain):
-        chain_info = chains.active_chains()[chain]
-        query = f'''
-        {{
-        EVM(dataset: archive, network: {chain_info.name.lower()}) {{
-            TokenHolders(
-            date: "{self.today}"
-            tokenSmartContract: "{ca.X7DAO(chain)}"
-            where: {{ Balance: {{ Amount: {{ ge: "500000" }} }} }}
-            ) {{
-            uniq(of: Holder_Address)
-            }}
-        }}
-        }}
-        '''
-        payload = json.dumps({'query': query})
-
-        try:
-            response_graphql = requests.post(self.url, headers=self.headers, data=payload)
-
-            if response_graphql.status_code == 200:
-                result = response_graphql.json()
-                number_of_holders = result.get('data', {}).get('EVM', {}).get('TokenHolders', [])[0].get('uniq', '0')
-                return int(number_of_holders)
-            else:
-                return None
-
-        except requests.RequestException as e:
-            return None
         
 
 class Blockspan:
@@ -910,9 +836,10 @@ class Twitter:
             tweets = self.api.user_timeline(screen_name=username, count=1, tweet_mode="extended")
             if tweets:
                 tweet = tweets[0]
+                tweet_url = f"https://twitter.com/{username}/status/{tweet.id}"
                 return {
                     "text": tweet.full_text,
-                    "id": tweet.id,
+                    "url": tweet_url,
                     "likes": tweet.favorite_count,
                     "retweets": tweet.retweet_count,
                     "replies": tweet.reply_count if hasattr(tweet, "reply_count") else "0",
@@ -920,5 +847,5 @@ class Twitter:
                 }
             else:
                 return {"error": "No tweets found for this user."}
-        except Exception as e:
-            return {"error": str(e)}
+        except Exception:
+            return None

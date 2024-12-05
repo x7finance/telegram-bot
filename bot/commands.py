@@ -11,7 +11,6 @@ from hooks import api, db, dune, functions, tools
 import pricebot
 import media
 
-bitquery = api.BitQuery()
 blockspan = api.Blockspan()
 coingecko = api.CoinGecko()
 defined = api.Defined()
@@ -20,6 +19,7 @@ etherscan = api.Etherscan()
 github = api.GitHub()
 opensea = api.Opensea()
 snapshot = api.Snapshot()
+twitter = api.Twitter()
 warpcast = api.WarpcastApi()
 
 
@@ -1046,10 +1046,6 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
-    if chain == "eth": 
-        x7dao_proposers = bitquery.get_proposers(chain) or "N/A"
-    else:
-        x7dao_proposers = "N/A"
     x7dao_info = dextools.get_token_info(ca.X7DAO(chain), chain)
     x7dao_holders = x7dao_info["holders"] or "N/A"
     x7r_info = dextools.get_token_info(ca.X7R(chain), chain)
@@ -1063,7 +1059,6 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"*X7 Finance Token Holders ({chain_info.name})*\n\n"
             f"X7R:        {x7r_holders}\n"
             f"X7DAO:  {x7dao_holders}\n"
-            f"X7DAO ≥ 500K: {x7dao_proposers}\n"
             f"X7D:        {x7d_holders}",
         parse_mode="Markdown",
     )
@@ -1650,41 +1645,6 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     InlineKeyboardButton(
                         text=chain_info.scan_name,
                         url=f"{chain_info.scan_address}{ca.TIME_LOCK(chain)}",
-                    )
-                ],
-            ]
-        ),
-    )
-
-
-
-async def magisters(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
-    chain_info, error_message = chains.get_info(chain, token=True)
-    if error_message:
-        await update.message.reply_text(error_message)
-        return
-
-    data = blockspan.get_nft_data(ca.MAGISTER(chain), chain)
-    holders = data["total_tokens"] or "N/A"
-    try:
-        magisters = bitquery.get_nft_holder_list(ca.MAGISTER(chain), chain)
-        address = "\n\n".join(map(lambda x: f"`{x}`", magisters))
-    except Exception:
-        address = ""
-    await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Magister Holders ({chain_info.name})*\n\n"
-            f"Holders - {holders}\n\n"
-            f"{address}",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="Magister Holder List",
-                        url=f"{chain_info.scan_token}{ca.MAGISTER(chain)}#balances",
                     )
                 ],
             ]
@@ -2731,17 +2691,42 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await trending_error()
 
 
-async def twitter(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_sticker(sticker=media.TWITTER_STICKER)
-    await update.message.reply_text(
-        f"*X7 Finance Twitter/X*\n\n" f"{random.choice(text.X_REPLIES)}",
+async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    command = update.message.text.lower()
+    if "xtrader" in command or "0xtrader" in command:
+        username = "0xtrader"
+        display_name = "0xTraderAi Twitter/X"
+        image = media.XTRADER
+    else:
+        username = "x7_finance"
+        display_name = "X7 Finance Twitter/X"
+        image  = tools.get_random_pioneer()
+    tweet = twitter.fetch_latest_tweet(username)
+    if not tweet or "error" in tweet:
+        message = random.choice(text.X_REPLIES)
+        tweet_url = f"https://twitter.com/{username}"
+    else:
+        tweet_url = tweet.get("url", f"https://twitter.com/{username}")
+        message = (
+            f"{tweet['text']}\n\n"
+            f"Likes: {tweet['likes']}\n"
+            f"Retweets: {tweet['retweets']}\n"
+            f"Replies: {tweet['replies']}\n"
+            f"Created At: {tweet['created_at']}\n"
+        )
+
+    await update.message.reply_photo(
+        photo=image,
+        caption=
+            f"*{display_name}*\n\n"
+            f"{message}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
-                        text=urls.TWITTER,
-                        url=urls.TWITTER,
+                        text="Tweet",
+                        url=tweet_url,
                     )
                 ],
             ]
@@ -2914,8 +2899,14 @@ async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
 
-    chain = args[1].lower() if len(args) == 2 else chains.get_chain(update.effective_message.message_thread_id)
-    wallet = args[0].lower() if len(args) >= 1 else  os.getenv("BURN_WALLET")
+    if len(args) < 1:
+        await update.message.reply_text(
+            "Please follow the command with a valid wallet address.",
+            parse_mode="Markdown"
+        )
+        return
+
+    wallet = args[0].lower()
 
     if not re.match(r'^0x[a-fA-F0-9]{40}$', wallet):
         await update.message.reply_text(
@@ -2924,6 +2915,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    chain = args[1].lower() if len(args) == 2 else chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -2934,7 +2926,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     native_price = etherscan.get_native_price(chain)
     eth = etherscan.get_native_balance(wallet, chain)
-    dollar = float(eth) * float(native_price)
+    dollar = eth * native_price
     x7r, _ = dextools.get_price(ca.X7R(chain), chain)
     x7dao, _ = dextools.get_price(ca.X7DAO(chain), chain)
 
@@ -3462,6 +3454,7 @@ async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         ),
     )
+
 
 async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args:

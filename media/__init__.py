@@ -23,6 +23,7 @@ PIONEER_LOGO = os.path.join("media", "pioneer.png")
 WEBSITE_LOGO = os.path.join("media", "website.png")
 
 WELCOMEVIDEO = os.path.join("media", "welcomevideo.mp4")
+XTRADER = os.path.join("media", "0xtrader.jpg")
 
 # STICKERS
 GM = "CAACAgQAAxkBAAEGsh9jjfZUfCKtJjaLGZbNFuzVgb9VOQAC6g4AAsII4FH2AAFleY-pPhorBA"

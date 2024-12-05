@@ -4,7 +4,7 @@ from telegram.ext import *
 import os, sys, sentry_sdk, subprocess
 
 from bot import admin, auto, commands, welcome
-from constants import chains, settings, urls
+from constants import settings, urls
 from hooks import db
 
 
@@ -100,7 +100,6 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler(["loan", "loans"], commands.loan))
     application.add_handler(CommandHandler("locks", commands.locks))
     application.add_handler(CommandHandler("me", commands.me))
-    application.add_handler(CommandHandler("magisters", commands.magisters))
     application.add_handler(CommandHandler(["mcap", "marketcap", "cap"], commands.mcap))
     application.add_handler(CommandHandler("media", commands.media_command))
     application.add_handler(CommandHandler(["nft", "nfts"], commands.nft))
@@ -118,7 +117,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler(["time", "clock"], commands.time_command))
     application.add_handler(CommandHandler("treasury", commands.treasury))
     application.add_handler(CommandHandler(["trending", "trend"], commands.trending))
-    application.add_handler(CommandHandler("twitter", commands.twitter))
+    application.add_handler(CommandHandler(["twitter", "xtrader", "0xtrader"], commands.twitter_command))
     application.add_handler(CommandHandler(["website", "site", "swap", "dex", "xchange"], commands.website))
     application.add_handler(CommandHandler(["volume"], commands.volume))
     application.add_handler(CommandHandler("wei", commands.wei))
