@@ -2694,7 +2694,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     command = update.message.text.lower()
     if "xtrader" in command or "0xtrader" in command:
-        username = "0xtrader"
+        username = "0xtraderai"
         display_name = "0xTraderAi Twitter/X"
         image = media.XTRADER
     else:

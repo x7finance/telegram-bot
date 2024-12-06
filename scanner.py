@@ -227,6 +227,8 @@ async def pair_alert(event, chain):
     liq_data = dextools.get_liquidity(event['args']['pair'], chain)
     if liq_data["total"] == "N/A":
         liq = "Unknown"
+    else:
+        liq = liq_data["total"]
 
     im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")
     try:
