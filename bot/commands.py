@@ -116,14 +116,29 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"*{token.upper()} ({chain_info.name}) Arbitrage Opportunities*\n\n"
                     f"Xchange: ${price_x:.6f}\n"
                     f"Uniswap: ${price_y:.6f}\n"
-                    f"Difference: ${price_diff:.6f} ({percentage_diff:.2f}%)\n"
+                    f"Difference: {percentage_diff:.2f}%\n"
                 )
 
                 await update.message.reply_photo(
                     photo=tools.get_random_pioneer(),
                     caption=comparison_text,
-                    parse_mode="Markdown"
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(
+                        [
+                            [
+                                InlineKeyboardButton(
+                                    text="Xchange Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{pair_x}"
+                                )
+                            ],
+                            [
+                                InlineKeyboardButton(
+                                    text="Uniswap Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{pair_y}"
+                                )
+                            ]
+                        ]
+                    )
                 )
+
             else:
                 await update.message.reply_text("Unable to retrieve prices for Xchange or Uniswap. Please try again later.")
 
@@ -147,7 +162,7 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     comparison_text += (
                         f"{t.upper()}:\n"
                         f"Price: ${price:.6f}\n"
-                        f"Difference: ${price_diff:.6f} ({percentage_diff:.2f}%)\n\n"
+                        f"Difference: {percentage_diff:.2f}%\n\n"
                     )
 
                 await update.message.reply_photo(
