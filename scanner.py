@@ -328,7 +328,7 @@ async def token_alert(event, chain):
 
     buttons = InlineKeyboardMarkup([
         [InlineKeyboardButton(text="Buy", url=urls.XCHANGE_BUY(chain_info.id, token_address))],
-        [InlineKeyboardButton(text="Chart", url=f"{chain_info.dext}/{token_address}")],
+        [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{token_address}")],
     ])
 
     if twitter_link:
