@@ -1,6 +1,8 @@
 import  os
+from hooks import api
 from constants import abis, ca, chains
 
+etherscan = api.Etherscan()
 
 async def burn_x7r(amount, chain):
     try:
@@ -93,7 +95,7 @@ def splitter_push(splitter_address, chain):
         transaction_data = push_all_function_selector
         nonce = chain_info.w3.eth.get_transaction_count(sender_address)
 
-        contract = chain_info.w3.eth.contract(address=splitter_address, abi=abis.read("splitter"))
+        contract = chain_info.w3.eth.contract(address=splitter_address, abi=etherscan.get_abi(splitter_address, chain))
         gas_estimate = contract.functions.pushAll().estimate_gas({"from": sender_address})
         gas_price = chain_info.w3.eth.gas_price
 

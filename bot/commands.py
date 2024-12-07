@@ -2373,12 +2373,12 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     eco_splitter_text = "Distribution:\n"
     eco_distribution = splitters.generate_eco_split(chain, eco_eth)
     for location, (share, percentage) in eco_distribution.items():
-        eco_splitter_text += f"{location}: {share:.2f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
+        eco_splitter_text += f"{location}: {share:.3f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
     treasury_splitter_text = "Distribution:\n"
     treasury_distribution = splitters.generate_treasury_split(chain, treasury_eth)
     for location, (share, percentage) in treasury_distribution.items():
-        treasury_splitter_text += f"{location}: {share:.2f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
+        treasury_splitter_text += f"{location}: {share:.3f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
     buttons = [
         [InlineKeyboardButton(text="Push Ecosystem Splitter", callback_data=f"push_eco:{chain}")],
@@ -2387,9 +2387,9 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     caption = (
         f"*X7 Finance Ecosystem Splitters ({chain_info.name})*\n\n"
-        f"Ecosystem Splitter\n{eco_eth:.2f} {chain_info.native.upper()} (${'{:0,.0f}'.format(eco_dollar)})\n"
+        f"Ecosystem Splitter\n{eco_eth:.3f} {chain_info.native.upper()} (${'{:0,.0f}'.format(eco_dollar)})\n"
         f"{eco_splitter_text}\n"
-        f"Treasury Splitter\n{treasury_eth:.2f} {chain_info.native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
+        f"Treasury Splitter\n{treasury_eth:.3f} {chain_info.native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
         f"{treasury_splitter_text}"
     )
 
