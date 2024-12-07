@@ -19,18 +19,31 @@ def generate_eco_split(chain, eth_value):
     lending_pool_percentage = contract.functions.outletShare(4).call() / 10
     treasury_percentage = contract.functions.outletShare(5).call() / 10
     
-    x7r_share = eth_value * x7r_percentage / 100
-    x7dao_share = eth_value * x7dao_percentage / 100
-    x7100_share = eth_value * x7100_percentage / 100
-    lending_pool_share = eth_value * lending_pool_percentage / 100
-    treasury_share = eth_value * treasury_percentage / 100
+    x7r_balance = contract.functions.outletBalance(1).call() / 10 ** 18
+    x7dao_balance = contract.functions.outletBalance(2).call() / 10 ** 18
+    x7100_balance = contract.functions.outletBalance(3).call() / 10 ** 18
+    lending_pool_balance = contract.functions.outletBalance(4).call() / 10 ** 18
+    treasury_balance = contract.functions.outletBalance(5).call() / 10 ** 18
+
+    slot_names = {
+        "eth": ("Treasury Splitter"),
+        "base": ("X7DAO Multisig"),
+        "bsc": (),
+        "arb": (),
+        "op": (),
+        "poly": (),
+    }
+
+    treasury_name = (
+        slot_names.get(chain) if slot_names.get(chain) else ("Treasury Splitter")
+    )
 
     return {
-        "> X7R Liquidity Hub": (x7r_share, x7r_percentage),
-        "> X7DAO Liquidity Hub": (x7dao_share, x7r_percentage),
-        "> X7100 Liquidity Hub": (x7100_share, x7100_percentage),
-        "> Lending Pool": (lending_pool_share, lending_pool_percentage),
-        "> Treasury Splitter": (treasury_share, treasury_percentage)
+        "> X7R Liquidity Hub": (x7r_balance, x7r_percentage),
+        "> X7DAO Liquidity Hub": (x7dao_balance, x7r_percentage),
+        "> X7100 Liquidity Hub": (x7100_balance, x7100_percentage),
+        "> Lending Pool": (lending_pool_balance, lending_pool_percentage),
+        f"> {treasury_name}": (treasury_balance, treasury_percentage)
     }
     
 
@@ -129,10 +142,15 @@ def generate_treasury_split(chain, eth_value):
     slot_1_percentage = contract.functions.outletShare(3).call() / 1000
     slot_2_percentage = contract.functions.outletShare(4).call() / 1000
 
-    profit_share = eth_value * profit_percentage / 100
-    reward_pool_share = eth_value * reward_pool_percentage / 100
-    slot_1_share = eth_value * slot_1_percentage / 100
-    slot_2_share = eth_value * slot_2_percentage / 100
+    profit_balance = contract.functions.outletBalance(1).call() / 10 ** 18
+    reward_pool_balance = contract.functions.outletBalance(2).call() / 10 ** 18
+    slot_1_balance = contract.functions.outletBalance(3).call() / 10 ** 18
+    slot_2_balance = contract.functions.outletBalance(4).call() / 10 ** 18
+
+    profit_balance = eth_value * profit_percentage / 100
+    reward_pool_balance = eth_value * reward_pool_percentage / 100
+    slot_1_balance = eth_value * slot_1_percentage / 100
+    slot_2_balance = eth_value * slot_2_percentage / 100
 
     slot_names = {
         "eth": ("Pioneer Pool", "Community Multi Sig", "Utility Deployer"),
@@ -148,8 +166,8 @@ def generate_treasury_split(chain, eth_value):
     )
 
     return {
-            "> DAO Multi Sig": (profit_share, profit_percentage), 
-            f"> {rewards_pool_name}": (reward_pool_share, reward_pool_percentage),
-            f"> {slot_1_name}": (slot_1_share, slot_1_percentage),
-            f"> {slot_2_name}": (slot_2_share, slot_2_percentage)
+            "> DAO Multi Sig": (profit_balance, profit_percentage), 
+            f"> {rewards_pool_name}": (reward_pool_balance, reward_pool_percentage),
+            f"> {slot_1_name}": (slot_1_balance, slot_1_percentage),
+            f"> {slot_2_name}": (slot_2_balance, slot_2_percentage)
     }

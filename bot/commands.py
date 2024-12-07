@@ -2368,30 +2368,40 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     eco_eth = float(etherscan.get_native_balance(ca.ECO_SPLITTER(chain), chain))
     native_price = etherscan.get_native_price(chain)
     eco_dollar = float(eco_eth) * float(native_price)
-    treasury_dollar = float(treasury_eth) * float(native_price)
 
     eco_splitter_text = "Distribution:\n"
     eco_distribution = splitters.generate_eco_split(chain, eco_eth)
     for location, (share, percentage) in eco_distribution.items():
         eco_splitter_text += f"{location}: {share:.3f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
-    treasury_splitter_text = "Distribution:\n"
-    treasury_distribution = splitters.generate_treasury_split(chain, treasury_eth)
-    for location, (share, percentage) in treasury_distribution.items():
-        treasury_splitter_text += f"{location}: {share:.3f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
+    treasury_splitter_text = ""
+    if chain == "eth":
+        treasury_dollar = float(treasury_eth) * float(native_price)
+        treasury_splitter_text = "Distribution:\n"
+        treasury_distribution = splitters.generate_treasury_split(chain, treasury_eth)
+        for location, (share, percentage) in treasury_distribution.items():
+            treasury_splitter_text += f"{location}: {share:.3f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
+    else:
+        treasury_dollar = 0
 
     buttons = [
-        [InlineKeyboardButton(text="Push Ecosystem Splitter", callback_data=f"push_eco:{chain}")],
-        [InlineKeyboardButton(text="Push Treasury Splitter", callback_data=f"push_treasury:{chain}")],
+        [InlineKeyboardButton(text="Push Ecosystem Splitter", callback_data=f"push_eco:{chain}")]
     ]
+
+    if chain == "eth":
+        buttons.append([InlineKeyboardButton(text="Push Treasury Splitter", callback_data=f"push_treasury:{chain}")])
 
     caption = (
         f"*X7 Finance Ecosystem Splitters ({chain_info.name})*\n\n"
         f"Ecosystem Splitter\n{eco_eth:.3f} {chain_info.native.upper()} (${'{:0,.0f}'.format(eco_dollar)})\n"
         f"{eco_splitter_text}\n"
-        f"Treasury Splitter\n{treasury_eth:.3f} {chain_info.native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
-        f"{treasury_splitter_text}"
     )
+
+    if chain == "eth":
+        caption += (
+            f"Treasury Splitter\n{treasury_eth:.3f} {chain_info.native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
+            f"{treasury_splitter_text}"
+        )
 
     await message.delete()
     await update.message.reply_photo(
