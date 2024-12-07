@@ -311,15 +311,13 @@ async def token_alert(event, chain):
 
     im1.paste(im2, (700, 20), im2)
 
-    message = (
-        f"{token_name} ({token_symbol})\n\n"
-        f"{description}\n\n"
-    )
+    message = f"{token_name} ({token_symbol})\n\n{description}\n\n"
+    message_without_description = f"{token_name} ({token_symbol})\n\n"
 
     i1 = ImageDraw.Draw(im1)
     i1.text(
         (26, 30),
-        f"New Token Deployed ({chain_info.name.upper()})\n\n{message}",
+        f"New Token Deployed ({chain_info.name.upper()})\n\n{message_without_description}",
         font=ImageFont.truetype(media.FONT, 26),
         fill=(255, 255, 255)
     )
@@ -329,7 +327,7 @@ async def token_alert(event, chain):
     caption = (
         f"*New Token Deployed ({chain_info.name.upper()})*\n\n"
         f"{message}\n\n"
-        f"Token Address:\n`{token_address}`"
+        f"Token Address:\n`{token_address}`\n\n"
     )
 
     button_list = [
