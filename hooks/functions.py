@@ -83,31 +83,34 @@ def liquidate_loan(loan_id, chain):
 
 
 def splitter_push(splitter_address, chain):
-    chain_info, error_message = chains.get_info(chain)
     try:
+        chain_info, _ = chains.get_info(chain)
+        sender_address = os.getenv("BURN_WALLET")
+        sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
+
         push_all_function_selector = "0x11ec9d34"
-        from_wallet = os.getenv("BURN_WALLET")
+
+        transaction_data = push_all_function_selector
+        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+
+        contract = chain_info.w3.eth.contract(address=splitter_address, abi=abis.read("splitter"))
+        gas_estimate = contract.functions.pushAll().estimate_gas({"from": sender_address})
+        gas_price = chain_info.w3.eth.gas_price
 
         transaction = {
-            'from': from_wallet,
+            'from': sender_address,
             'to': splitter_address,
-            'data': push_all_function_selector,
-            'gas': 0,
-            'gasPrice': chain_info.w3.eth.gas_price,
-            'nonce': chain_info.w3.eth.get_transaction_count(from_wallet),
-            'chainId': int(chain_info.id),
+            'data': transaction_data,
+            'gas': gas_estimate,
+            'gasPrice': gas_price,
+            'nonce': nonce,
+            'chainId': int(chain_info.id)
         }
-        transaction['gas'] = chain_info.w3.eth.estimate_gas(transaction)
 
-        signed_tx = chain_info.w3.eth.account.sign_transaction(transaction, private_key=os.getenv("BURN_WALLET_PRIVATE_KEY"))
+        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
 
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
-        tx_receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash)
+        return f"{chain_info.name} Splitter Push Successful! TX: {chain_info.scan_tx}{tx_hash.hex()}"
 
-        if tx_receipt.status == 1:
-            return f"{chain_info.name} Splitter Push Successful! TX: {tx_hash.hex()}"
-        else:
-            f"{chain_info.name} Splitter Push Failed"
-    
     except Exception as e:
-       return f"{chain_info.name} Splitter Push Error: {str(e)}"
+        return f"{chain_info.name} Splitter Push Error: {e}"
