@@ -50,20 +50,26 @@ async def log_loop(chain, poll_interval):
                 loan_filters[ill_key] = contract.events.LoanOriginated.create_filter(fromBlock="latest")
 
             while True:
-                for PairCreated in pair_filter.get_new_entries():
-                    await pair_alert(PairCreated, chain)
+                try:
+                    for PairCreated in pair_filter.get_new_entries():
+                        await pair_alert(PairCreated, chain)
 
-                for TokenDeployed in token_filter.get_new_entries():
-                    await token_alert(TokenDeployed, chain)
+                    for TokenDeployed in token_filter.get_new_entries():
+                        await token_alert(TokenDeployed, chain)
 
-                for ill_key, loan_filter in loan_filters.items():
-                    for LoanOriginated in loan_filter.get_new_entries():
-                        await loan_alert(LoanOriginated, chain)
+                    for ill_key, loan_filter in loan_filters.items():
+                        for LoanOriginated in loan_filter.get_new_entries():
+                            await loan_alert(LoanOriginated, chain)
 
-                await asyncio.sleep(poll_interval)
+                    await asyncio.sleep(poll_interval)
+
+                except Exception as e:
+                    await error(f"Error in inner loop for chain '{chain}': {str(e)}. Restarting loop.")
+                    await asyncio.sleep(5)
+                    break
 
         except Exception as e:
-            await error(f"Error in log loop for chain {chain}: {e}")
+            await error(f"Error in log loop for chain '{chain}': {str(e)}. Retrying after 10 seconds.")
             await asyncio.sleep(10)
 
 
