@@ -332,18 +332,19 @@ async def token_alert(event, chain):
         f"Token Address:\n`{token_address}`"
     )
 
-    buttons = InlineKeyboardMarkup([
+    button_list = [
         [InlineKeyboardButton(text="Buy", url=urls.XCHANGE_BUY(chain_info.id, token_address))],
         [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{token_address}")],
-    ])
+    ]
 
     if twitter_link:
-        buttons.inline_keyboard.append([InlineKeyboardButton(text="Twitter", url=twitter_link)])
+        button_list.append([InlineKeyboardButton(text="Twitter", url=twitter_link)])
     if telegram_link:
-        buttons.inline_keyboard.append([InlineKeyboardButton(text="Telegram", url=telegram_link)])
+        button_list.append([InlineKeyboardButton(text="Telegram", url=telegram_link)])
     if website_link:
-        buttons.inline_keyboard.append([InlineKeyboardButton(text="Website", url=website_link)])
+        button_list.append([InlineKeyboardButton(text="Website", url=website_link)])
 
+    buttons = InlineKeyboardMarkup(button_list)
     for channel, thread_id, link in channels:
         with open(image_path, "rb") as photo:
             send_params = {
