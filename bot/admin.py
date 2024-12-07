@@ -3,14 +3,13 @@ from telegram.ext import *
 
 import os, requests, tweepy
 from datetime import datetime, timedelta
+from farcaster import Warpcast
 
 from bot import auto
 from constants import ca, chains, settings
 from hooks import  db, api, functions
 
-defined = api.Defined()
 etherscan = api.Etherscan()
-
 
 async def command(update, context):
     user_id = update.effective_user.id
@@ -130,7 +129,7 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Content-Type": "application/json",
             "Authorization": os.getenv("DEFINED_API_KEY")
         }
-        pair_query = f"""query {{
+        defined_query = f"""query {{
             listPairsWithMetadataForToken (tokenAddress: "{ca.X7R("eth")}" networkId: 1) {{
                 results {{
                     pair {{
@@ -139,7 +138,7 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 }}
             }}
             }}"""
-        defined_response = requests.post("https://graph.defined.fi/graphql", headers=defined_headers, json={"query": pair_query})
+        defined_response = requests.post("https://graph.defined.fi/graphql", headers=defined_headers, json={"query": defined_query})
         if defined_response.status_code == 200:
             status.append("🟢 Defined: Connected Successfully")
         else:
@@ -156,22 +155,33 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             status.append(f"🔴 Dextools: Connection failed with status {dextools_response.status_code}")
 
+        drpc_url = f"https://lb.drpc.org/ogrpc?network=ethereum&dkey={os.getenv('DRPC_API_KEY')}"
+        drpc_payload = {"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": 1}
+        drpc_response = requests.post(drpc_url, json=drpc_payload)
+        if drpc_response.status_code == 200:
+            status.append(f"🟢 DRPC: Connected Successfully")
+        else:
+            status.append(f"🔴 DRPC: Connection failed with status {drpc_response.status_code}")
+
         etherscan_url = "https://api.etherscan.io/v2/api"
         etherscan_key = os.getenv('ETHERSCAN_API_KEY')
         etherscan_url = f"{etherscan_url}?module=stats&action=ethprice&apikey={etherscan_key}"
-        response = requests.get(etherscan_url)
-        if response.status_code == 200:
+        etherscan_response = requests.get(etherscan_url)
+        if etherscan_response.status_code == 200:
             status.append(f"🟢 Etherscan: Connected Successfully")
         else:
             status.append(f"🔴 Etherscan: Connection failed with status {response.status_code}")
 
-        rpc_url = f"https://lb.drpc.org/ogrpc?network=ethereum&dkey={os.getenv('DRPC_API_KEY')}"
-        rpc_payload = {"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": 1}
-        rpc_response = requests.post(rpc_url, json=rpc_payload)
-        if rpc_response.status_code == 200:
-            status.append(f"🟢 DRPC: Connected Successfully")
+
+        github_url = "https://api.github.com/repos/x7finance/monorepo/issues"
+        github_headers = {
+        "Authorization": f"token {os.getenv('GITHUB_PAT')}"
+        }
+        response = requests.get(github_url, headers=github_headers)
+        if response.status_code == 200:
+            status.append("🟢 GitHub: Connected Successfully")
         else:
-            status.append(f"🔴 DRPC: Connection failed with status {rpc_response.status_code}")
+            status.append(f"🔴 GitHub: Connection failed with status {response.status_code}")
 
         opensea_url = f"https://api.opensea.io/v2/chain/ethereum/contract/{ca.PIONEER}/nfts/2"
         opensea_headers = {
@@ -184,15 +194,51 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             status.append(f"🔴 Opensea: Connection failed with status {opensea_response.status_code}")
 
+        snapshot_url = "https://hub.snapshot.org/graphql"
+        snapshot_query = {
+            "query": 'query { proposals ( first: 1, skip: 0, where: { space_in: ["x7finance.eth"]}, '
+                    'orderBy: "created", orderDirection: desc ) { id title start end snapshot state choices '
+                    "scores scores_total author }}"
+        }
+        snapshot_response = requests.get(snapshot_url, snapshot_query)
+
+        if snapshot_response.status_code == 200:
+            status.append("🟢 Snapshot: Connected Successfully")
+        else:
+            status.append(f"🔴 Snashot: Connection failed with status {response.status_code}")
+
         try:
-            auth = tweepy.OAuthHandler(os.getenv("TWITTER_API_KEY"), os.getenv("TWITTER_API_SECRET"))
-            auth.set_access_token(os.getenv("TWITTER_ACCESS_TOKEN"), os.getenv("TWITTER_ACCESS_TOKEN_SECRET"))
-            api = tweepy.API(auth)
-            api.verify_credentials()
+            twitter_auth = tweepy.OAuthHandler(
+                os.getenv("TWITTER_API_KEY"),
+                os.getenv("TWITTER_API_SECRET")
+            )
+            twitter_auth.set_access_token(
+                os.getenv("TWITTER_ACCESS_TOKEN"),
+                os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+            )
+            twitter_api = tweepy.API(twitter_auth)
+            twitter_api.verify_credentials()
+            twitter_response = True
+        except tweepy.TweepyException as e:
+            if hasattr(e, "response") and e.response is not None:
+                twitter_response = e.response.status_code
+            else:
+                twitter_response = "Unknown Error"
+
+        if twitter_response == True:
             status.append("🟢 Twitter: Connected Successfully")
-        except Exception as e:
-            error_code = e.response.status_code if e.response else "Unknown"
-            status.append(f"🔴 Twitter: Connection failed with status {error_code}")
+        elif isinstance(twitter_response, int):
+            status.append(f"🔴 Twitter: Connection failed with status {twitter_response}")
+        else:
+            status.append(f"🔴 Twitter: Connection failed ({twitter_response})")
+
+        warpcast_client = Warpcast(mnemonic=os.getenv("WARPCAST_API_KEY"))
+        warpcast_fid = "419688"
+        cast = warpcast_client.get_casts(warpcast_fid, None, 1)
+        if cast is not None:
+            status.append("🟢 Warpcast: Connected Successfully")
+        else:
+            status.append("🔴 Warpcast: Connection failed")
         
         await update.message.reply_text(
             "*X7 Finance Telegram Bot API Status*\n\n" + "\n".join(status),

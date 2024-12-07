@@ -807,11 +807,7 @@ class Opensea:
 
 class Snapshot:
     def __init__(self):
-        self.headers = {
-            "accept": "application/json",
-            "X-API-KEY": os.getenv("OPENSEA_API_KEY")
-        }
-        self.url = f"https://hub.snapshot.org/graphql"
+        self.url = "https://hub.snapshot.org/graphql"
 
 
     def get_latest(self):
