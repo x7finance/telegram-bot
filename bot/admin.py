@@ -260,21 +260,29 @@ async def pushall_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if action == "push_eco":
         splitter_address = ca.ECO_SPLITTER(chain)
         splitter_name = "Ecosystem Splitter"
+        contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(splitter_address),
+            abi=etherscan.get_abi(splitter_address, chain),
+            )
+        splitter_balance = contract.functions.outletBalance(4).call() / 10 ** 18
     elif action == "push_treasury":
         splitter_address = ca.TREASURY_SPLITTER(chain)
         splitter_name = "Treasury Splitter"
+        splitter_balance = float(etherscan.get_native_balance(splitter_address, chain))
     else:
         await query.answer("Invalid action.", show_alert=True)
         return
 
-    splitter_balance = float(etherscan.get_native_balance(splitter_address, chain))
     if splitter_balance <= 0:
         await query.answer(f"{chain_info.name} {splitter_name} has no balance to push.", show_alert=True)
         return
 
     try:
         result = functions.splitter_push(splitter_address, chain)
-        await query.answer(result, show_alert=True)
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=f"{splitter_name} push successful: {result}"
+        )
     except Exception as e:
         await query.answer(f"Error during {splitter_name} push: {str(e)}", show_alert=True)
 

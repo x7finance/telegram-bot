@@ -40,7 +40,7 @@ def generate_eco_split(chain, eth_value):
 
     return {
         "> X7R Liquidity Hub": (x7r_balance, x7r_percentage),
-        "> X7DAO Liquidity Hub": (x7dao_balance, x7r_percentage),
+        "> X7DAO Liquidity Hub": (x7dao_balance, x7dao_percentage),
         "> X7100 Liquidity Hub": (x7100_balance, x7100_percentage),
         "> Lending Pool": (lending_pool_balance, lending_pool_percentage),
         f"> {treasury_name}": (treasury_balance, treasury_percentage)
