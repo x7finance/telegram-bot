@@ -1,6 +1,11 @@
+from telegram import *
+from telegram.ext import *
+
 import os
 from datetime import datetime
 from requests import get, post
+
+from constants import urls
 
 
 API_KEY = os.getenv("DUNE_API_KEY")
@@ -45,3 +50,20 @@ def get_query_results(execution_id):
 
 def cancel_query_execution(execution_id):
     return get(make_api_url("execution", "cancel", execution_id), headers=HEADER)
+
+
+async def get_error(update: Update, context: ContextTypes.DEFAULT_TYPE, type):
+        await update.message.reply_text(
+            f'*{type}*\n\nUnable to get Dune data, please use the link below',
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                        )
+                    ],
+                ]
+            ),
+        )
+

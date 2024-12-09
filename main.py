@@ -34,7 +34,7 @@ async def error(update: Update, context: CallbackContext):
         message: Message = update.message
         if message is not None and message.text is not None:
             await update.message.reply_text(
-                "Error while loading data, please try again"
+                "Uh oh! You trusted code and it failed you! Please try again"
             )
             print({context.error})
             sentry_sdk.capture_exception(
