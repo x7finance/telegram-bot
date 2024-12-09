@@ -317,8 +317,8 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     burn = etherscan.get_token_balance(ca.DEAD, ca.X7R(chain), chain)
     percent = round(burn / ca.SUPPLY * 100, 2)
-    price,_ = dextools.get_price(ca.X7R(chain), chain)
-    burn_dollar = float(price) * float(burn)
+    x7r_price = dextools.get_price(ca.X7R(chain), chain)[0] or 0
+    burn_dollar = float(x7r_price) * float(burn)
     native = burn_dollar / etherscan.get_native_price(chain)
 
     await message.delete()
@@ -2550,10 +2550,10 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     eth_balance = etherscan.get_native_balance(chain_info.dao_multi, chain)
     eth_dollar = eth_balance * native_price
     x7r_balance = etherscan.get_token_balance(chain_info.dao_multi, ca.X7R(chain), chain)
-    x7r_price,_ = dextools.get_price(ca.X7R(chain), chain)
+    x7r_price = dextools.get_price(ca.X7R(chain), chain)[0] or 0
     x7r_dollar = float(x7r_balance) * float(x7r_price)
     x7dao_balance = etherscan.get_token_balance(chain_info.dao_multi, ca.X7DAO(chain), chain)
-    x7dao_price,_ = dextools.get_price(ca.X7DAO(chain), chain)
+    x7dao_price = dextools.get_price(ca.X7DAO(chain), chain)[0] or 0
     x7dao_dollar = float(x7dao_balance) * float(x7dao_price)
     x7d_balance = etherscan.get_token_balance(chain_info.dao_multi, ca.X7D(chain), chain)
     x7d_dollar = x7d_balance * native_price
@@ -2952,8 +2952,8 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     native_price = etherscan.get_native_price(chain)
     eth_balance = etherscan.get_native_balance(wallet, chain)
     dollar = eth_balance * native_price
-    x7r_price, _ = dextools.get_price(ca.X7R(chain), chain)
-    x7dao_price, _ = dextools.get_price(ca.X7DAO(chain), chain)
+    x7r_price = dextools.get_price(ca.X7R(chain), chain)[0] or 0
+    x7dao_price = dextools.get_price(ca.X7DAO(chain), chain)[0] or 0
 
     x7r_balance = etherscan.get_token_balance(wallet, ca.X7R(chain), chain)
     x7r_dollar = float(x7r_balance) * float(x7r_price)
