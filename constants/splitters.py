@@ -58,7 +58,7 @@ def generate_hub_split(chain, hub_address, token):
         distribute = contract.functions.distributeShare().call() / 10
         liquidity = contract.functions.liquidityShare().call() / 10
         treasury = contract.functions.treasuryShare().call() / 10
-        liquidity_ratio_target = contract.functions.liquidityRatioTarget().call()
+        liquidity_ratio_target = contract.functions.liquidityRatioTarget().call() / 10
         balance_threshold = contract.functions.balanceThreshold().call() / 10 ** 18
         liquidity_balance = contract.functions.liquidityBalance().call() / 10 ** 18
         distribute_balance = contract.functions.distributeBalance().call() / 10 ** 18
