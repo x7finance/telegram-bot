@@ -1,14 +1,13 @@
 from telegram import *
 from telegram.ext import *
 
-import os, sys, sentry_sdk, subprocess
+import os, sys, sentry_sdk, socket, subprocess
 
 from bot import admin, auto, commands, welcome
 from constants import settings, urls
 from hooks import db
 
 
-LOCAL = False
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
 
@@ -46,6 +45,11 @@ async def error(update: Update, context: CallbackContext):
                     f"Error occurred without a valid message: {context.error}"
                 )
             )
+
+
+def is_local():
+    ip = socket.gethostbyname(socket.gethostname())
+    return ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"
 
 
 def scanners():
@@ -148,7 +152,8 @@ if __name__ == "__main__":
     application.add_handler(CallbackQueryHandler(admin.reset_no, pattern="^reset_no$"))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies))
 
-    if not LOCAL:
+    if not is_local():
+        print("Running on server")
         if db.settings_get("click_me"):
             job_queue.run_once(
                 auto.button_send,
