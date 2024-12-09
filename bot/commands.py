@@ -2586,14 +2586,13 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
-
-    chain_info, error_message = chains.get_info(chain)
+    chain = " ".join(context.args).lower()
+    chain_info, error_message = chains.get_info(chain) if chain else (None, None)
     if error_message:
         await update.message.reply_text(error_message)
         return
-    chain_name = "ethereum" if chain == "eth" else chain_info.name.lower()
-    chain_name_title = f"({chain_info.name.upper()})"
+    chain_name = "ethereum" if chain == "eth" else (chain_info.name.lower() if chain_info else "all")
+    chain_name_title = f"({chain_info.name.upper()})" if chain_info else ""
 
     if chain_name.upper() not in dune.TRENDING_FLAG:
         dune.TRENDING_TEXT[chain_name.upper()] = ""
@@ -2609,7 +2608,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
         hours, remainder = divmod(remaining_time, 3600)
         minutes, seconds = divmod(remainder, 60)
         time_remaining_text = f"Next update available in: {hours}h {minutes}m {seconds}s"
-        
+
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=(
@@ -2631,7 +2630,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        message = await update.message.reply_text(f"Getting Xchange Trending {chain_name}, Please wait...")
+        message = await update.message.reply_text(f"Getting Xchange Trending {chain_name_title}, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
         execution_id = dune.execute_query(dune.TOP_PAIRS_ID, "medium")
@@ -2655,11 +2654,18 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         rows = response_data["result"]["rows"]
-        rows = [
-            row for row in rows
-            if row.get("pair") and row["pair"].lower() != "total" and
-            row.get("blockchain", "").strip().lower() == chain_name.strip().lower()
-        ]
+
+        if chain:
+            rows = [
+                row for row in rows
+                if row.get("pair") and row["pair"].lower() != "total" and
+                row.get("blockchain", "").strip().lower() == chain_name.strip().lower()
+            ]
+        else:
+            rows = [
+                row for row in rows
+                if row.get("pair") and row["pair"].lower() != "total"
+            ]
 
         valid_rows = [
             row for row in rows
@@ -2676,7 +2682,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_photo(
                 photo=tools.get_random_pioneer(),
                 caption=
-                    f'*Xchange Trending {chain_name_title.upper()}*\n\n'
+                    f'*Xchange Trending {chain_name_title}*\n\n'
                     f'No trending data for {chain_name}',
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup(
