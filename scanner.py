@@ -298,6 +298,9 @@ async def token_alert(event, chain):
     token_name = args["name"]
     token_symbol = args["symbol"]
     description = args["description"]
+    supply = args["supply"]
+    team_tokens = args["teamTokens"]
+    description = args["description"]
     token_uri = args["tokenURI"]
     twitter_link = args.get("twitterLink", None)
     telegram_link = args.get("telegramLink", None)
@@ -311,13 +314,12 @@ async def token_alert(event, chain):
 
     im1.paste(im2, (700, 20), im2)
 
-    message = f"{token_name} ({token_symbol})\n\n{description}\n\n"
-    message_without_description = f"{token_name} ({token_symbol})\n\n"
+    message = f"{token_name} ({token_symbol})\n\nSupply: {supply}\nTeam Supply: {team_tokens}%"
 
     i1 = ImageDraw.Draw(im1)
     i1.text(
         (26, 30),
-        f"New Token Deployed ({chain_info.name.upper()})\n\n{message_without_description}",
+        f"New Token Deployed ({chain_info.name.upper()})\n\n{message}",
         font=ImageFont.truetype(media.FONT, 26),
         fill=(255, 255, 255)
     )
@@ -326,7 +328,7 @@ async def token_alert(event, chain):
 
     caption = (
         f"*New Token Deployed ({chain_info.name.upper()})*\n\n"
-        f"{message}\n\n"
+        f"{message}\n\n{description}\n\n"
         f"Token Address:\n`{token_address}`\n\n"
     )
 
