@@ -3094,7 +3094,12 @@ async def x7_token(update: Update, context: ContextTypes.DEFAULT_TYPE, token_nam
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    pair = tokens.TOKENS[token_name].get(chain).pairs[0]
+    pairs = tokens.TOKENS[token_name][chain].pairs
+    if isinstance(pairs, str):
+        pair = pairs 
+    elif isinstance(pairs, list) and pairs:
+        pair = pairs[0]
+
     info = dextools.get_token_info(token_ca(chain), chain)
     holders = info.get("holders", "N/A")
     market_cap = info.get("mcap", "N/A")
@@ -3132,7 +3137,7 @@ async def x7_token(update: Update, context: ContextTypes.DEFAULT_TYPE, token_nam
         reply_markup=InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{token_ca(chain)}")],
-                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{token_ca(chain)}")],
+                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{pair}")],
                 [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, token_ca(chain))}")],
             ]
         ),
