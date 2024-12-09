@@ -326,7 +326,7 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=tools.get_random_pioneer(),
         caption=
             f"*X7R Tokens Burned ({chain_info.name})*\n\n"
-            f'{"{:0,.0f}".format(float(burn))} / {native:,.3f} {chain_info.native.upper()} (${"{:0,.0f}".format(float(burn_dollar))})\n'
+            f'{burn:,.0f} X7R / {native:,.3f} {chain_info.native.upper()} (${burn_dollar:,.0f})\n'
             f"{percent}% of Supply",
         parse_mode="markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -532,11 +532,11 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"*X7 Finance Market Cap Comparison* ({chain_info.name})\n\n"
             f"{token2.upper()} Market Cap:\n"
-            f'${"{:,.0f}".format(token_market_cap)}\n\n'
+            f'${token_market_cap:,.0f}\n\n'
             f'Token value of {x7token.upper()} at {token2.upper()} Market Cap:\n'
-            f'${"{:,.2f}".format(token_value)}\n'
-            f'{"{:,.0f}%".format(percent)}\n'
-            f'{"{:,.0f}x".format(x)}',
+            f'${token_value:,.3f}\n'
+            f'{percent:,.0f}%\n'
+            f'{x:,.3f}x',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -635,12 +635,9 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     value = float(price) * float(amount)
-    output = '{:0,.0f}'.format(value)
-    
-    amount_str = float(amount)
 
     caption = (f"*X7 Finance Price Conversion - {token_info.name.upper()} ({chain_info.name})*\n\n"
-            f"{amount_str:,.0f} {token.upper()}  is currently worth:\n\n${output}\n\n")
+            f"{amount} {token.upper()}  is currently worth:\n\n${value:,.0f}\n\n")
     
     if amount == "500000" and token.upper() == "X7DAO":
         caption+= "Holding 500,000 X7DAO tokens earns you the right to make X7DAO proposals\n\n"
@@ -698,7 +695,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ])
 
         choices_text = "\n".join(
-            f'{choice} - {"{:0,.0f}".format(score)} Votes'
+            f'{choice} - {score:,.0f} Votes'
             for choice, score in zip(proposal["choices"], proposal["scores"])
         )
         
@@ -711,7 +708,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f'{proposal["title"]} by - '
                 f'{proposal["author"][-5:]}\n\n'
                 f'{choices_text}\n\n'
-                f'{"{:0,.0f}".format(proposal["scores_total"])} Total Votes\n\n'
+                f'{proposal["scores_total"]:,.0f} Total Votes\n\n'
                 f'{end_status}',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(buttons)
@@ -1183,7 +1180,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ) = tools.get_last_buyback(hub_address, chain)
         when = tools.get_time_difference(timestamp)
         buy_back_text = (
-            f'Last Buy Back: {time} UTC\n{value} {chain_info.native.upper()} (${"{:0,.0f}".format(dollar)})\n'
+            f'Last Buy Back: {time} UTC\n{value} {chain_info.native.upper()} (${dollar:,.0f})\n'
             f"{when}"
         )
     except Exception:
@@ -1191,14 +1188,14 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     eth_price = etherscan.get_native_price(chain)
     eth_balance = etherscan.get_native_balance(hub_address, chain)
-    eth_dollar = (float(eth_balance) * float(eth_price))
+    eth_dollar = eth_balance * eth_price
 
     await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
             f"*{token.upper()} Liquidity Hub ({chain_info.name})*\n\n"
-            f"{round(float(eth_balance), 2)} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
+            f"{eth_balance:,.3f} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
             f"{split_text}\n\n"
             f"{buy_back_text}",
         parse_mode="Markdown",
@@ -1553,7 +1550,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         price = etherscan.get_native_price(chain)
         liability = contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
-        remaining = f'Remaining Liability:\n{liability} {chain_info.native.upper()} (${"{:0,.0f}".format(price * liability)})'
+        remaining = f'Remaining Liability:\n{liability} {chain_info.native.upper()} (${price * liability:,.0f})'
         schedule1 = contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
         schedule2 = contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
         schedule_str = tools.format_schedule(schedule1, schedule2, chain_info.native.upper())
@@ -1586,9 +1583,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reward = contract.functions.liquidationReward().call() / 10**18
                 liquidation_status = (
                     f"\n\n*Eligible For Liquidation*\n"
-                    f"Cost: {liquidation / 10 ** 18} {chain_info.native.upper()} "
-                    f'(${"{:0,.0f}".format(price * liquidation / 10 ** 18)})\n'
-                    f'Reward: {reward} {chain_info.native.upper()} (${"{:0,.0f}".format(price * reward)})'
+                    f'Reward: {reward} {chain_info.native.upper()} (${price * reward:,.4f})'
                 )
         except Exception:
             pass
@@ -2016,10 +2011,10 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             photo=tools.get_random_pioneer(),
             caption=
                 f"*X7 Pioneer NFT Info*\n\n"
-                f"Floor Price: {floor_round} ETH (${'{:0,.0f}'.format(floor_dollar)})\n"
-                f"Total Unclaimed Rewards: {pioneer_pool:.3f} ETH (${'{:0,.0f}'.format(total_dollar)})\n"
-                f"Total Claimed Rewards: {total_claimed:.3f} ETH (${'{:0,.0f}'.format(total_claimed_dollar)})\n"
-                f"Unlock Fee: {unlock_fee:.2f} ETH (${'{:0,.0f}'.format(unlock_fee_dollar)})\n\n"
+                f"Floor Price: {floor_round} ETH (${floor_dollar:,.0f})\n"
+                f"Total Unclaimed Rewards: {pioneer_pool:.3f} ETH (${total_dollar:,.0f})\n"
+                f"Total Claimed Rewards: {total_claimed:.3f} ETH (${total_claimed_dollar:,.0f})\n"
+                f"Unlock Fee: {unlock_fee:.2f} ETH (${unlock_fee_dollar:,.0f})\n\n"
                 f"{recent_tx_text}",
             parse_mode="markdown",
             reply_markup=InlineKeyboardMarkup(
@@ -2055,8 +2050,8 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         await update.message.reply_text(
             f"*X7 Pioneer {pioneer_id} NFT Info*\n\n"
             f"Transfer Lock Status: {status}\n"
-            f"Unclaimed Rewards: {unclaimed:.3f} ETH (${'{:0,.0f}'.format(unclaimed_dollar)})\n"
-            f"Claimed Rewards: {claimed:.3f} ETH (${'{:0,.0f}'.format(claimed_dollar)})\n\n"
+            f"Unclaimed Rewards: {unclaimed:.3f} ETH (${unclaimed_dollar:,.0f})\n"
+            f"Claimed Rewards: {claimed:.3f} ETH (${claimed_dollar:,.0f})\n\n"
             f"https://pro.opensea.io/nft/ethereum/{ca.PIONEER}/{pioneer_id}",
         parse_mode="markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -2101,11 +2096,11 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 price = 0
                 lpool_reserve = 0
                 lpool = 0
-            lpool_reserve_dollar = (float(lpool_reserve) * float(price))
-            lpool_dollar = (float(lpool) * float(price))
-            pool = round(float(lpool_reserve) + float(lpool), 2)
+            lpool_reserve_dollar = lpool_reserve * price
+            lpool_dollar = lpool * price
+            pool = lpool_reserve + lpool
             dollar = lpool_reserve_dollar + lpool_dollar
-            pool_text += f'{chain_name}:   {pool} {native.upper()} (${"{:0,.0f}".format(dollar)})\n'
+            pool_text += f'{chain_name}:   {pool:,.3f} {native.upper()} (${dollar:,.0f})\n'
             total_lpool_reserve_dollar += lpool_reserve_dollar
             total_lpool_dollar += lpool_dollar
             total_dollar += dollar 
@@ -2113,11 +2108,11 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=
-                f"*X7 Finance Lending Pool Info*\n"
+                f"*X7 Finance Lending Pool Info*\n\n"
                 f"{pool_text}\n"
-                f'Lending Pool: ${"{:0,.0f}".format(total_lpool_dollar)}\n'
-                f'Lending Pool Reserve: ${"{:0,.0f}".format(total_lpool_reserve_dollar)}\n'
-                f'Total: ${"{:0,.0f}".format(total_dollar)}',
+                f'Lending Pool: ${total_lpool_dollar:,.0f}\n'
+                f'Lending Pool Reserve: ${total_lpool_reserve_dollar:,.0f}\n'
+                f'Total: ${total_dollar:,.0f}',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2139,13 +2134,11 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_lpool = ca.LPOOL(chain)
         native_price = etherscan.get_native_price(chain)
         lpool_reserve = etherscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
-        lpool_reserve_dollar = (float(lpool_reserve) * float(native_price))
-        lpool = float(etherscan.get_native_balance(chain_lpool, chain))
-        lpool_dollar = (float(lpool) * float(native_price))
-        pool = round(float(lpool_reserve) + float(lpool), 2)
+        lpool_reserve_dollar = lpool_reserve * native_price
+        lpool = etherscan.get_native_balance(chain_lpool, chain)
+        lpool_dollar = lpool * native_price
+        pool = lpool_reserve + lpool
         dollar = lpool_reserve_dollar + lpool_dollar
-        lpool_reserve = round(float(lpool_reserve), 2)
-        lpool = round(float(lpool), 2)
 
         try:
             contract = chain_info.w3.eth.contract(
@@ -2178,13 +2171,13 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"*X7 Finance Lending Pool Info ({chain_info.name})*\n"
                 f"use `/loans all` for all chains\n\n"
                 f"Lending Pool:\n"
-                f'{lpool} {chain_info.native.upper()} (${"{:0,.0f}".format(lpool_dollar)})\n\n'
+                f'{lpool:,.3f} {chain_info.native.upper()} (${lpool_dollar:,.0f})\n\n'
                 f"Lending Pool Reserve:\n"
-                f'{lpool_reserve} {chain_info.native.upper()} (${"{:0,.0f}".format(lpool_reserve_dollar)})\n\n'
+                f'{lpool_reserve:,.3f} {chain_info.native.upper()} (${lpool_reserve_dollar:,.0f})\n\n'
                 f"Total\n"
-                f'{pool} {chain_info.native.upper()} (${"{:0,.0f}".format(dollar)})\n\n'
+                f'{pool:,.3f} {chain_info.native.upper()} (${dollar:,.0f})\n\n'
                 f'Total Currently Borrowed\n'
-                f'{total_borrowed:,.3f} {chain_info.native.upper()} (${"{:0,.0f}".format(total_borrowed_dollar)})',
+                f'{total_borrowed:,.3f} {chain_info.native.upper()} (${total_borrowed_dollar:,.0f})',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2388,10 +2381,10 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = await update.message.reply_text("Getting Splitter Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
-    treasury_eth = float(etherscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain))
-    eco_eth = float(etherscan.get_native_balance(ca.ECO_SPLITTER(chain), chain))
+    treasury_eth = etherscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain)
+    eco_eth = etherscan.get_native_balance(ca.ECO_SPLITTER(chain), chain)
     native_price = etherscan.get_native_price(chain)
-    eco_dollar = float(eco_eth) * float(native_price)
+    eco_dollar = eco_eth * native_price
 
     eco_splitter_text = "Distribution:\n"
     eco_distribution = splitters.generate_eco_split(chain, eco_eth)
@@ -2400,7 +2393,7 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     treasury_splitter_text = ""
     if chain == "eth":
-        treasury_dollar = float(treasury_eth) * float(native_price)
+        treasury_dollar = treasury_eth * native_price
         treasury_splitter_text = "Distribution:\n"
         treasury_distribution = splitters.generate_treasury_split(chain, treasury_eth)
         for location, (share, percentage) in treasury_distribution.items():
@@ -2417,13 +2410,13 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     caption = (
         f"*X7 Finance Ecosystem Splitters ({chain_info.name})*\n\n"
-        f"Ecosystem Splitter\n{eco_eth:.3f} {chain_info.native.upper()} (${'{:0,.0f}'.format(eco_dollar)})\n"
+        f"Ecosystem Splitter\n{eco_eth:.3f} {chain_info.native.upper()} (${eco_dollar:,.0f})\n"
         f"{eco_splitter_text}\n"
     )
 
     if chain == "eth":
         caption += (
-            f"Treasury Splitter\n{treasury_eth:.3f} {chain_info.native.upper()} (${'{:0,.0f}'.format(treasury_dollar)})\n"
+            f"Treasury Splitter\n{treasury_eth:.3f} {chain_info.native.upper()} (${treasury_dollar:,.0f})\n"
             f"{treasury_splitter_text}"
         )
 
@@ -2554,17 +2547,17 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     native_price = etherscan.get_native_price(chain)
-    eth = round(float(etherscan.get_native_balance(chain_info.dao_multi, chain)), 2)
-    dollar = float(eth) * float(native_price)
+    eth_balance = etherscan.get_native_balance(chain_info.dao_multi, chain)
+    eth_dollar = eth_balance * native_price
     x7r_balance = etherscan.get_token_balance(chain_info.dao_multi, ca.X7R(chain), chain)
     x7r_price,_ = dextools.get_price(ca.X7R(chain), chain)
-    x7r_price = float(x7r_balance) * float(x7r_price)
+    x7r_dollar = float(x7r_balance) * float(x7r_price)
     x7dao_balance = etherscan.get_token_balance(chain_info.dao_multi, ca.X7DAO(chain), chain)
     x7dao_price,_ = dextools.get_price(ca.X7DAO(chain), chain)
-    x7dao_price = float(x7dao_balance) * float(x7dao_price)
+    x7dao_dollar = float(x7dao_balance) * float(x7dao_price)
     x7d_balance = etherscan.get_token_balance(chain_info.dao_multi, ca.X7D(chain), chain)
-    x7d_price = x7d_balance * native_price
-    total = x7r_price + dollar + x7d_price + x7dao_price
+    x7d_dollar = x7d_balance * native_price
+    total = x7r_dollar + eth_dollar + x7d_dollar + x7dao_dollar
     x7r_percent = round(x7r_balance / ca.SUPPLY * 100, 2)
     x7dao_percent = round(x7dao_balance / ca.SUPPLY * 100, 2)
     
@@ -2573,11 +2566,11 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=tools.get_random_pioneer(),
         caption=
             f"*X7 Finance Treasury ({chain_info.name})*\n\n"
-            f'{eth} {chain_info.native.upper()} (${"{:0,.0f}".format(dollar)})\n'
-            f'{x7d_balance} X7D (${"{:0,.0f}".format(x7d_price)})\n'
-            f'{"{:0,.0f}".format(x7r_balance)} X7R ({x7r_percent}%) (${"{:0,.0f}".format(x7r_price)})\n'
-            f'{"{:0,.0f}".format(x7dao_balance)} X7DAO ({x7dao_percent}%) (${"{:0,.0f}".format(x7dao_price)})\n'
-            f'Total: (${"{:0,.0f}".format(total)})',
+            f'{eth_balance:,.3f} {chain_info.native.upper()} (${eth_dollar:,.0f})\n\n'
+            f'{x7r_balance:,.0f} X7R (${x7r_dollar:,.0f}) - {x7r_percent}% \n'
+            f'{x7dao_balance:,.0f} X7DAO (${x7dao_dollar:,.0f}) - {x7dao_percent}%\n'
+            f'{x7d_balance} X7D (${x7d_dollar:,.0f})\n\n'
+            f'Total: ${total:,.0f}',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2703,7 +2696,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
             last_24hr_amt = item.get("last_24hr_amt")
             blockchain = item.get("blockchain")
             if pair and last_24hr_amt:
-                trending_text += f'{idx}. {pair} ({blockchain.upper()})\n24 Hour Volume: ${"{:0,.0f}".format(last_24hr_amt)}\n\n'
+                trending_text += f'{idx}. {pair} ({blockchain.upper()})\n24 Hour Volume: ${last_24hr_amt:,.0f}\n\n'
 
         await message.delete()
         await update.message.reply_photo(
@@ -2837,10 +2830,10 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         volume_text = (
-            f'Total:       ${"{:0,.0f}".format(lifetime_amt)}\n'
-            f'30 Day:    ${"{:0,.0f}".format(last_30d_amt)}\n'
-            f'7 Day:      ${"{:0,.0f}".format(last_7d_amt)}\n'
-            f'24 Hour:  ${"{:0,.0f}".format(last_24hr_amt)}'
+            f'Total:       ${lifetime_amt:,.0f}\n'
+            f'30 Day:    ${last_30d_amt:,.0f}\n'
+            f'7 Day:      ${last_7d_amt:,.0f}\n'
+            f'24 Hour:  ${last_24hr_amt:,.0f}'
         )
 
         await message.delete()
@@ -2957,22 +2950,22 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     native_price = etherscan.get_native_price(chain)
-    eth = etherscan.get_native_balance(wallet, chain)
-    dollar = eth * native_price
-    x7r, _ = dextools.get_price(ca.X7R(chain), chain)
-    x7dao, _ = dextools.get_price(ca.X7DAO(chain), chain)
+    eth_balance = etherscan.get_native_balance(wallet, chain)
+    dollar = eth_balance * native_price
+    x7r_price, _ = dextools.get_price(ca.X7R(chain), chain)
+    x7dao_price, _ = dextools.get_price(ca.X7DAO(chain), chain)
 
     x7r_balance = etherscan.get_token_balance(wallet, ca.X7R(chain), chain)
-    x7r_price = float(x7r_balance) * float(x7r)
+    x7r_dollar = float(x7r_balance) * float(x7r_price)
     x7dao_balance = etherscan.get_token_balance(wallet, ca.X7DAO(chain), chain)
-    x7dao_price = float(x7dao_balance) * float(x7dao)
+    x7dao_dollar = float(x7dao_balance) * float(x7dao_price)
 
     x7d_balance = etherscan.get_token_balance(wallet, ca.X7D(chain), chain)
-    x7d_price = x7d_balance * native_price
+    x7d_dollar = x7d_balance * native_price
     total = (
-        x7d_price
-        + x7r_price
-        + x7dao_price
+        x7d_dollar
+        + x7r_dollar
+        + x7dao_dollar
     )
 
     if x7dao_balance == 0:
@@ -2996,12 +2989,12 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"{header}\n\n"
             f"`{wallet}`\n\n"
-            f"{float(eth):.3f} {chain_info.native.upper()} (${'{:0,.0f}'.format(dollar)})\n\n"
-            f"{x7r_balance:,.0f} X7R {x7r_percent}% (${'{:0,.0f}'.format(x7r_price)})\n"
-            f"{x7dao_balance:,.0f} X7DAO {x7dao_percentage}% (${'{:0,.0f}'.format(x7dao_price)})\n"
-            f"{x7d_balance:.3f} X7D (${'{:0,.0f}'.format(x7d_price)})\n\n"
+            f"{eth_balance:.3f} {chain_info.native.upper()} (${dollar:,.0f})\n\n"
+            f"{x7r_balance:,.0f} X7R (${x7r_dollar:,.0f}) -  {x7r_percent}%\n"
+            f"{x7dao_balance:,.0f} X7DAO (${x7dao_dollar:,.0f}) - {x7dao_percentage}%\n"
+            f"{x7d_balance:.3f} X7D (${x7d_dollar:,.0f})\n\n"
             f"{txs} tx's in the last 24 hours\n\n"
-            f"Total X7 Finance token value ${'{:0,.0f}'.format(total)}",
+            f"Total X7 Finance token value ${total:,.0f}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3070,13 +3063,11 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain_lpool = ca.LPOOL(chain)
     native_price = etherscan.get_native_price(chain)
     lpool_reserve = etherscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
-    lpool_reserve_dollar = (float(lpool_reserve) * float(native_price))
+    lpool_reserve_dollar = lpool_reserve * native_price
     lpool = etherscan.get_native_balance(chain_lpool, chain)
-    lpool_dollar = (float(lpool) * float(native_price))
+    lpool_dollar = lpool * native_price
     dollar = lpool_reserve_dollar + lpool_dollar
-    supply = round(float(lpool_reserve) + float(lpool), 2)
-    lpool_rounded = round(float(lpool), 2)
-    lpool_reserve_rounded = round(float(lpool_reserve), 2)
+    supply = lpool_reserve + lpool
     info = dextools.get_token_info(ca.X7D(chain), chain)
     holders = info["holders"] or "N/A"
 
@@ -3085,9 +3076,9 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"*X7D ({chain_info.name}) Info*\n\n"
             f"Holders: {holders}\n\n"
-            f'Lending Pool:\n{lpool_rounded} X7D (${"{:0,.0f}".format(lpool_dollar)})\n\n'
-            f'Lending Pool Reserve:\n{lpool_reserve_rounded} X7D (${"{:0,.0f}".format(lpool_reserve_dollar)})\n\n'
-            f'Total Supply:\n{supply} X7D (${"{:0,.0f}".format(dollar)})',
+            f'Lending Pool:\n{lpool:,.3f} X7D (${lpool_dollar:,.0f})\n\n'
+            f'Lending Pool Reserve:\n{lpool_reserve:,.3f} X7D (${lpool_reserve_dollar:,.0f})\n\n'
+            f'Total Supply:\n{supply:,.3f} X7D (${dollar:,.0f})',
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3137,7 +3128,7 @@ async def x7_token(update: Update, context: ContextTypes.DEFAULT_TYPE, token_nam
         if ath_data:
             ath_change = f'{ath_data[1]}'
             ath_value = ath_data[0]
-            ath = f'${ath_value} (${"{:0,.0f}".format(ath_value * ca.SUPPLY)}) {ath_change[:3]}%'
+            ath = f'${ath_value} (${ath_value * ca.SUPPLY:,.0f}) {ath_change[:3]}%'
         else:
             ath = "Unavailable"
     else:
