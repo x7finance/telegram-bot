@@ -145,7 +145,8 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("wen", admin.wen))
 
     application.add_handler(CallbackQueryHandler(auto.button_function, pattern=r"^click_button:\d+$"))
-    application.add_handler(CallbackQueryHandler(admin.pushall_callback, pattern="^push_(eco|treasury|x7r|x7dao|x7100):"))
+    application.add_handler(CallbackQueryHandler(admin.callback_pushall, pattern="^push_(eco|treasury|x7r|x7dao|x7100):"))
+    application.add_handler(CallbackQueryHandler(admin.callback_liquidate, pattern=r"^liquidate:[a-zA-Z0-9-]+:\d+$"))
     application.add_handler(CallbackQueryHandler(admin.command_toggle, pattern="^toggle_"))
     application.add_handler(CallbackQueryHandler(admin.reset_start, pattern="^reset_start$"))
     application.add_handler(CallbackQueryHandler(admin.reset_yes, pattern="^reset_yes$"))

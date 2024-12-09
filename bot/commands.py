@@ -1494,10 +1494,11 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await message.delete()
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
-            caption=
+            caption=(
                 f"*X7 Finance Loan Count*\n\n"
                 f"{loan_text}\n"
-                f"TOTAL:  `{total}`",
+                f"TOTAL:  `{total}`"
+            ),
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -1511,7 +1512,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         )
         return
-    
+
     loan_id = None
     chain = None
 
@@ -1541,7 +1542,10 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     chain_lpool = ca.LPOOL(chain, int(loan_id))
-    contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool"))
+    contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(chain_lpool),
+        abi=abis.read("lendingpool"),
+    )
 
     try:
         price = etherscan.get_native_price(chain)
@@ -1556,7 +1560,10 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pair = contract.functions.loanPair(int(loan_id)).call()
 
         term = contract.functions.loanTermLookup(int(loan_id)).call()
-        term_contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(term), abi=etherscan.get_abi(term, chain))
+        term_contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(term),
+            abi=etherscan.get_abi(term, chain),
+        )
         index = 0
         token_by_id = None
         while True:
@@ -1572,7 +1579,8 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ill_number = tools.get_ill_number(term)
 
         liquidation_status = ""
-    
+        liquidation_button = []
+
         try:
             liquidation = contract.functions.canLiquidate(int(loan_id)).call()
             if liquidation != 0:
@@ -1581,35 +1589,45 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"\n\n*Eligible For Liquidation*\n"
                     f'Reward: {reward} {chain_info.native.upper()} (${price * reward:,.4f})'
                 )
+                liquidation_button = [
+                    InlineKeyboardButton(
+                        text=f"Liquidate Loan {loan_id}",
+                        callback_data=f"liquidate:{chain}:{loan_id}",
+                    )
+                ]
         except Exception:
             pass
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    text=f"Chart",
+                    url=f"{urls.DEX_TOOLS(chain_info.dext)}{pair}",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=f"View Loan",
+                    url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}",
+                )
+            ],
+        ]
+
+        if liquidation_button:
+            keyboard.append(liquidation_button)
 
         await message.delete()
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
-            caption=
+            caption=(
                 f"*X7 Finance Initial Liquidity Loan - {loan_id} ({chain_info.name})*\n\n"
                 f"{name}\n\n"
                 f"Payment Schedule UTC:\n{schedule_str}\n\n"
                 f"{remaining}"
-                f"{liquidation_status}",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text=f"Chart",
-                            url=f"{urls.DEX_TOOLS(chain_info.dext)}{pair}",
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            text=f"View Loan",
-                            url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}",
-                        )
-                    ]
-                ]
+                f"{liquidation_status}"
             ),
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(keyboard),
         )
     except Exception:
         await message.delete()
