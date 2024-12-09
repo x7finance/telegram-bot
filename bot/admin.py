@@ -257,31 +257,81 @@ async def pushall_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     action, chain = query.data.split(":")
     chain_info, error_message = chains.get_info(chain)
 
-    if action == "push_eco":
-        splitter_address = ca.ECO_SPLITTER(chain)
-        splitter_name = "Ecosystem Splitter"
-        contract = chain_info.w3.eth.contract(
-            address=chain_info.w3.to_checksum_address(splitter_address),
-            abi=etherscan.get_abi(splitter_address, chain),
-            )
-        splitter_balance = contract.functions.outletBalance(4).call() / 10 ** 18
-    elif action == "push_treasury":
-        splitter_address = ca.TREASURY_SPLITTER(chain)
-        splitter_name = "Treasury Splitter"
-        splitter_balance = float(etherscan.get_native_balance(splitter_address, chain))
-    else:
+    contract = None
+    splitter_balance = 0
+    token_address = None
+    threshold = 0
+    contract_type = None
+
+    settings = {
+        "push_eco": {
+            "splitter_address": ca.ECO_SPLITTER(chain),
+            "splitter_name": "Ecosystem Splitter",
+            "threshold": 0.01,
+            "contract_type": "splitter",
+            "balance_func": lambda contract: contract.functions.outletBalance(4).call() / 10 ** 18
+        },
+        "push_treasury": {
+            "splitter_address": ca.TREASURY_SPLITTER(chain),
+            "splitter_name": "Treasury Splitter",
+            "threshold": 0.01,
+            "contract_type": "splitter",
+            "balance_func": lambda _: etherscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain)
+        },
+        "push_x7r": {
+            "splitter_address": ca.X7R_LIQ_HUB(chain),
+            "splitter_name": "X7R Liquidity Hub",
+            "token_address": ca.X7R(chain),
+            "threshold": 10000,
+            "contract_type": "hub",
+            "balance_func": lambda contract: etherscan.get_token_balance(
+                ca.X7R_LIQ_HUB(chain), ca.X7R(chain), chain
+            ) - (contract.functions.x7rLiquidityBalance().call() / 10 ** 18)
+        },
+        "push_x7dao": {
+            "splitter_address": ca.X7DAO_LIQ_HUB(chain),
+            "splitter_name": "X7DAO Liquidity Hub",
+            "token_address": ca.X7DAO(chain),
+            "threshold": 10000,
+            "contract_type": "hub",
+            "balance_func": lambda contract: etherscan.get_token_balance(
+                ca.X7DAO_LIQ_HUB(chain), ca.X7DAO(chain), chain
+            ) - (contract.functions.x7daoLiquidityBalance().call() / 10 ** 18)
+        },
+    }
+
+    if action not in settings:
         await query.answer("Invalid action.", show_alert=True)
         return
 
-    if splitter_balance <= 0:
+    config = settings[action]
+    splitter_address = config["splitter_address"]
+    splitter_name = config["splitter_name"]
+    threshold = config["threshold"]
+    contract_type = config["contract_type"]
+    token_address = config.get("token_address")
+
+    if contract_type in ["splitter", "hub"]:
+        contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(splitter_address),
+            abi=etherscan.get_abi(splitter_address, chain),
+        )
+
+    splitter_balance = config["balance_func"](contract)
+
+    if splitter_balance < threshold:
         await query.answer(f"{chain_info.name} {splitter_name} has no balance to push.", show_alert=True)
         return
 
     try:
-        result = functions.splitter_push(splitter_address, chain)
+        if contract_type == "hub":
+            result = functions.splitter_push(contract_type, splitter_address, chain, token_address)
+        else:
+            result = functions.splitter_push(contract_type, splitter_address, chain)
+
         await context.bot.send_message(
             chat_id=query.message.chat_id,
-            text=f"{splitter_name} push successful: {result}"
+            text=result
         )
     except Exception as e:
         await query.answer(f"Error during {splitter_name} push: {str(e)}", show_alert=True)

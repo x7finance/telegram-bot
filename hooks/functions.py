@@ -84,19 +84,30 @@ def liquidate_loan(loan_id, chain):
         return f"Error liquidating Loan ID {loan_id}: {e}"
 
 
-def splitter_push(splitter_address, chain):
+def splitter_push(contract_type, splitter_address, chain, token_address=None):
     try:
         chain_info, _ = chains.get_info(chain)
         sender_address = os.getenv("BURN_WALLET")
         sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
 
-        push_all_function_selector = "0x11ec9d34"
+        if contract_type == "splitter":
+            function_selector = "0x11ec9d34"
+            function_string = "Splitter push"
+            function_name = "pushAll"
+            function_args = []
+            
+        if contract_type == "hub":
+            function_selector = "0x61582eaa"
+            function_string = "Fees process"
+            function_name = "processFees"
+            function_args = [token_address]
 
-        transaction_data = push_all_function_selector
+        transaction_data = function_selector
         nonce = chain_info.w3.eth.get_transaction_count(sender_address)
 
         contract = chain_info.w3.eth.contract(address=splitter_address, abi=etherscan.get_abi(splitter_address, chain))
-        gas_estimate = contract.functions.pushAll().estimate_gas({"from": sender_address})
+        function_to_call = getattr(contract.functions, function_name)
+        gas_estimate = function_to_call(*function_args).estimate_gas({"from": sender_address})
         gas_price = chain_info.w3.eth.gas_price
 
         transaction = {
@@ -112,7 +123,7 @@ def splitter_push(splitter_address, chain):
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
 
-        return f"{chain_info.name} Splitter Push Successful! TX: {chain_info.scan_tx}{tx_hash.hex()}"
+        return f"{chain_info.name} {function_string} Successful! TX: {chain_info.scan_tx}{tx_hash.hex()}"
 
     except Exception as e:
-        return f"{chain_info.name} Splitter Push Error: {e}"
+        return f"{chain_info.name} {function_string} Error: {e}"

@@ -1180,15 +1180,19 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ) = tools.get_last_buyback(hub_address, chain)
         when = tools.get_time_difference(timestamp)
         buy_back_text = (
-            f'Last Buy Back: {time} UTC\n{value} {chain_info.native.upper()} (${dollar:,.0f})\n'
+            f'Last Buy Back:\n{time} UTC\n{value} {chain_info.native.upper()} (${dollar:,.0f})\n'
             f"{when}"
         )
     except Exception:
-        buy_back_text = f'Last Buy Back: None Found'
+        buy_back_text = f'Last Buy Back:None Found'
 
     eth_price = etherscan.get_native_price(chain)
     eth_balance = etherscan.get_native_balance(hub_address, chain)
     eth_dollar = eth_balance * eth_price
+
+    buttons = [
+        [InlineKeyboardButton(text=f"Process {token.upper()} fees", callback_data=f"push_{token}:{chain}")]
+    ]
 
     await message.delete()
     await update.message.reply_photo(
@@ -1199,15 +1203,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{split_text}\n\n"
             f"{buy_back_text}",
         parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text=f"{token.upper()} Liquidity Hub", url=f"{chain_info.scan_address}{hub_address}"
-                    )
-                ],
-            ]
-        ),
+        reply_markup=InlineKeyboardMarkup(buttons),
     )
 
 
@@ -1986,7 +1982,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             else:
                 floor_round = "N/A"
                 floor_dollar = 0 
-        pioneer_pool = float(etherscan.get_native_balance(ca.PIONEER, "eth"))
+        pioneer_pool = etherscan.get_native_balance(ca.PIONEER, "eth")
         total_dollar = float(pioneer_pool) * float(native_price)
         tx = etherscan.get_tx(ca.PIONEER, "eth")
         tx_filter = [d for d in tx["result"] if ca.PIONEER.lower() in d["to"].lower() and d.get("functionName", "") == "claimRewards(uint256[] _pids)"]
