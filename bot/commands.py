@@ -100,8 +100,8 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if token.upper() in tokens.TOKENS:
         pairs = tokens.TOKENS[token.upper()][chain].pairs
 
-        await context.bot.send_chat_action(update.effective_chat.id, "typing")
         message = await update.message.reply_text("Getting Arbitrage Opportunities, please wait...")
+        await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
         if token in ["x7dao", "x7r"]:
             pair_x, pair_y = pairs[0], pairs[1]
@@ -180,6 +180,7 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+    
     when = round(time.time())
     try:
         blocks = {chain: etherscan.get_block(chain, when) for chain in chains.active_chains()}
@@ -214,7 +215,6 @@ async def blog(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) >=  1:
-        await context.bot.send_chat_action(update.effective_chat.id, "typing")
         amount = context.args[0]
         amount_in_wei = int(float(amount) * 10 ** 18)
         chain = chains.get_chain(update.effective_message.message_thread_id) if len(context.args) < 2 else context.args[1]
@@ -233,6 +233,7 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     message = await update.message.reply_text("Getting Loan Rates Info, Please wait...")
+    await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     loan_info = ""
     native_price = etherscan.get_native_price(chain)
@@ -310,13 +311,17 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if error_message:
         await update.message.reply_text(error_message)
         return
-
+    
+    message = await update.message.reply_text("Getting Burn Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
     burn = etherscan.get_token_balance(ca.DEAD, ca.X7R(chain), chain)
     percent = round(burn / ca.SUPPLY * 100, 2)
     price,_ = dextools.get_price(ca.X7R(chain), chain)
     burn_dollar = float(price) * float(burn)
     native = burn_dollar / etherscan.get_native_price(chain)
+
+    await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
@@ -456,6 +461,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
+    message = await update.message.reply_text("Getting Comparison Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     token_names = {
@@ -472,7 +478,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=(
-                f"*X7 Finance Market Cap Comparison*\n\n"
+                f"*X7 Finance Market Cap Comparison ({chain_info.name})*\n\n"
                 f"Please enter X7 token first followed by token to compare\n\n"
                 f"ie. `/compare x7r uni`"
             ),
@@ -485,7 +491,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=
-                f"*X7 Finance Market Cap Comparison*\n\n"
+                f"*X7 Finance Market Cap Comparison* ({chain_info.name})\n\n"
                 f"Please enter X7 token first followed by token to compare\n\n"
                 f"ie. `/compare x7r uni`",
             parse_mode="Markdown",
@@ -520,10 +526,11 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x = (token_market_cap - x7_market_cap) / x7_market_cap
     token_value = token_market_cap / x7_supply
 
+    await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
-            f"*X7 Finance Market Cap Comparison*\n\n"
+            f"*X7 Finance Market Cap Comparison* ({chain_info.name})\n\n"
             f"{token2.upper()} Market Cap:\n"
             f'${"{:,.0f}".format(token_market_cap)}\n\n'
             f'Token value of {x7token.upper()} at {token2.upper()} Market Cap:\n'
@@ -596,7 +603,6 @@ async def contribute(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) >= 2:
-        await context.bot.send_chat_action(update.effective_chat.id, "typing")
         amount_raw = context.args[0]
         amount = amount_raw.replace(',', '')
         token = context.args[1]
@@ -608,6 +614,8 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await context.bot.send_message(update.effective_chat.id, "Please provide the amount and X7 token name")
         return
+
+    await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     chain_info, error_message = chains.get_info(chain, token=True)
     if error_message:
@@ -631,7 +639,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     amount_str = float(amount)
 
-    caption = (f"*X7 Finance Price Conversion ({token_info.name.upper()})*\n\n"
+    caption = (f"*X7 Finance Price Conversion - {token_info.name.upper()} ({chain_info.name})*\n\n"
             f"{amount_str:,.0f} {token.upper()}  is currently worth:\n\n${output}\n\n")
     
     if amount == "500000" and token.upper() == "X7DAO":
@@ -902,6 +910,7 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
     try:
         gas_data = etherscan.get_gas(chain)
         gas_text = (
@@ -977,6 +986,9 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if error_message:
         await update.message.reply_text(error_message)
         return
+    
+    message = await update.message.reply_text("Getting Liquidity Hub data, Please wait...")
+    await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     native_price = etherscan.get_native_price(chain)
     eth = etherscan.get_native_balance(ca.LIQUIDITY_TREASURY(chain), chain)
@@ -999,6 +1011,7 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         recent_tx_text = 'Last Liquidation: Not Found'
 
+    await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
@@ -1061,6 +1074,7 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
     x7dao_info = dextools.get_token_info(ca.X7DAO(chain), chain)
     x7dao_holders = x7dao_info["holders"] or "N/A"
     x7r_info = dextools.get_token_info(ca.X7R(chain), chain)
@@ -1080,8 +1094,9 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    arg = " ".join(context.args).lower()
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
+    arg = " ".join(context.args).lower()
     if arg == "issues":
         issues = github.get_issues()
         issue_chunks = []
@@ -1150,6 +1165,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if token in ca.HUBS(chain):
         message = await update.message.reply_text("Getting Liquidity Hub data, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
         if token.startswith("x710") and token in {f"x710{i}" for i in range(1, 6)}:
             token = "x7100"
         hub_address = ca.HUBS(chain)[token]
@@ -1323,6 +1339,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
         total_x7dao_liquidity += float(x7dao_total_liquidity.replace('$', '').replace(',', ''))
 
     final_text = f"{x7r_text}\n\n{x7dao_text}"
+
     await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
@@ -1455,6 +1472,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) < 1:
         message = await update.message.reply_text("Getting Loan Info, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
         loan_text = ""
         total = 0
 
@@ -1528,6 +1546,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     message = await update.message.reply_text("Getting Loan Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
     chain_lpool = ca.LPOOL(chain, int(loan_id))
     contract = chain_info.w3.eth.contract(address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool"))
 
@@ -1801,6 +1820,7 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     message = await update.message.reply_text("Getting NFT Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
     chain_prices = nfts.mint_prices(chain)
     chain_data = nfts.data(chain)
     discount = nfts.discounts()
@@ -1892,6 +1912,7 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
     pair_text = ""
     total = 0
     for chain in chains.active_chains():
@@ -1947,6 +1968,7 @@ async def pfp(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
     pioneer_id = " ".join(context.args)
     chain = "eth"
     chain_info, error_message = chains.get_info(chain)
@@ -2058,8 +2080,10 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
 
 async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
     message = await update.message.reply_text("Getting Lending Pool Info, Please wait...")
+    await context.bot.send_chat_action(update.effective_chat.id, "typing")
+    
     if chain == "all":
         pool_text = ""
         total_lpool_reserve_dollar = 0
@@ -2528,6 +2552,7 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     message = await update.message.reply_text("Getting Treasury Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
     native_price = etherscan.get_native_price(chain)
     eth = round(float(etherscan.get_native_balance(chain_info.dao_multi, chain)), 2)
     dollar = float(eth) * float(native_price)
@@ -2542,6 +2567,7 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     total = x7r_price + dollar + x7d_price + x7dao_price
     x7r_percent = round(x7r_balance / ca.SUPPLY * 100, 2)
     x7dao_percent = round(x7dao_balance / ca.SUPPLY * 100, 2)
+    
     await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
@@ -2612,9 +2638,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        message = await update.message.reply_text(
-            f"Getting Xchange Trending {chain_name}, Please wait..."
-        )
+        message = await update.message.reply_text(f"Getting Xchange Trending {chain_name}, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
         execution_id = dune.execute_query(dune.TOP_PAIRS_ID, "medium")
@@ -2719,32 +2743,30 @@ async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         username = "x7_finance"
         display_name = "X7 Finance Twitter/X"
         image  = tools.get_random_pioneer()
-    tweet = twitter.fetch_latest_tweet(username)
-    if not tweet or "error" in tweet:
-        message = random.choice(text.X_REPLIES)
-        tweet_url = f"https://twitter.com/{username}"
-    else:
-        tweet_url = tweet.get("url", f"https://twitter.com/{username}")
-        message = (
-            f"{tweet['text']}\n\n"
-            f"Likes: {tweet['likes']}\n"
-            f"Retweets: {tweet['retweets']}\n"
-            f"Replies: {tweet['replies']}\n"
-            f"Created At: {tweet['created_at']}\n"
-        )
+    tweet_data = twitter.fetch_latest_tweet(username)
+    followers = twitter.get_follower_count(username)
+    tweet = (
+        f"Latest Tweet - {tweet_data['created_at']}:\n"
+        f"{tweet_data['text']}\n\n"
+        f"Likes: {tweet_data['likes']}\n"
+        f"Retweets: {tweet_data['retweets']}\n"
+        f"Replies: {tweet_data['replies']}\n\n"
+        f"{random.choice(text.X_REPLIES)}"
+    )
 
     await update.message.reply_photo(
         photo=image,
         caption=
             f"*{display_name}*\n\n"
-            f"{message}",
+            f"Followers: {followers}\n\n"
+            f"{tweet}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
                         text="Tweet",
-                        url=tweet_url,
+                        url=tweet_data['url'],
                     )
                 ],
             ]
@@ -2967,6 +2989,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
         header = f"*X7 Finance Bot Wallet Info ({chain_info.name})*"
     else:
         header = f"*X7 Finance Wallet Tracker Info ({chain_info.name})*"
+    
     await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),

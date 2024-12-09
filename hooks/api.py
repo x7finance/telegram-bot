@@ -841,7 +841,20 @@ class Twitter:
                     "replies": tweet.reply_count if hasattr(tweet, "reply_count") else "0",
                     "created_at": tweet.created_at,
                 }
-            else:
-                return {"error": "No tweets found for this user."}
         except Exception:
-            return None
+            return {
+                    "text": "No tweets found",
+                    "url": f"https://twitter.com/{username}",
+                    "likes": "N/A",
+                    "retweets": "N/A",
+                    "replies": "N/A",
+                    "created_at": "N/A",
+                }
+        
+    def get_follower_count(self, username):
+        try:
+            user = self.api.get_user(screen_name=username)
+            return user.followers_count
+
+        except Exception:
+            return "N/A"
