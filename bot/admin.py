@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 from farcaster import Warpcast
 
 from bot import auto
-from constants import ca, chains, settings
-from hooks import  db, api, functions
+from constants import ca, settings
+from hooks import  db, api
 
 etherscan = api.Etherscan()
+
 
 async def command(update, context):
     user_id = update.effective_user.id
@@ -37,180 +38,6 @@ async def command(update, context):
 
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text("Bot Settings", reply_markup=reply_markup)
-
-
-async def command_toggle(update, context):
-    query = update.callback_query
-    user_id = query.from_user.id
-
-    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
-        await query.answer(
-            text="Admin only.",
-            show_alert=True
-        )
-        return
-
-    callback_data = query.data
-    if not callback_data.startswith("toggle_"):
-        return
-
-    setting = callback_data.replace("toggle_", "")
-
-    try:
-        current_status = db.settings_get(setting)
-        new_status = not current_status
-        db.settings_set(setting, new_status)
-
-        formatted_setting = setting.replace("_", " ").title()
-        await query.answer(
-            text=f"{formatted_setting} updated to {'ON' if new_status else 'OFF'}."
-        )
-
-        settings = db.settings_get_all()
-        keyboard = [
-            [
-                InlineKeyboardButton(
-                    f"{s.replace('_', ' ').title()}: {'ON' if v else 'OFF'}",
-                    callback_data=f"toggle_{s}"
-                )
-            ]
-            for s, v in settings.items()
-        ]
-        keyboard.append(
-            [
-                InlineKeyboardButton("Reset Clicks", callback_data="reset_start")
-            ]
-        )
-
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("Bot Settings", reply_markup=reply_markup)
-
-    except Exception as e:
-        await query.answer(
-            text=f"An error occurred: {str(e)}",
-            show_alert=True
-        )
-
-
-async def callback_liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    try:
-        _, chain, loan_id = query.data.split(":")
-        
-        result = functions.liquidate_loan(int(loan_id), chain)
-        
-        await context.bot.send_message(
-            chat_id=query.message.chat_id,
-            text=f"Liquidation successful: {result}"
-        )
-
-    except Exception as e:
-        await query.answer(f"Error during liquidation: {str(e)}", show_alert=True)
-
-
-async def callback_pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    query = update.callback_query
-    
-    is_admin = user_id == int(os.getenv("TELEGRAM_ADMIN_ID"))
-    if not is_admin:
-        await query.answer("Admin only.", show_alert=True)
-        return
-
-    action, chain = query.data.split(":")
-    chain_info, error_message = chains.get_info(chain)
-
-    contract = None
-    splitter_balance = 0
-    token_address = None
-    threshold = 0
-    contract_type = None
-
-    settings = {
-        "push_eco": {
-            "splitter_address": ca.ECO_SPLITTER(chain),
-            "splitter_name": "Ecosystem Splitter",
-            "threshold": 0.01,
-            "contract_type": "splitter",
-            "balance_func": lambda contract: contract.functions.outletBalance(4).call() / 10 ** 18
-        },
-        "push_treasury": {
-            "splitter_address": ca.TREASURY_SPLITTER(chain),
-            "splitter_name": "Treasury Splitter",
-            "threshold": 0.01,
-            "contract_type": "splitter",
-            "balance_func": lambda _: etherscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain)
-        },
-        "push_x7r": {
-            "splitter_address": ca.X7R_LIQ_HUB(chain),
-            "splitter_name": "X7R Liquidity Hub",
-            "token_address": ca.X7R(chain),
-            "threshold": 10000,
-            "contract_type": "hub",
-            "balance_func": lambda contract: etherscan.get_token_balance(
-                ca.X7R_LIQ_HUB(chain), ca.X7R(chain), chain
-            ) - (contract.functions.x7rLiquidityBalance().call() / 10 ** 18)
-        },
-        "push_x7dao": {
-            "splitter_address": ca.X7DAO_LIQ_HUB(chain),
-            "splitter_name": "X7DAO Liquidity Hub",
-            "token_address": ca.X7DAO(chain),
-            "threshold": 10000,
-            "contract_type": "hub",
-            "balance_func": lambda contract: etherscan.get_token_balance(
-                ca.X7DAO_LIQ_HUB(chain), ca.X7DAO(chain), chain
-            ) - (contract.functions.x7daoLiquidityBalance().call() / 10 ** 18)
-        },
-    }
-
-    if action not in settings:
-        await query.answer("Invalid action.", show_alert=True)
-        return
-
-    config = settings[action]
-    splitter_address = config["splitter_address"]
-    splitter_name = config["splitter_name"]
-    threshold = config["threshold"]
-    contract_type = config["contract_type"]
-    token_address = config.get("token_address")
-
-    if contract_type in ["splitter", "hub"]:
-        contract = chain_info.w3.eth.contract(
-            address=chain_info.w3.to_checksum_address(splitter_address),
-            abi=etherscan.get_abi(splitter_address, chain),
-        )
-
-    splitter_balance = config["balance_func"](contract)
-
-    if splitter_balance < threshold:
-        await query.answer(f"{chain_info.name} {splitter_name} has no balance to push.", show_alert=True)
-        return
-
-    try:
-        if contract_type == "hub":
-            result = functions.splitter_push(contract_type, splitter_address, chain, token_address)
-        else:
-            result = functions.splitter_push(contract_type, splitter_address, chain)
-
-        await context.bot.send_message(
-            chat_id=query.message.chat_id,
-            text=result
-        )
-    except Exception as e:
-        await query.answer(f"Error during {splitter_name} push: {str(e)}", show_alert=True)
-
-
-async def reset_no(update, context):
-    query = update.callback_query
-    user_id = query.from_user.id
-
-    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
-        await query.answer(text="Admin only.", show_alert=True)
-        return
-
-    await query.edit_message_text(
-        text="Action canceled. No changes were made."
-    )
 
 
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -364,53 +191,6 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "*X7 Finance Telegram Bot API Status*\n\n" + "\n".join(status),
             parse_mode="Markdown")
-        
-
-async def reset_yes(update, context):
-    query = update.callback_query
-    user_id = query.from_user.id
-
-    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
-        await query.answer(
-            text="Admin only.",
-            show_alert=True
-        )
-        return
-
-    try:
-        result_text = db.clicks_reset()
-        await query.edit_message_text(
-            text=f"Clicks have been reset. {result_text}"
-        )
-    except Exception as e:
-        await query.answer(
-            text=f"An error occurred: {str(e)}",
-            show_alert=True
-        )
-
-
-async def reset_start(update, context):
-    query = update.callback_query
-    user_id = query.from_user.id
-
-    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
-        await query.answer(
-            text="Admin only.",
-            show_alert=True
-        )
-        return
-
-    keyboard = [
-        [
-            InlineKeyboardButton("Yes", callback_data="reset_yes"),
-            InlineKeyboardButton("No", callback_data="reset_no")
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.edit_message_text(
-        text="Are you sure you want to reset clicks?",
-        reply_markup=reply_markup
-    )
 
 
 async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -1,12 +1,11 @@
 from telegram import *
 from telegram.ext import *
 
-import os, sys, sentry_sdk, socket, subprocess
+import os, sys, sentry_sdk,subprocess
 
-from bot import admin, auto, commands, welcome
+from bot import admin, auto, callbacks, commands
 from constants import settings, urls
-from hooks import db
-
+from hooks import db, tools
 
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue
@@ -47,11 +46,6 @@ async def error(update: Update, context: CallbackContext):
             )
 
 
-def is_local():
-    ip = socket.gethostbyname(socket.gethostname())
-    return ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"
-
-
 def scanners():
     python_executable = sys.executable
     script_path = os.path.join(os.path.dirname(__file__), "scanner.py")
@@ -63,10 +57,6 @@ def scanners():
 
 if __name__ == "__main__":
     application.add_error_handler(error)
-
-    application.add_handler(ChatMemberHandler(welcome.message, ChatMemberHandler.CHAT_MEMBER))
-    application.add_handler(MessageHandler(filters.StatusUpdate._NewChatMembers(Update) | filters.StatusUpdate._LeftChatMember(Update), welcome.delete))
-    application.add_handler(CallbackQueryHandler(welcome.button_callback, pattern=r"unmute:.+"))
 
     application.add_handler(CommandHandler("about", commands.about))
     application.add_handler(CommandHandler("admins", commands.admins))
@@ -144,16 +134,20 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("ping", admin.ping))
     application.add_handler(CommandHandler("wen", admin.wen))
 
-    application.add_handler(CallbackQueryHandler(auto.button_function, pattern=r"^click_button:\d+$"))
-    application.add_handler(CallbackQueryHandler(admin.callback_pushall, pattern="^push_(eco|treasury|x7r|x7dao|x7100):"))
-    application.add_handler(CallbackQueryHandler(admin.callback_liquidate, pattern=r"^liquidate:[a-zA-Z0-9-]+:\d+$"))
-    application.add_handler(CallbackQueryHandler(admin.command_toggle, pattern="^toggle_"))
-    application.add_handler(CallbackQueryHandler(admin.reset_start, pattern="^reset_start$"))
-    application.add_handler(CallbackQueryHandler(admin.reset_yes, pattern="^reset_yes$"))
-    application.add_handler(CallbackQueryHandler(admin.reset_no, pattern="^reset_no$"))
+    application.add_handler(CallbackQueryHandler(callbacks.click_me, pattern=r"^click_button:\d+$"))
+    application.add_handler(CallbackQueryHandler(callbacks.admin_toggle, pattern="^admin_toggle_"))
+    application.add_handler(CallbackQueryHandler(callbacks.clicks_reset, pattern="^clicks_reset_start$"))
+    application.add_handler(CallbackQueryHandler(callbacks.clicks_reset_yes, pattern="^clicks_reset_yes$"))
+    application.add_handler(CallbackQueryHandler(callbacks.clicks_reset_no, pattern="^clicks_reset_no$"))
+    application.add_handler(CallbackQueryHandler(callbacks.pushall, pattern="^push_(eco|treasury|x7r|x7dao|x7100):"))
+    application.add_handler(CallbackQueryHandler(callbacks.liquidate, pattern=r"^liquidate:[a-zA-Z0-9-]+:\d+$"))
+    application.add_handler(CallbackQueryHandler(callbacks.welcome_button, pattern=r"unmute:.+"))
+    
+    application.add_handler(ChatMemberHandler(auto.welcome_message, ChatMemberHandler.CHAT_MEMBER))
+    application.add_handler(MessageHandler(filters.StatusUpdate._NewChatMembers(Update) | filters.StatusUpdate._LeftChatMember(Update), auto.welcome_delete))
     application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies))
 
-    if not is_local():
+    if not tools.is_local():
         print("Running on server")
         if db.settings_get("click_me"):
             job_queue.run_once(

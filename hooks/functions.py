@@ -4,6 +4,7 @@ from constants import abis, ca, chains
 
 etherscan = api.Etherscan()
 
+
 async def burn_x7r(amount, chain):
     try:
         chain_info, _ = chains.get_info(chain)

@@ -1,4 +1,4 @@
-import random, requests
+import random, requests, socket
 from datetime import datetime
 
 from constants import ca, chains, urls
@@ -140,3 +140,8 @@ def is_eth(address):
         return True
     else:
         return False
+    
+
+def is_local():
+    ip = socket.gethostbyname(socket.gethostname())
+    return ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"

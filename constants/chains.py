@@ -1,5 +1,6 @@
 from hooks import db
 from constants import ca, urls
+from hooks import tools
 import media
 
 from web3 import Web3
@@ -219,6 +220,8 @@ GAS_CHAINS = ["eth", "poly", "bsc"]
 
 
 def active_chains():
+    if tools.is_local():
+        return {**MAINNETS, **TESTNETS}
     return {**MAINNETS, **TESTNETS} if db.settings_get("testnets") else MAINNETS
 
 

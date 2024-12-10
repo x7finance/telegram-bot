@@ -2,14 +2,18 @@ from telegram import *
 from telegram.ext import *
 
 import random, time
-from datetime import datetime
+from typing import Optional, Tuple
 
 import media
-from hooks import api, db, functions, tools
-from constants import settings, text, urls
-from main import application
+from hooks import db, tools
+from constants import text, urls
 
-job_queue = application.job_queue
+welcome_rescrictions = {
+    'can_send_messages': False,
+    'can_send_media_messages': False,
+    'can_send_other_messages': False,
+    'can_add_web_page_previews': False,
+}
 
 
 async def button_send(context: ContextTypes.DEFAULT_TYPE):
@@ -41,104 +45,6 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
 
     context.bot_data["button_generation_timestamp"] = time.time()
     context.bot_data['click_me_id'] = click_me.message_id
-
-
-async def button_function(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    button_click_timestamp = time.time()
-
-    current_button_data = context.bot_data.get("current_button_data")
-    if not current_button_data or update.callback_query.data != current_button_data:
-        return
-
-    button_generation_timestamp = context.bot_data.get("button_generation_timestamp")
-    if not button_generation_timestamp:
-        await update.callback_query.answer("Too slow!", show_alert=True)
-        return
-
-    button_data = update.callback_query.data
-    user = update.effective_user
-    user_info = user.username or f"{user.first_name} {user.last_name}" or user.first_name
-
-    context.user_data.setdefault("clicked_buttons", set())
-    if button_data in context.user_data["clicked_buttons"]:
-        await update.callback_query.answer("You have already clicked this button.", show_alert=True)
-        return
-
-    context.user_data["clicked_buttons"].add(button_data)
-
-    if button_data == current_button_data:
-        time_taken = button_click_timestamp - button_generation_timestamp
-
-        await db.clicks_update(user_info, time_taken)
-
-        if not context.bot_data.get("first_user_clicked"):
-            context.bot_data["first_user_clicked"] = True
-
-            user_data = db.clicks_get_by_name(user_info)
-            clicks = user_data[0]
-            streak = user_data[2]
-            total_click_count = db.clicks_get_total()
-
-            if clicks == 1:
-                click_message = "🎉🎉 This is their first button click! 🎉🎉"
-            elif clicks % 10 == 0:
-                click_message = f"🎉🎉 They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak! 🎉🎉"
-            else:
-                click_message = f"They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak!"
-
-            if db.clicks_check_is_fastest(time_taken):
-                click_message += f"\n\n🎉🎉 {time_taken:.3f} seconds is the new fastest time! 🎉🎉"
-
-            if db.settings_get('burn'):
-                clicks_needed = settings.CLICK_ME_BURN - (total_click_count % settings.CLICK_ME_BURN)
-                message_text = (
-                    f"{tools.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
-                    f"{click_message}\n\n"
-                    f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
-                    f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
-                    f"use `/leaderboard` to see the fastest Pioneers!\n\n"
-                )
-            else:
-                message_text = (
-                    f"{tools.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
-                    f"{click_message}\n\n"
-                    f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
-                    f"use `/leaderboard` to see the fastest Pioneers!\n\n"
-                )
-
-            photos = await context.bot.get_user_profile_photos(update.effective_user.id, limit=1)
-            if photos and photos.photos and photos.photos[0]:
-                photo = photos.photos[0][0].file_id
-                clicked = await context.bot.send_photo(
-                    photo=photo,
-                    chat_id=update.effective_chat.id,
-                    caption=message_text,
-                    parse_mode="Markdown"
-                )
-            else:
-                clicked = await context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text=message_text,
-                    parse_mode="Markdown"
-                )
-
-            if db.settings_get('burn') and total_click_count % settings.CLICK_ME_BURN == 0:
-                burn_message = await functions.burn_x7r(settings.burn_amount(), "eth")
-                await context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text=f"🔥🔥🔥🔥🔥🔥🔥🔥\n\nThe button has been clicked a total of {total_click_count} times by all Pioneers!\n\n{burn_message}"
-                )
-
-            context.bot_data['clicked_id'] = clicked.message_id
-
-            settings.RESTART_TIME = datetime.now().timestamp()
-            settings.BUTTON_TIME = settings.random_button_time()
-            job_queue.run_once(
-                button_send,
-                settings.BUTTON_TIME,
-                chat_id=urls.TG_MAIN_CHANNEL_ID,
-                name="Click Me",
-            )
 
 
 async def replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -190,3 +96,87 @@ async def replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     )
                 elif "sticker" in response:
                     await update.message.reply_sticker(sticker=response["sticker"])
+
+
+async def welcome_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:    
+        await context.bot.delete_message(
+            chat_id=update.effective_chat.id,
+            message_id=update.effective_message.id
+        )
+    except Exception:
+        return
+
+
+async def welcome_member(chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
+    status_change = chat_member_update.difference().get("status")
+    old_is_member, new_is_member = chat_member_update.difference().get("is_member", (None, None))
+
+    if status_change is None:
+        return None
+
+    old_status, new_status = status_change
+    was_member = old_status in [
+        ChatMember.MEMBER,
+        ChatMember.OWNER,
+        ChatMember.ADMINISTRATOR,
+    ] or (old_status == ChatMember.RESTRICTED and old_is_member is True)
+    is_member = new_status in [
+        ChatMember.MEMBER,
+        ChatMember.OWNER,
+        ChatMember.ADMINISTRATOR,
+    ] or (new_status == ChatMember.RESTRICTED and new_is_member is True)
+
+    return was_member, is_member
+
+
+async def welcome_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    channel_id = update.effective_chat.id
+    result = await welcome_member(update.chat_member)
+    if result is None:
+        return
+
+    was_member, is_member = result
+    new_member = update.chat_member.new_chat_member
+
+    if str(channel_id) == urls.TG_MAIN_CHANNEL_ID:
+        new_member_id = new_member.user.id
+
+        new_member_username = (
+            f"@{new_member.user.username}" if new_member.user.username
+            else f"{new_member.user.first_name} {new_member.user.last_name or ''}".strip()
+        )
+
+        welcome_message = None
+        reply_markup = None
+
+        if not was_member and is_member:
+            previous_welcome_message_id = context.bot_data.get('welcome_message_id')
+            if previous_welcome_message_id:
+                try:
+                    await context.bot.delete_message(
+                        chat_id=update.effective_chat.id,
+                        message_id=previous_welcome_message_id
+                    )
+                except Exception:
+                    pass
+            
+            if db.settings_get('welcome_restrictions'):
+                await context.bot.restrict_chat_member(
+                    chat_id=update.effective_chat.id,
+                    user_id=new_member_id,
+                    permissions=welcome_rescrictions,
+                )
+                reply_markup = InlineKeyboardMarkup(
+                    [[InlineKeyboardButton(text="❗ I am human! ❗", callback_data=f"unmute:{new_member_id}")]]
+                )
+
+            welcome_message = await update.effective_chat.send_video(
+                video=open(media.WELCOMEVIDEO, 'rb'),
+                caption=f"{text.welcome(new_member_username)}",
+                parse_mode="Markdown",
+                reply_markup=reply_markup
+            )
+
+        if welcome_message:
+            context.bot_data['welcome_message_id'] = welcome_message.message_id
