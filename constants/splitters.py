@@ -95,7 +95,7 @@ def generate_hub_split(chain, hub_address, token):
         except Exception:
             auxiliary = "N/A"
             auxiliary_balance = 0
-        split_text += f"\nAuxiliary Share: {auxiliary}% - {auxiliary_balance:,.3f} {chain_info.native.upper()}"
+        split_text += f"\nAuxiliary Share: {auxiliary:,.0f}% - {auxiliary_balance:,.3f} {chain_info.native.upper()}"
 
     if token == "x7100":
         token_str = "x7101-x7105"
@@ -108,7 +108,7 @@ def generate_hub_split(chain, hub_address, token):
             lending_pool = "N/A"
             lending_pool_balance = 0
             liquidity_balance_threshold = "N/A"
-        split_text += f"\nLending Pool Share: {lending_pool}% - {lending_pool_balance:,.3f} {chain_info.native.upper()}"
+        split_text += f"\nLending Pool Share: {lending_pool:,.0f}% - {lending_pool_balance:,.3f} {chain_info.native.upper()}"
         threshold_text += f"\nLiquidity Balance Threshold: {liquidity_balance_threshold} {chain_info.native.upper()}"
     
     balance_text = ""

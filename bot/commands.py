@@ -1184,7 +1184,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{when}"
         )
     except Exception:
-        buy_back_text = f'Last Buy Back:None Found'
+        buy_back_text = f'Last Buy Back: None Found'
 
     eth_price = etherscan.get_native_price(chain)
     eth_balance = etherscan.get_native_balance(hub_address, chain)
