@@ -1,6 +1,6 @@
 import  os
 from hooks import api
-from constants import abis, ca, chains
+from constants import abis, ca, chains, tax
 
 etherscan = api.Etherscan()
 
@@ -45,7 +45,75 @@ async def burn_x7r(amount, chain):
         return f"{amount} X7R Burnt\n\n{chain_info.scan_tx}{tx_hash.hex()}"
     except Exception as e:
         return f'Error burning X7R: {e}'
-    
+
+
+def estimate_gas(chain, function, loan_id = None):
+    def calculate_cost(gas_estimate):
+        eth_cost = gas_price * gas_estimate
+        dollar_cost = (eth_cost / 10**9) * eth_price
+        return f"{eth_cost / 10**9:.4f} {chain_info.native.upper()} (${dollar_cost:.2f})"
+
+    chain_info, error_message = chains.get_info(chain)
+    if not chain_info:
+        return "Invalid chain or chain information unavailable."
+
+    gas_price = chain_info.w3.eth.gas_price / 10**9
+    eth_price = etherscan.get_native_price(chain)
+
+    try:
+        if function == "swap":
+            return calculate_cost(tax.SWAP_GAS)
+        
+        elif function == "pair":
+            data = "0xc9c65396" + ca.WETH(chain)[2:].rjust(64, '0') + ca.DEAD[2:].rjust(64, '0')
+            gas_estimate = chain_info.w3.eth.estimate_gas({
+                'from': chain_info.w3.to_checksum_address(ca.DEPLOYER),
+                'to': chain_info.w3.to_checksum_address(ca.FACTORY(chain)),
+                'data': data,
+            })
+            return calculate_cost(gas_estimate)
+
+        elif function == "push":
+            gas_estimate = chain_info.w3.eth.estimate_gas({
+                'from': chain_info.w3.to_checksum_address(ca.DEPLOYER),
+                'to': chain_info.w3.to_checksum_address(ca.TREASURY_SPLITTER(chain)),
+                'data': "0x11ec9d34",
+            })
+            return calculate_cost(gas_estimate)
+
+        elif function == "processfees":
+            data = "0x61582eaa" + ca.X7R(chain)[2:].rjust(64, '0')
+            gas_estimate = chain_info.w3.eth.estimate_gas({
+                'from': chain_info.w3.to_checksum_address(ca.DEPLOYER),
+                'to': chain_info.w3.to_checksum_address(ca.X7R_LIQ_HUB(chain)),
+                'data': data, 
+            })
+            return calculate_cost(gas_estimate)
+
+        elif function == "mint":
+            gas_estimate = chain_info.w3.eth.estimate_gas({
+                'from': chain_info.w3.to_checksum_address(ca.DEPLOYER),
+                'to': chain_info.w3.to_checksum_address(ca.LPOOL_RESERVE(chain)),
+                'data': "0xf6326fb3",
+            })
+            return calculate_cost(gas_estimate)
+
+        elif function == "liquidate":
+            chain_lpool = ca.LPOOL(chain)
+            data = '0x415f1240' + hex(loan_id)[2:].rjust(64, '0')
+            gas_estimate = chain_info.w3.eth.estimate_gas({
+                'from': chain_info.w3.to_checksum_address(ca.DEPLOYER),
+                'to': chain_info.w3.to_checksum_address(chain_lpool),
+                'data': data,
+            })
+            return calculate_cost(gas_estimate)
+
+        else:
+            return "Unsupported function."
+    except Exception as e:
+        print(e)
+        return "N/A"
+
 
 def liquidate_loan(loan_id, chain):
     try:

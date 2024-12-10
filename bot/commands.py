@@ -906,6 +906,7 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
+    message = await update.message.reply_text("Getting Gas data, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     try:
@@ -914,61 +915,29 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Gas:\n"
             f'Low: {float(gas_data["result"]["SafeGasPrice"]):.0f} Gwei\n'
             f'Average: {float(gas_data["result"]["ProposeGasPrice"]):.0f} Gwei\n'
-             f'High: {float(gas_data["result"]["FastGasPrice"]):.0f} Gwei\n\n'
+            f'High: {float(gas_data["result"]["FastGasPrice"]):.0f} Gwei\n\n'
              )
     except Exception:
         gas_text = ""
     
-    gas_price = chain_info.w3.eth.gas_price / 10**9
-    eth_price = etherscan.get_native_price(chain)
+    pair_gas  = functions.estimate_gas(chain, "pair")
+    liquidate_gas  = functions.estimate_gas(chain,"liquidate")
+    mint_gas  = functions.estimate_gas(chain, "mint")
+    process_fees_gas  = functions.estimate_gas(chain, "processfees")
+    push_gas  = functions.estimate_gas(chain, "push")
+    swap_gas  = functions.estimate_gas(chain,"swap")
 
-    swap_cost_in_eth = gas_price * tax.SWAP_GAS
-    swap_cost_in_dollars = (swap_cost_in_eth / 10**9)* eth_price
-    swap_text = f"Swap: {swap_cost_in_eth / 10**9:.4f} {chain_info.native.upper()} (${swap_cost_in_dollars:.2f})"
-    
-    try:
-        pair_data = "0xc9c65396" + ca.WETH(chain)[2:].lower().rjust(64, '0') + ca.DEAD[2:].lower().rjust(64, '0')
-        pair_gas_estimate = chain_info.w3.eth.estimate_gas({
-            'from': chain_info.w3.to_checksum_address(ca.DEPLOYER),
-            'to': chain_info.w3.to_checksum_address(ca.FACTORY(chain)),
-            'data': pair_data,})
-        pair_cost_in_eth = gas_price * pair_gas_estimate
-        pair_cost_in_dollars = (pair_cost_in_eth / 10**9)* eth_price
-        pair_text = f"Create Pair: {pair_cost_in_eth / 10**9:.2f} {chain_info.native.upper()} (${pair_cost_in_dollars:.2f})"
-    except Exception:
-        pair_text = "Create Pair: N/A"
-
-    try:
-        split_gas = chain_info.w3.eth.estimate_gas({
-            'from': chain_info.w3.to_checksum_address(ca.DEPLOYER),
-            'to': chain_info.w3.to_checksum_address(ca.TREASURY_SPLITTER(chain)),
-            'data': "0x11ec9d34"})
-        split_eth = gas_price * split_gas
-        split_dollars = (split_eth / 10**9)* eth_price
-        split_text = f"Splitter Push: {split_eth / 10**9:.4f} {chain_info.native.upper()} (${split_dollars:.2f})"
-    except Exception:
-        split_text = "Splitter Push: N/A"
-
-    try:
-        deposit_data = "0xf6326fb3"
-        deposit_gas = chain_info.w3.eth.estimate_gas({
-            'from': chain_info.w3.to_checksum_address(ca.DEPLOYER),
-            'to': chain_info.w3.to_checksum_address(ca.LPOOL_RESERVE(chain)),
-            'data': deposit_data,})
-        deposit_eth = gas_price * deposit_gas
-        deposit_dollars = (deposit_eth / 10**9)* eth_price
-        deposit_text = f"Mint X7D: {deposit_eth / 10**9:.4f} {chain_info.native.upper()} (${deposit_dollars:.2f})"
-    except Exception:
-        deposit_text = "Mint X7D: N/A"
-
+    await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
             f"*Live Xchange Gas Fees ({chain_info.name})*\n\n"
-            f"{swap_text}\n"
-            f"{pair_text}\n"
-            f"{split_text}\n"
-            f"{deposit_text}\n\n"
+            f"Create Pair: {pair_gas}\n"
+            f"Liquidate Loan: {liquidate_gas}\n"
+            f"Mint X7D: {mint_gas}\n"
+            f"Process Fees: {process_fees_gas}\n"
+            f"Push Splitter: {push_gas}\n"
+            f"Swap Cost: {swap_gas}\n\n"
             f"{gas_text}",
         parse_mode="markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -1190,6 +1159,8 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     eth_balance = etherscan.get_native_balance(hub_address, chain)
     eth_dollar = eth_balance * eth_price
 
+    cost = functions.estimate_gas(chain, "processfees")
+
     buttons = [
         [InlineKeyboardButton(text=f"Process {token.upper()} fees", callback_data=f"push_{token}:{chain}")]
     ]
@@ -1200,7 +1171,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"*{token.upper()} Liquidity Hub ({chain_info.name})*\n\n"
             f"{eth_balance:,.3f} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
-            f"{split_text}\n\n"
+            f"{split_text}\n\nEstimated process fees gas cost: {cost}\n\n"
             f"{buy_back_text}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
@@ -1358,6 +1329,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ),
     )
 
+
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     loan_id = None
     chain = None
@@ -1397,7 +1369,6 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         num_loans = contract.functions.nextLoanID().call()
         liquidatable_loans = 0
         results = []
-
         ignored_loans = range(21, 25)
 
         for loan in range(num_loans):
@@ -1406,8 +1377,10 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             try:
                 result = contract.functions.canLiquidate(int(loan)).call()
                 if result > 0:
-                    liquidatable_loans += 1
-                    results.append(f"Loan ID {loan}")
+                        if liquidatable_loans == 0:
+                            first_loan_id = loan
+                        liquidatable_loans += 1
+                        results.append(f"Loan ID {loan}")
             except Exception:
                 continue
 
@@ -1419,8 +1392,14 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if liquidatable_loans > 0:
             liquidation_instructions = "To liquidate use `/liquidate loanID`"
+            cost = functions.estimate_gas(chain, "liquidate", first_loan_id)
             results_text = "\n".join(results)
-            output = f"{liquidatable_loans_text}\n\n{results_text}\n\n{liquidation_instructions}"
+            output = (
+                f"{liquidatable_loans_text}\n\n"
+                f"{results_text}\n\n"
+                f"{liquidation_instructions}\n"
+                f"Estimated gas cost: {cost}"
+            )
         else:
             output = liquidatable_loans_text
 
@@ -1585,9 +1564,11 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             liquidation = contract.functions.canLiquidate(int(loan_id)).call()
             if liquidation != 0:
                 reward = contract.functions.liquidationReward().call() / 10**18
+                cost = functions.estimate_gas(chain, "liquidate", loan_id)
                 liquidation_status = (
                     f"\n\n*Eligible For Liquidation*\n"
-                    f'Reward: {reward} {chain_info.native.upper()} (${price * reward:,.4f})'
+                    f'Reward: {reward} {chain_info.native.upper()} (${price * reward:,.4f})\n'
+                    f'Estimated gas cost: {cost}'
                 )
                 liquidation_button = [
                     InlineKeyboardButton(
@@ -2434,10 +2415,13 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{treasury_splitter_text}"
         )
 
+    cost = functions.estimate_gas(chain, "push")
+
     await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
-        caption=caption,
+        caption=
+            f"{caption}\nEstimated push gas cost: {cost}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
