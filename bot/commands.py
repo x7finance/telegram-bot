@@ -214,19 +214,21 @@ async def blog(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) >=  1:
+    if len(context.args) >= 1:
         amount = context.args[0]
         amount_in_wei = int(float(amount) * 10 ** 18)
         chain = chains.get_chain(update.effective_message.message_thread_id) if len(context.args) < 2 else context.args[1]
     else:
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
-            caption=
+            caption=(
                 f"*X7 Finance Loan Rates*\n\n"
-                "Follow the /borrow command with an amount to borrow",
-            parse_mode="Markdown"
-            )
+                "Follow the /borrow command with an amount to borrow"
+            ),
+            parse_mode="Markdown",
+        )
         return
+
     chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
@@ -239,8 +241,8 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     native_price = etherscan.get_native_price(chain)
     borrow_usd = native_price * float(amount)
     lending_pool = chain_info.w3.eth.contract(
-            address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)), abi=abis.read("lendingpool")
-        )
+        address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)), abi=abis.read("lendingpool")
+    )
     active_terms_count = lending_pool.functions.countOfActiveLoanTerms().call()
     liquidation_fee = lending_pool.functions.liquidationReward().call() / 10 ** 18
     liquidation_dollar = liquidation_fee * native_price
@@ -265,43 +267,70 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
             max_loan = loan_contract.functions.maximumLoanAmount().call()
             min_loan_duration = loan_contract.functions.minimumLoanLengthSeconds().call()
             max_loan_duration = loan_contract.functions.maximumLoanLengthSeconds().call()
-            
-            premium_periods = loan_contract.functions.numberOfPremiumPeriods().call()
-            origination_fee, total_premium = [value / 10**18 for value in loan_data[1:]]
-            origination_dollar, total_premium_dollar = [value * native_price for value in [origination_fee, total_premium]]
-            
-            loan_info += (
-                f"*{loan_name}*\n"
-                f"Origination Fee: {origination_fee} {chain_info.native.upper()} (${origination_dollar:,.0f})\n"
+
+            x7100_share = lending_pool.functions.X7100PremiumShare().call() + lending_pool.functions.X7100OriginationShare().call()
+            x7dao_share = lending_pool.functions.X7DAOPremiumShare().call() + lending_pool.functions.X7DAOOriginationShare().call()
+            ecosystem_share = lending_pool.functions.ecosystemSplitterPremiumShare().call() + lending_pool.functions.ecosystemSplitterOriginationShare().call()
+            lpool_share = lending_pool.functions.lendingPoolPremiumShare().call() + lending_pool.functions.lendingPoolOriginationShare().call()
+
+            total_share = x7100_share + x7dao_share + ecosystem_share + lpool_share
+
+            origination_fee, premium_fee = [value / 10 ** 18 for value in loan_data[1:]]
+            origination_dollar, premium_fee_dollar = [value * native_price for value in [origination_fee, premium_fee]]
+
+            total_fees_eth = origination_fee + premium_fee
+            total_fees_dollars = origination_dollar + premium_fee_dollar
+
+            x7100_share_eth = (x7100_share / total_share) * total_fees_eth
+            x7dao_share_eth = (x7dao_share / total_share) * total_fees_eth
+            ecosystem_share_eth = (ecosystem_share / total_share) * total_fees_eth
+            lpool_share_eth = (lpool_share / total_share) * total_fees_eth
+
+            x7100_share_dollars = (x7100_share / total_share) * total_fees_dollars
+            x7dao_share_dollars = (x7dao_share / total_share) * total_fees_dollars
+            ecosystem_share_dollars = (ecosystem_share / total_share) * total_fees_dollars
+            lpool_share_dollars = (lpool_share / total_share) * total_fees_dollars
+
+            distribution = (
+                f"Fee Distribution:\n"
+                f"X7100: {x7100_share_eth:.4f} {chain_info.native.upper()} (${x7100_share_dollars:,.2f})\n"
+                f"X7DAO: {x7dao_share_eth:.4f} {chain_info.native.upper()} (${x7dao_share_dollars:,.2f})\n"
+                f"Ecosystem Splitter: {ecosystem_share_eth:.4f} {chain_info.native.upper()} (${ecosystem_share_dollars:,.2f})\n"
+                f"Lending Pool: {lpool_share_eth:.4f} {chain_info.native.upper()} (${lpool_share_dollars:,.2f})\n\n------\n\n"
             )
 
-            if premium_periods > 0:
-                per_period_premium = total_premium / premium_periods
-                per_period_premium_dollar = total_premium_dollar / premium_periods
+            loan_info += (
+                f"*{loan_name}*\n"
+                f"Origination Fee: {origination_fee} {chain_info.native.upper()} (${origination_dollar:,.2f})\n"
+            )
 
-                loan_info += f"Premium Fees: {total_premium} {chain_info.native.upper()} (${total_premium_dollar:,.0f}) over {premium_periods} payments:\n"
+            premium_periods = loan_contract.functions.numberOfPremiumPeriods().call()
+            if premium_periods > 0:
+                per_period_premium = premium_fee / premium_periods
+                per_period_premium_dollar = premium_fee_dollar / premium_periods
+
+                loan_info += f"Premium Fees: {premium_fee} {chain_info.native.upper()} (${premium_fee:,.0f}) over {premium_periods} payments:\n"
                 for period in range(1, premium_periods + 1):
                     loan_info += f"  - Payment {period}: {per_period_premium:.4f} {chain_info.native.upper()} (${per_period_premium_dollar:,.2f})\n"
             else:
-                loan_info += f"Premium Fees: {total_premium} {chain_info.native.upper()} (${total_premium_dollar:,.0f})\n"
+                loan_info += f"Premium Fees: {premium_fee} {chain_info.native.upper()} (${premium_fee:,.0f})\n"
 
             loan_info += (
-                f"Loan Cost: {total_premium + origination_fee} {chain_info.native.upper()} (${origination_dollar + total_premium_dollar:,.0f})\n"
+                f"Total Loan Cost: {total_fees_eth} {chain_info.native.upper()} (${total_fees_dollars:,.2f})\n"
                 f"Min Loan: {min_loan / 10 ** 18} {chain_info.native.upper()}\n"
                 f"Max Loan: {max_loan / 10 ** 18} {chain_info.native.upper()}\n"
                 f"Min Loan Duration: {math.floor(min_loan_duration / 84600)} days\n"
-                f"Max Loan Duration: {math.floor(max_loan_duration / 84600)} days \n\n"
+                f"Max Loan Duration: {math.floor(max_loan_duration / 84600)} days\n\n"
             )
 
+            loan_info += distribution
     await message.delete()
     await update.message.reply_text(
         f"*X7 Finance Loan Rates ({chain_info.name})*\n\n"
         f"Borrowing {amount} {chain_info.native.upper()} (${borrow_usd:,.0f}) will cost:\n\n"
         f"{loan_info}"
-        f"Principal Repayment Condition:\nPrincipal must be returned by the end of the loan term.\n\n"
-        f"Liquidation Deposit: {liquidation_fee} {chain_info.native.upper()} (${liquidation_dollar:,.0f})\n"
-        f"Failure to make a premium payment by its due date or repay the principal by the end of the loan term will result in loan liquidation, and the deposit will be forfeited.",
-        parse_mode="Markdown"
+        f"Liquidation Deposit: {liquidation_fee} {chain_info.native.upper()} (${liquidation_dollar:,.0f})\n\n",
+        parse_mode="Markdown",
     )
 
 
