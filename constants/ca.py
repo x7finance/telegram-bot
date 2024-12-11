@@ -308,7 +308,7 @@ def XCHANGE_DISCOUNT(chain):
 def XCHANGE_CREATE(chain):
     map = {
         "eth": "0xfD392Fc17fcCe76b41d9ab4Ea72943bc5e244F6e",
-        "base": "0xd9511408f0042b75D2Be3Bfe9d9e9df7624AFcc1",
+        "base": "0x8B76C05676D205563ffC1cbd11c0A6e3d83929c5",
 
     }
     return map.get(chain)
