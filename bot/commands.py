@@ -1596,12 +1596,12 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 cost = functions.estimate_gas(chain, "liquidate", loan_id)
                 liquidation_status = (
                     f"\n\n*Eligible For Liquidation*\n"
-                    f'Reward: {reward} {chain_info.native.upper()} (${price * reward:,.4f})\n'
+                    f'Reward: {reward} {chain_info.native.upper()} (${price * reward:,.2f})\n'
                     f'Estimated gas cost: {cost}'
                 )
                 liquidation_button = [
                     InlineKeyboardButton(
-                        text=f"Liquidate Loan {loan_id}",
+                        text=f"Liquidate Loan",
                         callback_data=f"liquidate:{chain}:{loan_id}",
                     )
                 ]
@@ -2771,8 +2771,10 @@ async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         image  = tools.get_random_pioneer()
     tweet_data = twitter.fetch_latest_tweet(username)
     followers = twitter.get_follower_count(username)
+
+    when = tools.get_time_difference(tweet_data['created_at'].timestamp())
     tweet = (
-        f"Latest Tweet - {tweet_data['created_at']}:\n"
+        f"Latest Tweet - {when}:\n\n"
         f"{tweet_data['text']}\n\n"
         f"Likes: {tweet_data['likes']}\n"
         f"Retweets: {tweet_data['retweets']}\n"
