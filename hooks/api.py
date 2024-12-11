@@ -822,39 +822,44 @@ class Snapshot:
 
 class Twitter:
     def __init__(self):
-        auth = tweepy.OAuthHandler(os.getenv("TWITTER_API_KEY"), os.getenv("TWITTER_API_SECRET"))
-        auth.set_access_token(os.getenv("TWITTER_ACCESS_TOKEN"), os.getenv("TWITTER_ACCESS_TOKEN_SECRET"))
-        self.api = tweepy.API(auth)
-
+        self.client = tweepy.Client(bearer_token=os.getenv("TWITTER_BEARER_TOKEN"))
 
     def fetch_latest_tweet(self, username):
         try:
-            tweets = self.api.user_timeline(screen_name=username, count=1, tweet_mode="extended")
-            if tweets:
-                tweet = tweets[0]
-                tweet_url = f"https://twitter.com/{username}/status/{tweet.id}"
+            user = self.client.get_user(username=username)
+            user_id = user.data.id
+            tweets = self.client.get_users_tweets(
+                user_id,
+                max_results=5,
+                tweet_fields=["created_at", "public_metrics"],
+                exclude=["retweets", "replies"]
+            )
+            if tweets and tweets.data:
+                tweet = tweets.data[0]
                 return {
-                    "text": tweet.full_text,
-                    "url": tweet_url,
-                    "likes": tweet.favorite_count,
-                    "retweets": tweet.retweet_count,
-                    "replies": tweet.reply_count if hasattr(tweet, "reply_count") else "0",
+                    "text": tweet.text,
+                    "url": f"https://twitter.com/{username}/status/{tweet.id}",
+                    "likes": tweet.public_metrics["like_count"],
+                    "retweets": tweet.public_metrics["retweet_count"],
+                    "replies": tweet.public_metrics.get("reply_count", 0),
                     "created_at": tweet.created_at,
                 }
         except Exception:
             return {
-                    "text": "No tweets found",
-                    "url": f"https://twitter.com/{username}",
-                    "likes": "N/A",
-                    "retweets": "N/A",
-                    "replies": "N/A",
-                    "created_at": "N/A",
-                }
-        
+                "text": "No tweets found",
+                "url": f"https://twitter.com/{username}",
+                "likes": "N/A",
+                "retweets": "N/A",
+                "replies": "N/A",
+                "created_at": "N/A",
+            }
+
+
     def get_follower_count(self, username):
         try:
-            user = self.api.get_user(screen_name=username)
-            return user.followers_count
-
+            user = self.client.get_user(username=username, user_fields=["public_metrics"])
+            if user and user.data:
+                return user.data.public_metrics["followers_count"]
+            return "N/A"
         except Exception:
             return "N/A"
