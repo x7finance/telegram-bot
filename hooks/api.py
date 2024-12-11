@@ -824,7 +824,21 @@ class Twitter:
     def __init__(self):
         self.client = tweepy.Client(bearer_token=os.getenv("TWITTER_BEARER_TOKEN"))
 
-    def fetch_latest_tweet(self, username):
+
+    def get_user_data(self, username):
+        try:
+            user = self.client.get_user(username=username, user_fields=["public_metrics", "profile_image_url"])
+            if user and user.data:
+                return {
+                    "followers": user.data.public_metrics["followers_count"],
+                    "profile_image": user.data.profile_image_url
+                }
+            return {"followers": "N/A", "profile_image": None}
+        except Exception:
+            return {"followers": "N/A", "profile_image": None}
+
+
+    def get_latest_tweet(self, username):
         try:
             user = self.client.get_user(username=username)
             user_id = user.data.id
@@ -844,6 +858,14 @@ class Twitter:
                     "replies": tweet.public_metrics.get("reply_count", 0),
                     "created_at": tweet.created_at,
                 }
+            return {
+                "text": "No tweets found",
+                "url": f"https://twitter.com/{username}",
+                "likes": "N/A",
+                "retweets": "N/A",
+                "replies": "N/A",
+                "created_at": "",
+            }
         except Exception:
             return {
                 "text": "No tweets found",
@@ -851,15 +873,29 @@ class Twitter:
                 "likes": "N/A",
                 "retweets": "N/A",
                 "replies": "N/A",
-                "created_at": "N/A",
+                "created_at": "",
             }
+        
 
-
-    def get_follower_count(self, username):
+    def get_next_space(self, username):
         try:
-            user = self.client.get_user(username=username, user_fields=["public_metrics"])
-            if user and user.data:
-                return user.data.public_metrics["followers_count"]
-            return "N/A"
+            user_id = self.get_user_id(username)
+            if not user_id:
+                return None
+
+            spaces = self.client.get_spaces(
+                user_ids=[user_id],
+                space_fields=["title", "state", "scheduled_start"]
+            )
+            if spaces and spaces.data:
+                for space in spaces.data:
+                    if space.state in ["live", "scheduled"]:
+                        return {
+                            "title": space.title,
+                            "state": "Live Now" if space.state == "live" else "Scheduled",
+                            "scheduled_start": getattr(space, "scheduled_start", None),
+                            "space_id": space.id,
+                        }
+            return None
         except Exception:
-            return "N/A"
+            return None

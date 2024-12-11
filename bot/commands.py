@@ -2277,6 +2277,41 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def spaces(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    space = twitter.get_next_space("x7_finance")
+    caption = "*X7 Finance Twitter Spaces*\n\n"
+
+    if space is None:
+        button_text = "Twitter"
+        caption += "No live or upcoming Spaces found."
+        url = urls.TWITTER
+    elif space.get("state") == "Live Now":
+        button_text = "Join Now"
+        caption += f"{space['title']} - {space['state']}"
+        url = f"https://twitter.com/i/spaces/{space['space_id']}"
+    elif space.get("state") == "Scheduled":
+        button_text = "Set Reminder"
+        when = tools.get_time_difference(space['scheduled_start'].timestamp())
+        caption += f"{space['title']}\n\n{space['state']} UTC - {space['scheduled_start']}\n{when}"
+        url = f"https://twitter.com/i/spaces/{space['space_id']}"
+
+    keyboard = InlineKeyboardMarkup(
+        [[
+            InlineKeyboardButton(
+                text=button_text,
+                url=url,
+            )
+        ]]
+    )
+
+    await update.message.reply_photo(
+        photo=tools.get_random_pioneer(),
+        caption=caption,
+        parse_mode="Markdown",
+        reply_markup=keyboard,
+    )
+
+
 async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
 
@@ -2761,20 +2796,29 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     command = update.message.text.lower()
-    if "xtrader" in command or "0xtrader" in command:
+    user_id = update.effective_user.id
+
+    if any(keyword in command for keyword in ["xtrader", "0xtrader", "0xtraderai"]):
         username = "0xtraderai"
         display_name = "0xTraderAi Twitter/X"
         image = media.XTRADER
+    elif user_id == int(os.getenv("TELEGRAM_ADMIN_ID")) and context.args:
+        username = " ".join(context.args).lower()
+        display_name = f"{username.capitalize()} Twitter/X"
+        image = twitter.get_user_data(username)["profile_image"] or tools.get_random_pioneer()
     else:
         username = "x7_finance"
         display_name = "X7 Finance Twitter/X"
-        image  = tools.get_random_pioneer()
-    tweet_data = twitter.fetch_latest_tweet(username)
-    followers = twitter.get_follower_count(username)
+        image = tools.get_random_pioneer()
 
-    when = tools.get_time_difference(tweet_data['created_at'].timestamp())
+    tweet_data = twitter.get_latest_tweet(username)
+    followers = twitter.get_user_data(username)["followers"]
+
+    created_at = tweet_data.get('created_at', "")
+    when = tools.get_time_difference(created_at.timestamp()) if created_at else ""
+
     tweet = (
-        f"Latest Tweet - {when}:\n\n"
+        f"Latest Tweet - {when}\n\n"
         f"{tweet_data['text']}\n\n"
         f"Likes: {tweet_data['likes']}\n"
         f"Retweets: {tweet_data['retweets']}\n"

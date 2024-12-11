@@ -104,6 +104,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler(["pool", "lpool", "lendingpool"], commands.pool))
     application.add_handler(CommandHandler(["price", "prices"], commands.price))
     application.add_handler(CommandHandler("router", commands.router))
+    application.add_handler(CommandHandler(["space", "spaces"], commands.spaces))
     application.add_handler(CommandHandler("smart", commands.smart))
     application.add_handler(CommandHandler(["split", "splitters", "splitter"], commands.splitters_command))
     application.add_handler(CommandHandler(["tax", "slippage"], commands.tax_command))
