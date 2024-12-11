@@ -156,29 +156,18 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
             status.append(f"🔴 Snashot: Connection failed with status {response.status_code}")
 
         try:
-            twitter_auth = tweepy.OAuthHandler(
-                os.getenv("TWITTER_API_KEY"),
-                os.getenv("TWITTER_API_SECRET")
-            )
-            twitter_auth.set_access_token(
-                os.getenv("TWITTER_ACCESS_TOKEN"),
-                os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
-            )
-            twitter_api = tweepy.API(twitter_auth)
-            twitter_api.verify_credentials()
-            twitter_response = True
+            twitter_client = tweepy.Client(bearer_token=os.getenv("TWITTER_BEARER_TOKEN"))
+            response = twitter_client.get_user(username="x7_finance")
+            if response.data:
+                status.append("🟢 Twitter: Connected Successfully")
+            else:
+                status.append("🔴 Twitter: Connection failed (No data returned)")
         except tweepy.TweepyException as e:
             if hasattr(e, "response") and e.response is not None:
-                twitter_response = e.response.status_code
+                status_code = e.response.status_code
+                status.append(f"🔴 Twitter: Connection failed with status {status_code}")
             else:
-                twitter_response = "Unknown Error"
-
-        if twitter_response == True:
-            status.append("🟢 Twitter: Connected Successfully")
-        elif isinstance(twitter_response, int):
-            status.append(f"🔴 Twitter: Connection failed with status {twitter_response}")
-        else:
-            status.append(f"🔴 Twitter: Connection failed ({twitter_response})")
+                status.append(f"🔴 Twitter: Connection failed (Unknown Error)")
 
         warpcast_client = Warpcast(mnemonic=os.getenv("WARPCAST_API_KEY"))
         warpcast_fid = "419688"
