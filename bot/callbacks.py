@@ -228,11 +228,10 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     try:
         _, chain, loan_id = query.data.split(":")
-        
+
         result = functions.liquidate_loan(int(loan_id), chain)
         
-        await context.bot.send_message(
-            chat_id=query.message.chat_id,
+        await query.edit_message_text(
             text=f"Liquidation successful: {result}"
         )
 
