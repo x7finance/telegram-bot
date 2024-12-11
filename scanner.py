@@ -299,7 +299,6 @@ async def token_alert(event, chain):
     token_symbol = args["symbol"]
     description = args["description"]
     supply = args["supply"]
-    team_tokens = args["teamTokens"]
     description = args["description"]
     token_uri = args["tokenURI"]
     twitter_link = args.get("twitterLink", None)
@@ -316,7 +315,7 @@ async def token_alert(event, chain):
 
     im1.paste(im2, (700, 20), im2)
 
-    message = f"{token_name} ({token_symbol})\n\nSupply: {supply}\nTeam Supply: {team_tokens}%\nTaxes: {buy_tax}%/{sell_tax}%"
+    message = f"{token_name} ({token_symbol})\n\nSupply: {supply}\nTaxes: {buy_tax}%/{sell_tax}%"
 
     i1 = ImageDraw.Draw(im1)
     i1.text(
