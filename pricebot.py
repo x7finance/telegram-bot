@@ -76,7 +76,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 else:
                     top_percent = f'✅️ Top Holder Holds {formatted_top_percent}% of Supply'
             else:
-                top_percent = "❓ Top Holder Unknown"
+                top_percent = "❓ Top Holder - Unknown"
 
             if "owner_address" in scan[token_address]:
                 if scan[token_address]["owner_address"] == "0x0000000000000000000000000000000000000000":
@@ -127,7 +127,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                     else:
                         owner_percent = f'✅️ Owner Holds {formatted_owner_percent}% of Supply'
             else:
-                owner_percent = "❓ Tokens Held By Owner Unknown"
+                owner_percent = "❓ Tokens Held By Owner - Unknown"
 
             try:
                 pair = defined.get_pair(token_address, chain)
@@ -143,7 +143,6 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             blacklist = "❓ Blacklist Functions - Unknown"
             sellable = "❓ Sellable - Unknown"
             owner_percent = "❓ Tokens Held By Owner - Unknown"
-            top_holder = "❓ Top Holder - Unknown"
             top_percent = "❓ Top Holder - Unknown"
             
 
