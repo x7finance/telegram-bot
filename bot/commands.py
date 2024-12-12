@@ -216,8 +216,15 @@ async def blog(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) >= 1:
         amount = context.args[0]
-        amount_in_wei = int(float(amount) * 10 ** 18)
-        chain = chains.get_chain(update.effective_message.message_thread_id) if len(context.args) < 2 else context.args[1]
+        if amount.replace('.', '', 1).isdigit():
+            amount_in_wei = int(float(amount) * 10 ** 18)
+            chain = chains.get_chain(update.effective_message.message_thread_id) if len(context.args) < 2 else context.args[1]
+        
+        else:
+            await update.message.reply_text(
+                "The amount must be a number. Please try again with a valid numeric value."
+            )
+            return
     else:
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
