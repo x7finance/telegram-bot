@@ -81,30 +81,38 @@ def generate_hub_split(chain, hub_address, token):
 
     threshold_text = f"Balance Threshold: {balance_threshold} {chain_info.native.upper()}"
     
-    token_str = token
     balance = 0
     if token.upper() in tokens.TOKENS:
         token_info = tokens.TOKENS[token.upper()].get(chain)
         address = token_info.ca
         price, _ = dextools.get_price(address, chain)
 
+    if token == "x7r":
+        try:
+            token_liquidity_balance = f"{contract.functions.x7rLiquidityBalance().call() / 10 ** 18:.0f}"
+        except Exception:
+            token_liquidity_balance = 0
+            
     if token == "x7dao":
         try:
+            token_liquidity_balance = f"{contract.functions.x7daoLiquidityBalance().call() / 10 ** 18:.0f}"
             auxiliary = contract.functions.auxiliaryShare().call() / 10
             auxiliary_balance = contract.functions.auxiliaryBalance().call() / 10 ** 18
         except Exception:
+            token_liquidity_balance = 0
             auxiliary = "N/A"
             auxiliary_balance = 0
         split_text += f"\nAuxiliary Share: {auxiliary:,.0f}% - {auxiliary_balance:,.3f} {chain_info.native.upper()}"
 
-    if token == "x7100":
-        token_str = "x7101-x7105"
-        address = ca.X7100(chain)
+    if token in ["x7101", "x7102", "x7103","x7104","x7105"]:
+        token_info = tokens.TOKENS.get(token.upper(), {}).get(chain)
         try:
+            token_liquidity_balance = f"{contract.functions.liquidityTokenBalance(address).call() / 10 ** 18:.0f}"
             lending_pool = contract.functions.lendingPoolShare().call() / 10
             lending_pool_balance = contract.functions.lendingPoolBalance().call() / 10 ** 18
             liquidity_balance_threshold = contract.functions.liquidityBalanceThreshold().call() / 10 ** 18
-        except Exception:
+        except Exception as e:
+            token_liquidity_balance = 0
             lending_pool = "N/A"
             lending_pool_balance = 0
             liquidity_balance_threshold = "N/A"
@@ -112,20 +120,16 @@ def generate_hub_split(chain, hub_address, token):
         threshold_text += f"\nLiquidity Balance Threshold: {liquidity_balance_threshold} {chain_info.native.upper()}"
     
     balance_text = ""
-    if isinstance(address, str):
-        balance = etherscan.get_token_balance(hub_address, address, chain)
-        dollar = float(price) * float(balance)
-        balance_text = f"{balance:,.0f} {token_str.upper()} (${dollar:,.0f})"
-    elif isinstance(address, list):
-        for quint in address:
-            balance += etherscan.get_token_balance(hub_address, quint, chain)
-        balance_text = f"{balance:,.0f} {token_str.upper()}"
+    balance = float(etherscan.get_token_balance(hub_address, address, chain)) - float(token_liquidity_balance)
+    balance_dollar = float(price) * float(balance)
+    balance_text = f"{balance:,.0f} {token.upper()} (${balance_dollar:,.0f})"
 
     return (
         f"{balance_text}\n\n"
-        f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
         f"{threshold_text}\n\n"
-        f"{split_text}"
+        f"{split_text}\n\n"
+        f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
+        f"Earmarked Token Liquidity {token_liquidity_balance} {token.upper()}"
     )
 
 

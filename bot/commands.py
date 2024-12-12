@@ -424,7 +424,6 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 text="DAO Chat", url=urls.TG_DAO
             ),
         ],
-
         [
             InlineKeyboardButton(
                 text="Xchange Create Bot", url=urls.TG_XCHANGE_CREATE
@@ -1169,8 +1168,10 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
         if token.startswith("x710") and token in {f"x710{i}" for i in range(1, 6)}:
-            token = "x7100"
-        hub_address = ca.HUBS(chain)[token]
+            hub_token = "x7100"
+        else:
+            hub_token = token
+        hub_address = ca.HUBS(chain)[hub_token]
         split_text = splitters.generate_hub_split(chain, hub_address, token)
     else:
         await update.message.reply_text("Please follow the command with X7 token name")

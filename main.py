@@ -140,7 +140,7 @@ if __name__ == "__main__":
     application.add_handler(CallbackQueryHandler(callbacks.clicks_reset, pattern="^clicks_reset_start$"))
     application.add_handler(CallbackQueryHandler(callbacks.clicks_reset_yes, pattern="^clicks_reset_yes$"))
     application.add_handler(CallbackQueryHandler(callbacks.clicks_reset_no, pattern="^clicks_reset_no$"))
-    application.add_handler(CallbackQueryHandler(callbacks.pushall, pattern="^push_(eco|treasury|x7r|x7dao|x7100):"))
+    application.add_handler(CallbackQueryHandler(callbacks.pushall, pattern="^push_(eco|treasury|x7r|x7dao|x710[1-5]):"))
     application.add_handler(CallbackQueryHandler(callbacks.liquidate, pattern=r"^liquidate:[a-zA-Z0-9-]+:\d+$"))
     application.add_handler(CallbackQueryHandler(callbacks.welcome_button, pattern=r"unmute:.+"))
     

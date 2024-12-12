@@ -280,9 +280,9 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "token_address": ca.X7R(chain),
             "threshold": 10000,
             "contract_type": "hub",
-            "balance_func": lambda contract: etherscan.get_token_balance(
-                ca.X7R_LIQ_HUB(chain), ca.X7R(chain), chain
-            ) - (contract.functions.x7rLiquidityBalance().call() / 10 ** 18)
+            "balance_func": lambda contract: float(etherscan.get_token_balance(
+                ca.X7R_LIQ_HUB(chain), ca.X7R(chain), chain)
+            ) - float(f"{contract.functions.x7rLiquidityBalance().call() / 10 ** 18:.0f}")
         },
         "push_x7dao": {
             "splitter_address": ca.X7DAO_LIQ_HUB(chain),
@@ -290,9 +290,49 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "token_address": ca.X7DAO(chain),
             "threshold": 10000,
             "contract_type": "hub",
-            "balance_func": lambda contract: etherscan.get_token_balance(
+            "balance_func": lambda contract: float(etherscan.get_token_balance(
                 ca.X7DAO_LIQ_HUB(chain), ca.X7DAO(chain), chain
-            ) - (contract.functions.x7daoLiquidityBalance().call() / 10 ** 18)
+            )) - float(f"{contract.functions.x7daoLiquidityBalance().call() / 10 ** 18:.0f}")
+        },
+        "push_x7101": {
+            "splitter_address": ca.X7100_LIQ_HUB(chain),
+            "splitter_name": "X7100 Liquidity Hub",
+            "token_address": ca.X7101(chain),
+            "threshold": 10000,
+            "contract_type": "hub",
+            "balance_func": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7101(chain), chain)
+        },
+        "push_x7102": {
+            "splitter_address": ca.X7100_LIQ_HUB(chain),
+            "splitter_name": "X7100 Liquidity Hub",
+            "token_address": ca.X7102(chain),
+            "threshold": 10000,
+            "contract_type": "hub",
+            "balance_func": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7102(chain), chain)
+        },
+        "push_x7103": {
+            "splitter_address": ca.X7100_LIQ_HUB(chain),
+            "splitter_name": "X7100 Liquidity Hub",
+            "token_address": ca.X7103(chain),
+            "threshold": 10000,
+            "contract_type": "hub",
+            "balance_func": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7103(chain), chain)
+        },
+        "push_x7104": {
+            "splitter_address": ca.X7100_LIQ_HUB(chain),
+            "splitter_name": "X7100 Liquidity Hub",
+            "token_address": ca.X7104(chain),
+            "threshold": 10000,
+            "contract_type": "hub",
+            "balance_func": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7104(chain), chain)
+        },
+        "push_x7105": {
+            "splitter_address": ca.X7100_LIQ_HUB(chain),
+            "splitter_name": "X7100 Liquidity Hub",
+            "token_address": ca.X7105(chain),
+            "threshold": 10000,
+            "contract_type": "hub",
+            "balance_func": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7105(chain), chain)
         },
     }
 

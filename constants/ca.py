@@ -16,14 +16,14 @@ def X7101(chain):
     map = {
         "base": "0x6b7B78552aCB26B161f39E5731B1A2ebc2436253",
     }
-    return map.get(chain, "0x7101a9392eac53b01e7c07ca3baca945a56ee105")
+    return map.get(chain, "0x7101a9392EAc53B01e7c07ca3baCa945A56EE105")
 
 
 def X7102(chain):
     map = {
         "base": "0xA4A002ee15Ed6fc6C9459e4789856dD20ffdfe62",
     }
-    return map.get(chain, "0x7102dc82ef61bfb0410b1b1bf8ea74575bf0a105")
+    return map.get(chain, "0x7102DC82EF61bfB0410B1b1bF8EA74575bf0A105")
 
 
 def X7103(chain):
@@ -318,7 +318,7 @@ def HUBS(chain):
     return {
         "x7r": X7R_LIQ_HUB(chain),
         "x7dao": X7DAO_LIQ_HUB(chain),
-        **{f"x710{i}": X7100_LIQ_HUB(chain) for i in range(6)},
+        **{f"x710{i}": X7100_LIQ_HUB(chain) for i in range(1, 6)},
     }
 
 
