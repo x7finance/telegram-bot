@@ -81,12 +81,13 @@ def get_ill_number(term):
 def get_last_buyback(hub_address, chain):
     chain_native = chains.active_chains()[chain].native
     hub = etherscan.get_internal_tx(hub_address, chain)
-    hub_filter = [d for d in hub["result"] if d["from"] in f"{hub_address}".lower()]
-    value = round(int(hub_filter[0]["value"]) / 10**18, 3)
+    hub_filter = [d for d in hub["result"] if d["to"].lower() == ca.ROUTER(chain).lower()]
+    last_txn = hub_filter[0]
+    value = int(last_txn["value"]) / 10**18
     dollar = float(value) * float(etherscan.get_native_price(chain_native))
-    time = datetime.fromtimestamp(int(hub_filter[0]["timeStamp"]))
-    timestamp =int(hub_filter[0]["timeStamp"])
-    return value, dollar, time, timestamp
+    timestamp = int(last_txn["timeStamp"])
+    
+    return value, dollar, timestamp
 
 
 def get_random_pioneer():

@@ -1173,11 +1173,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = await update.message.reply_text("Getting Liquidity Hub data, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-        if token.startswith("x710") and token in {f"x710{i}" for i in range(1, 6)}:
-            hub_token = "x7100"
-        else:
-            hub_token = token
-        hub_address = ca.HUBS(chain)[hub_token]
+        hub_address = ca.HUBS(chain)[token]
         split_text = splitters.generate_hub_split(chain, hub_address, token)
     else:
         await update.message.reply_text("Please follow the command with X7 token name")
@@ -1187,12 +1183,11 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         (
             value,
             dollar,
-            time,
             timestamp
         ) = tools.get_last_buyback(hub_address, chain)
         when = tools.get_time_difference(timestamp)
         buy_back_text = (
-            f'Last Buy Back:\n{time} UTC\n{value} {chain_info.native.upper()} (${dollar:,.0f})\n'
+            f'Last Buy Back:\n{value:.3f} {chain_info.native.upper()} (${dollar:,.0f})\n'
             f"{when}"
         )
     except Exception:
@@ -1204,8 +1199,13 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     cost = functions.estimate_gas(chain, "processfees")
 
+    if token.startswith("x71"):
+        button_name = "X7100"
+    else:
+        button_name = token.upper()
+
     buttons = [
-        [InlineKeyboardButton(text=f"{token.upper()} Liquidity Hub Contract", url=chain_info.scan_address + hub_address)],
+        [InlineKeyboardButton(text=f"{button_name} Liquidity Hub Contract", url=chain_info.scan_address + hub_address)],
         [InlineKeyboardButton(text=f"Process {token.upper()} fees", callback_data=f"push_{token}:{chain}")]
     ]
 
