@@ -332,11 +332,12 @@ async def token_alert(event, chain):
     )
 
     wrapped_text = textwrap.fill(description, width=50)
+    y_offset = 300
     for line in wrapped_text.split("\n"):
         line_bbox = i1.textbbox((0, 0), line, font=font)
         line_height = line_bbox[3] - line_bbox[1]
         i1.text((26, 300), line, font=font, fill=(255, 255, 255))
-        300 += line_height + 5
+        y_offset += line_height + 5
     
     image_path = r"media/blackhole.png"
     im1.save(image_path)
