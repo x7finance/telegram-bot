@@ -37,7 +37,7 @@ async def admin_toggle(update, context):
 
         formatted_setting = setting.replace("_", " ").title()
         await query.answer(
-            text=f"{formatted_setting} updated to {'ON' if new_status else 'OFF'}."
+            text=f"{formatted_setting} turned {'ON' if new_status else 'OFF'}."
         )
 
         settings = db.settings_get_all()
