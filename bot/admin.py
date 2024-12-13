@@ -24,7 +24,7 @@ async def command(update, context):
             [
                 InlineKeyboardButton(
                     f"{setting.replace('_', ' ').title()}: {'ON' if status else 'OFF'}",
-                    callback_data=f"toggle_{setting}"
+                    callback_data=f"admin_toggle_{setting}"
                 )
             ]
             for setting, status in settings.items()
@@ -32,7 +32,7 @@ async def command(update, context):
 
         keyboard.append(
             [
-                InlineKeyboardButton("Reset Clicks", callback_data="reset_start")
+                InlineKeyboardButton("Reset Clicks", callback_data="clicks_reset_start")
             ]
         )
 
