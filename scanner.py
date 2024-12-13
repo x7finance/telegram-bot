@@ -3,6 +3,7 @@ from telegram.ext import ApplicationBuilder
 
 import asyncio, os, requests, random, sentry_sdk, traceback
 from PIL import Image, ImageDraw, ImageFont
+import textwrap
 
 from constants import abis, ca, urls, chains
 from hooks import api, tools
@@ -23,6 +24,7 @@ channels = [
     (urls.TG_ALERTS_CHANNEL_ID, None, urls.TG_PORTAL)
 ]
 
+font = ImageFont.truetype(media.FONT, 26)
 
 async def error(context):
     sentry_sdk.capture_exception(
@@ -112,7 +114,12 @@ async def loan_alert(event, chain):
     ill_number = tools.get_ill_number(term_contract_address)
 
     im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")
-    im2 = Image.open(chain_info.logo).convert("RGBA")
+    try:
+        image_url = defined.get_token_image(token, chain)
+        im2 = Image.open(requests.get(image_url, stream=True).raw).convert("RGBA")
+    except:
+        im2 = Image.open(chain_info.logo).convert("RGBA")
+        
     im1.paste(im2, (700, 20), im2)
 
     message = (
@@ -126,7 +133,7 @@ async def loan_alert(event, chain):
     i1.text(
         (26, 30),
         f"New Loan Originated ({chain_info.name.upper()})\n\n{message}",
-        font=ImageFont.truetype(media.FONT, 26),
+        font=font,
         fill=(255, 255, 255)
     )
     image_path = r"media/blackhole.png"
@@ -255,7 +262,7 @@ async def pair_alert(event, chain):
     i1.text(
         (26, 30),
         f"New Pair Created ({chain_info.name.upper()})\n\n{message}",
-        font=ImageFont.truetype(media.FONT, 26),
+        font=font,
         fill=(255, 255, 255)
     )
     image_path = r"media/blackhole.png"
@@ -297,7 +304,6 @@ async def token_alert(event, chain):
     token_address = args["tokenAddress"]
     token_name = args["name"]
     token_symbol = args["symbol"]
-    description = args["description"]
     supply = args["supply"]
     description = args["description"]
     token_uri = args["tokenURI"]
@@ -315,15 +321,23 @@ async def token_alert(event, chain):
 
     im1.paste(im2, (700, 20), im2)
 
-    message = f"{token_name} ({token_symbol})\n\nSupply: {supply:,.0f}\nTaxes: {buy_tax}%/{sell_tax}%"
+    message = f"{token_name} ({token_symbol})\n\nSupply: {supply:,.0f}\nTaxes: {buy_tax}/{sell_tax}"
 
     i1 = ImageDraw.Draw(im1)
     i1.text(
         (26, 30),
         f"New Token Deployed ({chain_info.name.upper()})\n\n{message}",
-        font=ImageFont.truetype(media.FONT, 26),
+        font=font,
         fill=(255, 255, 255)
     )
+
+    wrapped_text = textwrap.fill(description, width=50)
+    for line in wrapped_text.split("\n"):
+        line_bbox = i1.textbbox((0, 0), line, font=font)
+        line_height = line_bbox[3] - line_bbox[1]
+        i1.text((26, 300), line, font=font, fill=(255, 255, 255))
+        300 += line_height + 5
+    
     image_path = r"media/blackhole.png"
     im1.save(image_path)
 
