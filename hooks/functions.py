@@ -147,10 +147,10 @@ def liquidate_loan(loan_id, chain):
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
 
-        return f"Loan {loan_id} liquidated successfully.\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        return f"Loan {loan_id} ({chain_info.name}) liquidated successfully.\n\n{chain_info.scan_tx}{tx_hash.hex()}"
 
     except Exception as e:
-        return f"Error liquidating Loan ID {loan_id}: {e}"
+        return f"Error liquidating Loan {loan_id} ({chain_info.name}): {e}"
 
 
 def splitter_push(contract_type, splitter_address, chain, token_address=None):

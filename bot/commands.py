@@ -1476,9 +1476,9 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(f"Loan {loan_id} is not eligible for liquidation")
                 return
 
-            await update.message.reply_text(f"Attempting to liquidate Loan ID {loan_id} on {chain.upper()}...")
+            await update.message.reply_text(f"Attempting to liquidate Loan {loan_id} ({chain_info.name})...")
             result = functions.liquidate_loan(loan_id, chain)
-            await update.message.reply_text(f"Liquidation result:\n\n{result}")
+            await update.message.reply_text(result)
 
         except Exception as e:
             await update.message.reply_text(f"Error liquidating Loan ID {loan_id}: {e}")
@@ -2477,10 +2477,12 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         treasury_dollar = 0
 
     buttons = [
+        [InlineKeyboardButton(text="Ecosystem Splitter Contract", url=chain_info.scan_address + ca.ECO_SPLITTER(chain))],
         [InlineKeyboardButton(text="Push Ecosystem Splitter", callback_data=f"push_eco:{chain}")]
     ]
 
     if chain == "eth":
+        buttons.append([InlineKeyboardButton(text="Treasury Splitter Contract", url=chain_info.scan_address + ca.TREASURY_SPLITTER(chain))])
         buttons.append([InlineKeyboardButton(text="Push Treasury Splitter", callback_data=f"push_treasury:{chain}")])
 
     caption = (
