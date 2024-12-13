@@ -79,11 +79,15 @@ async def replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if keyword.startswith("https://"):
             if any(word.startswith(keyword) for word in words):
                 if "text" in response:
+
                     await update.message.reply_text(
-                        text=response["text"], parse_mode=response["mode"]
+                            response["text"],
+                        parse_mode=response["mode"]
                     )
                 elif "sticker" in response:
-                    await update.message.reply_sticker(sticker=response["sticker"])
+                    
+                    await update.message.reply_sticker(
+                        response["sticker"])
         else:
             if (
                 f" {keyword} " in f" {lower_message} "
@@ -91,11 +95,16 @@ async def replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 or lower_message.endswith(" " + keyword)
             ):
                 if "text" in response:
+
                     await update.message.reply_text(
-                        text=response["text"], parse_mode=response["mode"], disable_web_page_preview=True
+                            response["text"],
+                        parse_mode=response["mode"],
+                        disable_web_page_preview=True
                     )
                 elif "sticker" in response:
-                    await update.message.reply_sticker(sticker=response["sticker"])
+
+                    await update.message.reply_sticker(
+                        response["sticker"])
 
 
 async def welcome_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):

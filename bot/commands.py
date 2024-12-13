@@ -25,7 +25,7 @@ warpcast = api.WarpcastApi()
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        text.ABOUT,
+            text.ABOUT,
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -49,7 +49,7 @@ async def admins(update: Update, context: ContextTypes.DEFAULT_TYPE):
             caption=
                 "*X7 Finance Telegram Admins*\n\n"
                 + "\n".join(team),
-            parse_mode="Markdown",
+            parse_mode="Markdown"
         )
 
 
@@ -187,6 +187,7 @@ async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         blocks = 0
     blocks_text = "\n".join([f"{block_type.upper()}: `{block}`" for block_type, block in blocks.items()])
+
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
@@ -219,20 +220,20 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if amount.replace('.', '', 1).isdigit():
             amount_in_wei = int(float(amount) * 10 ** 18)
             chain = chains.get_chain(update.effective_message.message_thread_id) if len(context.args) < 2 else context.args[1]
-        
         else:
             await update.message.reply_text(
                 "The amount must be a number. Please try again with a valid numeric value."
             )
             return
     else:
+        
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=(
                 f"*X7 Finance Loan Rates*\n\n"
                 "Follow the /borrow command with an amount to borrow"
             ),
-            parse_mode="Markdown",
+            parse_mode="Markdown"
         )
         return
 
@@ -331,13 +332,14 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
             loan_info += distribution
+
     await message.delete()
     await update.message.reply_text(
-        f"*X7 Finance Loan Rates ({chain_info.name})*\n\n"
-        f"Borrowing {amount} {chain_info.native.upper()} (${borrow_usd:,.0f}) will cost:\n\n"
-        f"{loan_info}"
-        f"Liquidation Deposit: {liquidation_fee} {chain_info.native.upper()} (${liquidation_dollar:,.0f})\n\n",
-        parse_mode="Markdown",
+            f"*X7 Finance Loan Rates ({chain_info.name})*\n\n"
+            f"Borrowing {amount} {chain_info.native.upper()} (${borrow_usd:,.0f}) will cost:\n\n"
+            f"{loan_info}"
+            f"Liquidation Deposit: {liquidation_fee} {chain_info.native.upper()} (${liquidation_dollar:,.0f})\n\n",
+        parse_mode="Markdown"
     )
 
 
@@ -430,6 +432,7 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         ]
     ]
+
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=f"\n",
@@ -456,7 +459,7 @@ async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
                     InlineKeyboardButton(
                         text="X7R - Rewards Token", url=urls.DEX_TOOLS(chain_info.dext, ca.X7R(chain))
                     )
-                ]
+                ],
                 [
                     InlineKeyboardButton(
                         text="X7DAO - Governance Token", url=urls.DEX_TOOLS(chain_info.dext, ca.X7DAO(chain))
@@ -474,6 +477,7 @@ async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply = "✅ Both inputs match"
     else:
         reply = f"❌ Inputs do not match"
+
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
@@ -509,6 +513,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
     }
 
     if len(context.args) < 1:
+
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=(
@@ -516,23 +521,25 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Please enter X7 token first followed by token to compare\n\n"
                 f"ie. `/compare x7r uni`"
             ),
-            parse_mode="Markdown",
+            parse_mode="Markdown"
         )
         return
 
     x7token = context.args[0].lower()
     if x7token not in token_names:
+
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=
                 f"*X7 Finance Market Cap Comparison* ({chain_info.name})\n\n"
                 f"Please enter X7 token first followed by token to compare\n\n"
                 f"ie. `/compare x7r uni`",
-            parse_mode="Markdown",
+            parse_mode="Markdown"
         )
         return
 
     if len(context.args) < 2:
+
         await update.message.reply_text(
             "Please provide a token to compare, e.g., `/compare x7r uni`."
         )
@@ -541,6 +548,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
     token2 = context.args[1].lower()
     search = coingecko.search(token2)
     if "coins" not in search or not search["coins"]:
+
         await update.message.reply_text(f"Comparison with `{token2}` is not available.")
         return
 
@@ -623,7 +631,7 @@ async def contracts(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"*X7R - Rewards Token *\n`{ca.X7R(chain)}`\n\n"
             f"*X7DAO - Governance Token*\n`{ca.X7DAO(chain)}`\n\n"
             f"For advanced trading and arbitrage opportunities see `/constellations`",
-        parse_mode="Markdown",
+        parse_mode="Markdown"
     )
 
 
@@ -665,6 +673,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
         token_info = chains.active_chains()[chain]
         price = etherscan.get_native_price(chain)
     else:
+
         await update.message.reply_text("Token not found, please use X7 tokens only")
         return
 
@@ -757,6 +766,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     else:
         if input_contract == "functions":
+
             await update.message.reply_photo(
                 photo=tools.get_random_pioneer(),
                 caption=
@@ -773,6 +783,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     break
             if matching_contract:
                 contract_text, contract_ca = dao.contract_mappings(chain)[matching_contract]
+
                 await update.message.reply_photo(
                     photo=tools.get_random_pioneer(),
                     caption=
@@ -783,6 +794,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     reply_markup=keyboard
                 )
             else:
+
                 await update.message.reply_photo(
                     photo=tools.get_random_pioneer(),
                     caption=
@@ -846,7 +858,7 @@ async def docs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def ecosystem(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        f"{text.ECOSYSTEM}",
+            text.ECOSYSTEM,
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -994,7 +1006,7 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
     
-    message = await update.message.reply_text("Getting Liquidity Hub data, Please wait...")
+    message = await update.message.reply_text("Getting Fee to data, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     native_price = etherscan.get_native_price(chain)
@@ -1066,10 +1078,11 @@ async def fg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     caption += (
         f"{int(hours[0])} hours and {int(minutes[0])} minutes"
     )
+
     await update.message.reply_photo(
         photo=f"https://alternative.me/crypto/fear-and-greed-index.png?timestamp={int(time.time())}",
         caption=caption,
-        parse_mode="Markdown",
+        parse_mode="Markdown"
     )
 
 
@@ -1096,7 +1109,7 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"X7R:        {x7r_holders}\n"
             f"X7DAO:  {x7dao_holders}\n"
             f"X7D:        {x7d_holders}",
-        parse_mode="Markdown",
+        parse_mode="Markdown"
     )
 
 
@@ -1125,11 +1138,13 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         for chunk in issue_chunks[1:]:
+
             await update.message.reply_text(chunk, parse_mode="Markdown")
             return
         
     if arg == "pr":
         pr = github.get_pull_requests()
+
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=f"*X7 Finance GitHub Monorepo Pull Requests*\n\n{pr}",
@@ -1138,6 +1153,7 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     else:
         latest = github.get_latest_commit()
+        
         await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
@@ -1233,8 +1249,8 @@ async def leaderboard(update: Update, context: CallbackContext):
 
     if db.settings_get('burn'):
         clicks_needed = settings.CLICK_ME_BURN - (click_counts_total % settings.CLICK_ME_BURN)
+
         await update.message.reply_text(
-            text=
                 f"*X7 Finance Fastest Pioneer 2024 Leaderboard\n(Top 10)\n\n*"
                 f"{tools.escape_markdown(board)}\n"
                 f"Total clicks: *{click_counts_total}*\n"
@@ -1244,8 +1260,8 @@ async def leaderboard(update: Update, context: CallbackContext):
             parse_mode="Markdown"
         )
     else:
+
         await update.message.reply_text(
-            text=
                 f"*X7 Finance Fastest Pioneer 2024 Leaderboard\n(Top 10)\n\n*"
                 f"{tools.escape_markdown(board)}\n"
                 f"Total clicks: *{click_counts_total}*\n"
@@ -1768,7 +1784,7 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f'`X7105:`         {caps[ca.X7105(chain)]}\n\n'
             f'`Constellations Combined:` ${total_cons:,.0f}\n'
             f'`Total Market Cap:` ${total_mcap:,.0f}',
-        parse_mode="Markdown",
+        parse_mode="Markdown"
     )
 
 
@@ -1795,8 +1811,8 @@ async def me(update: Update, context: CallbackContext):
                   f"Your fastest time is {fastest_time} seconds\n\n"
 
     await update.message.reply_text(
-        text=message,
-        parse_mode="Markdown",
+            message,
+        parse_mode="Markdown"
     )
 
 
@@ -1841,7 +1857,7 @@ async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=tools.get_random_pioneer(),
         caption=caption,
         parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(buttons),
+        reply_markup=InlineKeyboardMarkup(buttons)
     )
 
 
@@ -1940,7 +1956,7 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Available - {49 - magister_count}\n{magister_price}\nFloor price - {magister_floor} {chain_info.native.upper()}\n"
             f"{magister_discount_text}\n",
         parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(buttons),
+        reply_markup=InlineKeyboardMarkup(buttons)
     )
 
 
@@ -1960,6 +1976,7 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
             amount += 141
         pair_text += f"{chain_info.name}:   `{amount}`\n"
         total += amount
+
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
@@ -1996,11 +2013,13 @@ async def pfp(update: Update, context: ContextTypes.DEFAULT_TYPE):
             i1.text(position, char, font=font, fill=(255, 255, 255))
             position = (position[0] + 37.5, position[1])
         img.save(r"media/pfp.png")
+
         await update.message.reply_photo(
             photo=open(r"media/pfp.png", "rb"))
 
 
 async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
+    message = await update.message.reply_text("Getting Pioneer Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     pioneer_id = " ".join(context.args)
@@ -2046,6 +2065,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         else:
             recent_tx_text = 'Last Claim: Not Found\n\n'
 
+        await message.delete()
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=
@@ -2086,6 +2106,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             await update.message.reply_text(f"Pioneer {pioneer_id} not found")
             return
         
+        await message.delete()
         await update.message.reply_text(
             f"*X7 Pioneer {pioneer_id} NFT Info*\n\n"
             f"Transfer Lock Status: {status}\n"
@@ -2143,7 +2164,9 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             total_lpool_reserve_dollar += lpool_reserve_dollar
             total_lpool_dollar += lpool_dollar
             total_dollar += dollar 
+        
         await message.delete()
+
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=
@@ -2201,7 +2224,6 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             total_borrowed = 0
             total_borrowed_dollar = 0
-
             
         await message.delete()
         await update.message.reply_photo(
@@ -2284,6 +2306,7 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             )
         buttons.append(buttons_row)
+
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=f"\n",
@@ -2325,7 +2348,7 @@ async def spaces(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=tools.get_random_pioneer(),
         caption=caption,
         parse_mode="Markdown",
-        reply_markup=keyboard,
+        reply_markup=keyboard
     )
 
 
@@ -2517,12 +2540,13 @@ async def tax_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     tax_info = tax.generate_info(chain)
+
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
             f"*X7 Finance Tax Info ({chain_info.name})*\n\n"
             f"{tax_info}\n",
-        parse_mode="Markdown",
+        parse_mode="Markdown"
     )
 
 
@@ -2537,13 +2561,14 @@ async def timestamp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             stamp = int(" ".join(context.args).lower())
             time = tools.convert_datetime(stamp)
             when = tools.get_time_difference(stamp)
+
             await update.message.reply_photo(
                 photo=tools.get_random_pioneer(),
                 caption=
                     f"*X7 Finance Timestamp Conversion*\n\n"
                     f"{stamp}\n{time} UTC\n\n"
                     f"{when}",
-                parse_mode="Markdown",
+                parse_mode="Markdown"
             )
     except Exception:
         await update.message.reply_text(
@@ -2562,7 +2587,7 @@ async def time_command(update: Update, context: CallbackContext):
         ("Asia/Dubai", "GST"),
         ("Asia/Kolkata", "IST"),
         ("Asia/Tokyo", "JST"),
-        ("Australia/Queensland", "AEST"),
+        ("Australia/Queensland", "AEST")
     ]
     current_time = datetime.now(pytz.timezone("UTC"))
     local_time = current_time.astimezone(pytz.timezone("UTC"))
@@ -2589,10 +2614,13 @@ async def time_command(update: Update, context: CallbackContext):
                         for tz_inner, tz_name_inner in timezones:
                             converted_time = tz_time.astimezone(pytz.timezone(tz_inner))
                             time_info += f"{converted_time.strftime('%I:%M %p')} - {tz_name_inner}\n"
+
                         await update.message.reply_text(
-                            time_info, parse_mode="Markdown"
+                            time_info,
+                            parse_mode="Markdown"
                         )
                         return
+                    
             time_info = f"{input_time.strftime('%A %B %d %Y')}\n"
             time_info += (
                 f"{input_time.strftime('%I:%M %p')} - {time_variable.upper()}\n\n"
@@ -2600,8 +2628,12 @@ async def time_command(update: Update, context: CallbackContext):
             for tz, tz_name in timezones:
                 tz_time = input_time.astimezone(pytz.timezone(tz))
                 time_info += f"{tz_time.strftime('%I:%M %p')} - {tz_name}\n"
-            await update.message.reply_text(time_info, parse_mode="Markdown")
+
+            await update.message.reply_text(
+                time_info,
+                parse_mode="Markdown")
             return
+        
         time_info = f"{local_time.strftime('%A %B %d %Y')}\n"
         time_info += (
             f"{local_time.strftime('%I:%M %p')} - {local_time.strftime('%Z')}\n\n"
@@ -2609,10 +2641,15 @@ async def time_command(update: Update, context: CallbackContext):
         for tz, tz_name in timezones:
             tz_time = local_time.astimezone(pytz.timezone(tz))
             time_info += f"{tz_time.strftime('%I:%M %p')} - {tz_name}\n"
-        await update.message.reply_text(time_info, parse_mode="Markdown")
+
+        await update.message.reply_text(
+                time_info,
+            parse_mode="Markdown")
+        
     except Exception:
         await update.message.reply_text(
-            "use `/time HH:MMPM or HHAM TZ`", parse_mode="Markdown"
+                "use `/time HH:MMPM or HHAM TZ`",
+            parse_mode="Markdown"
         )
 
 
@@ -2758,6 +2795,7 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
         trending_text = f"*Xchange Trending Pairs {chain_name_title}*\n\n"
 
         if not any(item.get("pair") for item in top_trending):
+
             await message.delete()
             await update.message.reply_photo(
                 photo=tools.get_random_pioneer(),
@@ -2871,6 +2909,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
         hours, remainder = divmod(remaining_time, 3600)
         minutes, seconds = divmod(remainder, 60)
         next_update_text = f"Next update available in: {hours}h {minutes}m {seconds}s"
+        
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=(
@@ -3023,7 +3062,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if len(args) < 1:
         await update.message.reply_text(
-            "Please follow the command with a valid wallet address.",
+                "Please follow the command with a valid wallet address.",
             parse_mode="Markdown"
         )
         return
@@ -3032,7 +3071,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not re.match(r'^0x[a-fA-F0-9]{40}$', wallet):
         await update.message.reply_text(
-            "Please provide a valid wallet address.",
+                "Please provide a valid wallet address.",
             parse_mode="Markdown"
         )
         return
@@ -3130,14 +3169,16 @@ async def wei(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Please follow the command with the amount of eth you wish to convert")
     else:
         wei = int(float(eth) * 10**18)
+        
         await update.message.reply_text(
-            f"{eth} ETH is equal to \n" f"`{wei}` wei", parse_mode="Markdown"
+            f"{eth} ETH is equal to \n" f"`{wei}` wei", 
+        parse_mode="Markdown"
         )
 
 
 async def wp(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        text=f"*X7 Finance Whitepaper Quote*\n\n{random.choice(text.QUOTES)}",
+            f"*X7 Finance Whitepaper Quote*\n\n{random.choice(text.QUOTES)}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
