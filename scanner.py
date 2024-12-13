@@ -304,8 +304,8 @@ async def token_alert(event, chain):
     twitter_link = args.get("twitterLink", None)
     telegram_link = args.get("telegramLink", None)
     website_link = args.get("websiteLink", None)
-    buy_tax = args.get("buy_tax", 0)
-    sell_tax = args.get("sell_tax", 0)
+    buy_tax = args.get("buyTax", 0)
+    sell_tax = args.get("sellTax", 0)
 
     im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")
     try:
@@ -315,7 +315,7 @@ async def token_alert(event, chain):
 
     im1.paste(im2, (700, 20), im2)
 
-    message = f"{token_name} ({token_symbol})\n\nSupply: {supply}\nTaxes: {buy_tax}%/{sell_tax}%"
+    message = f"{token_name} ({token_symbol})\n\nSupply: {supply:,.0f}\nTaxes: {buy_tax}%/{sell_tax}%"
 
     i1 = ImageDraw.Draw(im1)
     i1.text(
