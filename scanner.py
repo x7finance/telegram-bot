@@ -354,11 +354,11 @@ async def token_alert(event, chain):
     ]
 
     if twitter_link:
-        button_list.append([InlineKeyboardButton(text="Twitter", url=twitter_link)])
+        button_list.append([InlineKeyboardButton(text=f"{token_name} Twitter", url=twitter_link)])
     if telegram_link:
-        button_list.append([InlineKeyboardButton(text="Telegram", url=telegram_link)])
+        button_list.append([InlineKeyboardButton(text=f"{token_name} Telegram", url=telegram_link)])
     if website_link:
-        button_list.append([InlineKeyboardButton(text="Website", url=website_link)])
+        button_list.append([InlineKeyboardButton(text=f"{token_name} Website", url=website_link)])
 
     buttons = InlineKeyboardMarkup(button_list)
     for channel, thread_id, link in channels:
