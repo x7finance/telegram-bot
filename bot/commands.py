@@ -29,7 +29,7 @@ async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton(text="X7Finance.org", url=urls.XCHANGE)],
+                [InlineKeyboardButton(text="X7Finance.org", url=urls.XCHANGE)]
             ]
         ),
     )
@@ -60,9 +60,9 @@ async def alerts(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton(text="XChange Alerts", url=urls.TG_ALERTS)],
+                [InlineKeyboardButton(text="XChange Alerts", url=urls.TG_ALERTS)]
             ]
-        ),
+        )
     )
 
 
@@ -78,9 +78,9 @@ async def announcements(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         text="X7 Announcement Channel",
                         url=urls.TG_ANNOUNCEMENTS,
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
     
 
@@ -127,12 +127,12 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         [
                             [
                                 InlineKeyboardButton(
-                                    text="Xchange Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{pair_x}"
+                                    text="Xchange Chart", url=urls.DEX_TOOLS(chain_info.dext, pair_x)
                                 )
                             ],
                             [
                                 InlineKeyboardButton(
-                                    text="Uniswap Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{pair_y}"
+                                    text="Uniswap Chart", url=urls.DEX_TOOLS(chain_info.dext, pair_y)
                                 )
                             ]
                         ]
@@ -207,9 +207,9 @@ async def blog(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     InlineKeyboardButton(
                         text="X7 Finance Blog", url=f"{urls.XCHANGE}blog"
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -372,9 +372,9 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         text="Burn Wallet",
                         url=f"{chain_info.scan_token}{ca.X7R(chain)}?a={ca.DEAD}",
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -394,16 +394,16 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 [
                     InlineKeyboardButton(
-                        text="X7R - Rewards Token", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7R(chain))}"
+                        text="X7R - Rewards Token", url=urls.XCHANGE_BUY(chain_info.id, ca.X7R(chain))
                     )
                 ],
                 [
                     InlineKeyboardButton(
-                        text="X7DAO - Governance Token", url=f"{urls.XCHANGE_BUY(chain_info.id, ca.X7DAO(chain))}"
+                        text="X7DAO - Governance Token", url=urls.XCHANGE_BUY(chain_info.id, ca.X7DAO(chain))
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -412,23 +412,23 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [
             InlineKeyboardButton(
                 text="X7 Portal", url=urls.TG_PORTAL
-            ),
+            )
         ],
         [
             InlineKeyboardButton(
                 text="Xchange Alerts", url=urls.TG_ALERTS
-            ),
+            )
         ],
         [
             InlineKeyboardButton(
                 text="DAO Chat", url=urls.TG_DAO
-            ),
+            )
         ],
         [
             InlineKeyboardButton(
                 text="Xchange Create Bot", url=urls.TG_XCHANGE_CREATE
             )
-        ],
+        ]
     ]
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
@@ -454,17 +454,16 @@ async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             [
                 [
                     InlineKeyboardButton(
-                        text="X7R - Rewards Token", url=f"https://www.dextools.io/app/{chain_info.dext}/pair-explorer/{ca.X7R(chain)}"
+                        text="X7R - Rewards Token", url=urls.DEX_TOOLS(chain_info.dext, ca.X7R(chain))
                     )
-                ],
+                ]
                 [
                     InlineKeyboardButton(
-                        text="X7DAO - Governance Token",
-                        url=f"https://www.dextools.io/app/{chain_info.dext}/pair-explorer/{ca.X7DAO(chain)}",
+                        text="X7DAO - Governance Token", url=urls.DEX_TOOLS(chain_info.dext, ca.X7DAO(chain))
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -580,9 +579,9 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         text=f"{token2.upper()} Chart",
                         url=f"https://www.coingecko.com/en/coins/{token_id}",
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -694,9 +693,16 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     input_contract = " ".join(context.args).lower()
     contract_names = list(dao.contract_mappings(chain))
     formatted_contract_names = '\n'.join(contract_names)
-    keyboard = InlineKeyboardMarkup(
-            [[InlineKeyboardButton(text="Vote Here",url=urls.SNAPSHOT,)],
-            [InlineKeyboardButton(text="DAO Chat",url=urls.TG_DAO,)],])
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton(
+            text="Vote Here",
+            url=urls.SNAPSHOT)
+        ],
+        [InlineKeyboardButton(
+            text="DAO Chat",
+            url=urls.TG_DAO)
+        ]
+        ])
     if not input_contract:
         latest = snapshot.get_latest()
         proposal = latest["data"]["proposals"][0]
@@ -803,9 +809,9 @@ async def onchains(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="View all on chain messages",
-                        url=f"{urls.XCHANGE}docs/onchains",
+                        url=f"{urls.XCHANGE}docs/onchains"
                     )
-                ],
+                ]
             ]
         ),
     )
@@ -814,19 +820,19 @@ async def onchains(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def docs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
     [
-        InlineKeyboardButton(text="Get Started", url=f"{urls.XCHANGE}getstarted"),
+        InlineKeyboardButton(text="Get Started", url=f"{urls.XCHANGE}getstarted")
     ],
     [
         InlineKeyboardButton(text="How to - Create Pair", url=f"{urls.XCHANGE}docs/guides/liquidity-provider"),
-        InlineKeyboardButton(text="How to - Initiate Loan", url=f"{urls.XCHANGE}docs/guides/initiate-loan"),
+        InlineKeyboardButton(text="How to - Initiate Loan", url=f"{urls.XCHANGE}docs/guides/initiate-loan")
     ],
     [
         InlineKeyboardButton(text="Trader", url=f"{urls.XCHANGE}docs/guides/trade"),
-        InlineKeyboardButton(text="Capital Allocator", url=f"{urls.XCHANGE}docs/guides/lending"),
+        InlineKeyboardButton(text="Capital Allocator", url=f"{urls.XCHANGE}docs/guides/lending")
     ],
     [
         InlineKeyboardButton(text="Project Engineer", url=f"{urls.XCHANGE}docs/guides/integrate"),
-        InlineKeyboardButton(text="Project Launcher", url=f"{urls.XCHANGE}docs/guides/launch"),
+        InlineKeyboardButton(text="Project Launcher", url=f"{urls.XCHANGE}docs/guides/launch")
     ]
 ]
 
@@ -844,9 +850,9 @@ async def ecosystem(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton(text="X7Finance.org", url=urls.XCHANGE)],
+                [InlineKeyboardButton(text="X7Finance.org", url=urls.XCHANGE)]
             ]
-        ),
+        )
     )
 
 
@@ -859,7 +865,7 @@ async def factory(update: Update, context: ContextTypes.DEFAULT_TYPE):
         buttons_row.append(
                 InlineKeyboardButton(
                     text=name,
-                    url=f"{address}{ca.FACTORY(chain)}"
+                    url=address+ca.FACTORY(chain)
                 )
             )
         buttons.append(buttons_row)
@@ -877,53 +883,53 @@ async def faq(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [
             InlineKeyboardButton(
                 text="Airdrop Questions",
-                url=f"{urls.XCHANGE}docs/faq/airdrop",
+                url=f"{urls.XCHANGE}docs/faq/airdrop"
             ),
             InlineKeyboardButton(
                 text="Constellation Tokens",
-                url=f"{urls.XCHANGE}docs/faq/constellations",
-            ),
+                url=f"{urls.XCHANGE}docs/faq/constellations"
+            )
         ],
         [
             InlineKeyboardButton(
                 text="Developer Questions",
-                url=f"{urls.XCHANGE}docs/faq/devs",
+                url=f"{urls.XCHANGE}docs/faq/devs"
             ),
             InlineKeyboardButton(
                 text="General Questions",
-                url=f"{urls.XCHANGE}docs/faq/general",
-            ),
+                url=f"{urls.XCHANGE}docs/faq/general"
+            )
         ],
         [
             InlineKeyboardButton(
                 text="Governance Questions",
-                url=f"{urls.XCHANGE}docs/faq/governance",
+                url=f"{urls.XCHANGE}docs/faq/governance"
             ),
             InlineKeyboardButton(
                 text="Investor Questions",
-                url=f"{urls.XCHANGE}faq/investors",
-            ),
+                url=f"{urls.XCHANGE}faq/investors"
+            )
         ],
         [
             InlineKeyboardButton(
                 text="Liquidity Lending Questions",
-                url=f"{urls.XCHANGE}docs/faq/liquiditylending",
+                url=f"{urls.XCHANGE}docs/faq/liquiditylending"
             ),
             InlineKeyboardButton(
                 text="NFT Questions",
                 url=f"{urls.XCHANGE}faq/nfts"
-            ),
+            )
         ],
         [
             InlineKeyboardButton(
                 text="Snapshot.org Questions",
-                url=f"{urls.XCHANGE}docs/faq/daosnapshot",
+                url=f"{urls.XCHANGE}docs/faq/daosnapshot"
             ),
             InlineKeyboardButton(
                 text="Xchange Questions",
-                url=f"{urls.XCHANGE}faq/xchange",
-            ),
-        ],
+                url=f"{urls.XCHANGE}faq/xchange"
+            )
+        ]
     ]
 
     await update.message.reply_photo(
@@ -977,7 +983,7 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="markdown",
         reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton(text=f"{chain_info.name} Gas Tracker", url=chain_info.scan_address)]]
-        ),
+        )
     )
 
 
@@ -1025,11 +1031,11 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text=chain_info.scan_name,
-                        url=f"{chain_info.scan_address}{ca.LIQUIDITY_TREASURY(chain)}",
+                        url=chain_info.scan_address + ca.LIQUIDITY_TREASURY(chain)
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -1144,9 +1150,9 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     InlineKeyboardButton(
                         text=f"X7 Finance GitHub", url=urls.GITHUB
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -1199,6 +1205,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cost = functions.estimate_gas(chain, "processfees")
 
     buttons = [
+        [InlineKeyboardButton(text=f"{token.upper()} Liquidity Hub Contract", url=chain_info.scan_address + hub_address)],
         [InlineKeyboardButton(text=f"Process {token.upper()} fees", callback_data=f"push_{token}:{chain}")]
     ]
 
@@ -1251,20 +1258,20 @@ async def leaderboard(update: Update, context: CallbackContext):
 async def links(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
         [
-            InlineKeyboardButton(text="X7Finance.org", url=urls.XCHANGE),
+            InlineKeyboardButton(text="X7Finance.org", url=urls.XCHANGE)
         ],
         [
             InlineKeyboardButton(text="Snapshot", url=urls.SNAPSHOT),
-            InlineKeyboardButton(text="Twitter", url=urls.TWITTER),
+            InlineKeyboardButton(text="Twitter", url=urls.TWITTER)
         ],
         [
             InlineKeyboardButton(text="Reddit", url=urls.REDDIT),
-            InlineKeyboardButton(text="Warpcast", url=urls.WARPCAST),
+            InlineKeyboardButton(text="Warpcast", url=urls.WARPCAST)
         ],
         [
             InlineKeyboardButton(text="GitHub", url=urls.GITHUB),
-            InlineKeyboardButton(text="Dune", url=urls.DUNE),
-        ],
+            InlineKeyboardButton(text="Dune", url=urls.DUNE)
+        ]
     ]
 
     await update.message.reply_photo(
@@ -1353,17 +1360,17 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="X7R Liquidty Pair",
-                        url=f"{chain_info.scan_address}{x7r_pair}",
+                        url=chain_info.scan_address + x7r_pair
                     )
                 ],
                 [
                     InlineKeyboardButton(
                         text="X7DAO Liquidty Pair",
-                        url=f"{chain_info.scan_address}{x7dao_pair}",
+                        url= chain_info.scan_address + x7dao_pair
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -1452,11 +1459,11 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         InlineKeyboardButton(
                             text="Lending Dashboard",
-                            url=f"{urls.XCHANGE}lending",
+                            url=f"{urls.XCHANGE}lending"
                         )
-                    ],
+                    ]
                 ]
-            ),
+            )
         )
     else:
         try:
@@ -1521,7 +1528,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         InlineKeyboardButton(
                             text=f"Loans Dashboard",
-                            url=f"{urls.XCHANGE}lending",
+                            url=f"{urls.XCHANGE}lending"
                         )
                     ]
                 ]
@@ -1620,15 +1627,15 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 InlineKeyboardButton(
                     text=f"Chart",
-                    url=f"{urls.DEX_TOOLS(chain_info.dext)}{pair}",
+                    url=urls.DEX_TOOLS(chain_info.dext, pair)
                 )
             ],
             [
                 InlineKeyboardButton(
                     text=f"View Loan",
-                    url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}",
+                    url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}"
                 )
-            ],
+            ]
         ]
 
         if liquidation_button:
@@ -1705,11 +1712,11 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text=chain_info.scan_name,
-                        url=f"{chain_info.scan_address}{ca.TIME_LOCK(chain)}",
+                        url=chain_info.scan_address + ca.TIME_LOCK(chain)
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -1805,29 +1812,29 @@ async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
             InlineKeyboardButton(
                 text="X7 TG Sticker Pack 1",
-                url="https://t.me/addstickers/x7financestickers",
-            ),
+                url="https://t.me/addstickers/x7financestickers"
+            )
         ],
         [
             InlineKeyboardButton(
                 text="X7 TG Sticker Pack 2",
-                url="https://t.me/addstickers/X7finance",
+                url="https://t.me/addstickers/X7finance"
             ),
             InlineKeyboardButton(
                 text="X7 TG Sticker Pack 3",
-                url="https://t.me/addstickers/x7financ",
-            ),
+                url="https://t.me/addstickers/x7financ"
+            )
         ],
         [
             InlineKeyboardButton(
                 text="X7 TG Sticker Pack 4",
-                url="https://t.me/addstickers/GavalarsX7",
+                url="https://t.me/addstickers/GavalarsX7"
             ),
             InlineKeyboardButton(
                 text="X7 Emojis Pack",
-                url="https://t.me/addemoji/x7FinanceEmojis",
-            ),
-        ],
+                url="https://t.me/addemoji/x7FinanceEmojis"
+            )
+        ]
     ]
 
     await update.message.reply_photo(
@@ -1900,16 +1907,16 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
         [
             InlineKeyboardButton(text="Mint Here", url=f"{urls.XCHANGE}dashboard/marketplace"),
-            InlineKeyboardButton(text="OS - Ecosystem Maxi", url=f"{urls.OS_LINK('eco')}{chain_info.opensea}"),
+            InlineKeyboardButton(text="OS - Ecosystem Maxi", url=urls.OS_LINK('eco') + chain_info.opensea)
         ],
         [
-            InlineKeyboardButton(text="OS - Liquidity Maxi", url=f"{urls.OS_LINK('liq')}{chain_info.opensea}"),
-            InlineKeyboardButton(text="OS - DEX Maxi", url=f"{urls.OS_LINK('dex')}{chain_info.opensea}"),
+            InlineKeyboardButton(text="OS - Liquidity Maxi", url=urls.OS_LINK('liq')+ chain_info.opensea),
+            InlineKeyboardButton(text="OS - DEX Maxi", url=urls.OS_LINK('dex') + chain_info.opensea),
         ],
         [
-            InlineKeyboardButton(text="OS - Borrowing Maxi", url=f"{urls.OS_LINK('borrow')}{chain_info.opensea}"),
-            InlineKeyboardButton(text="OS - Magister", url=f"{urls.OS_LINK('magister')}{chain_info.opensea}"),
-        ],
+            InlineKeyboardButton(text="OS - Borrowing Maxi", url=urls.OS_LINK('borrow') + chain_info.opensea),
+            InlineKeyboardButton(text="OS - Magister", url=urls.OS_LINK('magister') + chain_info.opensea)
+        ]
     ]
 
     await message.delete()
@@ -1965,11 +1972,11 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="Xchange Pairs Dashboard",
-                        url=f"{urls.XCHANGE}liquidity?=all-pools",
+                        url=f"{urls.XCHANGE}liquidity?=all-pools"
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -2054,17 +2061,17 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
                     [
                         InlineKeyboardButton(
                             text="X7 Pioneer Dashboard",
-                            url=f"{urls.XCHANGE}dashboard/pioneer",
+                            url=f"{urls.XCHANGE}dashboard/pioneer"
                         )
                     ],
                     [
                         InlineKeyboardButton(
                             text="Opensea",
-                            url=f"{urls.OS_LINK('pioneer')}",
+                            url=urls.OS_LINK('pioneer')
                         )
                     ]
                 ]
-            ),
+            )
         )
     else:
         data = opensea.get_nft_id(ca.PIONEER, pioneer_id)
@@ -2091,17 +2098,17 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
                 [
                     InlineKeyboardButton(
                         text="X7 Pioneer Dashboard",
-                        url=f"{urls.XCHANGE}dashboard/pioneer",
+                        url=f"{urls.XCHANGE}dashboard/pioneer"
                     )
                 ],
                 [
                     InlineKeyboardButton(
                         text="Opensea",
-                        url=f"https://pro.opensea.io/nft/ethereum/{ca.PIONEER}/{pioneer_id}",
+                        url=f"https://pro.opensea.io/nft/ethereum/{ca.PIONEER}/{pioneer_id}"
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -2151,11 +2158,11 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         InlineKeyboardButton(
                             text=f"Lending Pool Dashboard",
-                            url=f"{urls.XCHANGE}lending",
+                            url=f"{urls.XCHANGE}lending"
                         )
                     ]
                 ]
-            ),
+            )
         )
     else:
         chain_info, error_message = chains.get_info(chain)
@@ -2216,11 +2223,11 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         InlineKeyboardButton(
                             text=f"Lending Pool Dashboard",
-                            url=f"{urls.XCHANGE}lending",
+                            url=f"{urls.XCHANGE}lending"
                         )
                     ]
                 ]
-            ),
+            )
         )
 
 
@@ -2250,17 +2257,17 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="X7R Chart - Rewards Token",
-                        url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7R(chain)}",
+                        url=urls.DEX_TOOLS(chain_info.dext, ca.X7R(chain))
                     )
                 ],
                 [
                     InlineKeyboardButton(
                         text="X7DAO Chart - Governance Token",
-                        url=f"{urls.DEX_TOOLS(chain_info.dext)}{ca.X7DAO(chain)}",
+                        url=urls.DEX_TOOLS(chain_info.dext, ca.X7DAO(chain))
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -2273,7 +2280,7 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         buttons_row.append(
                 InlineKeyboardButton(
                     text=name,
-                    url=f"{address}{ca.ROUTER(chain)}"
+                    url=address + ca.ROUTER(chain)
                 )
             )
         buttons.append(buttons_row)
@@ -2304,12 +2311,14 @@ async def spaces(update: Update, context: ContextTypes.DEFAULT_TYPE):
         url = f"https://twitter.com/i/spaces/{space['space_id']}"
 
     keyboard = InlineKeyboardMarkup(
-        [[
+        [
+            [
             InlineKeyboardButton(
                 text=button_text,
-                url=url,
-            )
-        ]]
+                url=url
+                )
+            ]
+        ]
     )
 
     await update.message.reply_photo(
@@ -2329,104 +2338,103 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         return
         
     buttons = [
-    [
-        InlineKeyboardButton(
-            text="Contracts Dashboard",
-            url=f"{urls.XCHANGE}dashboard",
-        ),
-    ],
-    [
-        InlineKeyboardButton(
-            text="X7100 Liquidity Hub",
-            url=f"{chain_info.scan_address}{ca.X7100_LIQ_HUB(chain)}"
-        ),
-        InlineKeyboardButton(
-            text="X7R Liquidity Hub",
-            url=f"{chain_info.scan_address}{ca.X7R_LIQ_HUB(chain)}"
-        ),
-    ],
-    [
-        InlineKeyboardButton(
-            text="X7DAO Liquidity Hub",
-            url=f"{chain_info.scan_address}{ca.X7DAO_LIQ_HUB(chain)}"
-        ),
-        InlineKeyboardButton(
-            text="X7100 Discount Authority",
-            url=f"{chain_info.scan_address}{ca.X7100_DISCOUNT(chain)}",
-        ),
-        
-    ],
-    [
-        InlineKeyboardButton(
-            text="X7R Discount Authority",
-            url=f"{chain_info.scan_address}{ca.X7R_DISCOUNT(chain)}",
-        ),
-        InlineKeyboardButton(
-            text="X7DAO Discount Authority",
-            url=f"{chain_info.scan_address}{ca.X7DAO_DISCOUNT(chain)}",
-        ),
-    ],
-    [
-        InlineKeyboardButton(
-            text="Xchange Discount Authority",
-            url=f"{chain_info.scan_address}{ca.XCHANGE_DISCOUNT(chain)}",
-        ),
-        InlineKeyboardButton(
-            text="Lending Discount Authority",
-            url=f"{chain_info.scan_address}{ca.LENDING_DISCOUNT(chain)}",
-        ),
-    ],
-    [
-        InlineKeyboardButton(
-            text="Token Burner",
-            url=f"{chain_info.scan_address}{ca.BURNER(chain)}"
-        ),
-        InlineKeyboardButton(
-            text="Token Time Lock",
-            url=f"{chain_info.scan_address}{ca.TIME_LOCK(chain)}"
-        ),
-    ],
-    [
-        InlineKeyboardButton(
-            text="Ecosystem Splitter",
-            url=f"{chain_info.scan_address}{ca.ECO_SPLITTER(chain)}",
-        ),
-        InlineKeyboardButton(
-            text="Treasury Splitter",
-            url=f"{chain_info.scan_address}{ca.TREASURY_SPLITTER(chain)}",
-        ),
-    ],
-    [
-        InlineKeyboardButton(
-            text="Liquidity Treasury",
-            url=f"{chain_info.scan_address}{ca.LIQUIDITY_TREASURY(chain)}",
-        ),
-        InlineKeyboardButton(
-            text="Default Token List",
-            url=f"{chain_info.scan_address}{ca.DEFAULT_TOKEN_LIST(chain)}"
-        ),
-    ],
-    [
-        InlineKeyboardButton(
-            text="Lending Pool",
-            url=f"{chain_info.scan_address}{ca.LPOOL(chain)}"
-        ),
-        InlineKeyboardButton(
-            text="Lending Pool Reserve",
-            url=f"{chain_info.scan_address}{ca.LPOOL_RESERVE(chain)}",
-        ),
-    ],
-    [
-        
-        InlineKeyboardButton(
-            text="Xchange Factory",
-            url=f"{chain_info.scan_address}{ca.FACTORY(chain)}"
-        ),
-        InlineKeyboardButton(
-            text="Xchange Router",
-            url=f"{chain_info.scan_address}{ca.ROUTER(chain)}"
-        ),
-    ],
+        [
+            InlineKeyboardButton(
+                text="Contracts Dashboard",
+                url=f"{urls.XCHANGE}dashboard"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="X7100 Liquidity Hub",
+                url=chain_info.scan_address + ca.X7100_LIQ_HUB(chain)
+            ),
+            InlineKeyboardButton(
+                text="X7R Liquidity Hub",
+                url=chain_info.scan_address + ca.X7R_LIQ_HUB(chain)
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="X7DAO Liquidity Hub",
+                url=chain_info.scan_address + ca.X7DAO_LIQ_HUB(chain)
+            ),
+            InlineKeyboardButton(
+                text="X7100 Discount Authority",
+                url=chain_info.scan_address + ca.X7100_DISCOUNT(chain)
+            )
+            
+        ],
+        [
+            InlineKeyboardButton(
+                text="X7R Discount Authority",
+                url=chain_info.scan_address + ca.X7R_DISCOUNT(chain)
+            ),
+            InlineKeyboardButton(
+                text="X7DAO Discount Authority",
+                url=chain_info.scan_address + ca.X7DAO_DISCOUNT(chain)
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Xchange Discount Authority",
+                url=chain_info.scan_address + ca.XCHANGE_DISCOUNT(chain)
+            ),
+            InlineKeyboardButton(
+                text="Lending Discount Authority",
+                url=chain_info.scan_address + ca.LENDING_DISCOUNT(chain)
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Token Burner",
+                url=chain_info.scan_address + ca.BURNER(chain),
+            ),
+            InlineKeyboardButton(
+                text="Token Time Lock",
+                url=chain_info.scan_address + ca.TIME_LOCK(chain),
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Ecosystem Splitter",
+                url=chain_info.scan_address + ca.ECO_SPLITTER(chain)
+            ),
+            InlineKeyboardButton(
+                text="Treasury Splitter",
+                url=chain_info.scan_address + ca.TREASURY_SPLITTER(chain)
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Liquidity Treasury",
+                url=chain_info.scan_address + ca.LIQUIDITY_TREASURY(chain)
+            ),
+            InlineKeyboardButton(
+                text="Default Token List",
+                url=chain_info.scan_address + ca.DEFAULT_TOKEN_LIST(chain),
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Lending Pool",
+                url=chain_info.scan_address + ca.LPOOL(chain),
+            ),
+            InlineKeyboardButton(
+                text="Lending Pool Reserve",
+                url=chain_info.scan_address + ca.LPOOL_RESERVE(chain)
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Xchange Factory",
+                url=chain_info.scan_address + ca.FACTORY(chain)
+            ),
+            InlineKeyboardButton(
+                text="Xchange Router",
+                url=chain_info.scan_address + ca.ROUTER(chain),
+            )
+        ]
     ]
 
     await update.message.reply_photo(
@@ -2647,11 +2655,11 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="DAO Multi-sig Wallet",
-                        url=f"{chain_info.scan_address}{chain_info.dao_multi}",
+                        url=chain_info.scan_address + chain_info.dao_multi
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -2691,11 +2699,11 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     [
                         InlineKeyboardButton(
-                            text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                            text="X7 Dune Dashboard", url=urls.DUNE
                         )
                     ]
                 ]
-            ),
+            )
         )
         return
 
@@ -2759,11 +2767,11 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [
                         [
                             InlineKeyboardButton(
-                                text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                                text="X7 Dune Dashboard", url=urls.DUNE
                             )
-                        ],
+                        ]
                     ]
-                ),
+                )
             )
             return
 
@@ -2783,11 +2791,11 @@ async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     [
                         InlineKeyboardButton(
-                            text="X7 Dune Dashboard", url=f"{urls.DUNE}"
+                            text="X7 Dune Dashboard", url=urls.DUNE
                         )
                     ]
                 ]
-            ),
+            )
         )
 
         dune.TRENDING_FLAG[chain_name.upper()] = True
@@ -2846,11 +2854,11 @@ async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="Tweet",
-                        url=tweet_data['url'],
+                        url=tweet_data['url']
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -2876,9 +2884,9 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         InlineKeyboardButton(
                             text="X7 Dune Dashboard", url=urls.DUNE
                         )
-                    ],
+                    ]
                 ]
-            ),
+            )
         )
         return
 
@@ -3000,11 +3008,11 @@ async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="Latest Cast",
-                        url=f"https://warpcast.com/{name}/{last_cast[0].hash}",
+                        url=f"https://warpcast.com/{name}/{last_cast[0].hash}"
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -3088,11 +3096,11 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="Wallet Link",
-                        url=f"{chain_info.scan_address}{wallet}",
+                        url=chain_info.scan_address + wallet
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -3106,11 +3114,11 @@ async def website(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="X7Finance.org",
-                        url=urls.XCHANGE,
+                        url=urls.XCHANGE
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -3132,9 +3140,9 @@ async def wp(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton(text="Website", url=urls.XCHANGE)],
-                [InlineKeyboardButton(text="Full WP", url=urls.WP_LINK)],
+                [InlineKeyboardButton(text="Full WP", url=urls.WP_LINK)]
             ]
-        ),
+        )
     )
 
 
@@ -3172,17 +3180,17 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 [
                     InlineKeyboardButton(
                         text="X7D Funding Dashboard",
-                        url=f"{urls.XCHANGE}fund",
+                        url=f"{urls.XCHANGE}fund"
                     )
                 ],
                 [
                     InlineKeyboardButton(
                         text=chain_info.scan_name,
-                        url=f"{chain_info.scan_token + ca.X7D(chain)}",
+                        url=chain_info.scan_token + ca.X7D(chain)
                     )
-                ],
+                ]
             ]
-        ),
+        )
     )
 
 
@@ -3237,11 +3245,11 @@ async def x7_token(update: Update, context: ContextTypes.DEFAULT_TYPE, token_nam
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton(text=chain_info.scan_name, url=f"{chain_info.scan_token}{token_ca(chain)}")],
-                [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{pair}")],
-                [InlineKeyboardButton(text="Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, token_ca(chain))}")],
+                [InlineKeyboardButton(text=chain_info.scan_name, url=chain_info.scan_token + token_ca(chain))],
+                [InlineKeyboardButton(text="Chart", url=urls.DEX_TOOLS(chain_info.dext, pair))],
+                [InlineKeyboardButton(text="Buy", url=urls.XCHANGE_BUY(chain_info.id, token_ca(chain)))]
             ]
-        ),
+        )
     )
 
 

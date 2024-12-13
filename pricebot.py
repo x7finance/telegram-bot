@@ -148,7 +148,6 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
 
         chain_name = chains.active_chains()[chain].name
         chain_dext = chains.active_chains()[chain].dext
-        dex_tools = urls.DEX_TOOLS(chain_dext)
         try:
             if etherscan.get_verified(token_address, chain):
                 verified = "✅️ Contract Verified"
@@ -184,15 +183,15 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             [
                 [
                     InlineKeyboardButton(
-                        text="Chart", url=f"{dex_tools}{pair}"
+                        text="Chart", url=urls.DEX_TOOLS(chain_dext, pair)
                     ),
                     InlineKeyboardButton(
                         text="Buy",
                         url=f"{urls.XCHANGE_BUY(chain_id, search)}",
                     )
-                ],
+                ]
             ]
-        ),
+        )
         )
         return
     
@@ -225,9 +224,9 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 [
                     InlineKeyboardButton(
                         text="Chart",
-                        url=f"https://www.coingecko.com/en/coins/{search}",
+                        url=f"https://www.coingecko.com/en/coins/{search}"
                     )
-                ],
+                ]
             ])
         )
 

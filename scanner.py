@@ -154,7 +154,7 @@ async def loan_alert(event, chain):
             [
                 InlineKeyboardButton(
                     text="Chart",
-                    url=f"{urls.DEX_TOOLS(chain_info.dext)}{pair}"
+                    url=urls.DEX_TOOLS(chain_info.dext, pair)
                 )
             ]
         ]
@@ -269,8 +269,8 @@ async def pair_alert(event, chain):
 
     buttons = InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton("Buy", url=f"{urls.XCHANGE_BUY(chain_info.id, token_address)}")],
-            [InlineKeyboardButton("Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{event['args']['pair']}")]
+            [InlineKeyboardButton("Buy", url=urls.XCHANGE_BUY(chain_info.id, token_address))],
+            [InlineKeyboardButton("Chart", url=urls.DEX_TOOLS(chain_info.dext, event['args']['pair']))]
         ]
     )
 
@@ -335,7 +335,7 @@ async def token_alert(event, chain):
 
     button_list = [
         [InlineKeyboardButton(text="Buy", url=urls.XCHANGE_BUY(chain_info.id, token_address))],
-        [InlineKeyboardButton(text="Chart", url=f"{urls.DEX_TOOLS(chain_info.dext)}{token_address}")],
+        [InlineKeyboardButton(text="Chart", url=urls.DEX_TOOLS(chain_info.dext, token_address))]
     ]
 
     if twitter_link:

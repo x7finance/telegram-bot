@@ -1,8 +1,8 @@
 import os
 
 
-def DEX_TOOLS(chain):
-    return f"https://www.dextools.io/app/{chain}/pair-explorer/"
+def DEX_TOOLS(chain, address):
+    return f"https://www.dextools.io/app/{chain}/pair-explorer/{address}"
 
 
 def OS_LINK(nft):
