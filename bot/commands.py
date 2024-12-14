@@ -1810,9 +1810,11 @@ async def me(update: Update, context: CallbackContext):
                 return
             
             balance = etherscan.get_native_balance(wallet["wallet"], chain)
+            price = etherscan.get_native_price(chain)
+            balance_usd = float(balance) * float(price)
             message += (
                 f"\n\nWallet Address:\n`{wallet['wallet']}`\n\n"
-                f"{chain_info.name.upper()} Balance: {balance:.5f} {chain_info.native.upper()}\n"
+                f"{chain_info.name.upper()} Balance: {balance:.4f} {chain_info.native.upper()} (${balance_usd:,.2f})\n"
                 f"To view balances on other chains use `/me chain-name`"
             )
 
