@@ -873,16 +873,14 @@ async def ecosystem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def factory(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
     for chain in chains.active_chains():
-        buttons_row = []
         name = chains.active_chains()[chain].name
         address = chains.active_chains()[chain].scan_address
-        buttons_row.append(
-                InlineKeyboardButton(
-                    text=name,
-                    url=address+ca.FACTORY(chain)
-                )
-            )
-        buttons.append(buttons_row)
+        buttons.append(
+            [InlineKeyboardButton(
+                text=name,
+                url=address + ca.FACTORY(chain),
+            )]
+        )
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
@@ -1794,7 +1792,7 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def me(update: Update, context: CallbackContext):
     user = update.effective_user
     if update.effective_chat.type == "private":
-
+        buttons = []
         message = (
             f"*X7 Finance Member Details*\n\n"
             f"Telegram User ID:\n`{user.id}`"
@@ -1803,20 +1801,31 @@ async def me(update: Update, context: CallbackContext):
         wallet = db.wallet_get(user.id)
         if not wallet:
             message += "\n\nuse /register to register an EVM wallet"
-        if wallet:
+        else:
+            chain = " ".join(context.args).lower() or "eth"
+            
+            chain_info, error_message = chains.get_info(chain)
+            if error_message:
+                await update.message.reply_text(error_message)
+                return
+            
+            balance = etherscan.get_native_balance(wallet["wallet"], chain)
             message += (
                 f"\n\nWallet Address:\n`{wallet['wallet']}`\n\n"
-                f"Secret Key:\n`{wallet['private_key']}`\n\n"
-                "*DO NOT SHARE YOUR PRIVATE KEY WITH ANYONE!*"
+                f"{chain_info.name.upper()} Balance: {balance:.3f} {chain_info.native.upper()}\n\n"
             )
-        
+
+            buttons.append([InlineKeyboardButton(text="Show private key", callback_data="wallet_private_key")])
+            buttons.append([InlineKeyboardButton(text="Delete wallet", callback_data="wallet_delete")])
+
         await update.message.reply_text(
             message,
-            parse_mode="Markdown"
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(buttons)
         )
     else:
         await update.message.reply_text(
-            f"Use this command in private!",
+            "Use this command in private!",
             parse_mode="Markdown"
         )
 
@@ -2314,11 +2323,20 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "*New EVM wallet created*\n\n"
             "You can now deposit to this address to initiate loan liquidations and splitter pushes\n\n"
-            f"Address:\n`{account.address}`\n\nSecret Key:\n`{account.key.hex()}`\n\n"
+            f"Address:\n`{account.address}`\n\n"
             "To withdraw import your wallet to MetaMask or similar browser by using your private key\n\n"
-            "*DO NOT SHARE YOUR PRIVATE KEY WITH ANYONE!*\n\n"
             "You can view these details at anytime using /me in private",
-            parse_mode="Markdown"
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            text="Show private key",
+                            callback_data="wallet_private_key"
+                        )
+                    ]
+                ]
+            )
         )
     else:
         await update.message.reply_text(f"Use this command in private to create a wallet to perform onchain tasks via TG!")
@@ -2327,16 +2345,14 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
     for chain in chains.active_chains():
-        buttons_row = []
         name = chains.active_chains()[chain].name
         address = chains.active_chains()[chain].scan_address
-        buttons_row.append(
-                InlineKeyboardButton(
-                    text=name,
-                    url=address + ca.ROUTER(chain)
-                )
-            )
-        buttons.append(buttons_row)
+        buttons.append(
+            [InlineKeyboardButton(
+                text=name,
+                url=address + ca.ROUTER(chain),
+            )]
+        )
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),

@@ -52,7 +52,7 @@ async def admin_toggle(update, context):
         ]
         keyboard.append(
             [
-                InlineKeyboardButton("Reset Clicks", callback_data="clicks_reset_start")
+                InlineKeyboardButton("Reset Clicks", callback_data="clicks_reset")
             ]
         )
 
@@ -64,6 +64,15 @@ async def admin_toggle(update, context):
             text=f"An error occurred: {str(e)}",
             show_alert=True
         )
+
+
+async def cancel(update, context):
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    await query.edit_message_text(
+        text="Action canceled. No changes were made."
+    )
 
 
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -178,26 +187,14 @@ async def clicks_reset(update, context):
     keyboard = [
         [
             InlineKeyboardButton("Yes", callback_data="clicks_reset_yes"),
-            InlineKeyboardButton("No", callback_data="clicks_reset_no")
+            InlineKeyboardButton("No", callback_data="cancel")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
+
     await query.edit_message_text(
         text="Are you sure you want to reset clicks?",
         reply_markup=reply_markup
-    )
-
-
-async def clicks_reset_no(update, context):
-    query = update.callback_query
-    user_id = query.from_user.id
-
-    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
-        await query.answer(text="Admin only.", show_alert=True)
-        return
-
-    await query.edit_message_text(
-        text="Action canceled. No changes were made."
     )
 
 
@@ -387,6 +384,58 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     except Exception as e:
         await query.answer(f"Error during {splitter_name} push: {str(e)}", show_alert=True)
+
+
+async def wallet_delete(update, context):
+    query = update.callback_query
+
+    keyboard = [
+        [
+            InlineKeyboardButton("Yes", callback_data="wallet_delete_yes"),
+            InlineKeyboardButton("No", callback_data="cancel")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await query.edit_message_text(
+        text="Are you sure you want delete your wallet? If you have funds in it, be sure you have saved the private key!",
+        reply_markup=reply_markup
+    )
+
+
+async def wallet_delete_yes(update, context):
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    try:
+        result_text = db.wallet_delete(user_id)
+
+        await query.edit_message_text(
+            text=result_text
+        )
+    except Exception as e:
+        await query.answer(
+            text=f"An error occurred: {str(e)}",
+            show_alert=True
+        )
+
+
+async def wallet_private_key(update, context):
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    try:
+        result_text = db.wallet_get(user_id)["private_key"]
+        await query.message.reply_text(
+            text=f"*DO NOT SHARE YOUR PRIVATE KEY*\n\n||{result_text}||",
+            parse_mode="markdownV2"
+        )
+        await query.answer()
+    except Exception as e:
+        await query.answer(
+            text=f"An error occurred: {str(e)}",
+            show_alert=True
+        )
 
 
 async def welcome_button(update: Update, context: CallbackContext) -> None:

@@ -32,7 +32,7 @@ async def command(update, context):
 
         keyboard.append(
             [
-                InlineKeyboardButton("Reset Clicks", callback_data="clicks_reset_start")
+                InlineKeyboardButton("Reset Clicks", callback_data="clicks_reset")
             ]
         )
 
