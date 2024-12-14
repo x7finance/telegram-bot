@@ -249,3 +249,82 @@ def settings_get_all():
     except mysql.connector.Error as e:
         return {}
 
+
+def wallet_add(user_id, wallet, private_key):
+    db_connection = None
+    cursor = None
+    try:
+        db_connection = create_db_connection()
+        cursor = db_connection.cursor()
+        
+        check_user_query = "SELECT 1 FROM wallets WHERE user_id = %s"
+        cursor.execute(check_user_query, (user_id,))
+        user_exists = cursor.fetchone()
+        
+        if user_exists:
+            return "Error: You already have a wallet registered, use /me in private to view it"
+        
+        add_wallet_query = """
+        INSERT INTO wallets (user_id, wallet, private_key)
+        VALUES (%s, %s, %s)
+        """
+        cursor.execute(add_wallet_query, (user_id, wallet, private_key))
+
+        db_connection.commit()
+        close_db_connection(db_connection, cursor)
+
+        return "Wallet added successfully"
+    
+    except mysql.connector.Error as err:
+        return(f"Error: {err}")
+            
+
+def wallet_delete(user_id):
+    db_connection = None
+    cursor = None
+    try:
+        db_connection = create_db_connection()
+        cursor = db_connection.cursor()
+        
+        delete_wallet_query = """
+        DELETE FROM wallets
+        WHERE user_id = %s
+        """
+        cursor.execute(delete_wallet_query, (user_id,))
+        db_connection.commit()
+        close_db_connection(db_connection, cursor)
+        
+        if cursor.rowcount > 0:
+            return (f"Wallet entry for user ID {user_id} deleted.")
+        else:
+            return (f"No wallet entry found for user ID {user_id}")
+    
+    except mysql.connector.Error as err:
+        return (f"Error: {err}")
+
+
+def wallet_get(user_id):
+    db_connection = None
+    cursor = None
+    try:
+        db_connection = create_db_connection()
+        cursor = db_connection.cursor()
+
+        get_wallet_query = """
+        SELECT wallet, private_key
+        FROM wallets
+        WHERE user_id = %s
+        """
+        cursor.execute(get_wallet_query, (user_id,))
+        
+        result = cursor.fetchone()
+        close_db_connection(db_connection, cursor)
+
+        if result:
+            wallet, private_key = result
+            return {"user_id": user_id, "wallet": wallet, "private_key": private_key}
+        else:
+            return None
+
+    except mysql.connector.Error:
+        return None

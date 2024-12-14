@@ -4,6 +4,7 @@ from telegram.ext import *
 import math, os, pytz, random, re, requests, time
 from datetime import datetime
 from web3.exceptions import ContractLogicError
+from eth_account import Account
 
 from PIL import Image, ImageDraw, ImageFont
 from constants import abis, ca, chains, dao, nfts, settings, splitters, tax, text, tokens, urls  
@@ -1392,6 +1393,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
     loan_id = None
     chain = None
 
@@ -1494,7 +1496,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
 
             await update.message.reply_text(f"Attempting to liquidate Loan {loan_id} ({chain_info.name})...")
-            result = functions.liquidate_loan(loan_id, chain)
+            result = functions.liquidate_loan(loan_id, chain, user_id)
             await update.message.reply_text(result)
 
         except Exception as e:
@@ -1791,30 +1793,32 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def me(update: Update, context: CallbackContext):
     user = update.effective_user
-    user_info = user.username or f"{user.first_name} {user.last_name}"
-    user_data = db.clicks_get_by_name(user_info)
-    clicks = user_data[0]
-    fastest_time = user_data[1]
-    streak = user_data[2]
+    if update.effective_chat.type == "private":
 
-    if streak != 0:
-        streak_message = f"and currently on a *{streak}* click streak!"
-    else:
-        streak_message = ""    
+        message = (
+            f"*X7 Finance Member Details*\n\n"
+            f"Telegram User ID:\n`{user.id}`"
+        )
 
-    if fastest_time is None:
-        message = f"*X7 Finance Fastest Pioneer Leaderboard*\n\n" \
-                  f"{tools.escape_markdown(user_info)}, You have been the Fastest Pioneer *{clicks}* times {streak_message}\n\n" \
-                  f"Your fastest time has not been logged yet\n\n"
-    else:
-        message = f"*X7 Finance Fastest Pioneer Leaderboard*\n\n" \
-                  f"{tools.escape_markdown(user_info)}, You have been the Fastest Pioneer *{clicks}* times {streak_message}\n\n" \
-                  f"Your fastest time is {fastest_time} seconds\n\n"
-
-    await update.message.reply_text(
+        wallet = db.wallet_get(user.id)
+        if not wallet:
+            message += "\n\nuse /register to register an EVM wallet"
+        if wallet:
+            message += (
+                f"\n\nWallet Address:\n`{wallet['wallet']}`\n\n"
+                f"Secret Key:`{wallet['private_key']}`\n\n"
+                "*DO NOT SHARE YOUR PRIVATE KEY WITH ANYONE!*"
+            )
+        
+        await update.message.reply_text(
             message,
-        parse_mode="Markdown"
-    )
+            parse_mode="Markdown"
+        )
+    else:
+        await update.message.reply_text(
+            f"Use this command in private!",
+            parse_mode="Markdown"
+        )
 
 
 async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2292,6 +2296,32 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ]
         )
     )
+
+
+async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_chat.type == "private":
+        user_id = update.effective_user.id
+
+        existing_wallet = db.wallet_get(user_id)
+        
+        if existing_wallet:
+            await update.message.reply_text(f"You have already registered a wallet, use /me in a private chat to view it")
+            return
+
+        account = Account.create()
+        db.wallet_add(user_id, account.address, account.key.hex())
+
+        await update.message.reply_text(
+            "*New EVM wallet created*\n\n"
+            "You can now deposit to this address to initiate loan liquidations and splitter pushes\n\n"
+            f"Address:\n`{account.address}`\n\nKey:`{account.key.hex()}`\n\n"
+            "To withdraw import your wallet to MetaMask or similar browser by using your private key\n\n"
+            "*DO NOT SHARE YOUR PRIVATE KEY WITH ANYONE!*\n\n"
+            "You can view these details at anytime using /me in private",
+            parse_mode="Markdown"
+        )
+    else:
+        await update.message.reply_text(f"Use this command in private to create a wallet to perform onchain tasks via TG!")
 
 
 async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):

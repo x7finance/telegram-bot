@@ -226,10 +226,18 @@ async def clicks_reset_yes(update, context):
 
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    user_id = query.from_user.id
+    existing_wallet = db.wallet_get(user_id)
+    
+    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
+        if not existing_wallet:
+            await query.answer("You have not registered a wallet, please use /register in private.", show_alert=True)
+            return
+    
     try:
         _, chain, loan_id = query.data.split(":")
 
-        result = functions.liquidate_loan(int(loan_id), chain)
+        result = functions.liquidate_loan(int(loan_id), chain, user_id)
         
         await query.edit_message_caption(
             caption=result,
@@ -241,13 +249,14 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
     query = update.callback_query
-    
-    is_admin = user_id == int(os.getenv("TELEGRAM_ADMIN_ID"))
-    if not is_admin:
-        await query.answer("Admin only.", show_alert=True)
-        return
+    user_id = query.from_user.id
+    existing_wallet = db.wallet_get(user_id)
+
+    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
+        if not existing_wallet:
+            await query.answer("You have not registered a wallet, please use /register in private.", show_alert=True)
+            return
 
     action, chain = query.data.split(":")
     chain_info, error_message = chains.get_info(chain)
@@ -360,9 +369,9 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         if contract_type == "hub":
-            result = functions.splitter_push(contract_type, splitter_address, chain, token_address)
+            result = functions.splitter_push(contract_type, splitter_address, chain, user_id, token_address)
         else:
-            result = functions.splitter_push(contract_type, splitter_address, chain)
+            result = functions.splitter_push(contract_type, splitter_address, chain, user_id)
 
         await context.bot.send_message(
             chat_id=query.message.chat_id,

@@ -18,8 +18,6 @@ sentry_sdk.init(
 
 
 async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
         return
 
 
@@ -103,6 +101,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("pioneer", commands.pioneer))
     application.add_handler(CommandHandler(["pool", "lpool", "lendingpool"], commands.pool))
     application.add_handler(CommandHandler(["price", "prices"], commands.price))
+    application.add_handler(CommandHandler("register", commands.register))
     application.add_handler(CommandHandler("router", commands.router))
     application.add_handler(CommandHandler(["space", "spaces"], commands.spaces))
     application.add_handler(CommandHandler("smart", commands.smart))
@@ -132,6 +131,7 @@ if __name__ == "__main__":
 
     application.add_handler(CommandHandler("admin", admin.command))
     application.add_handler(CommandHandler("clickme", admin.click_me))
+    application.add_handler(CommandHandler("delete", admin.delete))
     application.add_handler(CommandHandler("ping", admin.ping))
     application.add_handler(CommandHandler("wen", admin.wen))
 

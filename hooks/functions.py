@@ -1,5 +1,5 @@
 import  os
-from hooks import api
+from hooks import api, db
 from constants import abis, ca, chains, tax
 
 etherscan = api.Etherscan()
@@ -110,18 +110,22 @@ def estimate_gas(chain, function, loan_id = None):
 
         else:
             return "Unsupported function."
-    except Exception as e:
-        print(e)
+    except Exception:
         return "N/A"
 
 
-def liquidate_loan(loan_id, chain):
+def liquidate_loan(loan_id, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
-        sender_address = os.getenv("BURN_WALLET")
-        sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
-        chain_lpool = ca.LPOOL(chain)
+        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+            sender_address = os.getenv("BURN_WALLET")
+            sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
+        else:
+            wallet = db.wallet_get(user_id)
+            sender_address = wallet["wallet"]
+            sender_private_key = wallet["private_key"]
 
+        chain_lpool = ca.LPOOL(chain)
         contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool")
         )
@@ -153,11 +157,17 @@ def liquidate_loan(loan_id, chain):
         return f"Error liquidating Loan {loan_id} ({chain_info.name}): {e}"
 
 
-def splitter_push(contract_type, splitter_address, chain, token_address=None):
+def splitter_push(contract_type, splitter_address, chain, user_id, token_address=None):
     try:
         chain_info, _ = chains.get_info(chain)
-        sender_address = os.getenv("BURN_WALLET")
-        sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
+
+        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+            sender_address = os.getenv("BURN_WALLET")
+            sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
+        else:
+            wallet = db.wallet_get(user_id)
+            sender_address = wallet["wallet"]
+            sender_private_key = wallet["private_key"]
 
         if contract_type == "splitter":
             function_selector = "0x11ec9d34"
