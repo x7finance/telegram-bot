@@ -2803,8 +2803,8 @@ async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     when = tools.get_time_difference(created_at.timestamp()) if created_at else ""
 
     tweet = (
-        f"Latest Tweet - {when}\n\n"
-        f"{tweet_data['text']}\n\n"
+        f"Latest {tweet_data['type']} - {when}\n\n"
+        f"{tools.escape_markdown(tweet_data['text'])}\n\n"
         f"Likes: {tweet_data['likes']}\n"
         f"Retweets: {tweet_data['retweets']}\n"
         f"Replies: {tweet_data['replies']}\n\n"
