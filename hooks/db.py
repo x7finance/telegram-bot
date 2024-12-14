@@ -279,30 +279,6 @@ def wallet_add(user_id, wallet, private_key):
         return(f"Error: {err}")
             
 
-def wallet_delete(user_id):
-    db_connection = None
-    cursor = None
-    try:
-        db_connection = create_db_connection()
-        cursor = db_connection.cursor()
-        
-        delete_wallet_query = """
-        DELETE FROM wallets
-        WHERE user_id = %s
-        """
-        cursor.execute(delete_wallet_query, (user_id,))
-        db_connection.commit()
-        close_db_connection(db_connection, cursor)
-        
-        if cursor.rowcount > 0:
-            return (f"Wallet entry for user ID {user_id} deleted.")
-        else:
-            return (f"No wallet entry found for user ID {user_id}")
-    
-    except mysql.connector.Error as err:
-        return (f"Error: {err}")
-
-
 def wallet_get(user_id):
     db_connection = None
     cursor = None
@@ -328,3 +304,27 @@ def wallet_get(user_id):
 
     except mysql.connector.Error:
         return None
+    
+
+def wallet_remove(user_id):
+    db_connection = None
+    cursor = None
+    try:
+        db_connection = create_db_connection()
+        cursor = db_connection.cursor()
+        
+        remove_wallet_query = """
+        DELETE FROM wallets
+        WHERE user_id = %s
+        """
+        cursor.execute(remove_wallet_query, (user_id,))
+        db_connection.commit()
+        close_db_connection(db_connection, cursor)
+        
+        if cursor.rowcount > 0:
+            return (f"Wallet entry for user ID {user_id} removed.")
+        else:
+            return (f"No wallet entry found for user ID {user_id}")
+    
+    except mysql.connector.Error as err:
+        return (f"Error: {err}")

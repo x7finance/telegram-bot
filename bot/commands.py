@@ -1797,8 +1797,12 @@ async def me(update: Update, context: CallbackContext):
             f"*X7 Finance Member Details*\n\n"
             f"Telegram User ID:\n`{user.id}`"
         )
-
-        wallet = db.wallet_get(user.id)
+        if user.id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+            wallet = {
+                "wallet": os.getenv("BURN_WALLET")
+            }
+        else:
+            wallet = db.wallet_get(user.id)
         if not wallet:
             message += "\n\nuse /register to register an EVM wallet"
         else:
@@ -1818,8 +1822,9 @@ async def me(update: Update, context: CallbackContext):
                 f"To view balances on other chains use `/me chain-name`"
             )
 
+            buttons.append([InlineKeyboardButton(text="View onchain", url=chain_info.scan_address + wallet["wallet"])])
             buttons.append([InlineKeyboardButton(text="Show private key", callback_data="wallet_private_key")])
-            buttons.append([InlineKeyboardButton(text="Delete wallet", callback_data="wallet_delete")])
+            buttons.append([InlineKeyboardButton(text="Remove wallet", callback_data="wallet_delete")])
 
         await update.message.reply_text(
             message,

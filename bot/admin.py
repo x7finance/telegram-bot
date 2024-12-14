@@ -50,11 +50,11 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
 
 
-async def delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    user_to_delete = " ".join(context.args)
+    user_to_remove = " ".join(context.args)
     if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-        result = db.wallet_delete(user_to_delete)
+        result = db.wallet_remove(user_to_remove)
         await update.message.reply_text(result)
 
 

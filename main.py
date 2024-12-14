@@ -131,8 +131,8 @@ if __name__ == "__main__":
 
     application.add_handler(CommandHandler("admin", admin.command))
     application.add_handler(CommandHandler("clickme", admin.click_me))
-    application.add_handler(CommandHandler("delete", admin.delete))
     application.add_handler(CommandHandler("ping", admin.ping))
+    application.add_handler(CommandHandler("remove", admin.remove))
     application.add_handler(CommandHandler("wen", admin.wen))
 
     application.add_handler(CallbackQueryHandler(callbacks.admin_toggle, pattern="^admin_toggle_"))
@@ -142,9 +142,9 @@ if __name__ == "__main__":
     application.add_handler(CallbackQueryHandler(callbacks.clicks_reset_yes, pattern="^clicks_reset_yes$"))
     application.add_handler(CallbackQueryHandler(callbacks.pushall, pattern="^push_(eco|treasury|x7r|x7dao|x710[1-5]):"))
     application.add_handler(CallbackQueryHandler(callbacks.liquidate, pattern=r"^liquidate:[a-zA-Z0-9-]+:\d+$"))
-    application.add_handler(CallbackQueryHandler(callbacks.wallet_delete, pattern="^wallet_delete$"))
-    application.add_handler(CallbackQueryHandler(callbacks.wallet_delete_yes, pattern="^wallet_delete_yes$"))
     application.add_handler(CallbackQueryHandler(callbacks.wallet_private_key, pattern="^wallet_private_key$"))
+    application.add_handler(CallbackQueryHandler(callbacks.wallet_remove, pattern="^wallet_remove$"))
+    application.add_handler(CallbackQueryHandler(callbacks.wallet_remove_yes, pattern="^wallet_remove_yes$"))
     application.add_handler(CallbackQueryHandler(callbacks.welcome_button, pattern=r"unmute:.+"))
     
     application.add_handler(ChatMemberHandler(auto.welcome_message, ChatMemberHandler.CHAT_MEMBER))

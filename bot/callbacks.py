@@ -386,29 +386,29 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer(f"Error during {splitter_name} push: {str(e)}", show_alert=True)
 
 
-async def wallet_delete(update, context):
+async def wallet_remove(update, context):
     query = update.callback_query
 
     keyboard = [
         [
-            InlineKeyboardButton("Yes", callback_data="wallet_delete_yes"),
+            InlineKeyboardButton("Yes", callback_data="wallet_remove_yes"),
             InlineKeyboardButton("No", callback_data="cancel")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await query.edit_message_text(
-        text="Are you sure you want delete your wallet? If you have funds in it, be sure you have saved the private key!",
+        text="Are you sure you want remove your wallet? If you have funds in it, be sure you have saved the private key!",
         reply_markup=reply_markup
     )
 
 
-async def wallet_delete_yes(update, context):
+async def wallet_remove_yes(update, context):
     query = update.callback_query
     user_id = query.from_user.id
 
     try:
-        result_text = db.wallet_delete(user_id)
+        result_text = db.wallet_remove(user_id)
 
         await query.edit_message_text(
             text=result_text
