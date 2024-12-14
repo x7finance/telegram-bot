@@ -1,13 +1,13 @@
 from telegram import *
 from telegram.ext import *
 
-import asyncio, math, os, pytz, random, re, requests, time
+import math, os, pytz, random, re, requests, time
 from datetime import datetime
 from web3.exceptions import ContractLogicError
 
 from PIL import Image, ImageDraw, ImageFont
 from constants import abis, ca, chains, dao, nfts, settings, splitters, tax, text, tokens, urls  
-from hooks import api, db, dune, functions, tools
+from hooks import api, db, functions, tools
 import pricebot
 import media
 
@@ -15,6 +15,7 @@ blockspan = api.Blockspan()
 coingecko = api.CoinGecko()
 defined = api.Defined()
 dextools = api.Dextools()
+dune = api.Dune()
 etherscan = api.Etherscan()
 github = api.GitHub()
 opensea = api.Opensea()
@@ -2704,150 +2705,32 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
-    chain_info, error_message = chains.get_info(chain) if chain else (None, None)
+
+    chain_info, error_message = chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
-    chain_name = "ethereum" if chain == "eth" else (chain_info.name.lower() if chain_info else "all")
-    chain_name_title = f"({chain_info.name.upper()})" if chain_info else ""
 
-    if chain_name.upper() not in dune.TRENDING_FLAG:
-        dune.TRENDING_TEXT[chain_name.upper()] = ""
-        dune.TRENDING_FLAG[chain_name.upper()] = False
-        dune.TRENDING_TIMESTAMP[chain_name.upper()] = datetime.now().timestamp()
-        dune.TRENDING_LAST_DATE[chain_name.upper()] = datetime.fromtimestamp(
-            dune.TRENDING_TIMESTAMP[chain_name.upper()]
-        ).strftime("%Y-%m-%d %H:%M:%S")
+    message = await update.message.reply_text("Getting Trending Info, Please wait...")
+    await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    if datetime.now().timestamp() - dune.TRENDING_TIMESTAMP[chain_name.upper()] < dune.TIME_ALLOWED and dune.TRENDING_TEXT[chain_name.upper()]:
-        next_update_time = dune.TRENDING_TIMESTAMP[chain_name.upper()] + dune.TIME_ALLOWED
-        remaining_time = max(0, int(next_update_time - datetime.now().timestamp()))
-        hours, remainder = divmod(remaining_time, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        time_remaining_text = f"Next update available in: {hours}h {minutes}m {seconds}s"
+    trending_text = await dune.get_trending_tokens(chain)
 
-        await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
-            caption=(
-                f'{dune.TRENDING_TEXT[chain_name.upper()]}'
-                f'Last Updated: {dune.TRENDING_LAST_DATE[chain_name.upper()]}\n'
-                f'{time_remaining_text}'
-            ),
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
+    await message.delete()
+    await update.message.reply_photo(
+        photo=tools.get_random_pioneer(),
+        caption=trending_text,
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
                 [
-                    [
-                        InlineKeyboardButton(
-                            text="X7 Dune Dashboard", url=urls.DUNE
-                        )
-                    ]
+                    InlineKeyboardButton(
+                        text="X7 Dune Dashboard", url=urls.DUNE
+                    )
                 ]
-            )
-        )
-        return
-
-    try:
-        message = await update.message.reply_text(f"Getting Xchange Trending {chain_name_title}, Please wait...")
-        await context.bot.send_chat_action(update.effective_chat.id, "typing")
-
-        execution_id = dune.execute_query(dune.TOP_PAIRS_ID, "medium")
-        response_data = None
-        for attempt in range(4):
-            try:
-                response = dune.get_query_results(execution_id)
-                response_data = response.json()
-            except ValueError:
-                await message.delete()
-                await dune.get_error(update, context, "Xchange Trending")
-                return
-
-            if response_data.get('is_execution_finished', False):
-                break
-            await asyncio.sleep(5)
-
-        if not response_data or 'result' not in response_data:
-            await message.delete()
-            await dune.get_error(update, context, "Xchange Trending")
-            return
-
-        rows = response_data["result"]["rows"]
-
-        if chain:
-            rows = [
-                row for row in rows
-                if row.get("pair") and row["pair"].lower() != "total" and
-                row.get("blockchain", "").strip().lower() == chain_name.strip().lower()
             ]
-        else:
-            rows = [
-                row for row in rows
-                if row.get("pair") and row["pair"].lower() != "total"
-            ]
-
-        valid_rows = [
-            row for row in rows
-            if row.get('last_24hr_amt') is not None and isinstance(row['last_24hr_amt'], (int, float))
-        ]
-
-        sorted_rows = sorted(valid_rows, key=lambda x: x.get('last_24hr_amt', 0), reverse=True)
-        top_trending = sorted_rows[:3] if len(sorted_rows) >= 3 else sorted_rows
-
-        trending_text = f"*Xchange Trending Pairs {chain_name_title}*\n\n"
-
-        if not any(item.get("pair") for item in top_trending):
-
-            await message.delete()
-            await update.message.reply_photo(
-                photo=tools.get_random_pioneer(),
-                caption=
-                    f'*Xchange Trending {chain_name_title}*\n\n'
-                    f'No trending data for {chain_name}',
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                text="X7 Dune Dashboard", url=urls.DUNE
-                            )
-                        ]
-                    ]
-                )
-            )
-            return
-
-        for idx, item in enumerate(top_trending, start=1):
-            pair = item.get("pair")
-            last_24hr_amt = item.get("last_24hr_amt")
-            blockchain = item.get("blockchain")
-            if pair and last_24hr_amt:
-                trending_text += f'{idx}. {pair} ({blockchain.upper()})\n24 Hour Volume: ${last_24hr_amt:,.0f}\n\n'
-
-        await message.delete()
-        await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
-            caption=trending_text,
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="X7 Dune Dashboard", url=urls.DUNE
-                        )
-                    ]
-                ]
-            )
         )
-
-        dune.TRENDING_FLAG[chain_name.upper()] = True
-        dune.TRENDING_TEXT[chain_name.upper()] = trending_text
-        dune.TRENDING_TIMESTAMP[chain_name.upper()] = datetime.now().timestamp()
-        dune.TRENDING_LAST_DATE[chain_name.upper()] = datetime.fromtimestamp(
-            dune.TRENDING_TIMESTAMP[chain_name.upper()]
-        ).strftime("%Y-%m-%d %H:%M:%S")
-
-    except Exception:
-        await message.delete()
-        await dune.get_error(update, context, "Xchange Trending")
+    )
 
 
 async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2903,21 +2786,15 @@ async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if datetime.now().timestamp() - dune.VOLUME_TIMESTAMP < dune.TIME_ALLOWED and dune.VOLUME_TEXT:
-        next_update_time = dune.VOLUME_TIMESTAMP + dune.TIME_ALLOWED
-        remaining_time = max(0, int(next_update_time - datetime.now().timestamp()))
-        hours, remainder = divmod(remaining_time, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        next_update_text = f"Next update available in: {hours}h {minutes}m {seconds}s"
-        
-        await update.message.reply_photo(
+    volume_text = await dune.get_volume()
+
+    message = await update.message.reply_text("Getting Volume Info, Please wait...")
+    await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
+    await message.delete()
+    await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
-            caption=(
-                f'*Xchange Trading Volume*\n\n'
-                f'{dune.VOLUME_TEXT}\n\n'
-                f'Last Updated: {dune.VOLUME_LAST_DATE} (UTC)\n'
-                f'{next_update_text}'
-            ),
+            caption=volume_text,
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2929,75 +2806,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ]
             )
         )
-        return
 
-    message = await update.message.reply_text("Getting Volume Info, Please wait...")
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
-
-    try:
-        execution_id = dune.execute_query(dune.VOLUME_ID, "medium")
-        response_data = None
-        for _ in range(10):
-            response = dune.get_query_results(execution_id)
-            try:
-                response_data = response.json()
-            except ValueError:
-                await message.delete()
-                await dune.get_error(update, context, "Xchange Volume")
-                return
-
-            if response_data.get('is_execution_finished', False):
-                break
-            await asyncio.sleep(2)
-
-        if 'result' not in response_data:
-            await message.delete()
-            await dune.get_error(update, context, "Xchange Volume")
-            return
-
-        try:
-            last_24hr_amt = response_data['result']['rows'][0]['last_24hr_amt']
-            last_30d_amt = response_data['result']['rows'][0]['last_30d_amt']
-            last_7d_amt = response_data['result']['rows'][0]['last_7d_amt']
-            lifetime_amt = response_data['result']['rows'][0]['lifetime_amt']
-        except (KeyError, IndexError):
-            await message.delete()
-            await dune.get_error(update, context, "Xchange Volume")
-            return
-
-        volume_text = (
-            f'Total:       ${lifetime_amt:,.0f}\n'
-            f'30 Day:    ${last_30d_amt:,.0f}\n'
-            f'7 Day:      ${last_7d_amt:,.0f}\n'
-            f'24 Hour:  ${last_24hr_amt:,.0f}'
-        )
-
-        await message.delete()
-        await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
-            caption=f"*Xchange Trading Volume*\n\n{volume_text}",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="X7 Dune Dashboard", url=urls.DUNE
-                        )
-                    ],
-                ]
-            ),
-        )
-
-        dune.VOLUME_TIMESTAMP = datetime.now().timestamp()
-        dune.VOLUME_LAST_DATE = datetime.fromtimestamp(dune.VOLUME_TIMESTAMP).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
-        dune.VOLUME_FLAG = True
-        dune.VOLUME_TEXT = volume_text
-
-    except Exception:
-        await message.delete()
-        await dune.get_error(update, context, "Xchange Volume")
 
 
 async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
