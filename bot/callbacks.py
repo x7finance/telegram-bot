@@ -238,6 +238,10 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         _, chain, loan_id = query.data.split(":")
 
         result = functions.liquidate_loan(int(loan_id), chain, user_id)
+
+        if result.startswith("Error"):
+            await query.answer(result, show_alert=True)
+            return
         
         await query.edit_message_caption(
             caption=result,
@@ -372,6 +376,10 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             result = functions.splitter_push(contract_type, splitter_address, chain, user_id, token_address)
         else:
             result = functions.splitter_push(contract_type, splitter_address, chain, user_id)
+
+        if result.startswith("Error"):
+            await query.answer(result, show_alert=True)
+            return
 
         await context.bot.send_message(
             chat_id=query.message.chat_id,

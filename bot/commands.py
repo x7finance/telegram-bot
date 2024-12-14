@@ -1806,7 +1806,7 @@ async def me(update: Update, context: CallbackContext):
         if wallet:
             message += (
                 f"\n\nWallet Address:\n`{wallet['wallet']}`\n\n"
-                f"Secret Key:`{wallet['private_key']}`\n\n"
+                f"Secret Key:\n`{wallet['private_key']}`\n\n"
                 "*DO NOT SHARE YOUR PRIVATE KEY WITH ANYONE!*"
             )
         
@@ -2314,7 +2314,7 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             "*New EVM wallet created*\n\n"
             "You can now deposit to this address to initiate loan liquidations and splitter pushes\n\n"
-            f"Address:\n`{account.address}`\n\nKey:`{account.key.hex()}`\n\n"
+            f"Address:\n`{account.address}`\n\nSecret Key:\n`{account.key.hex()}`\n\n"
             "To withdraw import your wallet to MetaMask or similar browser by using your private key\n\n"
             "*DO NOT SHARE YOUR PRIVATE KEY WITH ANYONE!*\n\n"
             "You can view these details at anytime using /me in private",

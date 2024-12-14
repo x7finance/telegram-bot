@@ -154,7 +154,7 @@ def liquidate_loan(loan_id, chain, user_id):
         return f"Loan {loan_id} ({chain_info.name}) liquidated successfully.\n\n{chain_info.scan_tx}{tx_hash.hex()}"
 
     except Exception as e:
-        return f"Error liquidating Loan {loan_id} ({chain_info.name}): {e}"
+        return f"Error liquidating loan {loan_id} ({chain_info.name}): {str(e)}"
 
 
 def splitter_push(contract_type, splitter_address, chain, user_id, token_address=None):
@@ -171,13 +171,13 @@ def splitter_push(contract_type, splitter_address, chain, user_id, token_address
 
         if contract_type == "splitter":
             function_selector = "0x11ec9d34"
-            function_string = "Splitter push"
+            function_string = "pushing splitter"
             function_name = "pushAll"
             function_args = []
             
         if contract_type == "hub":
             function_selector = "0x61582eaa"
-            function_string = "Fees process"
+            function_string = "processing fees"
             function_name = "processFees"
             function_args = [token_address]
 
@@ -205,4 +205,4 @@ def splitter_push(contract_type, splitter_address, chain, user_id, token_address
         return f"{chain_info.name} {function_string} Successful! TX: {chain_info.scan_tx}{tx_hash.hex()}"
 
     except Exception as e:
-        return f"{chain_info.name} {function_string} Error: {e}"
+        return f"Error {function_string} ({chain_info.name}): {str(e)}"
