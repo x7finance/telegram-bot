@@ -1070,11 +1070,24 @@ class Twitter:
             tweets = self.client.get_users_tweets(
                 user_id,
                 max_results=5,
-                tweet_fields=["created_at", "public_metrics"],
-                exclude=["retweets", "replies"]
+                tweet_fields=["created_at", "public_metrics", "referenced_tweets"],
             )
             if tweets and tweets.data:
                 tweet = tweets.data[0]
+
+                if hasattr(tweet, "referenced_tweets") and tweet.referenced_tweets:
+                    ref_type = tweet.referenced_tweets[0].type
+                    if ref_type == "replied_to":
+                        tweet_type = "Reply"
+                    elif ref_type == "retweeted":
+                        tweet_type = "Retweet"
+                    elif ref_type == "quoted":
+                        tweet_type = "Quote"
+                    else:
+                        tweet_type = "Tweet"
+                else:
+                    tweet_type = "Tweet"
+
                 return {
                     "text": tweet.text,
                     "url": f"https://twitter.com/{username}/status/{tweet.id}",
@@ -1082,6 +1095,7 @@ class Twitter:
                     "retweets": tweet.public_metrics["retweet_count"],
                     "replies": tweet.public_metrics.get("reply_count", 0),
                     "created_at": tweet.created_at,
+                    "type": tweet_type,
                 }
             return {
                 "text": "No tweets found",
@@ -1090,6 +1104,7 @@ class Twitter:
                 "retweets": "N/A",
                 "replies": "N/A",
                 "created_at": "",
+                "type": "Tweet",
             }
         except Exception:
             return {
@@ -1099,6 +1114,7 @@ class Twitter:
                 "retweets": "N/A",
                 "replies": "N/A",
                 "created_at": "",
+                "type": "Tweet",
             }
         
 
