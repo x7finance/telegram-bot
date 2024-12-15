@@ -68,9 +68,15 @@ async def admin_toggle(update, context):
 async def cancel(update, context):
     query = update.callback_query
 
-    await query.edit_message_text(
-        text="Action canceled. No changes were made."
-    )
+    try:
+        await query.edit_message_text(
+            text="Action canceled. No changes were made."
+        )
+    except Exception as e:
+        await update.message.reply_text(
+            text="Action canceled. No changes were made."
+        )
+
     return ConversationHandler.END
 
 
@@ -469,9 +475,10 @@ async def x7d_start(update, context):
 async def x7d_amount(update, context):
     try:
         user_id = update.effective_user.id
-        action = context.user_data["x7d_action"]
-        
         chain = context.user_data["x7d_chain"]
+        action = context.user_data["x7d_action"]
+        operation = action.split("_")[1]
+
         chain_info, error_message = chains.get_info(chain)
 
         if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
@@ -481,21 +488,25 @@ async def x7d_amount(update, context):
         else:
             wallet = db.wallet_get(user_id)
 
-        balance = etherscan.get_native_balance(wallet["wallet"], chain)
+        if operation == "deposit":
+            balance = etherscan.get_native_balance(wallet["wallet"], chain)
+        elif operation == "withdraw":
+            balance = float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain)) / 10 ** 18
 
         amount = float(update.message.text)
+
         if amount <= 0 or amount > balance:
-            raise ValueError(f"Invalid amount. You have {balance} {chain_info.native.upper()} available to {action.split('_')[1]}.")
+            raise ValueError(f"Invalid amount. You have {balance} {chain_info.native.upper()} available to {operation}")
 
     except ValueError as e:
-        await update.message.reply_text(str(e))
+        await update.message.reply_text("Nope! not accepted! Please reply with the amount (e.g., `0.5`)")
         return X7D_ASK
 
     context.user_data["x7d_amount"] = amount
 
-    operation = action.split("_")[1]
+
     await update.message.reply_text(
-        text=f"You want to {operation} {amount} {chain.upper()}. Are you sure?",
+        text=f"You want to {operation} {amount} {chain_info.native.upper()} on {chain_info.name.upper()}. Are you sure?",
         reply_markup=InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("Yes", callback_data=f"{action}:{chain}"),
@@ -511,15 +522,15 @@ async def x7d_confirm(update, context):
     query = update.callback_query
 
     callback_data = query.data.split(":")
-    action = callback_data[0]
-    chain = context.user_data.get("x7d_chain", "unknown")
-    amount = context.user_data.get("x7d_amount", 0)
+    operation = callback_data[0]
+    chain = context.user_data.get("x7d_chain")
+    amount = context.user_data.get("x7d_amount")
 
     try:
-        if action == "x7d_deposit":
+        if operation == "x7d_deposit":
             user_id = query.from_user.id
             result = functions.x7d_deposit(amount, chain, user_id)
-        elif action == "x7d_withdraw":
+        elif operation == "x7d_withdraw":
             user_id = query.from_user.id
             result = functions.x7d_withdraw(amount, chain, user_id)
         else:

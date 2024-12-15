@@ -1822,7 +1822,7 @@ async def me(update: Update, context: CallbackContext):
             message += (
                 f"\n\nWallet Address:\n`{wallet['wallet']}`\n\n"
                 f"*{chain_info.name.upper()} Chain*\n"
-                f"{chain_info.native.upper()} Balance: {eth_balance}\n"
+                f"{chain_info.native.upper()} Balance: {eth_balance:.4f}\n"
                 f"X7D Balance: {x7d_balance}\n\n"
                 f"To view balances on other chains, use `/me chain-name`."
             )
