@@ -374,7 +374,7 @@ class Etherscan:
             url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={self.key}"
             response = requests.get(url)
             data = response.json()
-            return int(data["result"][:-18])
+            return data["result"]
         except Exception:
             return 0
 

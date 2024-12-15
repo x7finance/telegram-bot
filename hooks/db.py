@@ -264,11 +264,11 @@ def wallet_add(user_id, wallet, private_key):
         if user_exists:
             return "Error: You already have a wallet registered, use /me in private to view it"
         
-        add_wallet_query = """
+        wallet_add_query = """
         INSERT INTO wallets (user_id, wallet, private_key)
         VALUES (%s, %s, %s)
         """
-        cursor.execute(add_wallet_query, (user_id, wallet, private_key))
+        cursor.execute(wallet_add_query, (user_id, wallet, private_key))
 
         db_connection.commit()
         close_db_connection(db_connection, cursor)
@@ -313,11 +313,11 @@ def wallet_remove(user_id):
         db_connection = create_db_connection()
         cursor = db_connection.cursor()
         
-        remove_wallet_query = """
+        wallet_remove_query = """
         DELETE FROM wallets
         WHERE user_id = %s
         """
-        cursor.execute(remove_wallet_query, (user_id,))
+        cursor.execute(wallet_remove_query, (user_id,))
         db_connection.commit()
         close_db_connection(db_connection, cursor)
         

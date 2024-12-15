@@ -355,7 +355,7 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = await update.message.reply_text("Getting Burn Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    burn = etherscan.get_token_balance(ca.DEAD, ca.X7R(chain), chain)
+    burn = float(etherscan.get_token_balance(ca.DEAD, ca.X7R(chain), chain)) / 10 ** 18
     percent = round(burn / ca.SUPPLY * 100, 2)
     x7r_price = dextools.get_price(ca.X7R(chain), chain)[0] or 0
     burn_dollar = float(x7r_price) * float(burn)
@@ -1011,8 +1011,7 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     native_price = etherscan.get_native_price(chain)
     eth = etherscan.get_native_balance(ca.LIQUIDITY_TREASURY(chain), chain)
-    weth = etherscan.get_token_balance(ca.LIQUIDITY_TREASURY(chain), ca.WETH(chain), chain)
-    eth_dollar = (float(eth) + float(weth) * float(native_price))
+    eth_dollar = (float(eth) * float(native_price))
 
     tx = etherscan.get_tx(ca.LIQUIDITY_TREASURY(chain), chain)
     tx_filter = [
@@ -1804,7 +1803,7 @@ async def me(update: Update, context: CallbackContext):
         else:
             wallet = db.wallet_get(user.id)
         if not wallet:
-            message += "\n\nuse /register to register an EVM wallet"
+            message += "\n\nUse /register to register an EVM wallet"
         else:
             chain = " ".join(context.args).lower() or "eth"
             
@@ -1812,19 +1811,25 @@ async def me(update: Update, context: CallbackContext):
             if error_message:
                 await update.message.reply_text(error_message)
                 return
-            
-            balance = etherscan.get_native_balance(wallet["wallet"], chain)
-            price = etherscan.get_native_price(chain)
-            balance_usd = float(balance) * float(price)
+
+            eth_balance = etherscan.get_native_balance(wallet["wallet"], chain)
+            x7d_balance = float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain)) / 10 ** 18
+            if eth_balance > 0:
+                buttons.append([InlineKeyboardButton("Mint X7D", callback_data=f"x7d_deposit:{chain}")])
+            if x7d_balance > 0:
+                buttons.append([InlineKeyboardButton("Withdraw X7D", callback_data=f"x7d_withdraw:{chain}")])
+
             message += (
                 f"\n\nWallet Address:\n`{wallet['wallet']}`\n\n"
-                f"{chain_info.name.upper()} Balance: {balance:.4f} {chain_info.native.upper()} (${balance_usd:,.2f})\n"
-                f"To view balances on other chains use `/me chain-name`"
+                f"*{chain_info.name.upper()} Chain*\n"
+                f"{chain_info.native.upper()} Balance: {eth_balance}\n"
+                f"X7D Balance: {x7d_balance}\n\n"
+                f"To view balances on other chains, use `/me chain-name`."
             )
 
-            buttons.append([InlineKeyboardButton(text="View onchain", url=chain_info.scan_address + wallet["wallet"])])
-            buttons.append([InlineKeyboardButton(text="Show private key", callback_data="wallet_private_key")])
-            buttons.append([InlineKeyboardButton(text="Remove wallet", callback_data="wallet_delete")])
+            buttons.append([InlineKeyboardButton("View onchain", url=chain_info.scan_address + wallet["wallet"])])
+            buttons.append([InlineKeyboardButton("Show private key", callback_data="wallet_private_key")])
+            buttons.append([InlineKeyboardButton("Remove wallet", callback_data="question:wallet_remove")])
 
         await update.message.reply_text(
             message,
@@ -2721,13 +2726,13 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     native_price = etherscan.get_native_price(chain)
     eth_balance = etherscan.get_native_balance(chain_info.dao_multi, chain)
     eth_dollar = eth_balance * native_price
-    x7r_balance = etherscan.get_token_balance(chain_info.dao_multi, ca.X7R(chain), chain)
+    x7r_balance = float(etherscan.get_token_balance(chain_info.dao_multi, ca.X7R(chain), chain)) / 10 ** 18
     x7r_price = dextools.get_price(ca.X7R(chain), chain)[0] or 0
     x7r_dollar = float(x7r_balance) * float(x7r_price)
-    x7dao_balance = etherscan.get_token_balance(chain_info.dao_multi, ca.X7DAO(chain), chain)
+    x7dao_balance = float(etherscan.get_token_balance(chain_info.dao_multi, ca.X7DAO(chain), chain)) / 10 ** 18
     x7dao_price = dextools.get_price(ca.X7DAO(chain), chain)[0] or 0
     x7dao_dollar = float(x7dao_balance) * float(x7dao_price)
-    x7d_balance = etherscan.get_token_balance(chain_info.dao_multi, ca.X7D(chain), chain)
+    x7d_balance = float(etherscan.get_token_balance(chain_info.dao_multi, ca.X7D(chain), chain)) / 10 ** 18
     x7d_dollar = x7d_balance * native_price
     total = x7r_dollar + eth_dollar + x7d_dollar + x7dao_dollar
     x7r_percent = round(x7r_balance / ca.SUPPLY * 100, 2)
@@ -2949,17 +2954,17 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     native_price = etherscan.get_native_price(chain)
-    eth_balance = etherscan.get_native_balance(wallet, chain)
+    eth_balance = float(etherscan.get_native_balance(wallet, chain)) / 10 ** 18
     dollar = eth_balance * native_price
     x7r_price = dextools.get_price(ca.X7R(chain), chain)[0] or 0
     x7dao_price = dextools.get_price(ca.X7DAO(chain), chain)[0] or 0
 
-    x7r_balance = etherscan.get_token_balance(wallet, ca.X7R(chain), chain)
+    x7r_balance = float(etherscan.get_token_balance(wallet, ca.X7R(chain), chain))  / 10 ** 18
     x7r_dollar = float(x7r_balance) * float(x7r_price)
-    x7dao_balance = etherscan.get_token_balance(wallet, ca.X7DAO(chain), chain)
+    x7dao_balance = float(etherscan.get_token_balance(wallet, ca.X7DAO(chain), chain))  / 10 ** 18
     x7dao_dollar = float(x7dao_balance) * float(x7dao_price)
 
-    x7d_balance = etherscan.get_token_balance(wallet, ca.X7D(chain), chain)
+    x7d_balance = float(etherscan.get_token_balance(wallet, ca.X7D(chain), chain))  / 10 ** 18
     x7d_dollar = x7d_balance * native_price
     total = (
         x7d_dollar

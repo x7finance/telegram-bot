@@ -12,6 +12,8 @@ from main import application
 job_queue = application.job_queue
 etherscan = api.Etherscan()
 
+X7D_ASK, X7D_CONFIRM = range(2)
+
 
 async def admin_toggle(update, context):
     query = update.callback_query
@@ -25,8 +27,6 @@ async def admin_toggle(update, context):
         return
 
     callback_data = query.data
-    if not callback_data.startswith("admin_toggle_"):
-        return
 
     setting = callback_data.replace("admin_toggle_", "")
 
@@ -52,27 +52,26 @@ async def admin_toggle(update, context):
         ]
         keyboard.append(
             [
-                InlineKeyboardButton("Reset Clicks", callback_data="clicks_reset")
+                InlineKeyboardButton("Reset Clicks", callback_data="question:clicks_reset")
             ]
         )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text("Bot Settings", reply_markup=reply_markup)
-
     except Exception as e:
         await query.answer(
-            text=f"An error occurred: {str(e)}",
-            show_alert=True
+        text=f"Error: {e}",
+        show_alert=True
         )
 
 
 async def cancel(update, context):
     query = update.callback_query
-    user_id = query.from_user.id
 
     await query.edit_message_text(
         text="Action canceled. No changes were made."
     )
+    return ConversationHandler.END
 
 
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -184,31 +183,6 @@ async def clicks_reset(update, context):
         )
         return
 
-    keyboard = [
-        [
-            InlineKeyboardButton("Yes", callback_data="clicks_reset_yes"),
-            InlineKeyboardButton("No", callback_data="cancel")
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await query.edit_message_text(
-        text="Are you sure you want to reset clicks?",
-        reply_markup=reply_markup
-    )
-
-
-async def clicks_reset_yes(update, context):
-    query = update.callback_query
-    user_id = query.from_user.id
-
-    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
-        await query.answer(
-            text="Admin only.",
-            show_alert=True
-        )
-        return
-
     try:
         result_text = db.clicks_reset()
         await query.edit_message_text(
@@ -219,6 +193,36 @@ async def clicks_reset_yes(update, context):
             text=f"An error occurred: {str(e)}",
             show_alert=True
         )
+
+
+async def confirm(update, context, amount=None, callback_data=None):
+    query = update.callback_query
+
+    callback_data = callback_data or query.data
+    question = callback_data.split(":")[1]
+    chain = context.user_data.get("x7d_chain")
+    chain_info, error_message = chains.get_info(chain)
+
+    replies = {
+        "clicks_reset": "Are you sure you want to reset clicks?",
+        "wallet_remove": "Are you sure you want to remove your wallet? If you have funds in it, be sure you have saved the private key!",
+        "x7d_deposit": f"Are you sure you want to deposit {amount} {chain_info.native.upper()}",
+        "x7d_withdraw": f"Are you sure you want to withdraw {amount} {chain_info.native.upper()}?",
+    }
+
+    reply = replies.get(question)
+
+    keyboard = [
+        [
+            InlineKeyboardButton("Yes", callback_data=question),
+            InlineKeyboardButton("No", callback_data="cancel"),
+        ]
+    ]
+
+    await query.edit_message_text(
+        text=reply,
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
 
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -388,23 +392,6 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def wallet_remove(update, context):
     query = update.callback_query
-
-    keyboard = [
-        [
-            InlineKeyboardButton("Yes", callback_data="wallet_remove_yes"),
-            InlineKeyboardButton("No", callback_data="cancel")
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await query.edit_message_text(
-        text="Are you sure you want remove your wallet? If you have funds in it, be sure you have saved the private key!",
-        reply_markup=reply_markup
-    )
-
-
-async def wallet_remove_yes(update, context):
-    query = update.callback_query
     user_id = query.from_user.id
 
     try:
@@ -459,3 +446,88 @@ async def welcome_button(update: Update, context: CallbackContext) -> None:
             )
         except Exception:
             pass
+
+
+async def x7d_start(update, context):
+    query = update.callback_query
+    callback_data = query.data.split(":")
+    action = callback_data[0]
+    chain = callback_data[1]
+
+    operation = action.split("_")[1]
+
+    context.user_data["x7d_action"] = action
+    context.user_data["x7d_chain"] = chain
+
+    await query.message.reply_text(
+        text=f"How much do you want to {operation} on {chain.upper()}? Please reply with the amount (e.g., `0.5`).",
+    )
+
+    return X7D_ASK
+
+
+async def x7d_amount(update, context):
+    try:
+        user_id = update.effective_user.id
+        action = context.user_data["x7d_action"]
+        
+        chain = context.user_data["x7d_chain"]
+        chain_info, error_message = chains.get_info(chain)
+
+        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+            wallet = {
+                "wallet": os.getenv("BURN_WALLET")
+            }
+        else:
+            wallet = db.wallet_get(user_id)
+
+        balance = etherscan.get_native_balance(wallet["wallet"], chain)
+
+        amount = float(update.message.text)
+        if amount <= 0 or amount > balance:
+            raise ValueError(f"Invalid amount. You have {balance} {chain_info.native.upper()} available to {action.split('_')[1]}.")
+
+    except ValueError as e:
+        await update.message.reply_text(str(e))
+        return X7D_ASK
+
+    context.user_data["x7d_amount"] = amount
+
+    operation = action.split("_")[1]
+    await update.message.reply_text(
+        text=f"You want to {operation} {amount} {chain.upper()}. Are you sure?",
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("Yes", callback_data=f"{action}:{chain}"),
+                InlineKeyboardButton("No", callback_data="cancel"),
+            ]
+        ]),
+    )
+
+    return X7D_CONFIRM
+
+
+async def x7d_confirm(update, context):
+    query = update.callback_query
+
+    callback_data = query.data.split(":")
+    action = callback_data[0]
+    chain = context.user_data.get("x7d_chain", "unknown")
+    amount = context.user_data.get("x7d_amount", 0)
+
+    try:
+        if action == "x7d_deposit":
+            user_id = query.from_user.id
+            result = functions.x7d_deposit(amount, chain, user_id)
+        elif action == "x7d_withdraw":
+            user_id = query.from_user.id
+            result = functions.x7d_withdraw(amount, chain, user_id)
+        else:
+            result = "Unknown action."
+
+        await query.edit_message_text(text=result)
+    except Exception as e:
+        await query.edit_message_text(text=f"An error occurred: {str(e)}")
+
+    return ConversationHandler.END
+

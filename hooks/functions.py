@@ -206,3 +206,95 @@ def splitter_push(contract_type, splitter_address, chain, user_id, token_address
 
     except Exception as e:
         return f"Error {function_string} ({chain_info.name}): {str(e)}"
+    
+
+def x7d_deposit(amount, chain, user_id):
+    try:
+        chain_info, _ = chains.get_info(chain)
+        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+            sender_address = os.getenv("BURN_WALLET")
+            sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
+        else:
+            wallet = db.wallet_get(user_id)
+            sender_address = wallet["wallet"]
+            sender_private_key = wallet["private_key"]
+
+        address = ca.LPOOL_RESERVE(chain)
+        contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(address), abi=etherscan.get_abi(address, chain)
+        )
+
+        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+
+        gas_estimate = contract.functions.depositETH().estimate_gas({
+            "from": sender_address,
+            "value": chain_info.w3.to_wei(amount, 'ether')
+        })
+        gas_price = chain_info.w3.eth.gas_price
+
+        transaction = {
+            "from": sender_address,
+            "to": chain_info.w3.to_checksum_address(address),
+            "value": chain_info.w3.to_wei(amount, 'ether'),
+            "gas": gas_estimate,
+            "gasPrice": gas_price,
+            "nonce": nonce,
+            "chainId": int(chain_info.id),
+            "data": contract.encodeABI(fn_name="depositETH")
+        }
+
+        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+
+        return f"{amount} ETH ({chain_info.name}) deposited.\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+
+    except Exception as e:
+        return f"Error depositing ETH ({chain_info.name}): {str(e)}"
+ 
+
+def x7d_withdraw(amount, chain, user_id):
+    try:
+        chain_info, _ = chains.get_info(chain)
+
+        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+            sender_address = os.getenv("BURN_WALLET")
+            sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
+        else:
+            wallet = db.wallet_get(user_id)
+            sender_address = wallet["wallet"]
+            sender_private_key = wallet["private_key"]
+
+        address = ca.LPOOL_RESERVE(chain)
+        contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(address),
+            abi=etherscan.get_abi(address, chain)
+        )
+
+        amount_in_wei = chain_info.w3.to_wei(amount, 'ether')
+
+        gas_estimate = contract.functions.withdrawETH(amount_in_wei).estimate_gas({"from": sender_address})
+        gas_price = chain_info.w3.eth.gas_price
+
+        function_selector = "0xf14210a6"
+        encoded_amount = f"{amount_in_wei:064x}"
+        data = function_selector + encoded_amount
+
+        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+
+        transaction = {
+            'from': sender_address,
+            'to': chain_info.w3.to_checksum_address(address),
+            'data': data,
+            'gas': gas_estimate,
+            'gasPrice': gas_price,
+            'nonce': nonce,
+            'chainId': int(chain_info.id)
+        }
+
+        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+
+        return f"Withdrew {amount} ETH ({chain_info.name}).\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+
+    except Exception as e:
+        return f"Error withdrawing ETH ({chain_info.name}): {str(e)}"

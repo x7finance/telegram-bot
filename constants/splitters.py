@@ -89,13 +89,13 @@ def generate_hub_split(chain, hub_address, token):
 
     if token == "x7r":
         try:
-            token_liquidity_balance = f"{contract.functions.x7rLiquidityBalance().call() / 10 ** 18:.0f}"
+            token_liquidity_balance = contract.functions.x7rLiquidityBalance().call() / 10 ** 18
         except Exception:
             token_liquidity_balance = 0
             
     if token == "x7dao":
         try:
-            token_liquidity_balance = f"{contract.functions.x7daoLiquidityBalance().call() / 10 ** 18:.0f}"
+            token_liquidity_balance = contract.functions.x7daoLiquidityBalance().call() / 10 ** 18
             auxiliary = contract.functions.auxiliaryShare().call() / 10
             auxiliary_balance = contract.functions.auxiliaryBalance().call() / 10 ** 18
         except Exception:
@@ -107,7 +107,7 @@ def generate_hub_split(chain, hub_address, token):
     if token in ["x7101", "x7102", "x7103","x7104","x7105"]:
         token_info = tokens.TOKENS.get(token.upper(), {}).get(chain)
         try:
-            token_liquidity_balance = f"{contract.functions.liquidityTokenBalance(address).call() / 10 ** 18:.0f}"
+            token_liquidity_balance = contract.functions.liquidityTokenBalance(address).call() / 10 ** 18
             lending_pool = contract.functions.lendingPoolShare().call() / 10
             lending_pool_balance = contract.functions.lendingPoolBalance().call() / 10 ** 18
             liquidity_balance_threshold = contract.functions.liquidityBalanceThreshold().call() / 10 ** 18
@@ -120,7 +120,7 @@ def generate_hub_split(chain, hub_address, token):
         threshold_text += f"\nLiquidity Balance Threshold: {liquidity_balance_threshold} {chain_info.native.upper()}"
     
     balance_text = ""
-    balance = float(etherscan.get_token_balance(hub_address, address, chain)) - float(token_liquidity_balance)
+    balance = float(etherscan.get_token_balance(hub_address, address, chain)) / 10 ** 18
     balance_dollar = float(price) * float(balance)
     balance_text = f"{balance:,.0f} {token.upper()} (${balance_dollar:,.0f})"
 
@@ -129,7 +129,7 @@ def generate_hub_split(chain, hub_address, token):
         f"{threshold_text}\n\n"
         f"{split_text}\n\n"
         f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
-        f"Earmarked Token Liquidity {token_liquidity_balance} {token.upper()}"
+        f"Earmarked Token Liquidity {token_liquidity_balance / 10 ** 18:,.0f} {token.upper()}"
     )
 
 

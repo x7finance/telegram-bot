@@ -32,11 +32,12 @@ async def command(update, context):
 
         keyboard.append(
             [
-                InlineKeyboardButton("Reset Clicks", callback_data="clicks_reset")
+                InlineKeyboardButton("Reset Clicks", callback_data="question:clicks_reset")
             ]
         )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
+        
         await update.message.reply_text("Bot Settings", reply_markup=reply_markup)
 
 
