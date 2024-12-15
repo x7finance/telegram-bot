@@ -111,6 +111,8 @@ class Dune:
 
     async def get_trending_tokens(self, chain):
         chain_info, error_message = chains.get_info(chain) if chain else (None, None)
+        if error_message:
+            return error_message
         chain_name = "ethereum" if chain == "eth" else (chain_info.name.lower() if chain_info else "all")
         chain_name_title = f"({chain_info.name.upper()})" if chain_info else "(All chains)"
 
@@ -194,7 +196,6 @@ class Dune:
             blockchain = item.get("blockchain")
             if pair and last_24hr_amt:
                 trending_text += f'{idx}. {pair} ({blockchain.upper()})\n24 Hour Volume: ${last_24hr_amt:,.0f}\n\n'
-
     
         self.trending_flag[chain_name.upper()] = True
         self.trending_text[chain_name.upper()] = trending_text

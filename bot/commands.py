@@ -2765,11 +2765,6 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower()
 
-    chain_info, error_message = chains.get_info(chain)
-    if error_message:
-        await update.message.reply_text(error_message)
-        return
-
     message = await update.message.reply_text("Getting Trending Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
