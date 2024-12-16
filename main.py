@@ -106,6 +106,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler(["space", "spaces"], commands.spaces))
     application.add_handler(CommandHandler("smart", commands.smart))
     application.add_handler(CommandHandler(["split", "splitters", "splitter"], commands.splitters_command))
+    application.add_handler(CommandHandler("stuck", commands.stuck))
     application.add_handler(CommandHandler(["tax", "slippage"], commands.tax_command))
     application.add_handler(CommandHandler("timestamp", commands.timestamp_command))
     application.add_handler(CommandHandler(["time", "clock"], commands.time_command))
@@ -139,25 +140,38 @@ if __name__ == "__main__":
     application.add_handler(CallbackQueryHandler(callbacks.cancel, pattern="^cancel$"))
     application.add_handler(CallbackQueryHandler(callbacks.click_me, pattern=r"^click_button:\d+$"))
     application.add_handler(CallbackQueryHandler(callbacks.clicks_reset, pattern="^clicks_reset$"))
-    application.add_handler(CallbackQueryHandler(callbacks.confirm, pattern="^question:.*"))
+    application.add_handler(CallbackQueryHandler(callbacks.confirm_simple, pattern="^question:.*"))
     application.add_handler(CallbackQueryHandler(callbacks.pushall, pattern="^push_(eco|treasury|x7r|x7dao|x710[1-5]):"))
     application.add_handler(CallbackQueryHandler(callbacks.liquidate, pattern=r"^liquidate:[a-zA-Z0-9-]+:\d+$"))
     application.add_handler(CallbackQueryHandler(callbacks.wallet_remove, pattern="^wallet_remove$"))
-    application.add_handler(CallbackQueryHandler(callbacks.wallet_private_key, pattern="^wallet_private_key$"))
     application.add_handler(CallbackQueryHandler(callbacks.welcome_button, pattern=r"unmute:.+"))
     
     x7d_conv_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(callbacks.x7d_start, pattern="^x7d_(deposit|withdraw):.*$")],
+        entry_points=[CallbackQueryHandler(callbacks.x7d_start, pattern="^(mint|redeem):.*$")],
         states={
-            callbacks.X7D_ASK: [MessageHandler(filters.TEXT & ~filters.COMMAND, callbacks.x7d_amount)],
+            callbacks.X7D_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, callbacks.x7d_amount)],
             callbacks.X7D_CONFIRM: [
-                CallbackQueryHandler(callbacks.x7d_confirm, pattern="^x7d_(deposit|withdraw):.*$"),
+                CallbackQueryHandler(callbacks.confirm_conv, pattern="^(mint|redeem):.*$"),
                 CallbackQueryHandler(callbacks.cancel, pattern="^cancel$"),
             ],
         },
         fallbacks=[CommandHandler("cancel", callbacks.cancel)],
     )
     application.add_handler(x7d_conv_handler)
+
+    withdraw_conv_handler = ConversationHandler(
+        entry_points=[CallbackQueryHandler(callbacks.withdraw_start, pattern="^withdraw:.*$")],
+        states={
+            callbacks.WITHDRAW_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, callbacks.withdraw_amount)],
+            callbacks.WITHDRAW_ADDRESS: [MessageHandler(filters.TEXT & ~filters.COMMAND, callbacks.withdraw_address)],
+            callbacks.WITHDRAW_CONFIRM: [
+                CallbackQueryHandler(callbacks.confirm_conv, pattern="^withdraw:.*$"),
+                CallbackQueryHandler(callbacks.cancel, pattern="^cancel$"),
+            ],
+        },
+        fallbacks=[CommandHandler("cancel", callbacks.cancel)],
+    )
+    application.add_handler(withdraw_conv_handler)
 
     application.add_handler(ChatMemberHandler(auto.welcome_message, ChatMemberHandler.CHAT_MEMBER))
     application.add_handler(MessageHandler(filters.StatusUpdate._NewChatMembers(Update) | filters.StatusUpdate._LeftChatMember(Update), auto.welcome_delete))

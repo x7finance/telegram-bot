@@ -1815,20 +1815,21 @@ async def me(update: Update, context: CallbackContext):
             eth_balance = etherscan.get_native_balance(wallet["wallet"], chain)
             x7d_balance = float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain)) / 10 ** 18
             if eth_balance > 0:
-                buttons.append([InlineKeyboardButton("Mint X7D", callback_data=f"x7d_deposit:{chain}")])
+                buttons.append([InlineKeyboardButton("Mint X7D", callback_data=f"mint:{chain}")])
+                buttons.append([InlineKeyboardButton(f"Withdraw {chain_info.native.upper()}", callback_data=f"withdraw:{chain}")])
             if x7d_balance > 0:
-                buttons.append([InlineKeyboardButton("Withdraw X7D", callback_data=f"x7d_withdraw:{chain}")])
+                buttons.append([InlineKeyboardButton("Redeem X7D", callback_data=f"redeem:{chain}")])
 
             message += (
                 f"\n\nWallet Address:\n`{wallet['wallet']}`\n\n"
                 f"*{chain_info.name.upper()} Chain*\n"
                 f"{chain_info.native.upper()} Balance: {eth_balance:.4f}\n"
                 f"X7D Balance: {x7d_balance}\n\n"
-                f"To view balances on other chains, use `/me chain-name`."
+                f"To view balances on other chains, use `/me chain-name`\n\n"
+                f"If your TXs are failing or returning blank TXs, you likely have a stuck TX, `use /stuck chain-name` to send a 0 value TX!"
             )
 
             buttons.append([InlineKeyboardButton("View onchain", url=chain_info.scan_address + wallet["wallet"])])
-            buttons.append([InlineKeyboardButton("Show private key", callback_data="wallet_private_key")])
             buttons.append([InlineKeyboardButton("Remove wallet", callback_data="question:wallet_remove")])
 
         await update.message.reply_text(
@@ -2337,19 +2338,8 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "*New EVM wallet created*\n\n"
             "You can now deposit to this address to initiate loan liquidations and splitter pushes\n\n"
             f"Address:\n`{account.address}`\n\n"
-            "To withdraw import your wallet to MetaMask or similar browser by using your private key\n\n"
-            "You can view these details at anytime using /me in private",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton(
-                            text="Show private key",
-                            callback_data="wallet_private_key"
-                        )
-                    ]
-                ]
-            )
+            "To withdraw use /me in private",
+            parse_mode="Markdown"
         )
     else:
         await update.message.reply_text(f"Use this command in private to create a wallet to perform onchain tasks via TG!")
@@ -2410,6 +2400,36 @@ async def spaces(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
         reply_markup=keyboard
     )
+
+
+async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_chat.type == "private":
+        user = update.effective_user
+        chain = " ".join(context.args).lower()
+        if chain == "":
+            await update.message.reply_text(
+                "Please follow command with desired chain"
+                )
+            return
+        chain_info, error_message = chains.get_info(chain)
+        if error_message:
+            await update.message.reply_text(error_message)
+            return
+
+        result = functions.stuck_tx(chain, user.id)
+
+        await update.message.reply_text(
+            f"Attempting to clear stuck TX on {chain_info.name.upper()}....."
+            )
+        await update.message.reply_text(
+            result
+            )
+    else:
+        await update.message.reply_text(
+            "Use this command in private!",
+            parse_mode="Markdown"
+        )
+
 
 
 async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):

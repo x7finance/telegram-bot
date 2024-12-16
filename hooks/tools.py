@@ -1,4 +1,5 @@
-import random, requests, socket
+from eth_utils import is_checksum_address, to_checksum_address
+import random, re, requests, socket
 from datetime import datetime
 
 from constants import ca, chains, urls
@@ -136,11 +137,22 @@ def get_time_difference(timestamp):
         return "just now" if not is_future else "in a moment"
 
 
+
+
 def is_eth(address):
-    if address.startswith("0x") and len(address) == 42:
-        return True
-    else:
+    if not address.startswith("0x") or len(address) != 42:
         return False
+
+    if not re.match(r"^0x[a-fA-F0-9]{40}$", address):
+        return False
+
+    try:
+        return is_checksum_address(address) or address.lower() == to_checksum_address(address.lower()).lower()
+    except:
+        return False
+
+    return True
+
     
 
 def is_local():

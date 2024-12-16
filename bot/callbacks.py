@@ -12,7 +12,8 @@ from main import application
 job_queue = application.job_queue
 etherscan = api.Etherscan()
 
-X7D_ASK, X7D_CONFIRM = range(2)
+X7D_AMOUNT, X7D_CONFIRM = range(2)
+WITHDRAW_AMOUNT, WITHDRAW_ADDRESS, WITHDRAW_CONFIRM = range(3)
 
 
 async def admin_toggle(update, context):
@@ -201,19 +202,45 @@ async def clicks_reset(update, context):
         )
 
 
-async def confirm(update, context, amount=None, callback_data=None):
+async def confirm_conv(update, context):
+    query = update.callback_query
+    user_id = query.from_user.id
+    callback_data = query.data.split(":")
+    operation = callback_data[0]
+    
+    try:
+        if operation == "mint":
+            chain = context.user_data.get("x7d_chain")
+            amount = context.user_data.get("x7d_amount")
+            result = functions.x7d_mint(amount, chain, user_id)
+        elif operation == "redeem":
+            chain = context.user_data.get("x7d_chain")
+            amount = context.user_data.get("x7d_amount")
+            result = functions.x7d_redeem(amount, chain, user_id)
+        elif operation == "withdraw":
+            chain = context.user_data.get("withdraw_chain")
+            amount = context.user_data.get("withdraw_amount")
+            address = context.user_data.get("withdraw_address")
+            result = functions.withdraw(amount, chain, user_id, address)
+        else:
+            result = "Unknown action."
+
+        await query.edit_message_text(text=result)
+    except Exception as e:
+        await query.edit_message_text(text=f"An error occurred: {str(e)}")
+
+    return ConversationHandler.END
+
+
+async def confirm_simple(update, context, amount=None, callback_data=None):
     query = update.callback_query
 
     callback_data = callback_data or query.data
     question = callback_data.split(":")[1]
-    chain = context.user_data.get("x7d_chain")
-    chain_info, error_message = chains.get_info(chain)
 
     replies = {
         "clicks_reset": "Are you sure you want to reset clicks?",
         "wallet_remove": "Are you sure you want to remove your wallet? If you have funds in it, be sure you have saved the private key!",
-        "x7d_deposit": f"Are you sure you want to deposit {amount} {chain_info.native.upper()}",
-        "x7d_withdraw": f"Are you sure you want to withdraw {amount} {chain_info.native.upper()}?",
     }
 
     reply = replies.get(question)
@@ -413,24 +440,6 @@ async def wallet_remove(update, context):
         )
 
 
-async def wallet_private_key(update, context):
-    query = update.callback_query
-    user_id = query.from_user.id
-
-    try:
-        result_text = db.wallet_get(user_id)["private_key"]
-        await query.message.reply_text(
-            text=f"*DO NOT SHARE YOUR PRIVATE KEY*\n\n||{result_text}||",
-            parse_mode="markdownV2"
-        )
-        await query.answer()
-    except Exception as e:
-        await query.answer(
-            text=f"An error occurred: {str(e)}",
-            show_alert=True
-        )
-
-
 async def welcome_button(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     user_id = query.from_user.id
@@ -460,53 +469,49 @@ async def x7d_start(update, context):
     action = callback_data[0]
     chain = callback_data[1]
 
-    operation = action.split("_")[1]
+    chain_info, error_message = chains.get_info(chain)
 
     context.user_data["x7d_action"] = action
     context.user_data["x7d_chain"] = chain
 
     await query.message.reply_text(
-        text=f"How much do you want to {operation} on {chain.upper()}? Please reply with the amount (e.g., `0.5`).",
+        text=f"How much do you want to {action} on {chain_info.name.upper()}? Please reply with the amount (e.g., `0.5`).",
     )
 
-    return X7D_ASK
+    return X7D_AMOUNT
 
 
 async def x7d_amount(update, context):
-    try:
-        user_id = update.effective_user.id
-        chain = context.user_data["x7d_chain"]
-        action = context.user_data["x7d_action"]
-        operation = action.split("_")[1]
+    user_id = update.effective_user.id
+    action = context.user_data["x7d_action"]
+    chain = context.user_data["x7d_chain"]
+    amount = float(update.message.text)
 
-        chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = chains.get_info(chain)
 
-        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-            wallet = {
-                "wallet": os.getenv("BURN_WALLET")
-            }
-        else:
-            wallet = db.wallet_get(user_id)
+    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+        wallet = {
+            "wallet": os.getenv("BURN_WALLET")
+        }
+    else:
+        wallet = db.wallet_get(user_id)
 
-        if operation == "deposit":
-            balance = etherscan.get_native_balance(wallet["wallet"], chain)
-        elif operation == "withdraw":
-            balance = float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain)) / 10 ** 18
+    if action == "mint":
+        balance = etherscan.get_native_balance(wallet["wallet"], chain)
+    elif action == "redeem":
+        balance = float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain)) / 10 ** 18
 
-        amount = float(update.message.text)
+    if amount <= 0 or amount > balance:
+        await update.message.reply_text(
+            f"Invalid amount. You have {balance} {chain_info.native.upper()} available to {action}"
+            )
 
-        if amount <= 0 or amount > balance:
-            raise ValueError(f"Invalid amount. You have {balance} {chain_info.native.upper()} available to {operation}")
-
-    except ValueError as e:
-        await update.message.reply_text("Nope! not accepted! Please reply with the amount (e.g., `0.5`)")
-        return X7D_ASK
+        return X7D_AMOUNT
 
     context.user_data["x7d_amount"] = amount
 
-
     await update.message.reply_text(
-        text=f"You want to {operation} {amount} {chain_info.native.upper()} on {chain_info.name.upper()}. Are you sure?",
+        text=f"Are you sure you want to {action} {amount} {chain_info.native.upper()} on {chain_info.name.upper()}?",
         reply_markup=InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("Yes", callback_data=f"{action}:{chain}"),
@@ -518,27 +523,85 @@ async def x7d_amount(update, context):
     return X7D_CONFIRM
 
 
-async def x7d_confirm(update, context):
+async def withdraw_start(update, context):
     query = update.callback_query
-
     callback_data = query.data.split(":")
-    operation = callback_data[0]
-    chain = context.user_data.get("x7d_chain")
-    amount = context.user_data.get("x7d_amount")
+    action = callback_data[0]
+    chain = callback_data[1]
 
-    try:
-        if operation == "x7d_deposit":
-            user_id = query.from_user.id
-            result = functions.x7d_deposit(amount, chain, user_id)
-        elif operation == "x7d_withdraw":
-            user_id = query.from_user.id
-            result = functions.x7d_withdraw(amount, chain, user_id)
-        else:
-            result = "Unknown action."
+    chain_info, error_message = chains.get_info(chain)
 
-        await query.edit_message_text(text=result)
-    except Exception as e:
-        await query.edit_message_text(text=f"An error occurred: {str(e)}")
+    context.user_data["withdraw_action"] = action
+    context.user_data["withdraw_chain"] = chain
 
-    return ConversationHandler.END
+    await query.message.reply_text(
+        text=f"How much do you want to withdraw on {chain_info.name.upper()}? Please reply with the amount (e.g., `0.5`).",
+    )
+
+    return WITHDRAW_AMOUNT
+
+
+async def withdraw_amount(update, context):
+    user_id = update.effective_user.id
+    action = context.user_data["withdraw_action"]
+    chain = context.user_data["withdraw_chain"]
+    amount = float(update.message.text)
+
+    chain_info, error_message = chains.get_info(chain)
+
+    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+        wallet = {
+            "wallet": os.getenv("BURN_WALLET")
+        }
+    else:
+        wallet = db.wallet_get(user_id)
+
+    balance = etherscan.get_native_balance(wallet["wallet"], chain)
+    
+    if amount <= 0 or amount > balance:
+        await update.message.reply_text(
+            f"Invalid amount. You have {balance} {chain_info.native.upper()} available to {action}"
+            )
+
+        return WITHDRAW_AMOUNT
+
+    context.user_data["withdraw_amount"] = amount
+
+    await update.message.reply_text(
+        text=f"Please send the {chain.upper()} address you want to withdraw to",
+    )
+
+    return WITHDRAW_ADDRESS
+
+
+async def withdraw_address(update, context):
+    action = context.user_data["withdraw_action"]
+    chain = context.user_data["withdraw_chain"]    
+    amount = context.user_data["withdraw_amount"]
+    address = update.message.text
+
+    chain_info, error_message = chains.get_info(chain)
+    
+    if not tools.is_eth(address):
+        await update.message.reply_text(
+            "Invalid address. Please provide a valid Ethereum address."
+            )
+
+        return X7D_AMOUNT
+
+    context.user_data["withdraw_address"] = address
+
+    await update.message.reply_text(
+        f"Are you sure you want to {action} {amount} {chain_info.native.upper()} on {chain_info.name.upper()} to the following address?\n\n"
+        f"`{address}`",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("Yes", callback_data=f"{action}:{chain}"),
+                InlineKeyboardButton("No", callback_data="cancel"),
+            ]
+        ]),
+    )
+
+    return WITHDRAW_CONFIRM
 

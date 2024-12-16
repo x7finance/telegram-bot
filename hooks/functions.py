@@ -206,9 +206,106 @@ def splitter_push(contract_type, splitter_address, chain, user_id, token_address
 
     except Exception as e:
         return f"Error {function_string} ({chain_info.name}): {str(e)}"
+
+
+def stuck_tx(chain, user_id, gas_multiplier=1.5):
+    try:
+        chain_info, _ = chains.get_info(chain)
+
+        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+            sender_address = os.getenv("BURN_WALLET")
+            sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
+        else:
+            wallet = db.wallet_get(user_id)
+            sender_address = wallet["wallet"]
+            sender_private_key = wallet["private_key"]
+
+        latest_nonce = chain_info.w3.eth.get_transaction_count(sender_address, "latest")
+        pending_nonce = chain_info.w3.eth.get_transaction_count(sender_address, "pending")
+
+        if pending_nonce == latest_nonce:
+            return "No pending transactions found. No action needed."
+
+        gas_price = chain_info.w3.eth.gas_price
+        adjusted_gas_price = int(gas_price * gas_multiplier)
+
+        transaction = {
+            "from": sender_address,
+            "to": sender_address,
+            "value": 0, 
+            "gas": 21000,
+            "gasPrice": adjusted_gas_price,
+            "nonce": pending_nonce,
+            "chainId": int(chain_info.id),
+        }
+
+        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+
+        return f"0 {chain_info.native.upper()} transaction sent successfully to cancel the stuck transaction.\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+
+    except Exception as e:
+        return f"Error sending 0 {chain_info.native.upper()} transaction: {str(e)}"
+
+
+def withdraw(amount, chain, user_id, recipient_address):
+    try:
+        chain_info, _ = chains.get_info(chain)
+
+        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+            sender_address = os.getenv("BURN_WALLET")
+            sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
+        else:
+            wallet = db.wallet_get(user_id)
+            sender_address = wallet["wallet"]
+            sender_private_key = wallet["private_key"]
+
+        recipient_address = chain_info.w3.to_checksum_address(recipient_address)
+
+        sender_balance = chain_info.w3.eth.get_balance(sender_address)
+
+        amount_in_wei = chain_info.w3.to_wei(amount, 'ether')
+
+        gas_estimate = chain_info.w3.eth.estimate_gas({
+            "from": sender_address,
+            "to": recipient_address,
+            "value": amount_in_wei,
+        })
+        gas_price = chain_info.w3.eth.gas_price
+        gas_fee = gas_estimate * gas_price
+        total_cost = amount_in_wei + gas_fee
+
+        if sender_balance < total_cost:
+            raise ValueError(
+                f"Insufficient funds: Available balance is {chain_info.w3.from_wei(sender_balance, 'ether')} {chain_info.native.upper()}, "
+                f"but {chain_info.w3.from_wei(total_cost, 'ether')} {chain_info.native.upper()} is required for this transaction."
+            )
+
+        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+
+        transaction = {
+            "from": sender_address,
+            "to": recipient_address,
+            "value": amount_in_wei,
+            "gas": gas_estimate,
+            "gasPrice": gas_price,
+            "nonce": nonce,
+            "chainId": int(chain_info.id),
+        }
+
+        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+
+        return f"Successfully transferred {amount} {chain_info.native.upper()} ({chain_info.name})\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+
+    except ValueError as ve:
+        return str(ve)
+    except Exception as e:
+        return f"Error transferring {chain_info.native.upper()} ({chain_info.name}): {str(e)}"
     
 
-def x7d_deposit(amount, chain, user_id):
+def x7d_mint(amount, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
         if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
@@ -246,13 +343,13 @@ def x7d_deposit(amount, chain, user_id):
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
 
-        return f"{amount} ETH ({chain_info.name}) deposited.\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        return f"{amount} X7D ({chain_info.name}) minted\n\n{chain_info.scan_tx}{tx_hash.hex()}"
 
     except Exception as e:
-        return f"Error depositing ETH ({chain_info.name}): {str(e)}"
+        return f"Error minting X7D ({chain_info.name}): {str(e)}"
  
 
-def x7d_withdraw(amount, chain, user_id):
+def x7d_redeem(amount, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
 
@@ -294,7 +391,7 @@ def x7d_withdraw(amount, chain, user_id):
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
 
-        return f"Withdrew {amount} ETH ({chain_info.name}).\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        return f"Redeemed {amount} X7D ({chain_info.name}).\n\n{chain_info.scan_tx}{tx_hash.hex()}"
 
     except Exception as e:
-        return f"Error withdrawing ETH ({chain_info.name}): {str(e)}"
+        return f"Error redeeming X7D ({chain_info.name}): {str(e)}"
