@@ -129,7 +129,7 @@ def generate_hub_split(chain, hub_address, token):
         f"{threshold_text}\n\n"
         f"{split_text}\n\n"
         f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
-        f"Earmarked Token Liquidity {token_liquidity_balance / 10 ** 18:,.0f} {token.upper()}"
+        f"Earmarked Token Liquidity {token_liquidity_balance:,.0f} {token.upper()}"
     )
 
 

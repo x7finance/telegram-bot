@@ -328,7 +328,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "contract_type": "hub",
             "balance_func": lambda contract: float(etherscan.get_token_balance(
                 ca.X7R_LIQ_HUB(chain), ca.X7R(chain), chain)
-            ) - float(f"{contract.functions.x7rLiquidityBalance().call() / 10 ** 18:.0f}")
+                ) - contract.functions.x7rLiquidityBalance().call()
         },
         "push_x7dao": {
             "splitter_address": ca.X7DAO_LIQ_HUB(chain),
@@ -337,8 +337,8 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "threshold": 10000,
             "contract_type": "hub",
             "balance_func": lambda contract: float(etherscan.get_token_balance(
-                ca.X7DAO_LIQ_HUB(chain), ca.X7DAO(chain), chain
-            )) - float(f"{contract.functions.x7daoLiquidityBalance().call() / 10 ** 18:.0f}")
+                ca.X7DAO_LIQ_HUB(chain), ca.X7DAO(chain), chain)
+                ) - contract.functions.x7daoLiquidityBalance().call()
         },
         "push_x7101": {
             "splitter_address": ca.X7100_LIQ_HUB(chain),
