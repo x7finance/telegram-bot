@@ -37,8 +37,8 @@ async def command(update, context):
         )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await update.message.reply_text("Bot Settings", reply_markup=reply_markup)
+        count = db.wallet_count()
+        await update.message.reply_text(f"Wallet users: {count}", reply_markup=reply_markup)
 
 
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):

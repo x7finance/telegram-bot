@@ -18,7 +18,7 @@ sentry_sdk.init(
 
 
 async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        return
+    return
 
 
 async def error(update: Update, context: CallbackContext):

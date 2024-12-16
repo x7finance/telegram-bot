@@ -277,7 +277,28 @@ def wallet_add(user_id, wallet, private_key):
     
     except mysql.connector.Error as err:
         return(f"Error: {err}")
-            
+
+
+def wallet_count():
+    try:
+        db_connection = create_db_connection()
+        cursor = db_connection.cursor()
+
+        get_count_query = """
+        SELECT COUNT(DISTINCT user_id) AS total_count
+        FROM wallets
+        """
+        cursor.execute(get_count_query)
+
+        total_count = cursor.fetchone()[0]
+
+        close_db_connection(db_connection, cursor)
+
+        return total_count
+
+    except mysql.connector.Error:
+        return "N/A"  
+
 
 def wallet_get(user_id):
     db_connection = None
