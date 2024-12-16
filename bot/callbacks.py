@@ -584,7 +584,7 @@ async def withdraw_address(update, context):
     
     if not tools.is_eth(address):
         await update.message.reply_text(
-            "Invalid address. Please provide a valid Ethereum address."
+            "Invalid address. Please provide a valid EVM address."
             )
 
         return X7D_AMOUNT

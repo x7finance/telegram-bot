@@ -1790,57 +1790,65 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def me(update: Update, context: CallbackContext):
     user = update.effective_user
-    if update.effective_chat.type == "private":
-        buttons = []
-        message = (
-            f"*X7 Finance Member Details*\n\n"
-            f"Telegram User ID:\n`{user.id}`"
-        )
-        if user.id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-            wallet = {
-                "wallet": os.getenv("BURN_WALLET")
-            }
-        else:
-            wallet = db.wallet_get(user.id)
-        if not wallet:
-            message += "\n\nUse /register to register an EVM wallet"
-        else:
-            chain = " ".join(context.args).lower() or "eth"
-            
-            chain_info, error_message = chains.get_info(chain)
-            if error_message:
-                await update.message.reply_text(error_message)
-                return
+    buttons = []
+    message = (
+        f"*X7 Finance Member Details*\n\n"
+        f"Telegram User ID:\n`{user.id}`"
+    )
 
-            eth_balance = etherscan.get_native_balance(wallet["wallet"], chain)
-            x7d_balance = float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain)) / 10 ** 18
-            if eth_balance > 0:
-                buttons.append([InlineKeyboardButton("Mint X7D", callback_data=f"mint:{chain}")])
-                buttons.append([InlineKeyboardButton(f"Withdraw {chain_info.native.upper()}", callback_data=f"withdraw:{chain}")])
-            if x7d_balance > 0:
-                buttons.append([InlineKeyboardButton("Redeem X7D", callback_data=f"redeem:{chain}")])
-
-            message += (
-                f"\n\nWallet Address:\n`{wallet['wallet']}`\n\n"
-                f"*{chain_info.name.upper()} Chain*\n"
-                f"{chain_info.native.upper()} Balance: {eth_balance:.4f}\n"
-                f"X7D Balance: {x7d_balance}\n\n"
-                f"To view balances on other chains, use `/me chain-name`\n\n"
-                f"If your TXs are failing or returning blank TXs, you likely have a stuck TX, `use /stuck chain-name` to send a 0 value TX!"
-            )
-
-            buttons.append([InlineKeyboardButton("View onchain", url=chain_info.scan_address + wallet["wallet"])])
-            buttons.append([InlineKeyboardButton("Remove wallet", callback_data="question:wallet_remove")])
-
-        await update.message.reply_text(
-            message,
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
+    if user.id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+        wallet = {
+            "wallet": os.getenv("BURN_WALLET")
+        }
     else:
+        wallet = db.wallet_get(user.id)
+
+    if not wallet:
+        message += "\n\nUse /register to register an EVM wallet"
+    else:
+        chain = " ".join(context.args).lower() or "eth"
+        
+        chain_info, error_message = chains.get_info(chain)
+        if error_message:
+            await context.bot.send_message(
+                chat_id=user.id,
+                text=error_message,
+                parse_mode="Markdown"
+            )
+            return
+
+        eth_balance = etherscan.get_native_balance(wallet["wallet"], chain)
+        x7d_balance = float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain)) / 10 ** 18
+        if eth_balance > 0:
+            buttons.append([InlineKeyboardButton("Mint X7D", callback_data=f"mint:{chain}")])
+            buttons.append([InlineKeyboardButton(f"Withdraw {chain_info.native.upper()}", callback_data=f"withdraw:{chain}")])
+        if x7d_balance > 0:
+            buttons.append([InlineKeyboardButton("Redeem X7D", callback_data=f"redeem:{chain}")])
+
+        message += (
+            f"\n\nWallet Address:\n`{wallet['wallet']}`\n\n"
+            f"*{chain_info.name.upper()} Chain*\n"
+            f"{chain_info.native.upper()} Balance: {eth_balance:.4f}\n"
+            f"X7D Balance: {x7d_balance}\n\n"
+            f"To view balances on other chains, use `/me chain-name`\n\n"
+            f"If your TXs are failing or returning blank TXs, you likely have a stuck TX, `use /stuck chain-name` to send a 0 value TX!"
+        )
+
+        buttons.append([InlineKeyboardButton("View onchain", url=chain_info.scan_address + wallet["wallet"])])
+        buttons.append([InlineKeyboardButton("Remove wallet", callback_data="question:wallet_remove")])
+
+    try:
+        await context.bot.send_message(
+            chat_id=user.id,
+            text=message,
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(buttons) if buttons else None
+        )
+        if update.effective_chat.type != "private":
+            await update.message.reply_text("Checks DMs!")
+    except Exception as e:
         await update.message.reply_text(
-            "Use this command in private!",
-            parse_mode="Markdown"
+            "Use this command in private!"
         )
 
 
@@ -2322,27 +2330,44 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_chat.type == "private":
-        user_id = update.effective_user.id
+    user_id = update.effective_user.id
+    existing_wallet = db.wallet_get(user_id)
+    if existing_wallet:
+        try:
+            await context.bot.send_message(
+                chat_id=user_id,
+                text="Youve already registed, your details are as follows....",
+                parse_mode="Markdown"
+            )
+            await me(update, context)
+        except Exception:
+            await update.message.reply_text(
+                "Use this command in private!"
+            )
+        return
 
-        existing_wallet = db.wallet_get(user_id)
-        
-        if existing_wallet:
-            await update.message.reply_text(f"You have already registered a wallet, use /me in a private chat to view it")
-            return
+    account = Account.create()
+    db.wallet_add(user_id, account.address, account.key.hex())
 
-        account = Account.create()
-        db.wallet_add(user_id, account.address, account.key.hex())
+    message = (
+        "*New EVM wallet created*\n\n"
+        "You can now deposit to this address to initiate loan liquidations and splitter pushes\n\n"
+        f"Address:\n`{account.address}`\n\n"
+        "To withdraw use /me in private."
+    )
 
-        await update.message.reply_text(
-            "*New EVM wallet created*\n\n"
-            "You can now deposit to this address to initiate loan liquidations and splitter pushes\n\n"
-            f"Address:\n`{account.address}`\n\n"
-            "To withdraw use /me in private",
+    try:
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=message,
             parse_mode="Markdown"
         )
-    else:
-        await update.message.reply_text(f"Use this command in private to create a wallet to perform onchain tasks via TG!")
+        if update.effective_chat.type != "private":
+            await update.message.reply_text("Check DMs!")
+    except Exception:
+        await update.message.reply_text(
+            "Use this command in private!"
+        )
 
 
 async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
