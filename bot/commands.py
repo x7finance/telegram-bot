@@ -1845,8 +1845,8 @@ async def me(update: Update, context: CallbackContext):
             reply_markup=InlineKeyboardMarkup(buttons) if buttons else None
         )
         if update.effective_chat.type != "private":
-            await update.message.reply_text("Checks DMs!")
-    except Exception as e:
+            await update.message.reply_text("Check DMs!")
+    except Exception:
         await update.message.reply_text(
             "Use this command in private!"
         )
@@ -2441,11 +2441,13 @@ async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(error_message)
             return
 
-        result = functions.stuck_tx(chain, user.id)
-
-        await update.message.reply_text(
+        message = await update.message.reply_text(
             f"Attempting to clear stuck TX on {chain_info.name.upper()}....."
             )
+
+        result = functions.stuck_tx(chain, user.id)
+        
+        await message.delete()
         await update.message.reply_text(
             result
             )

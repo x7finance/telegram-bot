@@ -14,7 +14,7 @@ async def burn_x7r(amount, chain):
         token_contract_address = ca.X7R(chain)
         sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
         decimals = 18
-        amount_to_send_wei = amount * (10 ** decimals)
+        amount_to_send_wei = int(amount * (10 ** decimals))
 
         token_transfer_data = (
             '0xa9059cbb'
@@ -28,7 +28,7 @@ async def burn_x7r(amount, chain):
             'to': token_contract_address,
             'data': token_transfer_data,
         })
-        gas_price = chain_info.w3.to_wei(chain_info.w3.eth.gas_price / 1e9, 'gwei')
+        gas_price = chain_info.w3.eth.gas_price
 
         transaction = {
             'from': sender_address,
@@ -42,7 +42,13 @@ async def burn_x7r(amount, chain):
 
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
-        return f"{amount} X7R Burnt\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+
+        if receipt.status == 1:
+            return f"{amount} X7R Burnt\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        else:
+            return f"Error: Transaction failed while burning {amount} X7R"
+
     except Exception as e:
         return f'Error burning X7R: {e}'
 
@@ -151,10 +157,14 @@ def liquidate_loan(loan_id, chain, user_id):
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
 
-        return f"Loan {loan_id} ({chain_info.name}) liquidated successfully.\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        if receipt.status == 1:
+            return f"Loan {loan_id} ({chain_info.name}) liquidated successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        else:
+            return f"Error: Transaction failed while liquidating loan {loan_id} ({chain_info.name})"
 
     except Exception as e:
-        return f"Error liquidating loan {loan_id} ({chain_info.name}): {str(e)}"
+        return f"Error liquidating loan: {str(e)}"
 
 
 def splitter_push(contract_type, splitter_address, chain, user_id, token_address=None):
@@ -175,7 +185,7 @@ def splitter_push(contract_type, splitter_address, chain, user_id, token_address
             function_name = "pushAll"
             function_args = []
             
-        if contract_type == "hub":
+        elif contract_type == "hub":
             function_selector = "0x61582eaa"
             function_string = "processing fees"
             function_name = "processFees"
@@ -202,10 +212,14 @@ def splitter_push(contract_type, splitter_address, chain, user_id, token_address
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
 
-        return f"{chain_info.name} {function_string} Successful! TX: {chain_info.scan_tx}{tx_hash.hex()}"
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        if receipt.status == 1:
+            return f"{chain_info.name} {function_string} Successful!\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        else:
+            return f"Error: Transaction failed ({function_string}) on {chain_info.name}"
 
     except Exception as e:
-        return f"Error {function_string} ({chain_info.name}): {str(e)}"
+        return f"Error {function_string}: {str(e)}"
 
 
 def stuck_tx(chain, user_id, gas_multiplier=1.5):
@@ -232,21 +246,24 @@ def stuck_tx(chain, user_id, gas_multiplier=1.5):
         transaction = {
             "from": sender_address,
             "to": sender_address,
-            "value": 0, 
+            "value": 0,
             "gas": 21000,
             "gasPrice": adjusted_gas_price,
             "nonce": pending_nonce,
             "chainId": int(chain_info.id),
         }
 
-        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+        signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
-
-        return f"0 {chain_info.native.upper()} transaction sent successfully to cancel the stuck transaction.\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        if receipt.status == 1:
+            return f"Stuck transaction successfully replaced\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        else:
+            return f"Error: Transaction failed to replace stuck transaction"
 
     except Exception as e:
-        return f"Error sending 0 {chain_info.native.upper()} transaction: {str(e)}"
+        return f"Error sending transaction: {str(e)}"
 
 
 def withdraw(amount, chain, user_id, recipient_address):
@@ -262,9 +279,7 @@ def withdraw(amount, chain, user_id, recipient_address):
             sender_private_key = wallet["private_key"]
 
         recipient_address = chain_info.w3.to_checksum_address(recipient_address)
-
         sender_balance = chain_info.w3.eth.get_balance(sender_address)
-
         amount_in_wei = chain_info.w3.to_wei(amount, 'ether')
 
         gas_estimate = chain_info.w3.eth.estimate_gas({
@@ -278,12 +293,10 @@ def withdraw(amount, chain, user_id, recipient_address):
 
         if sender_balance < total_cost:
             raise ValueError(
-                f"Insufficient funds: Available balance is {chain_info.w3.from_wei(sender_balance, 'ether')} {chain_info.native.upper()}, "
-                f"but {chain_info.w3.from_wei(total_cost, 'ether')} {chain_info.native.upper()} is required for this transaction."
+                "Insufficient funds for transaction and gas."
             )
 
         nonce = chain_info.w3.eth.get_transaction_count(sender_address)
-
         transaction = {
             "from": sender_address,
             "to": recipient_address,
@@ -294,20 +307,23 @@ def withdraw(amount, chain, user_id, recipient_address):
             "chainId": int(chain_info.id),
         }
 
-        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+        signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
-        return f"Successfully transferred {amount} {chain_info.native.upper()} ({chain_info.name})\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        if receipt.status == 1:
+            return f"Successfully withdrew {amount} {chain_info.native.upper()} ({chain_info.name})\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        else:
+            return f"Error: Transaction failed during withdrawal"
 
-    except ValueError as ve:
-        return str(ve)
     except Exception as e:
-        return f"Error transferring {chain_info.native.upper()} ({chain_info.name}): {str(e)}"
+        return f"Error withdrawing: {str(e)}"
     
 
 def x7d_mint(amount, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
+
         if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
             sender_address = os.getenv("BURN_WALLET")
             sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
@@ -322,16 +338,15 @@ def x7d_mint(amount, chain, user_id):
         )
 
         nonce = chain_info.w3.eth.get_transaction_count(sender_address)
-
+        gas_price = chain_info.w3.eth.gas_price
         gas_estimate = contract.functions.depositETH().estimate_gas({
             "from": sender_address,
             "value": chain_info.w3.to_wei(amount, 'ether')
         })
-        gas_price = chain_info.w3.eth.gas_price
 
         transaction = {
             "from": sender_address,
-            "to": chain_info.w3.to_checksum_address(address),
+            "to": address,
             "value": chain_info.w3.to_wei(amount, 'ether'),
             "gas": gas_estimate,
             "gasPrice": gas_price,
@@ -340,14 +355,18 @@ def x7d_mint(amount, chain, user_id):
             "data": contract.encodeABI(fn_name="depositETH")
         }
 
-        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+        signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
-        return f"{amount} X7D ({chain_info.name}) minted\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        if receipt.status == 1:
+            return f"{amount} X7D ({chain_info.name}) minted successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        else:
+            return f"Error: Transaction failed while minting X7D"
 
     except Exception as e:
-        return f"Error minting X7D ({chain_info.name}): {str(e)}"
- 
+        return f"Error minting X7D: {str(e)}"
+
 
 def x7d_redeem(amount, chain, user_id):
     try:
@@ -368,7 +387,6 @@ def x7d_redeem(amount, chain, user_id):
         )
 
         amount_in_wei = chain_info.w3.to_wei(amount, 'ether')
-
         gas_estimate = contract.functions.withdrawETH(amount_in_wei).estimate_gas({"from": sender_address})
         gas_price = chain_info.w3.eth.gas_price
 
@@ -388,10 +406,14 @@ def x7d_redeem(amount, chain, user_id):
             'chainId': int(chain_info.id)
         }
 
-        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+        signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
-        return f"Redeemed {amount} X7D ({chain_info.name}).\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        if receipt.status == 1:
+            return f"Redeemed {amount} X7D ({chain_info.name}) successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+        else:
+            return f"Error: Transaction failed while redeeming X7D"
 
     except Exception as e:
         return f"Error redeeming X7D ({chain_info.name}): {str(e)}"

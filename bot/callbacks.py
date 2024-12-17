@@ -207,7 +207,16 @@ async def confirm_conv(update, context):
     user_id = query.from_user.id
     callback_data = query.data.split(":")
     operation = callback_data[0]
+
+    chain_info, error_message = chains.get_info(chain)
+
+    token = chain_info.name if operation in ["mint", "redeem"] else "X7D"
     
+    message = await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=f"Attempting to {operation} {amount} {token} ({chain_info.name}), please wait..."
+        )
+
     try:
         if operation == "mint":
             chain = context.user_data.get("x7d_chain")
@@ -225,8 +234,10 @@ async def confirm_conv(update, context):
         else:
             result = "Unknown action."
 
+        await message.delete()
         await query.edit_message_text(text=result)
     except Exception as e:
+        await message.delete()
         await query.edit_message_text(text=f"An error occurred: {str(e)}")
 
     return ConversationHandler.END
@@ -270,6 +281,12 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     try:
         _, chain, loan_id = query.data.split(":")
+        chain_info, error_message = chains.get_info(chain)
+
+        message = await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=f"Attempting to liquidate {loan_id} {chain_info.name}, please wait..."
+        )
 
         result = functions.liquidate_loan(int(loan_id), chain, user_id)
 
@@ -277,12 +294,14 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.answer(result, show_alert=True)
             return
         
+        await message.delete()
         await query.edit_message_caption(
             caption=result,
             reply_markup=None 
         )
 
     except Exception as e:
+        await message.delete()
         await query.answer(f"Error during liquidation: {str(e)}", show_alert=True)
 
 
@@ -406,6 +425,11 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
+        message = await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=f"Attempting to push {contract_type}, please wait..."
+        )
+
         if contract_type == "hub":
             result = functions.splitter_push(contract_type, splitter_address, chain, user_id, token_address)
         else:
@@ -415,11 +439,13 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.answer(result, show_alert=True)
             return
 
+        await message.delete()
         await context.bot.send_message(
             chat_id=query.message.chat_id,
             text=result
         )
     except Exception as e:
+        await message.delete()
         await query.answer(f"Error during {splitter_name} push: {str(e)}", show_alert=True)
 
 
@@ -475,7 +501,7 @@ async def x7d_start(update, context):
     context.user_data["x7d_chain"] = chain
 
     await query.message.reply_text(
-        text=f"How much do you want to {action} on {chain_info.name.upper()}? Please reply with the amount (e.g., `0.5`).",
+        text=f"How much do you want to {action} on {chain_info.name}? Please reply with the amount (e.g., `0.5`).",
     )
 
     return X7D_AMOUNT
@@ -511,7 +537,7 @@ async def x7d_amount(update, context):
     context.user_data["x7d_amount"] = amount
 
     await update.message.reply_text(
-        text=f"Are you sure you want to {action} {amount} {chain_info.native.upper()} on {chain_info.name.upper()}?",
+        text=f"Are you sure you want to {action} {amount} {chain_info.native.upper()} on {chain_info.name}?",
         reply_markup=InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("Yes", callback_data=f"{action}:{chain}"),
@@ -535,7 +561,7 @@ async def withdraw_start(update, context):
     context.user_data["withdraw_chain"] = chain
 
     await query.message.reply_text(
-        text=f"How much do you want to withdraw on {chain_info.name.upper()}? Please reply with the amount (e.g., `0.5`).",
+        text=f"How much do you want to withdraw on {chain_info.name}? Please reply with the amount (e.g., `0.5`).",
     )
 
     return WITHDRAW_AMOUNT
@@ -592,7 +618,7 @@ async def withdraw_address(update, context):
     context.user_data["withdraw_address"] = address
 
     await update.message.reply_text(
-        f"Are you sure you want to {action} {amount} {chain_info.native.upper()} on {chain_info.name.upper()} to the following address?\n\n"
+        f"Are you sure you want to {action} {amount} {chain_info.native.upper()} on {chain_info.name} to the following address?\n\n"
         f"`{address}`",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([
