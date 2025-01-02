@@ -2266,7 +2266,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             photo=tools.get_random_pioneer(),
             caption=
                 f"*X7 Finance Lending Pool Info ({chain_info.name})*\n"
-                f"use `/loans all` for all chains\n\n"
+                f"use `/pool all` for all chains\n\n"
                 f"Lending Pool:\n"
                 f'{lpool:,.3f} {chain_info.native.upper()} (${lpool_dollar:,.0f})\n\n'
                 f"Lending Pool Reserve:\n"
