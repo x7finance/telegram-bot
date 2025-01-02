@@ -43,8 +43,10 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
         chain_id = chains.active_chains()[chain].id
         token_address = str(search.lower())
         if token_address in scan:
-            
-            token_name = scan[token_address]["token_name"]
+            if "token_name" in scan[token_address]:
+                token_name = f"({scan[token_address]['token_name']})"
+            else:
+                token_name = ""
             if "token_symbol" in scan[token_address]:
                 token_symbol = f"({scan[token_address]['token_symbol']})"
             else:

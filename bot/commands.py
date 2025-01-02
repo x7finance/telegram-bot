@@ -1141,7 +1141,7 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(chunk, parse_mode="Markdown")
             return
         
-    if arg == "pr":
+    elif arg == "pr":
         pr = github.get_pull_requests()
 
         await update.message.reply_photo(
@@ -2456,7 +2456,6 @@ async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Use this command in private!",
             parse_mode="Markdown"
         )
-
 
 
 async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):

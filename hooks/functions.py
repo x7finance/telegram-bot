@@ -60,8 +60,6 @@ def estimate_gas(chain, function, loan_id = None):
         return f"{eth_cost / 10**9:.4f} {chain_info.native.upper()} (${dollar_cost:.2f})"
 
     chain_info, error_message = chains.get_info(chain)
-    if not chain_info:
-        return "Invalid chain or chain information unavailable."
 
     gas_price = chain_info.w3.eth.gas_price / 10**9
     eth_price = etherscan.get_native_price(chain)
