@@ -218,6 +218,8 @@ TESTNETS = {
 
 GAS_CHAINS = ["eth", "poly", "bsc"]
 
+ETH_CHAINS = {"eth", "base", "arb", "op", "eth-sepolia", "base-sepolia"}
+
 
 def active_chains():
     if tools.is_local():

@@ -1414,9 +1414,8 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
-    chain_lpool = ca.LPOOL(chain)
     contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool")
+        address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)), abi=abis.read("lendingpool")
     )
 
     reward = contract.functions.liquidationReward().call() / 10 ** 18
@@ -2170,30 +2169,35 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
 
 
 async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
+    chain = " ".join(context.args).lower() or None
 
     message = await update.message.reply_text("Getting Lending Pool Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
-    if chain == "all":
+    if not chain:
         pool_text = ""
         total_lpool_reserve_dollar = 0
         total_lpool_dollar = 0
         total_dollar = 0
+        eth_price = None 
+
         for chain in chains.active_chains():
             native = chains.active_chains()[chain].native.lower()
             chain_name = chains.active_chains()[chain].name
-            chain_lpool = ca.LPOOL(chain)
             try:
-                price = etherscan.get_native_price(chain)
+                if chain in chains.ETH_CHAINS and eth_price is None:
+                    eth_price = etherscan.get_native_price(chain)
+                native_price = eth_price if chain in chains.ETH_CHAINS else etherscan.get_native_price(chain)
+
                 lpool_reserve = etherscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
-                lpool = etherscan.get_native_balance(chain_lpool, chain)
+                lpool = etherscan.get_native_balance(ca.LPOOL(chain), chain)
             except Exception:
-                price = 0
+                native_price = 0
                 lpool_reserve = 0
                 lpool = 0
-            lpool_reserve_dollar = lpool_reserve * price
-            lpool_dollar = lpool * price
+
+            lpool_reserve_dollar = lpool_reserve * native_price
+            lpool_dollar = lpool * native_price
             pool = lpool_reserve + lpool
             dollar = lpool_reserve_dollar + lpool_dollar
             pool_text += f'{chain_name}:   {pool:,.3f} {native.upper()} (${dollar:,.0f})\n'
@@ -2229,11 +2233,10 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(error_message)
             return
         
-        chain_lpool = ca.LPOOL(chain)
         native_price = etherscan.get_native_price(chain)
         lpool_reserve = etherscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
         lpool_reserve_dollar = lpool_reserve * native_price
-        lpool = etherscan.get_native_balance(chain_lpool, chain)
+        lpool = etherscan.get_native_balance(ca.LPOOL(chain), chain)
         lpool_dollar = lpool * native_price
         pool = lpool_reserve + lpool
         dollar = lpool_reserve_dollar + lpool_dollar
@@ -2265,8 +2268,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=
-                f"*X7 Finance Lending Pool Info ({chain_info.name})*\n"
-                f"use `/pool all` for all chains\n\n"
+                f"*X7 Finance Lending Pool Info ({chain_info.name})*\n\n"
                 f"Lending Pool:\n"
                 f'{lpool:,.3f} {chain_info.native.upper()} (${lpool_dollar:,.0f})\n\n'
                 f"Lending Pool Reserve:\n"
@@ -3107,11 +3109,10 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
-    chain_lpool = ca.LPOOL(chain)
     native_price = etherscan.get_native_price(chain)
     lpool_reserve = etherscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
     lpool_reserve_dollar = lpool_reserve * native_price
-    lpool = etherscan.get_native_balance(chain_lpool, chain)
+    lpool = etherscan.get_native_balance(ca.LPOOL(chain), chain)
     lpool_dollar = lpool * native_price
     dollar = lpool_reserve_dollar + lpool_dollar
     supply = lpool_reserve + lpool
