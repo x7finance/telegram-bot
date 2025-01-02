@@ -1261,7 +1261,7 @@ async def leaderboard(update: Update, context: CallbackContext):
     else:
 
         await update.message.reply_text(
-                f"*X7 Finance Fastest Pioneer 2024 Leaderboard\n(Top 10)\n\n*"
+                f"*X7 Finance Fastest Pioneer 2025 Leaderboard\n\n*"
                 f"{tools.escape_markdown(board)}\n"
                 f"Total clicks: *{click_counts_total}*\n"
                 f"Fastest Click:\n{fastest_time} seconds\nby {tools.escape_markdown(fastest_user)}\n\n"
