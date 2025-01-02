@@ -1261,7 +1261,7 @@ async def leaderboard(update: Update, context: CallbackContext):
     else:
 
         await update.message.reply_text(
-                f"*X7 Finance Fastest Pioneer 2024 Leaderboard\n(Top 10)\n\n*"
+                f"*X7 Finance Fastest Pioneer 2025 Leaderboard\n\n*"
                 f"{tools.escape_markdown(board)}\n"
                 f"Total clicks: *{click_counts_total}*\n"
                 f"Fastest Click:\n{fastest_time} seconds\nby {tools.escape_markdown(fastest_user)}\n\n"
@@ -2266,7 +2266,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             photo=tools.get_random_pioneer(),
             caption=
                 f"*X7 Finance Lending Pool Info ({chain_info.name})*\n"
-                f"use `/loans all` for all chains\n\n"
+                f"use `/pool all` for all chains\n\n"
                 f"Lending Pool:\n"
                 f'{lpool:,.3f} {chain_info.native.upper()} (${lpool_dollar:,.0f})\n\n'
                 f"Lending Pool Reserve:\n"
