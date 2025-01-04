@@ -239,7 +239,9 @@ async def pair_alert(event, chain):
         status = "Scan Unavailable"
     
     liq_data = dextools.get_liquidity(event['args']['pair'], chain)
-    if liq_data["total"] == "N/A":
+    if liq_data is None or "total" not in liq_data:
+        liq = "Unknown"
+    elif liq_data["total"] == "N/A":
         liq = "Unknown"
     else:
         liq = liq_data["total"]
