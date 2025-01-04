@@ -59,7 +59,7 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(result)
 
 
-async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
         status = []

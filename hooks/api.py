@@ -63,10 +63,10 @@ class Dune:
         self.volume_timestamp = datetime.now().timestamp()
         self.volume_last_date = datetime.fromtimestamp(self.volume_timestamp).strftime("%Y-%m-%d %H:%M:%S")
 
-        self.trending_text = {}
-        self.trending_flag = {}
-        self.trending_timestamp = {}
-        self.trending_last_date = {}
+        self.top_text = {}
+        self.top_flag = {}
+        self.top_timestamp = {}
+        self.top_last_date = {}
 
 
     def make_api_url(self, module, action, identifier):
@@ -109,31 +109,31 @@ class Dune:
             response.raise_for_status()
 
 
-    async def get_trending_tokens(self, chain):
+    async def get_top_tokens(self, chain):
         chain_info, error_message = chains.get_info(chain) if chain else (None, None)
         if error_message:
             return error_message
         chain_name = "ethereum" if chain == "eth" else (chain_info.name.lower() if chain_info else "all")
         chain_name_title = f"({chain_info.name.upper()})" if chain_info else "(All chains)"
 
-        if chain_name.upper() not in self.trending_flag:
-            self.trending_text[chain_name.upper()] = ""
-            self.trending_flag[chain_name.upper()] = False
-            self.trending_timestamp[chain_name.upper()] = datetime.now().timestamp()
-            self.trending_last_date[chain_name.upper()] = datetime.fromtimestamp(
-                self.trending_timestamp[chain_name.upper()]
+        if chain_name.upper() not in self.top_flag:
+            self.top_text[chain_name.upper()] = ""
+            self.top_flag[chain_name.upper()] = False
+            self.top_timestamp[chain_name.upper()] = datetime.now().timestamp()
+            self.top_last_date[chain_name.upper()] = datetime.fromtimestamp(
+                self.top_timestamp[chain_name.upper()]
             ).strftime("%Y-%m-%d %H:%M:%S")
 
-        if datetime.now().timestamp() - self.trending_timestamp[chain_name.upper()] < self.time_allowed and self.trending_text[chain_name.upper()]:
-            next_update_time = self.trending_timestamp[chain_name.upper()] + self.time_allowed
+        if datetime.now().timestamp() - self.top_timestamp[chain_name.upper()] < self.time_allowed and self.top_text[chain_name.upper()]:
+            next_update_time = self.top_timestamp[chain_name.upper()] + self.time_allowed
             remaining_time = max(0, int(next_update_time - datetime.now().timestamp()))
             hours, remainder = divmod(remaining_time, 3600)
             minutes, seconds = divmod(remainder, 60)
             time_remaining_text = f"Next update available in: {hours}h {minutes}m {seconds}s"
 
             return (
-                    f'{self.trending_text[chain_name.upper()]}'
-                    f'Last Updated: {self.trending_last_date[chain_name.upper()]}\n'
+                    f'{self.top_text[chain_name.upper()]}'
+                    f'Last Updated: {self.top_last_date[chain_name.upper()]}\n'
                     f'{time_remaining_text}'
             )
 
@@ -145,7 +145,7 @@ class Dune:
             except ValueError:
 
                 return (
-                    f'*Xchange Trending {chain_name_title}*\n\n'
+                    f'*Xchange Top Pairs {chain_name_title}*\n\n'
                     f'Unable to get Dune data, please use the link below'
                     )
 
@@ -156,7 +156,7 @@ class Dune:
         if not response_data or 'result' not in response_data:
 
             return (
-                f'*Xchange Trending {chain_name_title}*\n\n'
+                f'*Xchange Top Pairs {chain_name_title}*\n\n'
                 f'Unable to get Dune data, please use the link below'
                 )
 
@@ -179,32 +179,32 @@ class Dune:
         ]
 
         sorted_rows = sorted(valid_rows, key=lambda x: x.get('last_24hr_amt', 0), reverse=True)
-        top_trending = sorted_rows[:3] if len(sorted_rows) >= 3 else sorted_rows
+        top_pairs = sorted_rows[:3] if len(sorted_rows) >= 3 else sorted_rows
 
-        trending_text = f"*Xchange Trending Pairs {chain_name_title}*\n\n"
+        top_text = f"*Xchange Top Pairs {chain_name_title}*\n\n"
 
-        if not any(item.get("pair") for item in top_trending):
+        if not any(item.get("pair") for item in top_pairs):
 
             return (
-                f'*Xchange Trending {chain_name_title}*\n\n'
+                f'*Xchange Top Pairs {chain_name_title}*\n\n'
                 f'Unable to get Dune data, please use the link below'
                 )
         
-        for idx, item in enumerate(top_trending, start=1):
+        for idx, item in enumerate(top_pairs, start=1):
             pair = item.get("pair")
             last_24hr_amt = item.get("last_24hr_amt")
             blockchain = item.get("blockchain")
             if pair and last_24hr_amt:
-                trending_text += f'{idx}. {pair} ({blockchain.upper()})\n24 Hour Volume: ${last_24hr_amt:,.0f}\n\n'
+                top_text += f'{idx}. {pair} ({blockchain.upper()})\n24 Hour Volume: ${last_24hr_amt:,.0f}\n\n'
     
-        self.trending_flag[chain_name.upper()] = True
-        self.trending_text[chain_name.upper()] = trending_text
-        self.trending_timestamp[chain_name.upper()] = datetime.now().timestamp()
-        self.trending_last_date[chain_name.upper()] = datetime.fromtimestamp(
-            self.trending_timestamp[chain_name.upper()]
+        self.top_flag[chain_name.upper()] = True
+        self.top_text[chain_name.upper()] = top_text
+        self.top_timestamp[chain_name.upper()] = datetime.now().timestamp()
+        self.top_last_date[chain_name.upper()] = datetime.fromtimestamp(
+            self.top_timestamp[chain_name.upper()]
         ).strftime("%Y-%m-%d %H:%M:%S")
 
-        return trending_text
+        return top_text
     
 
     async def get_volume(self):
@@ -500,7 +500,7 @@ class Dextools:
                 else:
                     fdv = data["data"].get("fdv", 0)
                     if fdv is not None:
-                        formatted_mcap = f'${fdv:,.0f} (FDV)'
+                        formatted_mcap = f'${fdv:,.0f}'
                     else:
                         formatted_mcap = None
 

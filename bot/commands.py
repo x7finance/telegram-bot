@@ -1041,7 +1041,7 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 [
                     InlineKeyboardButton(
-                        text=chain_info.scan_name,
+                        text=f"{chain_info.scan_name} Contract",
                         url=chain_info.scan_address + ca.LIQUIDITY_TREASURY(chain)
                     )
                 ]
@@ -1250,7 +1250,7 @@ async def leaderboard(update: Update, context: CallbackContext):
         clicks_needed = settings.CLICK_ME_BURN - (click_counts_total % settings.CLICK_ME_BURN)
 
         await update.message.reply_text(
-                f"*X7 Finance Fastest Pioneer 2024 Leaderboard\n(Top 10)\n\n*"
+                f"*X7 Finance Fastest Pioneer 2025 Leaderboard\n\n*"
                 f"{tools.escape_markdown(board)}\n"
                 f"Total clicks: *{click_counts_total}*\n"
                 f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
@@ -1421,6 +1421,11 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reward = contract.functions.liquidationReward().call() / 10 ** 18
     escrow = contract.functions.liquidationEscrow().call() / 10 ** 18
 
+    if escrow > 0:
+        live_loans = escrow/reward
+    else:
+        live_loans = 0
+    
     if loan_id is None:
         message = await update.message.reply_text("Getting Liquidation Info, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
@@ -1444,9 +1449,9 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 continue
 
         liquidatable_loans_text = (
-            f"Liquidation reward per loan: {reward} {chain_info.native.upper()}\n"
-            f"Current liquidation escrow: {escrow} {chain_info.native.upper()}\n"
-            f"Current liquidatable loans: {liquidatable_loans}"
+            f"Liquidation reward: {reward} {chain_info.native.upper()}\n"
+            f"Live loans: {live_loans:.0f}\n"
+            f"Liquidatable loans: {liquidatable_loans}"
         )
 
         if liquidatable_loans > 0:
@@ -1506,6 +1511,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         loan_text = ""
         total = 0
+        total_live = 0
 
         for chain in chains.active_chains():
             chain_info, error_message = chains.get_info(chain)
@@ -1513,7 +1519,10 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)),
                 abi=abis.read("lendingpool"),
             )
+
             amount = contract.functions.nextLoanID().call() - 1
+            live_loans = contract.functions.liquidationEscrow().call() / contract.functions.liquidationReward().call()
+            
             latest_loan_text = ""
 
             if chain != "eth":
@@ -1524,9 +1533,11 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 latest_loan = amount
 
             if amount != 0:
-                latest_loan_text = f"- Latest loanID:   `{latest_loan}`"
+                latest_loan_text = f"- Latest ID:   `{latest_loan}`"
 
-            loan_text += f"{chain_info.name}:   `{amount}`  {latest_loan_text}\n"
+            loan_text += f"{chain_info.name}:   `{live_loans:.0f}`/`{amount}`   {latest_loan_text}\n"
+            
+            total_live += live_loans
             total += amount
 
         await message.delete()
@@ -1535,7 +1546,8 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             caption=(
                 f"*X7 Finance Loan Count*\n\n"
                 f"{loan_text}\n"
-                f"TOTAL:  `{total}`"
+                f"Total:  `{total}`\n"
+                f"Total Live: `{total_live:.0f}`"
             ),
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
@@ -1726,7 +1738,7 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 [
                     InlineKeyboardButton(
-                        text=chain_info.scan_name,
+                        text=f"{chain_info.scan_name} Contract",
                         url=chain_info.scan_address + ca.TIME_LOCK(chain)
                     )
                 ]
@@ -1776,12 +1788,7 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"*X7 Finance Market Cap Info ({chain_info.name})*\n\n"
             f'`X7R: `            {caps[ca.X7R(chain)]}\n'
             f'`X7DAO:`         {caps[ca.X7DAO(chain)]}\n'
-            f'`X7101:`         {caps[ca.X7101(chain)]}\n'
-            f'`X7102:`         {caps[ca.X7102(chain)]}\n'
-            f'`X7103:`         {caps[ca.X7103(chain)]}\n'
-            f'`X7104:`         {caps[ca.X7104(chain)]}\n'
-            f'`X7105:`         {caps[ca.X7105(chain)]}\n\n'
-            f'`Constellations Combined:` ${total_cons:,.0f}\n'
+            f'`X7100:`         ${total_cons:,.0f}\n\n'
             f'`Total Market Cap:` ${total_mcap:,.0f}',
         parse_mode="Markdown"
     )
@@ -2761,6 +2768,31 @@ async def time_command(update: Update, context: CallbackContext):
         )
 
 
+async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chain = " ".join(context.args).lower()
+
+    message = await update.message.reply_text("Getting Xchange Top Pairs Info, Please wait...")
+    await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
+    top_text = await dune.get_top_tokens(chain)
+
+    await message.delete()
+    await update.message.reply_photo(
+        photo=tools.get_random_pioneer(),
+        caption=top_text,
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        text="X7 Dune Dashboard", url=urls.DUNE
+                    )
+                ]
+            ]
+        )
+    )
+
+
 async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
     chain_info, error_message = chains.get_info(chain)
@@ -2803,31 +2835,6 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     InlineKeyboardButton(
                         text="DAO Multi-sig Wallet",
                         url=chain_info.scan_address + chain_info.dao_multi
-                    )
-                ]
-            ]
-        )
-    )
-
-
-async def trending(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower()
-
-    message = await update.message.reply_text("Getting Trending Info, Please wait...")
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
-
-    trending_text = await dune.get_trending_tokens(chain)
-
-    await message.delete()
-    await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
-        caption=trending_text,
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="X7 Dune Dashboard", url=urls.DUNE
                     )
                 ]
             ]
@@ -3138,7 +3145,7 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ],
                 [
                     InlineKeyboardButton(
-                        text=chain_info.scan_name,
+                        text=f"{chain_info.scan_name} Contract",
                         url=chain_info.scan_token + ca.X7D(chain)
                     )
                 ]
@@ -3198,7 +3205,7 @@ async def x7_token(update: Update, context: ContextTypes.DEFAULT_TYPE, token_nam
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton(text=chain_info.scan_name, url=chain_info.scan_token + token_ca(chain))],
+                [InlineKeyboardButton(text=f"{chain_info.scan_name} Contract", url=chain_info.scan_token + token_ca(chain))],
                 [InlineKeyboardButton(text="Chart", url=urls.DEX_TOOLS(chain_info.dext, pair))],
                 [InlineKeyboardButton(text="Buy", url=urls.XCHANGE_BUY(chain_info.id, token_ca(chain)))]
             ]
