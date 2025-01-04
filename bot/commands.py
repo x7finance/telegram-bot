@@ -1,12 +1,11 @@
-from telegram import *
-from telegram.ext import *
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
+from telegram.ext import CallbackContext, ContextTypes
 
 import math, os, pytz, random, re, requests, time
 from datetime import datetime
-from web3.exceptions import ContractLogicError
 from eth_account import Account
-
 from PIL import Image, ImageDraw, ImageFont
+
 from constants import abis, ca, chains, dao, nfts, settings, splitters, tax, text, tokens, urls  
 from hooks import api, db, functions, tools
 import pricebot
@@ -1489,7 +1488,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if not can or can == 0:
                     await update.message.reply_text(f"Loan {loan_id} is not eligible for liquidation")
                     return
-            except ContractLogicError:
+            except Exception:
                 await update.message.reply_text(f"Loan {loan_id} is not eligible for liquidation")
                 return
 

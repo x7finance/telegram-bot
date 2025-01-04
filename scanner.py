@@ -118,7 +118,7 @@ async def loan_alert(event, chain):
     try:
         image_url = defined.get_token_image(token, chain)
         im2 = Image.open(requests.get(image_url, stream=True).raw).convert("RGBA")
-    except:
+    except Exception:
         im2 = Image.open(chain_info.logo).convert("RGBA")
         
     im1.paste(im2, (700, 20), im2)
@@ -248,7 +248,7 @@ async def pair_alert(event, chain):
     try:
         image_url = defined.get_token_image(token_address, chain)
         im2 = Image.open(requests.get(image_url, stream=True).raw).convert("RGBA")
-    except:
+    except Exception:
         im2 = Image.open(chain_info.logo).convert("RGBA")
     
     im1.paste(im2, (700, 20), im2)

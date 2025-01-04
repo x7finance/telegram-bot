@@ -139,7 +139,7 @@ def is_eth(address):
 
     try:
         return is_checksum_address(address) or address.lower() == to_checksum_address(address.lower()).lower()
-    except:
+    except Exception:
         return False
 
 

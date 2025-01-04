@@ -1,5 +1,11 @@
-from telegram import *
-from telegram.ext import *
+from telegram import (
+    ChatMember,
+    ChatMemberUpdated,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Update
+)
+from telegram.ext import ContextTypes
 
 import random, time
 from typing import Optional, Tuple

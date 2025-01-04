@@ -1,5 +1,5 @@
-from telegram import *
-from telegram.ext import *
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
 
 import os, requests, tweepy
 from datetime import datetime, timedelta

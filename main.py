@@ -1,11 +1,25 @@
-from telegram import *
-from telegram.ext import *
+from telegram import Message, Update
+from telegram.ext import (
+    ApplicationBuilder,
+    CallbackContext,
+    CallbackQueryHandler,
+    ChatMemberHandler,
+    CommandHandler,
+    ConversationHandler,
+    ContextTypes,
+    filters, 
+    MessageHandler
+    )
 
 import os, sys, sentry_sdk,subprocess
+from telegram.warnings import PTBUserWarning
+from warnings import filterwarnings
 
 from bot import admin, auto, callbacks, commands
 from constants import settings, urls
 from hooks import db, tools
+
+filterwarnings(action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning)
 
 application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 job_queue = application.job_queue

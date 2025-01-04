@@ -1,5 +1,5 @@
-from telegram import *
-from telegram.ext import *
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
 
 from hooks import api, tools
 from constants import ca, chains, tokens, urls
