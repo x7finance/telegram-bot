@@ -1240,35 +1240,32 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def leaderboard(update: Update, context: CallbackContext):
     board = db.clicks_get_leaderboard()
     click_counts_total = db.clicks_get_total()
-    fastest = db.clicks_fastest_time()
-    fastest_user = fastest[0]
-    fastest_time = fastest[1]
-    streak = db.clicks_check_highest_streak()
-    streak_user, streak_value = streak
+    fastest_user, fastest_time = db.clicks_fastest_time()
+    streak_user, streak_value = db.clicks_check_highest_streak()
+    year = datetime.now().year
 
-    if db.settings_get('burn'):
-        clicks_needed = settings.CLICK_ME_BURN - (click_counts_total % settings.CLICK_ME_BURN)
+    burn_active = db.settings_get('burn')
+    clicks_needed = (
+        settings.CLICK_ME_BURN - (click_counts_total % settings.CLICK_ME_BURN)
+        if burn_active else None
+    )
 
-        await update.message.reply_text(
-                f"*X7 Finance Fastest Pioneer 2025 Leaderboard\n\n*"
-                f"{tools.escape_markdown(board)}\n"
-                f"Total clicks: *{click_counts_total}*\n"
-                f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
-                f"Fastest Click:\n{fastest_time} seconds\nby {tools.escape_markdown(fastest_user)}\n\n"
-                f"{tools.escape_markdown(streak_user)} clicked the button last and is on a *{streak_value}* click streak!",
-            parse_mode="Markdown"
-        )
-    else:
+    message = (
+        f"*X7 Finance Fastest Pioneer {year} Leaderboard*\n\n"
+        f"{tools.escape_markdown(board)}\n"
+        f"Total clicks: *{click_counts_total}*\n"
+        + (f"Clicks till next X7R Burn: *{clicks_needed}*\n" if burn_active else "") +
+        f"\nFastest click:\n"
+        f"{fastest_time:,.3f} seconds\n"
+        f"by @{tools.escape_markdown(fastest_user)}\n\n"
+        f"@{tools.escape_markdown(streak_user)} clicked the button last and is on a *{streak_value}* click streak!"
+    )
 
-        await update.message.reply_text(
-                f"*X7 Finance Fastest Pioneer 2025 Leaderboard\n\n*"
-                f"{tools.escape_markdown(board)}\n"
-                f"Total clicks: *{click_counts_total}*\n"
-                f"Fastest Click:\n{fastest_time} seconds\nby {tools.escape_markdown(fastest_user)}\n\n"
-                f"{tools.escape_markdown(streak_user)} clicked the button last and is on a *{streak_value}* click streak!",
-            parse_mode="Markdown"
-        )
-    
+    await update.message.reply_text(
+        message,
+        parse_mode="Markdown"
+    )
+
 
 async def links(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [

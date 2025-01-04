@@ -113,36 +113,31 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.bot_data["first_user_clicked"] = True
 
             user_data = db.clicks_get_by_name(user_info)
-            clicks = user_data[0]
-            streak = user_data[2]
+            clicks, _, streak = user_data
             total_click_count = db.clicks_get_total()
+            burn_active = db.settings_get('burn')
 
             if clicks == 1:
-                click_message = "🎉🎉 This is their first button click! 🎉🎉"
+                user_count_message = "🎉🎉 This is their first button click! 🎉🎉"
             elif clicks % 10 == 0:
-                click_message = f"🎉🎉 They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak! 🎉🎉"
+                user_count_message = f"🎉🎉 They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak! 🎉🎉"
             else:
-                click_message = f"They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak!"
+                user_count_message = f"They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak!"
 
             if db.clicks_check_is_fastest(time_taken):
-                click_message += f"\n\n🎉🎉 {time_taken:.3f} seconds is the new fastest time! 🎉🎉"
+                user_count_message += f"\n\n🎉🎉 {time_taken:.3f} seconds is the new fastest time! 🎉🎉"
 
-            if db.settings_get('burn'):
+            message_text = (
+                f"@{tools.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
+                f"{user_count_message}\n\n"
+                f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
+            )
+
+            if burn_active:
                 clicks_needed = settings.CLICK_ME_BURN - (total_click_count % settings.CLICK_ME_BURN)
-                message_text = (
-                    f"{tools.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
-                    f"{click_message}\n\n"
-                    f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
-                    f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
-                    f"use `/leaderboard` to see the fastest Pioneers!\n\n"
-                )
-            else:
-                message_text = (
-                    f"{tools.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
-                    f"{click_message}\n\n"
-                    f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
-                    f"use `/leaderboard` to see the fastest Pioneers!\n\n"
-                )
+                message_text += f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
+
+            message_text += "use `/leaderboard` to see the fastest Pioneers!"
 
             photos = await context.bot.get_user_profile_photos(update.effective_user.id, limit=1)
             if photos and photos.photos and photos.photos[0]:
@@ -160,7 +155,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode="Markdown"
                 )
 
-            if db.settings_get('burn') and total_click_count % settings.CLICK_ME_BURN == 0:
+            if burn_active and total_click_count % settings.CLICK_ME_BURN == 0:
                 burn_message = await functions.burn_x7r(settings.burn_amount(), "eth")
                 await context.bot.send_message(
                     chat_id=update.effective_chat.id,
@@ -168,7 +163,6 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
 
             context.bot_data['clicked_id'] = clicked.message_id
-
             settings.RESTART_TIME = datetime.now().timestamp()
             settings.BUTTON_TIME = settings.random_button_time()
             job_queue.run_once(
