@@ -865,6 +865,29 @@ class Defined:
             return None
 
 
+class GoPlus:
+    def __init__(self):
+        self.url = "https://api.gopluslabs.io/api/v1/"
+
+
+    def get_security_scan(self, token, chain):
+        chain_info = chains.active_chains()[chain]
+        endpoint = f"token_security/{chain_info.id}?contract_addresses={token}"
+        
+        try:
+            response = requests.get(self.url + endpoint)
+            data = response.json()
+            if response.status_code == 200:
+                if "result" in data and data["result"]:
+                    return data["result"]
+                else:
+                    return None
+            else:
+                return None
+        except Exception as e:
+            return None
+        
+
 class WarpcastApi:
     def __init__(self):
         self.client = Warpcast(mnemonic=os.getenv("WARPCAST_API_KEY"))

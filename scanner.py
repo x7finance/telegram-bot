@@ -17,6 +17,7 @@ sentry_sdk.init(
 defined = api.Defined()
 dextools = api.Dextools()
 etherscan = api.Etherscan()
+goplus = api.GoPlus()
 
 channels = [
     (urls.TG_MAIN_CHANNEL_ID, None, urls.TG_ALERTS),
@@ -213,7 +214,7 @@ async def pair_alert(event, chain):
     renounced = ""
     tax = ""
     try:
-        scan = tools.get_scan(token_address, chain)
+        scan = goplus.get_security_scan(token_address, chain)
         token_address_str  = str(token_address).lower()
         if "owner_address" in scan[token_address_str]:
             if scan[token_address_str]["owner_address"] == "0x0000000000000000000000000000000000000000":

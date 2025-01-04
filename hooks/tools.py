@@ -1,5 +1,5 @@
 from eth_utils import is_checksum_address, to_checksum_address
-import random, re, requests, socket
+import random, re, socket
 from datetime import datetime
 
 from constants import ca, chains, urls
@@ -96,13 +96,6 @@ def get_random_pioneer():
     return f"{urls.PIONEERS}{number}.png"
 
 
-def get_scan(token: str, chain: str) -> dict:
-    chain_info = chains.active_chains()[chain]
-    url = f"https://api.gopluslabs.io/api/v1/token_security/{chain_info.id}?contract_addresses={token}"
-    response = requests.get(url)
-    return response.json()["result"]
-
-
 def get_time_difference(timestamp):
     timestamp_int = int(timestamp)
     current_time = datetime.now()
@@ -137,8 +130,6 @@ def get_time_difference(timestamp):
         return "just now" if not is_future else "in a moment"
 
 
-
-
 def is_eth(address):
     if not address.startswith("0x") or len(address) != 42:
         return False
@@ -151,9 +142,6 @@ def is_eth(address):
     except:
         return False
 
-    return True
-
-    
 
 def is_local():
     ip = socket.gethostbyname(socket.gethostname())

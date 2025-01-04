@@ -8,6 +8,7 @@ coingecko = api.CoinGecko()
 defined = api.Defined()
 dextools = api.Dextools()
 etherscan = api.Etherscan()
+goplus = api.GoPlus()
 
 
 async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, chain):
@@ -30,7 +31,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
     if tools.is_eth(search):
         if chain == None:
             for chain in chains.active_chains():
-                scan = tools.get_scan(search, chain)
+                scan = goplus.get_security_scan(search, chain)
                 if scan:
                     break
             else:
@@ -39,12 +40,17 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 )
                 return
         else:
-            scan = tools.get_scan(search, chain)
+            scan = goplus.get_security_scan(search, chain)
+            if not scan:
+                await update.message.reply_text(
+                    f"No result found",
+                )
+                return
         chain_id = chains.active_chains()[chain].id
         token_address = str(search.lower())
         if token_address in scan:
             if "token_name" in scan[token_address]:
-                token_name = f"({scan[token_address]['token_name']})"
+                token_name = f"{scan[token_address]['token_name']}"
             else:
                 token_name = ""
             if "token_symbol" in scan[token_address]:
