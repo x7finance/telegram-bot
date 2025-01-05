@@ -884,7 +884,7 @@ class GoPlus:
                     return None
             else:
                 return None
-        except Exception as e:
+        except Exception:
             return None
         
 

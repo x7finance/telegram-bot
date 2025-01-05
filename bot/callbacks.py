@@ -322,14 +322,14 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "push_eco": {
             "splitter_address": ca.ECO_SPLITTER(chain),
             "splitter_name": "Ecosystem Splitter",
-            "threshold": 0.01,
+            "threshold": 0.001,
             "contract_type": "splitter",
             "balance_func": lambda contract: contract.functions.outletBalance(4).call() / 10 ** 18
         },
         "push_treasury": {
             "splitter_address": ca.TREASURY_SPLITTER(chain),
             "splitter_name": "Treasury Splitter",
-            "threshold": 0.01,
+            "threshold": 0.001,
             "contract_type": "splitter",
             "balance_func": lambda _: etherscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain)
         },

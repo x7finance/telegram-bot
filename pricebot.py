@@ -70,19 +70,22 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
 
             if "holders" in scan[token_address]:
                 top_holders = scan[token_address].get("holders", [])
+                top_holder = None
+
                 for holder in top_holders:
                     if holder.get("is_contract", 0) == 0 and holder.get("address").lower() != "0x000000000000000000000000000000000000dead":
                         top_holder = holder.get("percent")
                         break
-                    else:
-                        top_percent = "❓ Top Holder Unknown"
 
-                top_holder_str = float(top_holder)
-                formatted_top_percent = "{:.1f}".format(float(top_holder_str) * 100)
-                if top_holder_str >= 0.05:
-                    top_percent = f'⚠️ Top Holder Holds {formatted_top_percent}% of Supply'
+                if top_holder is not None:
+                    top_holder_percent = float(top_holder)
+                    formatted_top_percent = f"{top_holder_percent * 100:.1f}"
+                    if top_holder_percent >= 0.05:
+                        top_percent = f"⚠️ Top Holder Holds {formatted_top_percent}% of Supply"
+                    else:
+                        top_percent = f"✅️ Top Holder Holds {formatted_top_percent}% of Supply"
                 else:
-                    top_percent = f'✅️ Top Holder Holds {formatted_top_percent}% of Supply'
+                    top_percent = "❓ Top Holder Unknown"
             else:
                 top_percent = "❓ Top Holder - Unknown"
 

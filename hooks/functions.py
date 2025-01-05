@@ -42,7 +42,7 @@ async def burn_x7r(amount, chain):
 
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
 
         if receipt.status == 1:
             return f"{amount} X7R Burnt\n\n{chain_info.scan_tx}{tx_hash.hex()}"
@@ -155,7 +155,7 @@ def liquidate_loan(loan_id, chain, user_id):
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
             return f"Loan {loan_id} ({chain_info.name}) liquidated successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
@@ -210,7 +210,7 @@ def splitter_push(contract_type, splitter_address, chain, user_id, token_address
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
             return f"{chain_info.name} {function_string} Successful!\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
@@ -254,7 +254,7 @@ def stuck_tx(chain, user_id, gas_multiplier=1.5):
         signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
             return f"Stuck transaction successfully replaced\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
@@ -308,7 +308,7 @@ def withdraw(amount, chain, user_id, recipient_address):
         signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
             return f"Successfully withdrew {amount} {chain_info.native.upper()} ({chain_info.name})\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
@@ -356,7 +356,7 @@ def x7d_mint(amount, chain, user_id):
         signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
             return f"{amount} X7D ({chain_info.name}) minted successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
@@ -407,7 +407,7 @@ def x7d_redeem(amount, chain, user_id):
         signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
         tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
             return f"Redeemed {amount} X7D ({chain_info.name}) successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
