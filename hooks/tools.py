@@ -134,13 +134,8 @@ def is_eth(address):
     if not address.startswith("0x") or len(address) != 42:
         return False
 
-    if not re.match(r"^0x[a-fA-F0-9]{40}$", address):
-        return False
+    return bool(re.match(r"^0x[a-f0-9]{40}$", address))
 
-    try:
-        return is_checksum_address(address) or address.lower() == to_checksum_address(address.lower()).lower()
-    except Exception:
-        return False
 
 
 def is_local():

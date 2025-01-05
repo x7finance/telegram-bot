@@ -106,8 +106,8 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if token in ["x7dao", "x7r"]:
             pair_x, pair_y = pairs[0], pairs[1]
-            price_x = dextools.get_pool_price(chain, pair_x)
-            price_y = dextools.get_pool_price(chain, pair_y)
+            price_x = dextools.get_pool_price(pair_x, chain)
+            price_y = dextools.get_pool_price(pair_y, chain)
 
             if price_x and price_y:
                 price_diff = abs(price_x - price_y)
@@ -144,9 +144,9 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("Unable to retrieve prices for Xchange or Uniswap. Please try again later.")
 
         elif token in ["x7101", "x7102", "x7103", "x7104", "x7105"]:
-            price_x = dextools.get_pool_price(chain, pairs)
+            price_x = dextools.get_pool_price(pairs, chain)
             prices = {
-                t: dextools.get_pool_price(chain, tokens.TOKENS[t.upper()][chain].pairs)
+                t: dextools.get_pool_price(tokens.TOKENS[t.upper()][chain].pairs, chain)
                 for t in ["x7101", "x7102", "x7103", "x7104", "x7105"]
                 if chain in tokens.TOKENS[t.upper()]
             }

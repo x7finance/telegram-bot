@@ -427,9 +427,16 @@ class Dextools:
         self.url = f"http://public-api.dextools.io/{self.plan}/v2/"
 
 
-    def get_dex(self, pair, chain):
+    def get_audit(self, address, chain):
         chain_info = chains.active_chains()[chain]
-        endpoint = f'pool/{chain_info.dext}/{pair}'
+        endpoint = f"token/{chain_info.dext}/{address}/audit"
+        response = requests.get(self.url + endpoint, headers=self.headers)
+        return response.json()    
+
+
+    def get_dex(self, address, chain):
+        chain_info = chains.active_chains()[chain]
+        endpoint = f'pool/{chain_info.dext}/{address}'
 
         response = requests.get(self.url + endpoint, headers=self.headers)
         data = response.json()
@@ -445,9 +452,9 @@ class Dextools:
             ""
     
 
-    def get_price(self, token, chain):
+    def get_price(self, address, chain):
         chain_info = chains.active_chains()[chain]
-        endpoint = f'token/{chain_info.dext}/{token.lower()}/price'
+        endpoint = f'token/{chain_info.dext}/{address}/price'
 
         response = requests.get(self.url + endpoint, headers=self.headers)
         if response.status_code == 200:
@@ -483,9 +490,9 @@ class Dextools:
             return None, change
         
 
-    def get_token_info(self, pair, chain):
+    def get_token_info(self, address, chain):
         chain_info = chains.active_chains()[chain]
-        endpoint = f"token/{chain_info.dext}/{pair}/info"
+        endpoint = f"token/{chain_info.dext}/{address}/info"
         response = requests.get(self.url + endpoint, headers=self.headers)
 
         if response.status_code == 200:
@@ -525,7 +532,7 @@ class Dextools:
         
     def get_token_name(self, address, chain):
         chain_info = chains.active_chains()[chain]
-        endpoint = f"token/{chain_info.dext}/{address.lower()}"
+        endpoint = f"token/{chain_info.dext}/{address}"
         response = requests.get(self.url + endpoint, headers=self.headers)
         if response.status_code == 200:
             data = response.json()
@@ -549,10 +556,10 @@ class Dextools:
             }
 
 
-    def get_liquidity(self, pair, chain):
+    def get_liquidity(self, address, chain):
         chain_info = chains.active_chains()[chain]
 
-        endpoint = f'pool/{chain_info.dext}/{pair}/liquidity'
+        endpoint = f'pool/{chain_info.dext}/{address}/liquidity'
         response = requests.get(self.url + endpoint, headers=self.headers)
 
         liquidity_data = {
@@ -577,9 +584,9 @@ class Dextools:
         return liquidity_data
     
     
-    def get_pool_price(self, chain, pair):
+    def get_pool_price(self, address, chain):
         chain_info = chains.active_chains()[chain]
-        endpoint = f'pool/{chain_info.dext}/{pair}/price'
+        endpoint = f'pool/{chain_info.dext}/{address}/price'
         price = 0
         
         response = requests.get(self.url + endpoint, headers=self.headers)
@@ -862,29 +869,6 @@ class Defined:
                 return token_info.get('address')
             return None
         else:
-            return None
-
-
-class GoPlus:
-    def __init__(self):
-        self.url = "https://api.gopluslabs.io/api/v1/"
-
-
-    def get_security_scan(self, token, chain):
-        chain_info = chains.active_chains()[chain]
-        endpoint = f"token_security/{chain_info.id}?contract_addresses={token}"
-        
-        try:
-            response = requests.get(self.url + endpoint)
-            data = response.json()
-            if response.status_code == 200:
-                if "result" in data and data["result"]:
-                    return data["result"]
-                else:
-                    return None
-            else:
-                return None
-        except Exception:
             return None
         
 

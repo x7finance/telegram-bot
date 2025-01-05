@@ -17,7 +17,6 @@ sentry_sdk.init(
 defined = api.Defined()
 dextools = api.Dextools()
 etherscan = api.Etherscan()
-goplus = api.GoPlus()
 
 channels = [
     (urls.TG_MAIN_CHANNEL_ID, None, urls.TG_ALERTS),
@@ -202,39 +201,31 @@ async def pair_alert(event, chain):
     else:
         token_address = event["args"]["token0"]
         token_name = token_0_name
-    try:
-        if etherscan.get_verified(token_address, chain):
-            verified = "Contract Verified"
-        else:
-            verified = "Contract Unverified"
-    except Exception:
-        verified = "Contract Verification Unknown"
 
     status = ""
+    open_source = ""
     renounced = ""
     tax = ""
+
     try:
-        scan = goplus.get_security_scan(token_address, chain)
-        token_address_str  = str(token_address).lower()
-        if "owner_address" in scan[token_address_str]:
-            if scan[token_address_str]["owner_address"] == "0x0000000000000000000000000000000000000000":
-                renounced = "Contract Renounced"
+        token_data = dextools.get_audit(token_address, chain)
+        if "data" in token_data:
+            buy_tax_data = token_data.get("buyTax", {})
+            sell_tax_data = token_data.get("sellTax", {})
+            buy_tax = buy_tax_data.get("max", 0) * 100
+            sell_tax = sell_tax_data.get("max", 0) * 100
+            if buy_tax > 5 or sell_tax > 5:
+                tax = f"⚠️ Tax: {int(buy_tax)}/{int(sell_tax)}"
             else:
-                renounced = "Contract Not Renounced"
-        if scan[token_address_str]["is_in_dex"] == "1":
-            try:
-                buy_tax = (
-                    float(scan[token_address_str]["buy_tax"]) * 100
-                )
-                sell_tax = (
-                    float(scan[token_address_str]["sell_tax"]) * 100
-                )
-                tax = f"Tax: {int(buy_tax)}/{int(sell_tax)}"
-            except Exception:
-                tax = f"Tax: Unavailable"
-        else:
-            tax = f"Tax: Unavailable"
-        status = f"{verified}\n{tax}\n{renounced}"
+                tax = f"✅️ Tax: {int(buy_tax)}/{int(sell_tax)}"
+
+            is_open_source = token_data.get("isOpenSource", "no")
+            open_source = "✅ Contract Verified" if is_open_source == "yes" else "⚠️ Contract Not Verified"
+
+            is_renounced = token_data.get("isContractRenounced", "no")
+            renounced = "✅ Contract Renounced" if is_renounced == "yes" else "⚠️ Contract Not Renounced"
+
+        status = f"{open_source}\n{tax}\n{renounced}"
     except Exception:
         status = "Scan Unavailable"
     
