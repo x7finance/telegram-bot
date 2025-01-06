@@ -137,7 +137,6 @@ def is_eth(address):
     return bool(re.match(r"^0x[a-f0-9]{40}$", address))
 
 
-
 def is_local():
     ip = socket.gethostbyname(socket.gethostname())
     return ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"

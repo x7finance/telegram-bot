@@ -2266,7 +2266,12 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             total_borrowed = 0
             total_borrowed_dollar = 0
-            
+        
+        if total_borrowed != 0:
+            borrowed_percentage = (total_borrowed / pool) * 100
+        else:
+            borrowed_percentage = 0
+
         await message.delete()
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
@@ -2279,7 +2284,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"Total\n"
                 f'{pool:,.3f} {chain_info.native.upper()} (${dollar:,.0f})\n\n'
                 f'Total Currently Borrowed\n'
-                f'{total_borrowed:,.3f} {chain_info.native.upper()} (${total_borrowed_dollar:,.0f})',
+                f'{total_borrowed:,.3f} {chain_info.native.upper()} (${total_borrowed_dollar:,.0f}) - {borrowed_percentage:.0f}%',
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
