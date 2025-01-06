@@ -230,10 +230,9 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
-            caption=(
+            caption=
                 f"*X7 Finance Loan Rates*\n\n"
-                "Follow the /borrow command with an amount to borrow"
-            ),
+                "Follow the /borrow command with an amount to borrow",
             parse_mode="Markdown"
         )
         return
@@ -517,11 +516,10 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
-            caption=(
+            caption=
                 f"*X7 Finance Market Cap Comparison ({chain_info.name})*\n\n"
                 f"Please enter X7 token first followed by token to compare\n\n"
-                f"ie. `/compare x7r uni`"
-            ),
+                f"ie. `/compare x7r uni`",
             parse_mode="Markdown"
         )
         return
@@ -1539,12 +1537,11 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await message.delete()
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
-            caption=(
+            caption=
                 f"*X7 Finance Loan Count*\n\n"
                 f"{loan_text}\n"
                 f"Total:  `{total}`\n"
-                f"Total Live: `{total_live:.0f}`"
-            ),
+                f"Total Live: `{total_live:.0f}`",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -1667,13 +1664,12 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await message.delete()
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
-            caption=(
+            caption=
                 f"*X7 Finance Initial Liquidity Loan - {loan_id} ({chain_info.name})*\n\n"
                 f"{name}\n\n"
                 f"Payment Schedule UTC:\n{schedule_str}\n\n"
                 f"{remaining}"
-                f"{liquidation_status}"
-            ),
+                f"{liquidation_status}",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
@@ -1690,45 +1686,38 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
-        
+
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(ca.TIME_LOCK(chain)), 
         abi=etherscan.get_abi(ca.TIME_LOCK(chain), chain)
     )
-
-    x7r_pair = ca.X7R_PAIR(chain)[0]
-    x7r_timestamp = contract.functions.getTokenUnlockTimestamp(
-        chain_info.w3.to_checksum_address(x7r_pair)
-    ).call()
-    x7r_remaining_time = tools.get_time_difference(x7r_timestamp)
-    x7r_date = datetime.fromtimestamp(x7r_timestamp)
-    x7r_date_str = x7r_date.strftime('%Y-%m-%d %H:%M')
     
-    x7dao_pair = ca.X7DAO_PAIR(chain)[0]
-    x7dao_timestamp = contract.functions.getTokenUnlockTimestamp(
-        chain_info.w3.to_checksum_address(x7dao_pair)
-    ).call()
-    x7dao_remaining_time = tools.get_time_difference(x7dao_timestamp)
-    x7dao_date = datetime.fromtimestamp(x7dao_timestamp)
-    x7dao_date_str = x7dao_date.strftime('%Y-%m-%d %H:%M')
+    def get_lock_info(pair):
+        effective_timestamp = contract.functions.getTokenUnlockTimestamp(
+                chain_info.w3.to_checksum_address(pair)
+            ).call()
+        
+        remaining_time = tools.get_time_difference(effective_timestamp)
+        date = datetime.fromtimestamp(effective_timestamp)
+        return date.strftime('%Y-%m-%d %H:%M'), remaining_time
 
-    x7d_timestamp = contract.functions.getTokenUnlockTimestamp(
-        chain_info.w3.to_checksum_address(ca.X7D(chain))
-    ).call()
-    x7d_remaining_time = tools.get_time_difference(x7d_timestamp)
-    x7d_date = datetime.fromtimestamp(x7d_timestamp)
-    x7d_date_str = x7d_date.strftime('%Y-%m-%d %H:%M')
-
+    x7r_date, x7r_remaining_time = get_lock_info(ca.X7R_PAIR(chain)[0])
+    x7dao_date, x7dao_remaining_time = get_lock_info(ca.X7DAO_PAIR(chain)[0])
+    x7100_date, x7100_remaining_time = get_lock_info(ca.X7101_PAIR(chain))
+    x7d_date, x7d_remaining_time = get_lock_info(ca.X7D(chain))
+    
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
-        caption=(
+        caption=
             f"*X7 Finance Liquidity Locks ({chain_info.name})*\n\n"
             f"*X7R*\n"
-            f"{x7r_date_str}\n{x7r_remaining_time}\n\n"
+            f"{x7r_date}\n{x7r_remaining_time}\n\n"
             f"*X7DAO*\n"
-            f"{x7dao_date_str}\n{x7dao_remaining_time}\n\n"
-            f"*X7D*\n{x7d_date_str}\n{x7d_remaining_time}"
-        ),
+            f"{x7dao_date}\n{x7dao_remaining_time}\n\n"
+            f"*X7100*\n"
+            f"{x7100_date}\n{x7100_remaining_time}\n\n"
+            f"*X7D*\n"
+            f"{x7d_date}\n{x7d_remaining_time}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -3192,7 +3181,7 @@ async def x7_token(update: Update, context: ContextTypes.DEFAULT_TYPE, token_nam
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
-        caption=(
+        caption=
             f"*{token_name} Info ({chain_info.name})*\n\n"
             f"💰 Price: {price}\n"
             f'💎 Market Cap:  {market_cap}\n'
@@ -3201,8 +3190,7 @@ async def x7_token(update: Update, context: ContextTypes.DEFAULT_TYPE, token_nam
             f"👪 Holders: {holders}\n"
             f"🔝 ATH: {ath}\n\n"
             f"{price_change}\n\n"
-            f"Contract Address:\n`{token_ca(chain)}`"
-        ),
+            f"Contract Address:\n`{token_ca(chain)}`",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
