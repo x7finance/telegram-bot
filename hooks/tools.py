@@ -97,9 +97,8 @@ def get_random_pioneer():
 
 
 def get_time_difference(timestamp):
-    timestamp_int = int(timestamp)
     current_time = datetime.now()
-    timestamp_time = datetime.fromtimestamp(timestamp_int)
+    timestamp_time = datetime.fromtimestamp(timestamp)
 
     time_difference = current_time - timestamp_time
     is_future = time_difference.total_seconds() < 0
@@ -109,19 +108,22 @@ def get_time_difference(timestamp):
     seconds = time_difference.seconds
 
     months = days // 30
-    weeks = (days % 30) // 7
-    days = days % 7
+    remaining_days = days % 30
+    weeks = remaining_days // 7
+    days = remaining_days % 7
     hours, remainder = divmod(seconds, 3600)
     minutes = remainder // 60
 
     suffix = "ago" if not is_future else "from now"
 
     if months > 0:
-        return f"{months} month{'s' if months > 1 else ''} {suffix}"
-    elif weeks > 0:
-        return f"{weeks} week{'s' if weeks > 1 else ''} {suffix}"
-    elif days > 0:
-        return f"{days} day{'s' if days > 1 else ''} {suffix}"
+        month_part = f"{months} month{'s' if months > 1 else ''}"
+        day_part = f"{remaining_days} day{'s' if remaining_days > 1 else ''}" if remaining_days > 0 else ""
+        return f"{month_part}{' and ' if months > 0 and remaining_days > 0 else ''}{day_part} {suffix}"
+    elif weeks > 0 or days > 0:
+        week_part = f"{weeks} week{'s' if weeks > 1 else ''}" if weeks > 0 else ""
+        day_part = f"{days} day{'s' if days > 1 else ''}" if days > 0 else ""
+        return f"{week_part}{' and ' if weeks > 0 and days > 0 else ''}{day_part} {suffix}"
     elif hours > 0:
         return f"{hours} hour{'s' if hours > 1 else ''} {suffix}"
     elif minutes > 0:

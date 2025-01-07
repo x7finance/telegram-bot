@@ -1697,9 +1697,9 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 chain_info.w3.to_checksum_address(pair)
             ).call()
         
-        remaining_time = tools.get_time_difference(effective_timestamp)
+        when = tools.get_time_difference(effective_timestamp)
         date = datetime.fromtimestamp(effective_timestamp)
-        return date.strftime('%Y-%m-%d %H:%M'), remaining_time
+        return date.strftime('%Y-%m-%d %H:%M'), when
 
     x7r_date, x7r_remaining_time = get_lock_info(ca.X7R_PAIR(chain)[0])
     x7dao_date, x7dao_remaining_time = get_lock_info(ca.X7DAO_PAIR(chain)[0])
