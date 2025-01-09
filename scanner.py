@@ -228,14 +228,6 @@ async def pair_alert(event, chain):
         status = f"{open_source}\n{tax}\n{renounced}"
     except Exception:
         status = "Scan Unavailable"
-    
-    liq_data = dextools.get_liquidity(event['args']['pair'], chain)
-    if liq_data is None or "total" not in liq_data:
-        liq = "Unknown"
-    elif liq_data["total"] == "N/A":
-        liq = "Unknown"
-    else:
-        liq = liq_data["total"]
 
     im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")
     try:
@@ -248,7 +240,6 @@ async def pair_alert(event, chain):
 
     message = (
         f"{token_name} ({token_0_symbol}/{token_1_symbol})\n\n"
-        f"Liquidity: {liq}\n"
         f"{status}"
     )
 
