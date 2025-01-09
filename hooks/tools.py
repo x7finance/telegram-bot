@@ -29,23 +29,13 @@ def escape_markdown(text):
     return text
 
 
-def format_schedule(schedule1, schedule2, native_token):
+def format_schedule(schedule1, schedule2, native_token, isComplete):
     current_datetime = datetime.now()
     next_payment_datetime = None
     next_payment_value = None
 
-    def format_date(date):
-        return datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S")
-
-    def calculate_time_remaining_str(time_remaining):
-        days, seconds = divmod(time_remaining.total_seconds(), 86400)
-        hours, seconds = divmod(seconds, 3600)
-        minutes, seconds = divmod(seconds, 60)
-        return f"{int(days)} days, {int(hours)} hours, {int(minutes)} minutes"
-
     all_dates = sorted(set(schedule1[0] + schedule2[0]))
-
-    schedule_list = []
+    schedule = []
 
     for date in all_dates:
         value1 = next((v for d, v in zip(schedule1[0], schedule1[1]) if d == date), 0)
@@ -53,23 +43,25 @@ def format_schedule(schedule1, schedule2, native_token):
 
         total_value = value1 + value2
 
-        formatted_date = format_date(date)
+        formatted_date = datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S")
         formatted_value = total_value / 10**18
         sch = f"{formatted_date} - {formatted_value:.3f} {native_token}"
-        schedule_list.append(sch)
+        schedule.append(sch)
 
         if datetime.fromtimestamp(date) > current_datetime:
             if next_payment_datetime is None or datetime.fromtimestamp(date) < next_payment_datetime:
                 next_payment_datetime = datetime.fromtimestamp(date)
                 next_payment_value = formatted_value
 
-    if next_payment_datetime:
-        time_until_next_payment = next_payment_datetime - current_datetime
-        time_remaining_str = calculate_time_remaining_str(time_until_next_payment)
+    if isComplete:
+        schedule.append("\nLoan Complete")
+    elif next_payment_datetime:
+        time_until_next_payment_timestamp = next_payment_datetime.timestamp()
+        time_remaining_str = get_time_difference(time_until_next_payment_timestamp)
 
-        schedule_list.append(f"\nNext Payment Due:\n{next_payment_value} {native_token}\n{time_remaining_str}")
+        schedule.append(f"\nNext Payment Due:\n{next_payment_value} {native_token}\n{time_remaining_str}")
 
-    return "\n".join(schedule_list)
+    return "\n".join(schedule)
 
 
 def get_ill_number(term):
@@ -120,12 +112,14 @@ def get_time_difference(timestamp):
         month_part = f"{months} month{'s' if months > 1 else ''}"
         day_part = f"{remaining_days} day{'s' if remaining_days > 1 else ''}" if remaining_days > 0 else ""
         return f"{month_part}{' and ' if months > 0 and remaining_days > 0 else ''}{day_part} {suffix}"
-    elif weeks > 0 or days > 0:
-        week_part = f"{weeks} week{'s' if weeks > 1 else ''}" if weeks > 0 else ""
+    elif weeks > 0:
+        week_part = f"{weeks} week{'s' if weeks > 1 else ''}"
         day_part = f"{days} day{'s' if days > 1 else ''}" if days > 0 else ""
         return f"{week_part}{' and ' if weeks > 0 and days > 0 else ''}{day_part} {suffix}"
-    elif hours > 0:
-        return f"{hours} hour{'s' if hours > 1 else ''} {suffix}"
+    elif days > 0 or hours > 0:
+        day_part = f"{days} day{'s' if days > 1 else ''}" if days > 0 else ""
+        hour_part = f"{hours} hour{'s' if hours > 1 else ''}" if hours > 0 else ""
+        return f"{day_part}{' and ' if days > 0 and hours > 0 else ''}{hour_part} {suffix}"
     elif minutes > 0:
         return f"{minutes} minute{'s' if minutes > 1 else ''} {suffix}"
     else:

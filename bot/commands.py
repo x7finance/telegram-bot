@@ -1591,12 +1591,23 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     try:
-        price = etherscan.get_native_price(chain)
-        liability = contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
-        remaining = f'Remaining Liability:\n{liability} {chain_info.native.upper()} (${price * liability:,.0f})'
+        term = contract.functions.loanTermLookup(int(loan_id)).call()
+        term_contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(term),
+            abi=etherscan.get_abi(term, chain),
+        )
+
         schedule1 = contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
         schedule2 = contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
-        schedule_str = tools.format_schedule(schedule1, schedule2, chain_info.native.upper())
+        isComplete = term_contract.functions.isComplete(loan_id).call()
+
+        schedule = tools.format_schedule(schedule1, schedule2, chain_info.native.upper(), isComplete)
+
+        if not isComplete:
+            liability = contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
+            remaining = f'Total Remaining Liability:\n{liability} {chain_info.native.upper()}'
+        else:
+            remaining = ""
 
         token = contract.functions.loanToken(int(loan_id)).call()
         name = dextools.get_token_name(token, chain)["name"]
@@ -1667,7 +1678,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             caption=
                 f"*X7 Finance Initial Liquidity Loan - {loan_id} ({chain_info.name})*\n\n"
                 f"{name}\n\n"
-                f"Payment Schedule UTC:\n{schedule_str}\n\n"
+                f"Payment Schedule UTC:\n{schedule}\n\n"
                 f"{remaining}"
                 f"{liquidation_status}",
             parse_mode="Markdown",

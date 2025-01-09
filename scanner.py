@@ -87,7 +87,7 @@ async def loan_alert(event, chain):
     liability = term_contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
     schedule1 = term_contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
     schedule2 = term_contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
-    schedule_str = tools.format_schedule(schedule1, schedule2, chain_info.native.upper())
+    schedule = tools.format_schedule(schedule1, schedule2, chain_info.native.upper(), isComplete=False)
 
     index, token_by_id = 0, None
     while True:
@@ -126,7 +126,7 @@ async def loan_alert(event, chain):
         f"{token_name} ({token_symbol})\n\n"
         f"{liability} {chain_info.native.upper()}\n\n"
         f"Loan ID: {loan_id}\n\n"
-        f"Payment Schedule UTC:\n{schedule_str}"
+        f"Payment Schedule UTC:\n{schedule}"
     )
 
     i1 = ImageDraw.Draw(im1)
