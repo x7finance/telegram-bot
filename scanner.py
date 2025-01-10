@@ -202,32 +202,32 @@ async def pair_alert(event, chain):
         token_address = event["args"]["token0"]
         token_name = token_0_name
 
-    status = ""
-    open_source = ""
-    renounced = ""
-    tax = ""
 
-    try:
-        token_data = dextools.get_audit(token_address, chain)
-        if "data" in token_data:
-            buy_tax_data = token_data.get("buyTax", {})
-            sell_tax_data = token_data.get("sellTax", {})
-            buy_tax = buy_tax_data.get("max", 0) * 100
-            sell_tax = sell_tax_data.get("max", 0) * 100
-            if buy_tax > 5 or sell_tax > 5:
-                tax = f"⚠️ Tax: {int(buy_tax)}/{int(sell_tax)}"
-            else:
-                tax = f"✅️ Tax: {int(buy_tax)}/{int(sell_tax)}"
+    token_data = dextools.get_audit(token_address, chain)
+    if token_data.get("statusCode") == 200 and token_data.get("data"):
+        data = token_data["data"]
+        
+        buy_tax_data = data.get("buyTax", {})
+        sell_tax_data = data.get("sellTax", {})
+        buy_tax = buy_tax_data.get("max", 0) * 100
+        sell_tax = sell_tax_data.get("max", 0) * 100
+        if buy_tax > 5 or sell_tax > 5:
+            tax = f"⚠️ Tax: {int(buy_tax)}/{int(sell_tax)}"
+        else:
+            tax = f"✅️ Tax: {int(buy_tax)}/{int(sell_tax)}"
 
-            is_open_source = token_data.get("isOpenSource", "no")
-            open_source = "✅ Contract Verified" if is_open_source == "yes" else "⚠️ Contract Not Verified"
+        is_open_source = data.get("isOpenSource", "no")
+        open_source = "✅ Contract Verified" if is_open_source == "yes" else "⚠️ Contract Not Verified"
 
-            is_renounced = token_data.get("isContractRenounced", "no")
-            renounced = "✅ Contract Renounced" if is_renounced == "yes" else "⚠️ Contract Not Renounced"
+        is_renounced = data.get("isContractRenounced", "no")
+        renounced = "✅ Contract Renounced" if is_renounced == "yes" else "⚠️ Contract Not Renounced"
 
-        status = f"{open_source}\n{tax}\n{renounced}"
-    except Exception:
-        status = "Scan Unavailable"
+    else:
+        open_source = "❓ Contract Verification - Unknown"
+        tax = "❓ Tax - Unknown"
+        renounced = "❓ Renounced - Unknown"
+
+    status = f"{open_source}\n{tax}\n{renounced}"
 
     im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")
     try:
