@@ -57,7 +57,7 @@ def estimate_gas(chain, function, loan_id = None):
     def calculate_cost(gas_estimate):
         eth_cost = gas_price * gas_estimate
         dollar_cost = (eth_cost / 10**9) * eth_price
-        return f"{eth_cost / 10**9:.4f} {chain_info.native.upper()} (${dollar_cost:.2f})"
+        return f"{eth_cost / 10**9:.6f} {chain_info.native.upper()} (${dollar_cost:.2f})"
 
     chain_info, error_message = chains.get_info(chain)
 

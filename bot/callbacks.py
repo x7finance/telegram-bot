@@ -322,14 +322,14 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "push_eco": {
             "splitter_address": ca.ECO_SPLITTER(chain),
             "splitter_name": "Ecosystem Splitter",
-            "threshold": 0.001,
+            "threshold": 0.01 if chain.lower() == "eth" else 0.0001,
             "contract_type": "splitter",
             "balance_func": lambda contract: contract.functions.outletBalance(4).call() / 10 ** 18
         },
         "push_treasury": {
             "splitter_address": ca.TREASURY_SPLITTER(chain),
             "splitter_name": "Treasury Splitter",
-            "threshold": 0.001,
+            "threshold": 0.01 if chain.lower() == "eth" else 0.0001,
             "contract_type": "splitter",
             "balance_func": lambda _: etherscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain)
         },
@@ -414,8 +414,8 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     splitter_balance = config["balance_func"](contract)
 
-    if splitter_balance < threshold:
-        await query.answer(f"{chain_info.name} {splitter_name} has no balance to push.", show_alert=True)
+    if float(splitter_balance) < float(threshold):
+        await query.answer(f"{chain_info.name} {splitter_name} balance to low to push.", show_alert=True)
         return
 
     try:

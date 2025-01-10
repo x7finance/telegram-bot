@@ -1226,7 +1226,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=tools.get_random_pioneer(),
         caption=
             f"*{token.upper()} Liquidity Hub ({chain_info.name})*\n\n"
-            f"{eth_balance:,.3f} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
+            f"{eth_balance:,.4f} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
             f"{split_text}\n\nEstimated process fees gas cost: {cost}\n\n"
             f"{buy_back_text}",
         parse_mode="Markdown",
@@ -2603,7 +2603,7 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     eco_splitter_text = "Distribution:\n"
     eco_distribution = splitters.generate_eco_split(chain, eco_eth)
     for location, (share, percentage) in eco_distribution.items():
-        eco_splitter_text += f"{location}: {share:.3f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
+        eco_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
     treasury_splitter_text = ""
     if chain == "eth":
@@ -2611,7 +2611,7 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         treasury_splitter_text = "Distribution:\n"
         treasury_distribution = splitters.generate_treasury_split(chain, treasury_eth)
         for location, (share, percentage) in treasury_distribution.items():
-            treasury_splitter_text += f"{location}: {share:.3f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
+            treasury_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
     else:
         treasury_dollar = 0
 
@@ -2626,13 +2626,13 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     caption = (
         f"*X7 Finance Ecosystem Splitters ({chain_info.name})*\n\n"
-        f"Ecosystem Splitter\n{eco_eth:.3f} {chain_info.native.upper()} (${eco_dollar:,.0f})\n"
-        f"{eco_splitter_text}\n"
+        f"Ecosystem Splitter\n{eco_eth:.4f} {chain_info.native.upper()} (${eco_dollar:,.0f})\n"
+        f"{eco_splitter_text}"
     )
 
     if chain == "eth":
         caption += (
-            f"Treasury Splitter\n{treasury_eth:.3f} {chain_info.native.upper()} (${treasury_dollar:,.0f})\n"
+            f"\nTreasury Splitter\n{treasury_eth:.4f} {chain_info.native.upper()} (${treasury_dollar:,.0f})\n"
             f"{treasury_splitter_text}"
         )
 

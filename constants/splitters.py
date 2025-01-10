@@ -54,6 +54,10 @@ def generate_hub_split(chain, hub_address, token):
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(hub_address), abi=etherscan.get_abi(hub_address, chain)
     )
+
+    distribute, liquidity, treasury, liquidity_ratio_target, balance_threshold = ("N/A",) * 5
+    liquidity_balance, distribute_balance, treasury_balance = 0, 0, 0
+
     try:
         distribute = contract.functions.distributeShare().call() / 10
         liquidity = contract.functions.liquidityShare().call() / 10
@@ -64,24 +68,20 @@ def generate_hub_split(chain, hub_address, token):
         distribute_balance = contract.functions.distributeBalance().call() / 10 ** 18
         treasury_balance = contract.functions.treasuryBalance().call() / 10 ** 18
     except Exception:
-        distribute = "N/A"
-        liquidity = "N/A"
-        treasury = "N/A"
-        liquidity_ratio_target = "N/A"
-        balance_threshold = "N/A"
-        liquidity_balance = 0
-        distribute_balance = 0
-        treasury_balance = 0
+        pass
 
-    split_text = (
-        f"Ecosystem Share: {distribute:.0f}% - {distribute_balance:,.3f} {chain_info.native.upper()}\n"
-        f"Liquidity Share: {liquidity:.0f}% - {liquidity_balance:,.3f} {chain_info.native.upper()}\n"
-        f"Treasury Share: {treasury:.0f}% - {treasury_balance:,.3f} {chain_info.native.upper()}"
-    )
+    split = {
+        "> Ecosystem Share": f"{distribute:.0f}% - {distribute_balance:,.4f} {chain_info.native.upper()}",
+        "> Liquidity Share": f"{liquidity:.0f}% - {liquidity_balance:,.4f} {chain_info.native.upper()}",
+        "> Treasury Share": f"{treasury:.0f}% - {treasury_balance:,.4f} {chain_info.native.upper()}",
+    }
 
     threshold_text = f"Balance Threshold: {balance_threshold} {chain_info.native.upper()}"
-    
-    balance = 0
+
+    token_liquidity_balance = 0
+    auxiliary, auxiliary_balance = "N/A", 0
+    lending_pool, lending_pool_balance, liquidity_balance_threshold = "N/A", 0, "N/A"
+
     if token.upper() in tokens.TOKENS:
         token_info = tokens.TOKENS[token.upper()].get(chain)
         address = token_info.ca
@@ -91,45 +91,44 @@ def generate_hub_split(chain, hub_address, token):
         try:
             token_liquidity_balance = contract.functions.x7rLiquidityBalance().call() / 10 ** 18
         except Exception:
-            token_liquidity_balance = 0
-            
-    if token == "x7dao":
+            pass
+
+    elif token == "x7dao":
         try:
             token_liquidity_balance = contract.functions.x7daoLiquidityBalance().call() / 10 ** 18
             auxiliary = contract.functions.auxiliaryShare().call() / 10
             auxiliary_balance = contract.functions.auxiliaryBalance().call() / 10 ** 18
+            split.update({
+                "> Auxiliary Share": f"{auxiliary:.0f}% - {auxiliary_balance:,.4f} {chain_info.native.upper()}",
+            })
         except Exception:
-            token_liquidity_balance = 0
-            auxiliary = "N/A"
-            auxiliary_balance = 0
-        split_text += f"\nAuxiliary Share: {auxiliary:,.0f}% - {auxiliary_balance:,.3f} {chain_info.native.upper()}"
+            pass
 
-    if token in ["x7101", "x7102", "x7103","x7104","x7105"]:
-        token_info = tokens.TOKENS.get(token.upper(), {}).get(chain)
+    elif token in ["x7101", "x7102", "x7103", "x7104", "x7105"]:
         try:
             token_liquidity_balance = contract.functions.liquidityTokenBalance(address).call() / 10 ** 18
             lending_pool = contract.functions.lendingPoolShare().call() / 10
             lending_pool_balance = contract.functions.lendingPoolBalance().call() / 10 ** 18
             liquidity_balance_threshold = contract.functions.liquidityBalanceThreshold().call() / 10 ** 18
-        except Exception as e:
-            token_liquidity_balance = 0
-            lending_pool = "N/A"
-            lending_pool_balance = 0
-            liquidity_balance_threshold = "N/A"
-        split_text += f"\nLending Pool Share: {lending_pool:,.0f}% - {lending_pool_balance:,.3f} {chain_info.native.upper()}"
-        threshold_text += f"\nLiquidity Balance Threshold: {liquidity_balance_threshold} {chain_info.native.upper()}"
-    
-    balance_text = ""
+            split.update({
+                "> Lending Pool Share": f"{lending_pool:.0f}% - {lending_pool_balance:,.4f} {chain_info.native.upper()}",
+            })
+            threshold_text += f"\nLiquidity Balance Threshold: {liquidity_balance_threshold} {chain_info.native.upper()}"
+        except Exception:
+            pass
+
     balance = float(etherscan.get_token_balance(hub_address, address, chain)) / 10 ** 18
     balance_dollar = float(price) * float(balance)
     balance_text = f"{balance:,.0f} {token.upper()} (${balance_dollar:,.0f})"
 
+    split_text = "\n".join([f"{key}: {value}" for key, value in split.items()])
+    
     return (
         f"{balance_text}\n\n"
         f"{threshold_text}\n\n"
         f"{split_text}\n\n"
         f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
-        f"Earmarked Token Liquidity {token_liquidity_balance:,.0f} {token.upper()}"
+        f"Earmarked Token Liquidity: {token_liquidity_balance:,.0f} {token.upper()}"
     )
 
 
