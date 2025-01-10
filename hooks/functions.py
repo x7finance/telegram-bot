@@ -45,12 +45,12 @@ async def burn_x7r(amount, chain):
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
 
         if receipt.status == 1:
-            return f"{amount} X7R Burnt\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"{amount} X7R ({chain_info.name.upper()}) Burnt\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
-            return f"Error: Transaction failed while burning {amount} X7R"
+            return f"Error: Transaction failed while burning {amount} X7R ({chain_info.name.upper()})"
 
     except Exception as e:
-        return f'Error burning X7R: {e}'
+        return f'Error burning X7R ({chain_info.name.upper()}): {e}'
 
 
 def estimate_gas(chain, function, loan_id = None):
@@ -157,12 +157,12 @@ def liquidate_loan(loan_id, chain, user_id):
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
-            return f"Loan {loan_id} ({chain_info.name}) liquidated successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"Loan {loan_id} ({chain_info.name.upper()}) liquidated successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
-            return f"Error: Transaction failed while liquidating loan {loan_id} ({chain_info.name})"
+            return f"Error: Transaction failed while liquidating loan {loan_id} ({chain_info.name.upper()})"
 
     except Exception as e:
-        return f"Error liquidating loan: {str(e)}"
+        return f"Error liquidating loan ({chain_info.name.upper()}): {str(e)}"
 
 
 def splitter_push(contract_type, splitter_address, chain, user_id, token_address=None):
@@ -179,13 +179,11 @@ def splitter_push(contract_type, splitter_address, chain, user_id, token_address
 
         if contract_type == "splitter":
             function_selector = "0x11ec9d34"
-            function_string = "pushing splitter"
             function_name = "pushAll"
             function_args = []
             
         elif contract_type == "hub":
             function_selector = "0x61582eaa"
-            function_string = "processing fees"
             function_name = "processFees"
             function_args = [token_address]
 
@@ -212,12 +210,12 @@ def splitter_push(contract_type, splitter_address, chain, user_id, token_address
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
-            return f"{chain_info.name} {function_string} Successful!\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"{function_name} ({chain_info.name.upper()}) called successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
-            return f"Error: Transaction failed ({function_string}) on {chain_info.name}"
+            return f"Error: Transaction failed on {function_name} ({chain_info.name.upper()})"
 
     except Exception as e:
-        return f"Error {function_string}: {str(e)}"
+        return f"Error on {function_name} ({chain_info.name.upper()}): {str(e)}"
 
 
 def stuck_tx(chain, user_id, gas_multiplier=1.5):
@@ -256,12 +254,12 @@ def stuck_tx(chain, user_id, gas_multiplier=1.5):
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
-            return f"Stuck transaction successfully replaced\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"Stuck transaction successfully replaced ({chain_info.name.upper()})\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
-            return f"Error: Transaction failed to replace stuck transaction"
+            return f"Error: Transaction failed to replace stuck transaction ({chain_info.name.upper()})"
 
     except Exception as e:
-        return f"Error sending transaction: {str(e)}"
+        return f"Error sending transaction ({chain_info.name.upper()}): {str(e)}"
 
 
 def withdraw(amount, chain, user_id, recipient_address):
@@ -310,12 +308,12 @@ def withdraw(amount, chain, user_id, recipient_address):
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
-            return f"Successfully withdrew {amount} {chain_info.native.upper()} ({chain_info.name})\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"Successfully withdrew {amount} {chain_info.native.upper()} ({chain_info.name.upper()})\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
-            return f"Error: Transaction failed during withdrawal"
+            return f"Error: Transaction failed during withdrawal ({chain_info.name.upper()})"
 
     except Exception as e:
-        return f"Error withdrawing: {str(e)}"
+        return f"Error withdrawing {amount} {chain_info.native.upper()} ({chain_info.name.upper()}): {str(e)}"
     
 
 def x7d_mint(amount, chain, user_id):
@@ -358,12 +356,12 @@ def x7d_mint(amount, chain, user_id):
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
-            return f"{amount} X7D ({chain_info.name}) minted successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"{amount} X7D ({chain_info.name.upper()}) minted successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
-            return f"Error: Transaction failed while minting X7D"
+            return f"Error: Transaction failed while minting X7D ({chain_info.name.upper()})"
 
     except Exception as e:
-        return f"Error minting X7D: {str(e)}"
+        return f"Error minting X7D ({chain_info.name.upper()}): {str(e)}"
 
 
 def x7d_redeem(amount, chain, user_id):
@@ -409,9 +407,9 @@ def x7d_redeem(amount, chain, user_id):
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
-            return f"Redeemed {amount} X7D ({chain_info.name}) successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"Redeemed {amount} X7D ({chain_info.name.upper()}) successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
-            return f"Error: Transaction failed while redeeming X7D"
+            return f"Error: Transaction failed while redeeming X7D ({chain_info.name.upper()})"
 
     except Exception as e:
-        return f"Error redeeming X7D ({chain_info.name}): {str(e)}"
+        return f"Error redeeming X7D ({chain_info.name.upper()}): {str(e)}"
