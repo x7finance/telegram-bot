@@ -90,7 +90,7 @@ def get_random_pioneer():
 
 def get_time_difference(timestamp):
     current_time = datetime.now()
-    timestamp_time = datetime.fromtimestamp(timestamp)
+    timestamp_time = datetime.fromtimestamp(int(timestamp))
 
     time_difference = current_time - timestamp_time
     is_future = time_difference.total_seconds() < 0
