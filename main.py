@@ -115,6 +115,7 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("pioneer", commands.pioneer))
     application.add_handler(CommandHandler(["pool", "lpool", "lendingpool"], commands.pool))
     application.add_handler(CommandHandler(["price", "prices"], commands.price))
+    application.add_handler(CommandHandler(["push_all", "pushall"], commands.pushall))
     application.add_handler(CommandHandler("register", commands.register))
     application.add_handler(CommandHandler("router", commands.router))
     application.add_handler(CommandHandler(["space", "spaces"], commands.spaces))

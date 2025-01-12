@@ -5,7 +5,7 @@ import os, time
 from datetime import datetime
 
 from bot import auto, callbacks
-from constants import ca, chains, settings, urls
+from constants import ca, chains, settings, splitters, urls
 from hooks import  api, db, functions, tools
 from main import application
 
@@ -318,88 +318,11 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     threshold = 0
     contract_type = None
 
-    settings = {
-        "push_eco": {
-            "splitter_address": ca.ECO_SPLITTER(chain),
-            "splitter_name": "Ecosystem Splitter",
-            "threshold": 0.01 if chain.lower() == "eth" else 0.0001,
-            "contract_type": "splitter",
-            "balance_func": lambda contract: contract.functions.outletBalance(4).call() / 10 ** 18
-        },
-        "push_treasury": {
-            "splitter_address": ca.TREASURY_SPLITTER(chain),
-            "splitter_name": "Treasury Splitter",
-            "threshold": 0.01 if chain.lower() == "eth" else 0.0001,
-            "contract_type": "splitter",
-            "balance_func": lambda _: etherscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain)
-        },
-        "push_x7r": {
-            "splitter_address": ca.X7R_LIQ_HUB(chain),
-            "splitter_name": "X7R Liquidity Hub",
-            "token_address": ca.X7R(chain),
-            "threshold": 10000,
-            "contract_type": "hub",
-            "balance_func": lambda contract: float(etherscan.get_token_balance(
-                ca.X7R_LIQ_HUB(chain), ca.X7R(chain), chain)
-                ) - contract.functions.x7rLiquidityBalance().call()
-        },
-        "push_x7dao": {
-            "splitter_address": ca.X7DAO_LIQ_HUB(chain),
-            "splitter_name": "X7DAO Liquidity Hub",
-            "token_address": ca.X7DAO(chain),
-            "threshold": 10000,
-            "contract_type": "hub",
-            "balance_func": lambda contract: float(etherscan.get_token_balance(
-                ca.X7DAO_LIQ_HUB(chain), ca.X7DAO(chain), chain)
-                ) - contract.functions.x7daoLiquidityBalance().call()
-        },
-        "push_x7101": {
-            "splitter_address": ca.X7100_LIQ_HUB(chain),
-            "splitter_name": "X7100 Liquidity Hub",
-            "token_address": ca.X7101(chain),
-            "threshold": 10000,
-            "contract_type": "hub",
-            "balance_func": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7101(chain), chain)
-        },
-        "push_x7102": {
-            "splitter_address": ca.X7100_LIQ_HUB(chain),
-            "splitter_name": "X7100 Liquidity Hub",
-            "token_address": ca.X7102(chain),
-            "threshold": 10000,
-            "contract_type": "hub",
-            "balance_func": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7102(chain), chain)
-        },
-        "push_x7103": {
-            "splitter_address": ca.X7100_LIQ_HUB(chain),
-            "splitter_name": "X7100 Liquidity Hub",
-            "token_address": ca.X7103(chain),
-            "threshold": 10000,
-            "contract_type": "hub",
-            "balance_func": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7103(chain), chain)
-        },
-        "push_x7104": {
-            "splitter_address": ca.X7100_LIQ_HUB(chain),
-            "splitter_name": "X7100 Liquidity Hub",
-            "token_address": ca.X7104(chain),
-            "threshold": 10000,
-            "contract_type": "hub",
-            "balance_func": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7104(chain), chain)
-        },
-        "push_x7105": {
-            "splitter_address": ca.X7100_LIQ_HUB(chain),
-            "splitter_name": "X7100 Liquidity Hub",
-            "token_address": ca.X7105(chain),
-            "threshold": 10000,
-            "contract_type": "hub",
-            "balance_func": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7105(chain), chain)
-        },
-    }
-
-    if action not in settings:
+    if action not in splitters.get_push_settings:
         await query.answer("Invalid action.", show_alert=True)
         return
 
-    config = settings[action]
+    config = splitters.get_push_settings[action]
     splitter_address = config["splitter_address"]
     splitter_name = config["splitter_name"]
     threshold = config["threshold"]

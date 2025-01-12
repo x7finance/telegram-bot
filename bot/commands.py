@@ -2339,6 +2339,65 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    existing_wallet = db.wallet_get(user_id)
+
+    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
+        if not existing_wallet:
+            await update.message.reply_text("You have not registered a wallet. Please use /register in private.")
+            return
+
+    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
+    chain_info, error_message = chains.get_info(chain)
+    if error_message:
+        await update.message.reply_text(error_message)
+        return
+
+    message = await update.message.reply_text(
+        f"Attempting to push splitters on {chain_info.name.upper()}. Please wait..."
+    )
+
+    eco_config = splitters.get_push_settings(chain)["push_eco"]
+    splitter_address = eco_config["splitter_address"]
+    splitter_name = eco_config["splitter_name"]
+    threshold = eco_config["threshold"]
+
+    contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(splitter_address),
+        abi=etherscan.get_abi(splitter_address, chain),
+    )
+
+    splitter_balance = eco_config["balance_func"](contract)
+
+    if float(splitter_balance) < float(threshold):
+        await message.delete()
+        await update.message.reply_text(f"{chain_info.name} {splitter_name} balance too low to push.")
+    else:
+        result = functions.splitter_push("splitter", splitter_address, chain, user_id)
+        await message.delete()
+        await update.message.reply_text(result)
+
+    if chain.lower() == "eth":
+        treasury_config = splitters.get_push_settings(chain)["push_treasury"]
+        splitter_address = treasury_config["splitter_address"]
+        splitter_name = treasury_config["splitter_name"]
+        threshold = treasury_config["threshold"]
+
+        contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(splitter_address),
+            abi=etherscan.get_abi(splitter_address, chain),
+        )
+
+        splitter_balance = treasury_config["balance_func"](contract)
+
+        if float(splitter_balance) < float(threshold):
+            await update.message.reply_text(f"{chain_info.name} {splitter_name} balance too low to push.")
+        else:
+            result = functions.splitter_push("splitter", splitter_address, chain, user_id)
+            await update.message.reply_text(result)
+
+
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     existing_wallet = db.wallet_get(user_id)
