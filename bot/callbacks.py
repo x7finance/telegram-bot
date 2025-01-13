@@ -318,11 +318,11 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     threshold = 0
     contract_type = None
 
-    if action not in splitters.get_push_settings:
+    if action not in splitters.get_push_settings(chain):
         await query.answer("Invalid action.", show_alert=True)
         return
 
-    config = splitters.get_push_settings[action]
+    config = splitters.get_push_settings(chain)[action]
     splitter_address = config["splitter_address"]
     splitter_name = config["splitter_name"]
     threshold = config["threshold"]
@@ -336,7 +336,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     splitter_balance = config["balance_func"](contract)
-
+    print(splitter_balance)
     if float(splitter_balance) < float(threshold):
         await query.answer(f"{chain_info.name} {splitter_name} balance to low to push.", show_alert=True)
         return
