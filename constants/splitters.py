@@ -117,7 +117,7 @@ def generate_hub_split(chain, hub_address, token):
         except Exception:
             pass
 
-    balance = float(etherscan.get_token_balance(hub_address, address, chain)) / 10 ** 18
+    balance = (float(etherscan.get_token_balance(hub_address, address, chain)) / 10 ** 18)  - float(token_liquidity_balance)
     balance_dollar = float(price) * float(balance)
     balance_text = f"{balance:,.0f} {token.upper()} (${balance_dollar:,.0f})"
 
@@ -128,7 +128,7 @@ def generate_hub_split(chain, hub_address, token):
         f"{threshold_text}\n\n"
         f"{split_text}\n\n"
         f"Liquidity Ratio Target: {liquidity_ratio_target}%\n"
-        f"Earmarked Token Liquidity: {token_liquidity_balance:,.0f} {token.upper()}"
+        f"Reserved Token Liquidity: {token_liquidity_balance:,.0f} {token.upper()}"
     )
 
 
