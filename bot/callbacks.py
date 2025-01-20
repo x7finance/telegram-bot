@@ -310,12 +310,25 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
     action, chain = query.data.split(":")
-
+    chain_info, error_message = chains.get_info(chain)
+    
     config = splitters.get_push_settings(chain)[action]
     splitter_address = config["splitter_address"]
     splitter_name = config["splitter_name"]
+    threshold = config["threshold"]
     contract_type = config["contract_type"]
     token_address = config.get("token_address")
+
+    contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(splitter_address),
+        abi=etherscan.get_abi(splitter_address, chain),
+    )
+
+    available_tokens = config["calculate_tokens"](contract)
+
+    if float(available_tokens) < float(threshold):
+        await query.answer(f"{chain_info.name} {splitter_name} balance to low to push.", show_alert=True)
+        return
 
     try:
         message = await context.bot.send_message(
