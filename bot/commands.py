@@ -1216,11 +1216,25 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         button_name = token.upper()
 
+    config = splitters.get_push_settings(chain)[f"push_{token}"]
+    threshold = config["threshold"]
+
+    contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(hub_address),
+        abi=etherscan.get_abi(hub_address, chain),
+    )
+
+    available_tokens = config["calculate_tokens"](contract)
+
     buttons = [
         [InlineKeyboardButton(text=f"{button_name} Liquidity Hub Contract", url=chain_info.scan_address + hub_address)],
-        [InlineKeyboardButton(text=f"Process {token.upper()} fees", callback_data=f"push_{token}:{chain}")]
     ]
 
+    if float(available_tokens) > float(threshold):
+        buttons.append(
+            [InlineKeyboardButton(text=f"Process {token.upper()} fees", callback_data=f"push_{token}:{chain}")]
+        )
+    
     await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
@@ -2368,9 +2382,9 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         abi=etherscan.get_abi(splitter_address, chain),
     )
 
-    splitter_balance = eco_config["balance_func"](contract)
+    available_tokens = eco_config["calculate_tokens"](contract)
 
-    if float(splitter_balance) < float(threshold):
+    if float(available_tokens) < float(threshold):
         await message.delete()
         await update.message.reply_text(f"{chain_info.name} {splitter_name} balance too low to push.")
     else:
@@ -2389,9 +2403,9 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             abi=etherscan.get_abi(splitter_address, chain),
         )
 
-        splitter_balance = treasury_config["balance_func"](contract)
+        available_tokens = treasury_config["calculate_tokens"](contract)
 
-        if float(splitter_balance) < float(threshold):
+        if float(available_tokens) < float(threshold):
             await update.message.reply_text(f"{chain_info.name} {splitter_name} balance too low to push.")
         else:
             result = functions.splitter_push("splitter", splitter_address, chain, user_id)
@@ -2654,9 +2668,10 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = await update.message.reply_text("Getting Splitter Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
-    treasury_eth = etherscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain)
-    eco_eth = etherscan.get_native_balance(ca.ECO_SPLITTER(chain), chain)
     native_price = etherscan.get_native_price(chain)
+
+    eco_address = ca.ECO_SPLITTER(chain)
+    eco_eth = etherscan.get_native_balance(eco_address, chain)
     eco_dollar = eco_eth * native_price
 
     eco_splitter_text = "Distribution:\n"
@@ -2664,24 +2679,15 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for location, (share, percentage) in eco_distribution.items():
         eco_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
-    treasury_splitter_text = ""
-    if chain == "eth":
-        treasury_dollar = treasury_eth * native_price
-        treasury_splitter_text = "Distribution:\n"
-        treasury_distribution = splitters.generate_treasury_split(chain, treasury_eth)
-        for location, (share, percentage) in treasury_distribution.items():
-            treasury_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
-    else:
-        treasury_dollar = 0
+    config = splitters.get_push_settings(chain)[f"push_eco"]
+    threshold = config["threshold"]
 
-    buttons = [
-        [InlineKeyboardButton(text="Ecosystem Splitter Contract", url=chain_info.scan_address + ca.ECO_SPLITTER(chain))],
-        [InlineKeyboardButton(text="Push Ecosystem Splitter", callback_data=f"push_eco:{chain}")]
-    ]
+    contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(eco_address),
+        abi=etherscan.get_abi(eco_address, chain),
+    )
 
-    if chain == "eth":
-        buttons.append([InlineKeyboardButton(text="Treasury Splitter Contract", url=chain_info.scan_address + ca.TREASURY_SPLITTER(chain))])
-        buttons.append([InlineKeyboardButton(text="Push Treasury Splitter", callback_data=f"push_treasury:{chain}")])
+    available_tokens = config["calculate_tokens"](contract)
 
     caption = (
         f"*X7 Finance Ecosystem Splitters ({chain_info.name})*\n\n"
@@ -2689,11 +2695,51 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"{eco_splitter_text}"
     )
 
+    buttons = [
+        [InlineKeyboardButton(text="Ecosystem Splitter Contract", url=chain_info.scan_address + eco_address)]
+    ]
+
+    if float(available_tokens) > float(threshold):
+        buttons.append(
+            [InlineKeyboardButton(text="Push Ecosystem Splitter", callback_data=f"push_eco:{chain}")]
+        )
+
+    treasury_splitter_text = ""
     if chain == "eth":
+        treasury_address = ca.TREASURY_SPLITTER(chain)
+        treasury_eth = etherscan.get_native_balance(treasury_address, chain)
+        treasury_dollar = treasury_eth * native_price
+
+        treasury_splitter_text = "Distribution:\n"
+        treasury_distribution = splitters.generate_treasury_split(chain, treasury_eth)
+        for location, (share, percentage) in treasury_distribution.items():
+            treasury_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
+
+        config = splitters.get_push_settings(chain)[f"push_treasury"]
+        threshold = config["threshold"]
+
+        contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(treasury_address),
+            abi=etherscan.get_abi(treasury_address, chain),
+        )
+
+        available_tokens = config["calculate_tokens"](contract)
+
         caption += (
             f"\nTreasury Splitter\n{treasury_eth:.4f} {chain_info.native.upper()} (${treasury_dollar:,.0f})\n"
             f"{treasury_splitter_text}"
         )
+
+        buttons.append(
+            [InlineKeyboardButton(text="Treasury Splitter Contract", url=chain_info.scan_address + treasury_address)]
+            )
+
+        if float(available_tokens) > float(threshold):
+            buttons.append(
+                [InlineKeyboardButton(text="Push Treasury Splitter", callback_data=f"push_treasury:{chain}")]
+            )
+    else:
+        treasury_dollar = 0
 
     cost = functions.estimate_gas(chain, "push")
 
