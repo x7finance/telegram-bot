@@ -12,7 +12,7 @@ from hooks import  db, api
 etherscan = api.Etherscan()
 
 
-async def command(update, context):
+async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
         settings = db.settings_get_all()
@@ -24,7 +24,7 @@ async def command(update, context):
             [
                 InlineKeyboardButton(
                     f"{setting.replace('_', ' ').title()}: {'ON' if status else 'OFF'}",
-                    callback_data=f"admin_toggle_{setting}"
+                    callback_data=f"settings_toggle_{setting}"
                 )
             ]
             for setting, status in settings.items()

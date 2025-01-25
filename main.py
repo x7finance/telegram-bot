@@ -151,15 +151,15 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("status", admin.status))
     application.add_handler(CommandHandler("wen", admin.wen))
 
-    application.add_handler(CallbackQueryHandler(callbacks.admin_toggle, pattern="^admin_toggle_"))
     application.add_handler(CallbackQueryHandler(callbacks.cancel, pattern="^cancel$"))
     application.add_handler(CallbackQueryHandler(callbacks.click_me, pattern=r"^click_button:\d+$"))
     application.add_handler(CallbackQueryHandler(callbacks.clicks_reset, pattern="^clicks_reset$"))
-    application.add_handler(CallbackQueryHandler(callbacks.confirm_simple, pattern="^question:.*"))
     application.add_handler(CallbackQueryHandler(callbacks.pushall, pattern="^push_(eco|treasury|x7r|x7dao|x710[1-5]):"))
     application.add_handler(CallbackQueryHandler(callbacks.liquidate, pattern=r"^liquidate:[a-zA-Z0-9-]+:\d+$"))
-    application.add_handler(CallbackQueryHandler(callbacks.wallet_remove, pattern="^wallet_remove$"))
+    application.add_handler(CallbackQueryHandler(callbacks.confirm_simple, pattern="^question:.*"))
+    application.add_handler(CallbackQueryHandler(callbacks.settings_toggle, pattern="^settings_toggle_"))
     application.add_handler(CallbackQueryHandler(callbacks.welcome_button, pattern=r"unmute:.+"))
+    application.add_handler(CallbackQueryHandler(callbacks.wallet_remove, pattern="^wallet_remove$"))
     
     x7d_conv_handler = ConversationHandler(
         entry_points=[CallbackQueryHandler(callbacks.x7d_start, pattern="^(mint|redeem):.*$")],

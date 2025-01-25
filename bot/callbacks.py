@@ -16,57 +16,7 @@ X7D_AMOUNT, X7D_CONFIRM = range(2)
 WITHDRAW_AMOUNT, WITHDRAW_ADDRESS, WITHDRAW_CONFIRM = range(3)
 
 
-async def admin_toggle(update, context):
-    query = update.callback_query
-    user_id = query.from_user.id
-
-    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
-        await query.answer(
-            text="Admin only.",
-            show_alert=True
-        )
-        return
-
-    callback_data = query.data
-
-    setting = callback_data.replace("admin_toggle_", "")
-
-    try:
-        current_status = db.settings_get(setting)
-        new_status = not current_status
-        db.settings_set(setting, new_status)
-
-        formatted_setting = setting.replace("_", " ").title()
-        await query.answer(
-            text=f"{formatted_setting} turned {'ON' if new_status else 'OFF'}."
-        )
-
-        settings = db.settings_get_all()
-        keyboard = [
-            [
-                InlineKeyboardButton(
-                    f"{s.replace('_', ' ').title()}: {'ON' if v else 'OFF'}",
-                    callback_data=f"admin_toggle_{s}"
-                )
-            ]
-            for s, v in settings.items()
-        ]
-        keyboard.append(
-            [
-                InlineKeyboardButton("Reset Clicks", callback_data="question:clicks_reset")
-            ]
-        )
-
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("Bot Settings", reply_markup=reply_markup)
-    except Exception as e:
-        await query.answer(
-        text=f"Error: {e}",
-        show_alert=True
-        )
-
-
-async def cancel(update, context):
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
 
     try:
@@ -173,7 +123,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
 
-async def clicks_reset(update, context):
+async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.from_user.id
 
@@ -187,7 +137,7 @@ async def clicks_reset(update, context):
     try:
         result_text = db.clicks_reset()
         await query.edit_message_text(
-            text=f"Clicks have been reset. {result_text}"
+            text=result_text
         )
     except Exception as e:
         await query.answer(
@@ -196,7 +146,7 @@ async def clicks_reset(update, context):
         )
 
 
-async def confirm_conv(update, context):
+async def confirm_conv(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.from_user.id
     callback_data = query.data.split(":")
@@ -237,7 +187,7 @@ async def confirm_conv(update, context):
     return ConversationHandler.END
 
 
-async def confirm_simple(update, context, amount=None, callback_data=None):
+async def confirm_simple(update: Update, context: ContextTypes.DEFAULT_TYPE, amount=None, callback_data=None):
     query = update.callback_query
 
     callback_data = callback_data or query.data
@@ -355,7 +305,57 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer(f"Error during {splitter_name} push: {str(e)}", show_alert=True)
 
 
-async def wallet_remove(update, context):
+async def settings_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
+        await query.answer(
+            text="Admin only.",
+            show_alert=True
+        )
+        return
+
+    callback_data = query.data
+
+    setting = callback_data.replace("settings_toggle_", "")
+
+    try:
+        current_status = db.settings_get(setting)
+        new_status = not current_status
+        db.settings_set(setting, new_status)
+
+        formatted_setting = setting.replace("_", " ").title()
+        await query.answer(
+            text=f"{formatted_setting} turned {'ON' if new_status else 'OFF'}."
+        )
+
+        settings = db.settings_get_all()
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    f"{s.replace('_', ' ').title()}: {'ON' if v else 'OFF'}",
+                    callback_data=f"settings_toggle_{s}"
+                )
+            ]
+            for s, v in settings.items()
+        ]
+        keyboard.append(
+            [
+                InlineKeyboardButton("Reset Clicks", callback_data="question:clicks_reset")
+            ]
+        )
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_reply_markup(reply_markup=reply_markup)
+    except Exception as e:
+        await query.answer(
+        text=f"Error: {e}",
+        show_alert=True
+        )
+
+
+async def wallet_remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.from_user.id
 
@@ -372,7 +372,7 @@ async def wallet_remove(update, context):
         )
 
 
-async def welcome_button(update: Update, context: CallbackContext) -> None:
+async def welcome_button(update: Update, context: CallbackContext):
     query = update.callback_query
     user_id = query.from_user.id
     action, allowed_user_id = query.data.split(":")
@@ -395,7 +395,7 @@ async def welcome_button(update: Update, context: CallbackContext) -> None:
             pass
 
 
-async def x7d_start(update, context):
+async def x7d_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     callback_data = query.data.split(":")
     action = callback_data[0]
@@ -413,7 +413,7 @@ async def x7d_start(update, context):
     return X7D_AMOUNT
 
 
-async def x7d_amount(update, context):
+async def x7d_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     action = context.user_data["x7d_action"]
     chain = context.user_data["x7d_chain"]
@@ -455,7 +455,7 @@ async def x7d_amount(update, context):
     return X7D_CONFIRM
 
 
-async def withdraw_start(update, context):
+async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     callback_data = query.data.split(":")
     action = callback_data[0]
@@ -473,7 +473,7 @@ async def withdraw_start(update, context):
     return WITHDRAW_AMOUNT
 
 
-async def withdraw_amount(update, context):
+async def withdraw_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     action = context.user_data["withdraw_action"]
     chain = context.user_data["withdraw_chain"]
@@ -506,7 +506,7 @@ async def withdraw_amount(update, context):
     return WITHDRAW_ADDRESS
 
 
-async def withdraw_address(update, context):
+async def withdraw_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
     action = context.user_data["withdraw_action"]
     chain = context.user_data["withdraw_chain"]    
     amount = context.user_data["withdraw_amount"]
