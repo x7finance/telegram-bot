@@ -2810,28 +2810,32 @@ async def time_command(update: Update, context: CallbackContext):
         ("Asia/Tokyo", "JST"),
         ("Australia/Queensland", "AEST")
     ]
-    current_time = datetime.now(pytz.timezone("UTC"))
-    local_time = current_time.astimezone(pytz.timezone("UTC"))
+
+    now_time = datetime.now(pytz.UTC)
+
     try:
         if len(message) > 1:
-            time_variable = message[1]
-            time_format = "%I%p"
-            if re.match(r"\d{1,2}:\d{2}([ap]m)?", time_variable):
-                time_format = (
-                    "%I:%M%p"
-                    if re.match(r"\d{1,2}:\d{2}am", time_variable, re.IGNORECASE)
-                    else "%I:%M%p"
-                )
-            input_time = datetime.strptime(time_variable, time_format).replace(
-                year=local_time.year, month=local_time.month, day=local_time.day
-            )
+            time_variable = message[1].strip().upper()
+
+            pattern_12h = r"^\d{1,2}(:\d{2})?(AM|PM)$" 
+            pattern_24h = r"^([01]?\d|2[0-3]):[0-5]\d$"
+
+            input_time = None
+            if re.match(pattern_12h, time_variable, re.IGNORECASE):
+                time_format = "%I:%M%p" if ":" in time_variable else "%I%p"
+                input_time = datetime.strptime(time_variable, time_format)
+            elif re.match(pattern_24h, time_variable):
+                time_format = "%H:%M"
+                input_time = datetime.strptime(time_variable, time_format)
+
+            input_time = input_time.replace(year=now_time.year, month=now_time.month, day=now_time.day)
+
             if len(message) > 2:
-                time_zone = message[2]
+                time_zone = message[2].upper()
                 for tz, tz_name in timezones:
-                    if time_zone.lower() == tz_name.lower():
+                    if time_zone == tz_name:
                         tz_time = pytz.timezone(tz).localize(input_time)
-                        time_info = f"{input_time.strftime('%A %B %d %Y')}\n"
-                        time_info += f"{input_time.strftime('%I:%M %p')} - {time_zone.upper()}\n\n"
+                        time_info = f"{time_variable} {time_zone}:\n\n"
                         for tz_inner, tz_name_inner in timezones:
                             converted_time = tz_time.astimezone(pytz.timezone(tz_inner))
                             time_info += f"{converted_time.strftime('%I:%M %p')} - {tz_name_inner}\n"
@@ -2841,11 +2845,8 @@ async def time_command(update: Update, context: CallbackContext):
                             parse_mode="Markdown"
                         )
                         return
-                    
-            time_info = f"{input_time.strftime('%A %B %d %Y')}\n"
-            time_info += (
-                f"{input_time.strftime('%I:%M %p')} - {time_variable.upper()}\n\n"
-            )
+            
+            time_info = f"{time_variable} UTC:\n\n"
             for tz, tz_name in timezones:
                 tz_time = input_time.astimezone(pytz.timezone(tz))
                 time_info += f"{tz_time.strftime('%I:%M %p')} - {tz_name}\n"
@@ -2855,12 +2856,9 @@ async def time_command(update: Update, context: CallbackContext):
                 parse_mode="Markdown")
             return
         
-        time_info = f"{local_time.strftime('%A %B %d %Y')}\n"
-        time_info += (
-            f"{local_time.strftime('%I:%M %p')} - {local_time.strftime('%Z')}\n\n"
-        )
+        time_info = "Current time:\n\n"
         for tz, tz_name in timezones:
-            tz_time = local_time.astimezone(pytz.timezone(tz))
+            tz_time = now_time.astimezone(pytz.timezone(tz))
             time_info += f"{tz_time.strftime('%I:%M %p')} - {tz_name}\n"
 
         await update.message.reply_text(
@@ -2869,7 +2867,7 @@ async def time_command(update: Update, context: CallbackContext):
         
     except Exception:
         await update.message.reply_text(
-                "use `/time HH:MMPM or HHAM TZ`",
+                f"Invalid format. Use `/time 2AM` or `/time 02:00` with or without a timezone.\n\n",
             parse_mode="Markdown"
         )
 

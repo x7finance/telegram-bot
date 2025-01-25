@@ -218,7 +218,7 @@ class Dune:
             return (
                     f'*Xchange Trading Volume*\n\n'
                     f'{self.volume_text}\n\n'
-                    f'Last Updated: {self.volume_last_date} (UTC)\n'
+                    f'Last Updated: {self.volume_last_date} UTC\n'
                     f'{next_update_text}'
                 )
 
