@@ -43,84 +43,78 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.callback_query.answer("Too slow!", show_alert=True)
         return
 
-    button_data = update.callback_query.data
+    if context.bot_data.get("first_user_clicked"):
+        await update.callback_query.answer("Too slow!", show_alert=True)
+        return
+
     user = update.effective_user
     user_info = user.username or f"{user.first_name} {user.last_name}" or user.first_name
 
-    context.user_data.setdefault("clicked_buttons", set())
-    if button_data in context.user_data["clicked_buttons"]:
-        await update.callback_query.answer("You have already clicked this button.", show_alert=True)
-        return
+    time_taken = button_click_timestamp - button_generation_timestamp
 
-    context.user_data["clicked_buttons"].add(button_data)
+    await db.clicks_update(user_info, time_taken)
 
-    if button_data == current_button_data:
-        time_taken = button_click_timestamp - button_generation_timestamp
+    context.bot_data["first_user_clicked"] = True
 
-        await db.clicks_update(user_info, time_taken)
+    user_data = db.clicks_get_by_name(user_info)
+    clicks, _, streak = user_data
+    total_click_count = db.clicks_get_total()
+    burn_active = db.settings_get('burn')
 
-        if not context.bot_data.get("first_user_clicked"):
-            context.bot_data["first_user_clicked"] = True
+    if clicks == 1:
+        user_count_message = "🎉🎉 This is their first button click! 🎉🎉"
+    elif clicks % 10 == 0:
+        user_count_message = f"🎉🎉 They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak! 🎉🎉"
+    else:
+        user_count_message = f"They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak!"
 
-            user_data = db.clicks_get_by_name(user_info)
-            clicks, _, streak = user_data
-            total_click_count = db.clicks_get_total()
-            burn_active = db.settings_get('burn')
+    if db.clicks_check_is_fastest(time_taken):
+        user_count_message += f"\n\n🎉🎉 {time_taken:.3f} seconds is the new fastest time! 🎉🎉"
 
-            if clicks == 1:
-                user_count_message = "🎉🎉 This is their first button click! 🎉🎉"
-            elif clicks % 10 == 0:
-                user_count_message = f"🎉🎉 They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak! 🎉🎉"
-            else:
-                user_count_message = f"They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak!"
+    message_text = (
+        f"@{tools.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
+        f"{user_count_message}\n\n"
+        f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
+    )
 
-            if db.clicks_check_is_fastest(time_taken):
-                user_count_message += f"\n\n🎉🎉 {time_taken:.3f} seconds is the new fastest time! 🎉🎉"
+    if burn_active:
+        clicks_needed = settings.CLICK_ME_BURN - (total_click_count % settings.CLICK_ME_BURN)
+        message_text += f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
 
-            message_text = (
-                f"@{tools.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
-                f"{user_count_message}\n\n"
-                f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
-            )
+    message_text += "use `/leaderboard` to see the fastest Pioneers!"
 
-            if burn_active:
-                clicks_needed = settings.CLICK_ME_BURN - (total_click_count % settings.CLICK_ME_BURN)
-                message_text += f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
+    photos = await context.bot.get_user_profile_photos(update.effective_user.id, limit=1)
+    if photos and photos.photos and photos.photos[0]:
+        photo = photos.photos[0][0].file_id
+        clicked = await context.bot.send_photo(
+            photo=photo,
+            chat_id=update.effective_chat.id,
+            caption=message_text,
+            parse_mode="Markdown"
+        )
+    else:
+        clicked = await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=message_text,
+            parse_mode="Markdown"
+        )
 
-            message_text += "use `/leaderboard` to see the fastest Pioneers!"
+    if burn_active and total_click_count % settings.CLICK_ME_BURN == 0:
+        burn_message = await functions.burn_x7r(settings.burn_amount(), "eth")
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f"🔥🔥🔥🔥🔥🔥🔥🔥\n\nThe button has been clicked a total of {total_click_count} times by all Pioneers!\n\n{burn_message}"
+        )
 
-            photos = await context.bot.get_user_profile_photos(update.effective_user.id, limit=1)
-            if photos and photos.photos and photos.photos[0]:
-                photo = photos.photos[0][0].file_id
-                clicked = await context.bot.send_photo(
-                    photo=photo,
-                    chat_id=update.effective_chat.id,
-                    caption=message_text,
-                    parse_mode="Markdown"
-                )
-            else:
-                clicked = await context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text=message_text,
-                    parse_mode="Markdown"
-                )
-
-            if burn_active and total_click_count % settings.CLICK_ME_BURN == 0:
-                burn_message = await functions.burn_x7r(settings.burn_amount(), "eth")
-                await context.bot.send_message(
-                    chat_id=update.effective_chat.id,
-                    text=f"🔥🔥🔥🔥🔥🔥🔥🔥\n\nThe button has been clicked a total of {total_click_count} times by all Pioneers!\n\n{burn_message}"
-                )
-
-            context.bot_data['clicked_id'] = clicked.message_id
-            settings.RESTART_TIME = datetime.now().timestamp()
-            settings.BUTTON_TIME = settings.random_button_time()
-            job_queue.run_once(
-                callbacks.click_me,
-                settings.BUTTON_TIME,
-                chat_id=urls.TG_MAIN_CHANNEL_ID,
-                name="Click Me",
-            )
+    context.bot_data['clicked_id'] = clicked.message_id
+    settings.RESTART_TIME = datetime.now().timestamp()
+    settings.BUTTON_TIME = settings.random_button_time()
+    job_queue.run_once(
+        callbacks.click_me,
+        settings.BUTTON_TIME,
+        chat_id=urls.TG_MAIN_CHANNEL_ID,
+        name="Click Me",
+    )
 
 
 async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
