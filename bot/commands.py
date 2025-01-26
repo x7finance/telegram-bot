@@ -251,87 +251,78 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lending_pool = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)), abi=abis.read("lendingpool")
     )
-    active_terms_count = lending_pool.functions.countOfActiveLoanTerms().call()
     liquidation_fee = lending_pool.functions.liquidationReward().call() / 10 ** 18
     liquidation_dollar = liquidation_fee * native_price
-    active_loan_addresses = []
 
-    for i in range(active_terms_count):
-        loan_address = lending_pool.functions.activeLoanTerms(i).call()
-        active_loan_addresses.append(loan_address)
 
-    if not active_loan_addresses:
-        loan_info = "N/A\n\n"
+    loan_contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(ca.ILL_ADDRESSES[chain]["005"]), abi=etherscan.get_abi(ca.ILL_ADDRESSES[chain]["005"], chain)
+    )
+    
+    loan_name = loan_contract.functions.name().call()
+    loan_data = loan_contract.functions.getQuote(int(amount_in_wei)).call()
+    
+    min_loan = loan_contract.functions.minimumLoanAmount().call()
+    max_loan = loan_contract.functions.maximumLoanAmount().call()
+    min_loan_duration = loan_contract.functions.minimumLoanLengthSeconds().call()
+    max_loan_duration = loan_contract.functions.maximumLoanLengthSeconds().call()
+
+    x7100_share = lending_pool.functions.X7100PremiumShare().call() + lending_pool.functions.X7100OriginationShare().call()
+    x7dao_share = lending_pool.functions.X7DAOPremiumShare().call() + lending_pool.functions.X7DAOOriginationShare().call()
+    ecosystem_share = lending_pool.functions.ecosystemSplitterPremiumShare().call() + lending_pool.functions.ecosystemSplitterOriginationShare().call()
+    lpool_share = lending_pool.functions.lendingPoolPremiumShare().call() + lending_pool.functions.lendingPoolOriginationShare().call()
+
+    total_share = x7100_share + x7dao_share + ecosystem_share + lpool_share
+
+    origination_fee, premium_fee = [value / 10 ** 18 for value in loan_data[1:]]
+    origination_dollar, premium_fee_dollar = [value * native_price for value in [origination_fee, premium_fee]]
+
+    total_fees_eth = origination_fee + premium_fee
+    total_fees_dollars = origination_dollar + premium_fee_dollar
+
+    x7100_share_eth = (x7100_share / total_share) * total_fees_eth
+    x7dao_share_eth = (x7dao_share / total_share) * total_fees_eth
+    ecosystem_share_eth = (ecosystem_share / total_share) * total_fees_eth
+    lpool_share_eth = (lpool_share / total_share) * total_fees_eth
+
+    x7100_share_dollars = (x7100_share / total_share) * total_fees_dollars
+    x7dao_share_dollars = (x7dao_share / total_share) * total_fees_dollars
+    ecosystem_share_dollars = (ecosystem_share / total_share) * total_fees_dollars
+    lpool_share_dollars = (lpool_share / total_share) * total_fees_dollars
+
+    distribution = (
+        f"Fee Distribution:\n"
+        f"X7100: {x7100_share_eth:.4f} {chain_info.native.upper()} (${x7100_share_dollars:,.2f})\n"
+        f"X7DAO: {x7dao_share_eth:.4f} {chain_info.native.upper()} (${x7dao_share_dollars:,.2f})\n"
+        f"Ecosystem Splitter: {ecosystem_share_eth:.4f} {chain_info.native.upper()} (${ecosystem_share_dollars:,.2f})\n"
+        f"Lending Pool: {lpool_share_eth:.4f} {chain_info.native.upper()} (${lpool_share_dollars:,.2f})\n\n"
+    )
+
+    loan_info += (
+        f"*{loan_name}*\n"
+        f"Origination Fee: {origination_fee} {chain_info.native.upper()} (${origination_dollar:,.2f})\n"
+    )
+
+    premium_periods = loan_contract.functions.numberOfPremiumPeriods().call()
+    if premium_periods > 0:
+        per_period_premium = premium_fee / premium_periods
+        per_period_premium_dollar = premium_fee_dollar / premium_periods
+
+        loan_info += f"Premium Fees: {premium_fee} {chain_info.native.upper()} (${premium_fee:,.0f}) over {premium_periods} payments:\n"
+        for period in range(1, premium_periods + 1):
+            loan_info += f"  - Payment {period}: {per_period_premium:.4f} {chain_info.native.upper()} (${per_period_premium_dollar:,.2f})\n"
     else:
-        for loan_term in active_loan_addresses:
-            loan_contract = chain_info.w3.eth.contract(
-                address=chain_info.w3.to_checksum_address(loan_term), abi=etherscan.get_abi(loan_term, chain)
-            )
-            
-            loan_name = loan_contract.functions.name().call()
-            loan_data = loan_contract.functions.getQuote(int(amount_in_wei)).call()
-            
-            min_loan = loan_contract.functions.minimumLoanAmount().call()
-            max_loan = loan_contract.functions.maximumLoanAmount().call()
-            min_loan_duration = loan_contract.functions.minimumLoanLengthSeconds().call()
-            max_loan_duration = loan_contract.functions.maximumLoanLengthSeconds().call()
+        loan_info += f"Premium Fees: {premium_fee} {chain_info.native.upper()} (${premium_fee:,.0f})\n"
 
-            x7100_share = lending_pool.functions.X7100PremiumShare().call() + lending_pool.functions.X7100OriginationShare().call()
-            x7dao_share = lending_pool.functions.X7DAOPremiumShare().call() + lending_pool.functions.X7DAOOriginationShare().call()
-            ecosystem_share = lending_pool.functions.ecosystemSplitterPremiumShare().call() + lending_pool.functions.ecosystemSplitterOriginationShare().call()
-            lpool_share = lending_pool.functions.lendingPoolPremiumShare().call() + lending_pool.functions.lendingPoolOriginationShare().call()
+    loan_info += (
+        f"Total Loan Cost: {total_fees_eth} {chain_info.native.upper()} (${total_fees_dollars:,.2f})\n"
+        f"Min Loan: {min_loan / 10 ** 18} {chain_info.native.upper()}\n"
+        f"Max Loan: {max_loan / 10 ** 18} {chain_info.native.upper()}\n"
+        f"Min Loan Duration: {math.floor(min_loan_duration / 84600)} days\n"
+        f"Max Loan Duration: {math.floor(max_loan_duration / 84600)} days\n\n"
+    )
 
-            total_share = x7100_share + x7dao_share + ecosystem_share + lpool_share
-
-            origination_fee, premium_fee = [value / 10 ** 18 for value in loan_data[1:]]
-            origination_dollar, premium_fee_dollar = [value * native_price for value in [origination_fee, premium_fee]]
-
-            total_fees_eth = origination_fee + premium_fee
-            total_fees_dollars = origination_dollar + premium_fee_dollar
-
-            x7100_share_eth = (x7100_share / total_share) * total_fees_eth
-            x7dao_share_eth = (x7dao_share / total_share) * total_fees_eth
-            ecosystem_share_eth = (ecosystem_share / total_share) * total_fees_eth
-            lpool_share_eth = (lpool_share / total_share) * total_fees_eth
-
-            x7100_share_dollars = (x7100_share / total_share) * total_fees_dollars
-            x7dao_share_dollars = (x7dao_share / total_share) * total_fees_dollars
-            ecosystem_share_dollars = (ecosystem_share / total_share) * total_fees_dollars
-            lpool_share_dollars = (lpool_share / total_share) * total_fees_dollars
-
-            distribution = (
-                f"Fee Distribution:\n"
-                f"X7100: {x7100_share_eth:.4f} {chain_info.native.upper()} (${x7100_share_dollars:,.2f})\n"
-                f"X7DAO: {x7dao_share_eth:.4f} {chain_info.native.upper()} (${x7dao_share_dollars:,.2f})\n"
-                f"Ecosystem Splitter: {ecosystem_share_eth:.4f} {chain_info.native.upper()} (${ecosystem_share_dollars:,.2f})\n"
-                f"Lending Pool: {lpool_share_eth:.4f} {chain_info.native.upper()} (${lpool_share_dollars:,.2f})\n\n------\n\n"
-            )
-
-            loan_info += (
-                f"*{loan_name}*\n"
-                f"Origination Fee: {origination_fee} {chain_info.native.upper()} (${origination_dollar:,.2f})\n"
-            )
-
-            premium_periods = loan_contract.functions.numberOfPremiumPeriods().call()
-            if premium_periods > 0:
-                per_period_premium = premium_fee / premium_periods
-                per_period_premium_dollar = premium_fee_dollar / premium_periods
-
-                loan_info += f"Premium Fees: {premium_fee} {chain_info.native.upper()} (${premium_fee:,.0f}) over {premium_periods} payments:\n"
-                for period in range(1, premium_periods + 1):
-                    loan_info += f"  - Payment {period}: {per_period_premium:.4f} {chain_info.native.upper()} (${per_period_premium_dollar:,.2f})\n"
-            else:
-                loan_info += f"Premium Fees: {premium_fee} {chain_info.native.upper()} (${premium_fee:,.0f})\n"
-
-            loan_info += (
-                f"Total Loan Cost: {total_fees_eth} {chain_info.native.upper()} (${total_fees_dollars:,.2f})\n"
-                f"Min Loan: {min_loan / 10 ** 18} {chain_info.native.upper()}\n"
-                f"Max Loan: {max_loan / 10 ** 18} {chain_info.native.upper()}\n"
-                f"Min Loan Duration: {math.floor(min_loan_duration / 84600)} days\n"
-                f"Max Loan Duration: {math.floor(max_loan_duration / 84600)} days\n\n"
-            )
-
-            loan_info += distribution
+    loan_info += distribution
 
     await message.delete()
     await update.message.reply_text(
@@ -357,14 +348,13 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     percent = round(burn / ca.SUPPLY * 100, 2)
     x7r_price = dextools.get_price(ca.X7R(chain), chain)[0] or 0
     burn_dollar = float(x7r_price) * float(burn)
-    native = burn_dollar / etherscan.get_native_price(chain)
 
     await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
             f"*X7R Tokens Burned ({chain_info.name})*\n\n"
-            f'{burn:,.0f} X7R / {native:,.3f} {chain_info.native.upper()} (${burn_dollar:,.0f})\n'
+            f'{burn:,.0f} X7R (${burn_dollar:,.0f})\n'
             f"{percent}% of Supply",
         parse_mode="markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -502,15 +492,6 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = await update.message.reply_text("Getting Comparison Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    token_names = {
-        "x7r": {"contract": ca.X7R(chain), "image": media.X7R_LOGO},
-        "x7dao": {"contract": ca.X7DAO(chain), "image": media.X7DAO_LOGO},
-        "x7101": {"contract": ca.X7101(chain), "image": media.X7101_LOGO},
-        "x7102": {"contract": ca.X7102(chain), "image": media.X7102_LOGO},
-        "x7103": {"contract": ca.X7103(chain), "image": media.X7103_LOGO},
-        "x7104": {"contract": ca.X7104(chain), "image": media.X7104_LOGO},
-        "x7105": {"contract": ca.X7105(chain), "image": media.X7105_LOGO},
-    }
 
     if len(context.args) < 1:
 
@@ -525,7 +506,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     x7token = context.args[0].lower()
-    if x7token not in token_names:
+    if x7token.upper() not in tokens.TOKENS:
 
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
@@ -559,8 +540,8 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         x7_supply = ca.SUPPLY
 
-    token_info = token_names[x7token]
-    x7_price, _ = dextools.get_price(token_info["contract"], chain)
+    ca = tokens.TOKENS[x7token.upper()][chain].ca
+    x7_price, _ = dextools.get_price(ca, chain)
     x7_market_cap = float(x7_price) * float(x7_supply)
 
     percent = ((token_market_cap - x7_market_cap) / x7_market_cap) * 100
@@ -663,13 +644,11 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
     if token.upper() in tokens.TOKENS:
-        token_info = tokens.TOKENS[token.upper()].get(chain)
-        address = token_info.ca
-        price, _ = dextools.get_price(address, chain)
+        ca = tokens.TOKENS[token.upper()][chain].ca
+        price, _ = dextools.get_price(ca, chain)
             
             
     elif token.upper() == "X7D":
-        token_info = chains.active_chains()[chain]
         price = etherscan.get_native_price(chain)
     else:
 
@@ -678,7 +657,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     value = float(price) * float(amount)
 
-    caption = (f"*X7 Finance Price Conversion - {token_info.name.upper()} ({chain_info.name})*\n\n"
+    caption = (f"*X7 Finance Price Conversion - {token.upper()} ({chain_info.name})*\n\n"
             f"{amount} {token.upper()}  is currently worth:\n\n${value:,.0f}\n\n")
     
     if amount == "500000" and token.upper() == "X7DAO":
@@ -691,12 +670,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
-    chain_info, error_message = chains.get_info(chain, token=True)
-    if error_message:
-        await update.message.reply_text(error_message)
-        return
-    
+    chain =  "eth"
     buttons = []
     input_contract = " ".join(context.args).lower()
     contract_names = list(dao.contract_mappings(chain))
@@ -1061,19 +1035,19 @@ async def fg(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 localtime,
             )
         )
+
     duration_in_s = float(fear_data["data"][0]["time_until_update"])
-    days = divmod(duration_in_s, 86400)
-    hours = divmod(days[1], 3600)
-    minutes = divmod(hours[1], 60)
+    next_update = tools.get_time_difference(time.time() + duration_in_s)
+
     caption = "*Market Fear and Greed Index*\n\n"
     caption += f'{fear_values[0][0]} - {fear_values[0][1]} - {fear_values[0][2].strftime("%B %d")}\n\n'
     caption += "Change:\n"
+
     for i in range(1, 7):
         caption += f'{fear_values[i][0]} - {fear_values[i][1]} - {fear_values[i][2].strftime("%B %d")}\n'
-    caption += "\nNext Update:\n"
-    caption += (
-        f"{int(hours[0])} hours and {int(minutes[0])} minutes"
-    )
+
+    caption += f"\nNext Update:\n{next_update}"
+
 
     await update.message.reply_photo(
         photo=f"https://alternative.me/crypto/fear-and-greed-index.png?timestamp={int(time.time())}",
@@ -1804,7 +1778,7 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def me(update: Update, context: CallbackContext):
+async def me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     buttons = []
     message = (
@@ -1822,20 +1796,12 @@ async def me(update: Update, context: CallbackContext):
     if not wallet:
         message += "\n\nUse /register to register an EVM wallet"
     else:
-        chain = " ".join(context.args).lower() or "eth"
-        
+        chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
         chain_info, error_message = chains.get_info(chain)
-        if error_message:
-            await context.bot.send_message(
-                chat_id=user.id,
-                text=error_message,
-                parse_mode="Markdown"
-            )
-            return
 
-        eth_balance = etherscan.get_native_balance(wallet["wallet"], chain)
+        native_balance = etherscan.get_native_balance(wallet["wallet"], chain)
         x7d_balance = float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain)) / 10 ** 18
-        if eth_balance > 0:
+        if native_balance > 0:
             buttons.append([InlineKeyboardButton("Mint X7D", callback_data=f"mint:{chain}")])
             buttons.append([InlineKeyboardButton(f"Withdraw {chain_info.native.upper()}", callback_data=f"withdraw:{chain}")])
         if x7d_balance > 0:
@@ -1844,7 +1810,7 @@ async def me(update: Update, context: CallbackContext):
         message += (
             f"\n\nWallet Address:\n`{wallet['wallet']}`\n\n"
             f"*{chain_info.name.upper()} Chain*\n"
-            f"{chain_info.native.upper()} Balance: {eth_balance:.4f}\n"
+            f"{chain_info.native.upper()} Balance: {native_balance:.4f}\n"
             f"X7D Balance: {x7d_balance}\n\n"
             f"To view balances on other chains, use `/me chain-name`\n\n"
             f"If your TXs are failing or returning blank TXs, you likely have a stuck TX, `use /stuck chain-name` to send a 0 value TX!"
@@ -2057,14 +2023,15 @@ async def pfp(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif len(text) > 17:
         await update.message.reply_text("Name too long, please use under 17 characters")
     else:
+        message = await update.message.reply_text("Generating PFP, Please wait...")
         img = Image.open(requests.get(tools.get_random_pioneer(), stream=True).raw)
         i1 = ImageDraw.Draw(img)
-        position = (380, 987.7)
-        font = ImageFont.truetype(r"media/Bartomes.otf", 34)
-        for char in text:
-            i1.text(position, char, font=font, fill=(255, 255, 255))
-            position = (position[0] + 37.5, position[1])
+        position = (700, 1977)
+        font = ImageFont.truetype(r"media/Bartomes.otf", 70)
+        i1.text(position, text, font=font, fill=(255, 255, 255))
         img.save(r"media/pfp.png")
+
+        await message.delete()
 
         await update.message.reply_photo(
             photo=open(r"media/pfp.png", "rb"))
@@ -2083,19 +2050,18 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
                 )
     native_price = etherscan.get_native_price(chain)
     if pioneer_id == "":
-        floor_data = blockspan.get_nft_data(ca.PIONEER, chain)
-        floor = floor_data["floor_price"]
-        if floor:
-            floor_round = round(floor, 2)
-            floor_dollar = floor * float(native_price)
+        floor = blockspan.get_nft_data(ca.PIONEER, chain)
+        if "floor_price" in floor:
+            floor_price = floor["floor_price"]
+            floor_dollar = floor_price * float(native_price)
         else:
             floor = coingecko.get_nft_floor(ca.PIONEER)
             if floor:
-                floor_round = floor["floor_price"]
+                floor_price = floor["floor_price"]
                 floor_dollar = floor["floor_price_usd"]
             else:
-                floor_round = "N/A"
-                floor_dollar = 0 
+                floor_price = 0
+                floor_dollar = 0
         pioneer_pool = etherscan.get_native_balance(ca.PIONEER, "eth")
         total_dollar = float(pioneer_pool) * float(native_price)
         tx = etherscan.get_tx(ca.PIONEER, "eth")
@@ -2122,7 +2088,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             photo=tools.get_random_pioneer(),
             caption=
                 f"*X7 Pioneer NFT Info*\n\n"
-                f"Floor Price: {floor_round} ETH (${floor_dollar:,.0f})\n"
+                f"Floor Price: {floor_price:,.3f} ETH (${floor_dollar:,.0f})\n"
                 f"Total Unclaimed Rewards: {pioneer_pool:.3f} ETH (${total_dollar:,.0f})\n"
                 f"Total Claimed Rewards: {total_claimed:.3f} ETH (${total_claimed_dollar:,.0f})\n"
                 f"Unlock Fee: {unlock_fee:.2f} ETH (${unlock_fee_dollar:,.0f})\n\n"
@@ -2780,7 +2746,7 @@ async def timestamp_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         else:  
             stamp = int(" ".join(context.args).lower())
-            time = tools.convert_datetime(stamp)
+            time = datetime.fromtimestamp(stamp)
             when = tools.get_time_difference(stamp)
 
             await update.message.reply_photo(

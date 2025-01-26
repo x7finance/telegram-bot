@@ -47,8 +47,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if db.settings_get("click_me"):
             await auto.button_send(context)
         else:
-            await update.message.reply_text(f"Next Click Me:\n\nDisabled\n\n"
-                )
+            await update.message.reply_text(f"Click Me is disabled")
 
 
 async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):

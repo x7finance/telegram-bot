@@ -8,20 +8,6 @@ from hooks import api
 etherscan = api.Etherscan()
 
 
-def convert_datetime(input_value):
-    try:
-        if isinstance(input_value, str):
-            datetime_obj = datetime.strptime(input_value, '%Y-%m-%d %H:%M')
-            return datetime_obj.timestamp()
-        elif isinstance(input_value, (int, float)):
-            datetime_obj = datetime.fromtimestamp(input_value)
-            return datetime_obj.strftime('%Y-%m-%d %H:%M')
-        else:
-            return "Invalid input type. Provide a datetime string or a timestamp."
-    except ValueError:
-        return "Invalid input format. Ensure datetime strings use 'YYYY-MM-DD HH:MM'."
-
-
 def escape_markdown(text):
     characters_to_escape = ['*', '_', '`']
     for char in characters_to_escape:
