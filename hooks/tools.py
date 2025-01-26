@@ -15,6 +15,16 @@ def escape_markdown(text):
     return text
 
 
+def format_seconds(seconds):
+    minutes = int(seconds // 60)
+    remaining_seconds = seconds % 60
+
+    if minutes > 0:
+        return f"{minutes} minutes and {remaining_seconds:.0f} seconds"
+    else:
+        return f"{remaining_seconds:.3f} secconds"
+
+
 def format_schedule(schedule1, schedule2, native_token, isComplete):
     current_datetime = datetime.now()
     next_payment_datetime = None

@@ -51,6 +51,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_info = user.username or f"{user.first_name} {user.last_name}" or user.first_name
 
     time_taken = button_click_timestamp - button_generation_timestamp
+    formatted_time_taken = tools.format_seconds(time_taken)
 
     await db.clicks_update(user_info, time_taken)
 
@@ -69,10 +70,10 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_count_message = f"They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak!"
 
     if db.clicks_check_is_fastest(time_taken):
-        user_count_message += f"\n\n🎉🎉 {time_taken:.3f} seconds is the new fastest time! 🎉🎉"
+        user_count_message += f"\n\n🎉🎉 {formatted_time_taken} is the new fastest time! 🎉🎉"
 
     message_text = (
-        f"@{tools.escape_markdown(user_info)} was the fastest Pioneer in {time_taken:.3f} seconds!\n\n"
+        f"@{tools.escape_markdown(user_info)} was the fastest Pioneer in {formatted_time_taken}!\n\n"
         f"{user_count_message}\n\n"
         f"The button has been clicked a total of {total_click_count} times by all Pioneers!\n\n"
     )

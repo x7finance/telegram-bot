@@ -1227,6 +1227,8 @@ async def leaderboard(update: Update, context: CallbackContext):
     click_counts_total = db.clicks_get_total()
     fastest_user, fastest_time = db.clicks_fastest_time()
     streak_user, streak_value = db.clicks_check_highest_streak()
+    formatted_fastest_time = tools.format_seconds(fastest_time)
+
     year = datetime.now().year
 
     burn_active = db.settings_get('burn')
@@ -1241,7 +1243,7 @@ async def leaderboard(update: Update, context: CallbackContext):
         f"Total clicks: *{click_counts_total}*\n"
         + (f"Clicks till next X7R Burn: *{clicks_needed}*\n" if burn_active else "") +
         f"\nFastest click:\n"
-        f"{fastest_time:,.3f} seconds\n"
+        f"{formatted_fastest_time}\n"
         f"by @{tools.escape_markdown(fastest_user)}\n\n"
         f"@{tools.escape_markdown(streak_user)} clicked the button last and is on a *{streak_value}* click streak!"
     )
