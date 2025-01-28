@@ -207,10 +207,10 @@ async def pair_alert(event, chain):
     if token_data.get("statusCode") == 200 and token_data.get("data"):
         data = token_data["data"]
         
-        buy_tax_data = data.get("buyTax", {})
-        sell_tax_data = data.get("sellTax", {})
-        buy_tax = buy_tax_data.get("max", 0) * 100
-        sell_tax = sell_tax_data.get("max", 0) * 100
+        buy_tax_data = data.get("buyTax") or {}
+        sell_tax_data = data.get("sellTax") or {}
+        buy_tax = (buy_tax_data.get("max") or 0) * 100
+        sell_tax = (sell_tax_data.get("max") or 0) * 100
         if buy_tax > 5 or sell_tax > 5:
             tax = f"⚠️ Tax: {int(buy_tax)}/{int(sell_tax)}"
         else:
