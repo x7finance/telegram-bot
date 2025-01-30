@@ -1439,7 +1439,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         if liquidatable_loans > 0:
-            liquidation_instructions = "To liquidate use `/liquidate loanID`"
+            liquidation_instructions = f"Use `/liquidate loanID {chain}`"
             cost = functions.estimate_gas(chain, "liquidate", first_loan_id)
             results_text = "\n".join(results)
             output = (
@@ -1632,7 +1632,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 cost = functions.estimate_gas(chain, "liquidate", loan_id)
                 liquidation_status = (
                     f"\n\n*Eligible For Liquidation*\n"
-                    f'Reward: {reward} {chain_info.native.upper()} (${price * reward:,.2f})\n'
+                    f'Reward: {reward} {chain_info.native.upper()}\n'
                     f'Estimated gas cost: {cost}'
                 )
                 liquidation_button = [
@@ -1641,7 +1641,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         callback_data=f"liquidate:{chain}:{loan_id}",
                     )
                 ]
-        except Exception:
+        except Exception as e:
             pass
 
         keyboard = [
@@ -1800,6 +1800,9 @@ async def me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         chain = " ".join(context.args).lower() or chains.get_chain(update.effective_message.message_thread_id)
         chain_info, error_message = chains.get_info(chain)
+        if error_message:
+            await update.message.reply_text(error_message)
+            return
 
         native_balance = etherscan.get_native_balance(wallet["wallet"], chain)
         x7d_balance = float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain)) / 10 ** 18
