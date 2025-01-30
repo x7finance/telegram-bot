@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
+from eth_utils import is_address
 
 from hooks import api, tools
 from constants import ca, chains, tokens, urls
@@ -13,7 +14,7 @@ etherscan = api.Etherscan()
 async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, chain):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    if not tools.is_eth(search):
+    if not is_address(search):
         if search.lower() in tokens.BLUE_CHIPS:
             token = coingecko.search(search)
             if token['coins']:
@@ -28,7 +29,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 )
                 return
             
-    if tools.is_eth(search):
+    if is_address(search):
         if chain is None:
             for chain, chain_info in chains.MAINNETS.items():
                 if chain_info.live:

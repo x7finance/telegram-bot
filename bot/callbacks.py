@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext, ConversationHandler, ContextTypes
+from eth_utils import is_address
 
 import os, time
 from datetime import datetime
@@ -147,31 +148,30 @@ async def confirm_conv(update: Update, context: ContextTypes.DEFAULT_TYPE):
     callback_data = query.data.split(":")
     operation = callback_data[0]
 
+    if operation in ["mint", "redeem"]:
+        chain = context.user_data.get("x7d_chain")
+        amount = context.user_data.get("x7d_amount")
+    elif operation == "withdraw":
+        chain = context.user_data.get("withdraw_chain")
+        amount = context.user_data.get("withdraw_amount")
+        address = context.user_data.get("withdraw_address")
+
     chain_info, error_message = chains.get_info(chain)
 
-    token = chain_info.name if operation in ["mint", "redeem"] else "X7D"
-    
+    token = chain_info.native.upper() if operation == "withdraw" else "X7D"
+
     message = await context.bot.send_message(
-            chat_id=query.message.chat_id,
-            text=f"Attempting to {operation} {amount} {token} ({chain_info.name}), please wait..."
-        )
+        chat_id=query.message.chat_id,
+        text=f"Attempting to {operation} {amount} {token} ({chain_info.name}), please wait..."
+    )
 
     try:
         if operation == "mint":
-            chain = context.user_data.get("x7d_chain")
-            amount = context.user_data.get("x7d_amount")
             result = functions.x7d_mint(amount, chain, user_id)
         elif operation == "redeem":
-            chain = context.user_data.get("x7d_chain")
-            amount = context.user_data.get("x7d_amount")
             result = functions.x7d_redeem(amount, chain, user_id)
         elif operation == "withdraw":
-            chain = context.user_data.get("withdraw_chain")
-            amount = context.user_data.get("withdraw_amount")
-            address = context.user_data.get("withdraw_address")
             result = functions.withdraw(amount, chain, user_id, address)
-        else:
-            result = "Unknown action."
 
         await message.delete()
         await query.edit_message_text(text=result)
@@ -396,13 +396,11 @@ async def x7d_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     action = callback_data[0]
     chain = callback_data[1]
 
-    chain_info, error_message = chains.get_info(chain)
-
     context.user_data["x7d_action"] = action
     context.user_data["x7d_chain"] = chain
 
     await query.message.reply_text(
-        text=f"How much do you want to {action} on {chain_info.name}? Please reply with the amount (e.g., `0.5`).",
+        text=f"How much do you want to {action}? Please reply with the amount (e.g., `0.5`).",
     )
 
     return X7D_AMOUNT
@@ -438,7 +436,7 @@ async def x7d_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["x7d_amount"] = amount
 
     await update.message.reply_text(
-        text=f"Are you sure you want to {action} {amount} {chain_info.native.upper()} on {chain_info.name}?",
+        text=f"Are you sure you want to {action} {amount} X7D ({chain_info.name})?",
         reply_markup=InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("Yes", callback_data=f"{action}:{chain}"),
@@ -456,13 +454,11 @@ async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     action = callback_data[0]
     chain = callback_data[1]
 
-    chain_info, error_message = chains.get_info(chain)
-
     context.user_data["withdraw_action"] = action
     context.user_data["withdraw_chain"] = chain
 
     await query.message.reply_text(
-        text=f"How much do you want to withdraw on {chain_info.name}? Please reply with the amount (e.g., `0.5`).",
+        text=f"How much do you want to withdraw? Please reply with the amount (e.g., `0.5`).",
     )
 
     return WITHDRAW_AMOUNT
@@ -509,7 +505,7 @@ async def withdraw_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chain_info, error_message = chains.get_info(chain)
     
-    if not tools.is_eth(address):
+    if not is_address(address):
         await update.message.reply_text(
             "Invalid address. Please provide a valid EVM address."
             )
@@ -519,7 +515,7 @@ async def withdraw_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["withdraw_address"] = address
 
     await update.message.reply_text(
-        f"Are you sure you want to {action} {amount} {chain_info.native.upper()} on {chain_info.name} to the following address?\n\n"
+        f"Are you sure you want to {action} {amount} {chain_info.native.upper()} ({chain_info.name}) to the following address?\n\n"
         f"`{address}`",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([
