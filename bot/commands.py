@@ -5,6 +5,7 @@ import math, os, pytz, random, re, requests, time
 from datetime import datetime
 from eth_account import Account
 from PIL import Image, ImageDraw, ImageFont
+from eth_utils import is_address
 
 from constants import abis, ca, chains, dao, nfts, settings, splitters, tax, text, tokens, urls  
 from hooks import api, db, functions, tools
@@ -461,21 +462,22 @@ async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
 
 
 async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    first = context.args[0]
-    second = context.args[1]
-    if first == second:
-        reply = "✅ Both inputs match"
-    else:
-        reply = f"❌ Inputs do not match"
+    if not context.args:
+        await update.message.reply_text("Please provide an address to check.")
+        return
+    
+    address = context.args[0]
+    result = is_address(address)
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
-        caption=
-            f"*X7 Finance Input Checker*\n\n"
-            f"First:\n{first}\n\n"
-            f"Second:\n{second}\n\n"
-            f"{reply}",
-        parse_mode="Markdown")
+        caption=(
+            f"*X7 Finance Address Checker*\n\n"
+            f"`{address}`\n\n"
+            f"{'✅ Is a valid address' if result else '❌ Is not a valid address'}"
+        ),
+        parse_mode="Markdown"
+    )
 
 
 async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
