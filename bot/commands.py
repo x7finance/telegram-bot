@@ -102,7 +102,7 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if token.upper() in tokens.TOKENS:
         pairs = tokens.TOKENS[token.upper()][chain].pairs
 
-        message = await update.message.reply_text("Getting Arbitrage Opportunities, please wait...")
+        message = await update.message.reply_text(f"Getting {token.upper()} ({chain_info.name}) arbitrage opportunities, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
         if token in ["x7dao", "x7r"]:
@@ -243,7 +243,7 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
-    message = await update.message.reply_text("Getting Loan Rates Info, Please wait...")
+    message = await update.message.reply_text(f"Getting {chain_info.name} loan rate info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     loan_info = ""
@@ -342,7 +342,7 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
     
-    message = await update.message.reply_text("Getting Burn Info, Please wait...")
+    message = await update.message.reply_text(f"Getting X7R ({chain_info.name}) burn info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     burn = float(etherscan.get_token_balance(ca.DEAD, ca.X7R(chain), chain)) / 10 ** 18
@@ -491,10 +491,6 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
-    message = await update.message.reply_text("Getting Comparison Info, Please wait...")
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
-
-
     if len(context.args) < 1:
 
         await update.message.reply_photo(
@@ -533,6 +529,10 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await update.message.reply_text(f"Comparison with `{token2}` is not available.")
         return
+    
+    message = await update.message.reply_text(f"Getting {x7token.upper()} ({chain_info.name}) comparison info, Please wait...")
+    await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
 
     token_id = search["coins"][0]["api_symbol"]
 
@@ -542,8 +542,8 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         x7_supply = ca.SUPPLY
 
-    ca = tokens.TOKENS[x7token.upper()][chain].ca
-    x7_price, _ = dextools.get_price(ca, chain)
+    token_ca = tokens.TOKENS[x7token.upper()][chain].ca
+    x7_price, _ = dextools.get_price(token_ca, chain)
     x7_market_cap = float(x7_price) * float(x7_supply)
 
     percent = ((token_market_cap - x7_market_cap) / x7_market_cap) * 100
@@ -654,7 +654,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
         price = etherscan.get_native_price(chain)
     else:
 
-        await update.message.reply_text("Token not found, please use X7 tokens only")
+        await update.message.reply_text("Token not found. Please use X7 tokens only")
         return
 
     value = float(price) * float(amount)
@@ -699,10 +699,6 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton(
                 text="Vote Here",
                 url=f"{urls.SNAPSHOT}/proposal/{proposal['id']}")
-            ],
-            [InlineKeyboardButton(
-                    text="DAO Chat",
-                    url=urls.TG_DAO)
             ]
             ])
         else:
@@ -710,13 +706,9 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             header = 'No Current Open Proposal\n\nLast Proposal:'
             buttons.extend([
             [InlineKeyboardButton(
-                text="X7 Finance DAO",
+                text="X7DAO Snapshot",
                 url=urls.SNAPSHOT)
             ],
-            [InlineKeyboardButton(
-                text="DAO Chat",
-                url=urls.TG_DAO)
-            ]
             ])
 
         choices_text = "\n".join(
@@ -932,7 +924,7 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
-    message = await update.message.reply_text("Getting Gas data, Please wait...")
+    message = await update.message.reply_text(f"Getting {chain_info.name} gas data, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     try:
@@ -979,7 +971,7 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
     
-    message = await update.message.reply_text("Getting Fee to data, Please wait...")
+    message = await update.message.reply_text(f"Getting {chain_info.name} fee to data, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     native_price = etherscan.get_native_price(chain)
@@ -1158,7 +1150,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if token in ca.HUBS(chain):
-        message = await update.message.reply_text("Getting Liquidity Hub data, Please wait...")
+        message = await update.message.reply_text(f"Getting {token.upper()} ({chain_info.name}) liquidity hub data, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
         hub_address = ca.HUBS(chain)[token]
@@ -1185,8 +1177,6 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     eth_balance = etherscan.get_native_balance(hub_address, chain)
     eth_dollar = eth_balance * eth_price
 
-    cost = functions.estimate_gas(chain, "processfees")
-
     if token.startswith("x71"):
         button_name = "X7100"
     else:
@@ -1207,8 +1197,11 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     if float(available_tokens) > float(threshold):
+        cost = functions.estimate_gas(chain, "processfees")
+        split_text += f"\n\nEstimated process fees gas cost: {cost}"
+
         buttons.append(
-            [InlineKeyboardButton(text=f"Process {token.upper()} fees", callback_data=f"push_{token}:{chain}")]
+            [InlineKeyboardButton(text=f"Process {token.upper()} Fees", callback_data=f"push_{token}:{chain}")]
         )
     
     await message.delete()
@@ -1217,7 +1210,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"*{token.upper()} Liquidity Hub ({chain_info.name})*\n\n"
             f"{eth_balance:,.4f} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
-            f"{split_text}\n\nEstimated process fees gas cost: {cost}\n\n"
+            f"{split_text}\n\n"
             f"{buy_back_text}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
@@ -1290,7 +1283,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
     
-    message = await update.message.reply_text("Getting Liquidity data, Please wait...")
+    message = await update.message.reply_text(f"Getting {chain_info.name} liquidity data, Please wait...")
 
     x7r_pair = tokens.TOKENS["X7R"].get(chain).pairs[0]
     x7dao_pair = tokens.TOKENS["X7DAO"].get(chain).pairs[0]
@@ -1413,7 +1406,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         live_loans = 0
     
     if loan_id is None:
-        message = await update.message.reply_text("Getting Liquidation Info, Please wait...")
+        message = await update.message.reply_text(f"Getting {chain_info.name} liquidation info, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
         num_loans = contract.functions.nextLoanID().call()
@@ -1482,7 +1475,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(f"Loan {loan_id} is not eligible for liquidation")
                 return
 
-            await update.message.reply_text(f"Attempting to liquidate Loan {loan_id} ({chain_info.name})...")
+            await update.message.reply_text(f"Liquidating Loan {loan_id} ({chain_info.name})...")
             result = functions.liquidate_loan(loan_id, chain, user_id)
             await update.message.reply_text(result)
 
@@ -1573,7 +1566,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Loan ID is required and should be a number")
         return
 
-    message = await update.message.reply_text("Getting Loan Info, Please wait...")
+    message = await update.message.reply_text(f"Getting loan {loan_id} ({chain_info.name}) info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     chain_lpool = ca.LPOOL(chain, int(loan_id))
@@ -1816,15 +1809,15 @@ async def me(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         message += (
             f"\n\nWallet Address:\n`{wallet['wallet']}`\n\n"
-            f"*{chain_info.name.upper()} Chain*\n"
+            f"*{chain_info.name} Chain*\n"
             f"{chain_info.native.upper()} Balance: {native_balance:.4f}\n"
             f"X7D Balance: {x7d_balance}\n\n"
             f"To view balances on other chains, use `/me chain-name`\n\n"
             f"If your TXs are failing or returning blank TXs, you likely have a stuck TX, `use /stuck chain-name` to send a 0 value TX!"
         )
 
-        buttons.append([InlineKeyboardButton("View onchain", url=chain_info.scan_address + wallet["wallet"])])
-        buttons.append([InlineKeyboardButton("Remove wallet", callback_data="question:wallet_remove")])
+        buttons.append([InlineKeyboardButton("View Onchain", url=chain_info.scan_address + wallet["wallet"])])
+        buttons.append([InlineKeyboardButton("Remove Wallet", callback_data="question:wallet_remove")])
 
     try:
         await context.bot.send_message(
@@ -1893,7 +1886,7 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
     
-    message = await update.message.reply_text("Getting NFT Info, Please wait...")
+    message = await update.message.reply_text(f"Getting {chain_info.name} NFT info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     chain_prices = nfts.mint_prices(chain)
@@ -2160,11 +2153,11 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
 
 async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower() or None
-
-    message = await update.message.reply_text("Getting Lending Pool Info, Please wait...")
-    await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
     if not chain:
+        message = await update.message.reply_text("Getting lending pool info, Please wait...")
+        await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
         pool_text = ""
         total_lpool_reserve_dollar = 0
         total_lpool_dollar = 0
@@ -2222,6 +2215,9 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if error_message:
             await update.message.reply_text(error_message)
             return
+        
+        message = await update.message.reply_text(f"Getting {chain_info.name} lending pool info, Please wait...")
+        await context.bot.send_chat_action(update.effective_chat.id, "typing")
         
         native_price = etherscan.get_native_price(chain)
         lpool_reserve = etherscan.get_native_balance(ca.LPOOL_RESERVE(chain), chain)
@@ -2342,7 +2338,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     message = await update.message.reply_text(
-        f"Attempting to push splitters on {chain_info.name.upper()}. Please wait..."
+        f"Pushing {chain_info.name} splitters, Please wait..."
     )
 
     eco_config = splitters.get_push_settings(chain)["push_eco"]
@@ -2392,7 +2388,7 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             await context.bot.send_message(
                 chat_id=user_id,
-                text="Youve already registed, your details are as follows....",
+                text="Youve already registed, your details are as follows...",
                 parse_mode="Markdown"
             )
             await me(update, context)
@@ -2498,7 +2494,7 @@ async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         message = await update.message.reply_text(
-            f"Attempting to clear stuck TX on {chain_info.name.upper()}....."
+            f"Clearing stuck TX on {chain_info.name}..."
             )
 
         result = functions.stuck_tx(chain, user.id)
@@ -2638,7 +2634,7 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
-    message = await update.message.reply_text("Getting Splitter Info, Please wait...")
+    message = await update.message.reply_text(f"Getting {chain_info.name} splitter info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
     
     native_price = etherscan.get_native_price(chain)
@@ -2668,13 +2664,11 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"{eco_splitter_text}"
     )
 
-    buttons = [
-        [InlineKeyboardButton(text="Ecosystem Splitter Contract", url=chain_info.scan_address + eco_address)]
-    ]
+    buttons = []
 
     if float(available_tokens) > float(threshold):
         buttons.append(
-            [InlineKeyboardButton(text="Push Ecosystem Splitter", callback_data=f"push_eco:{chain}")]
+            [InlineKeyboardButton(text=f"Push {chain_info.name} Ecosystem Splitter", callback_data=f"push_eco:{chain}")]
         )
 
     treasury_splitter_text = ""
@@ -2703,24 +2697,21 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{treasury_splitter_text}"
         )
 
-        buttons.append(
-            [InlineKeyboardButton(text="Treasury Splitter Contract", url=chain_info.scan_address + treasury_address)]
-            )
-
         if float(available_tokens) > float(threshold):
+            cost = functions.estimate_gas(chain, "push")
+            caption += f"\nEstimated push gas cost: {cost}"
+
             buttons.append(
-                [InlineKeyboardButton(text="Push Treasury Splitter", callback_data=f"push_treasury:{chain}")]
+                [InlineKeyboardButton(text=f"Push {chain_info.name} Treasury Splitter", callback_data=f"push_treasury:{chain}")]
             )
     else:
         treasury_dollar = 0
-
-    cost = functions.estimate_gas(chain, "push")
 
     await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=
-            f"{caption}\nEstimated push gas cost: {cost}",
+            f"{caption}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -2877,7 +2868,7 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
-    message = await update.message.reply_text("Getting Treasury Info, Please wait...")
+    message = await update.message.reply_text(f"Getting {chain_info.name} treasury info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     native_price = etherscan.get_native_price(chain)
@@ -2910,7 +2901,7 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 [
                     InlineKeyboardButton(
-                        text="DAO Multi-sig Wallet",
+                        text="DAO Multi-Sig Wallet",
                         url=chain_info.scan_address + chain_info.dao_multi
                     )
                 ]
@@ -3077,7 +3068,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
-    message = await update.message.reply_text("Getting Wallet Info, Please wait...")
+    message = await update.message.reply_text(f"Getting {chain_info.name} Wallet Info, Please wait...")
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     native_price = etherscan.get_native_price(chain)
@@ -3219,12 +3210,6 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         text="X7D Funding Dashboard",
                         url=f"{urls.XCHANGE}fund"
                     )
-                ],
-                [
-                    InlineKeyboardButton(
-                        text=f"{chain_info.scan_name} Contract",
-                        url=chain_info.scan_token + ca.X7D(chain)
-                    )
                 ]
             ]
         )
@@ -3281,7 +3266,6 @@ async def x7_token(update: Update, context: ContextTypes.DEFAULT_TYPE, token_nam
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton(text=f"{chain_info.scan_name} Contract", url=chain_info.scan_token + token_ca(chain))],
                 [InlineKeyboardButton(text="Chart", url=urls.DEX_TOOLS(chain_info.dext, pair))],
                 [InlineKeyboardButton(text="Buy", url=urls.XCHANGE_BUY(chain_info.id, token_ca(chain)))]
             ]

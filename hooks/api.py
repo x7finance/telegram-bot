@@ -67,6 +67,7 @@ class Dune:
         self.top_flag = {}
         self.top_timestamp = {}
         self.top_last_date = {}
+        self.error = "Unable to get Dune data. Please use the link below"
 
 
     def make_api_url(self, module, action, identifier):
@@ -114,7 +115,7 @@ class Dune:
         if error_message:
             return error_message
         chain_name = "ethereum" if chain == "eth" else (chain_info.name.lower() if chain_info else "all")
-        chain_name_title = f"({chain_info.name.upper()})" if chain_info else "(All chains)"
+        chain_name_title = f"({chain_info.name})" if chain_info else "(All chains)"
 
         if chain_name.upper() not in self.top_flag:
             self.top_text[chain_name.upper()] = ""
@@ -146,7 +147,7 @@ class Dune:
 
                 return (
                     f'*Xchange Top Pairs {chain_name_title}*\n\n'
-                    f'Unable to get Dune data, please use the link below'
+                    f'{self.error}'
                     )
 
             if response_data.get('is_execution_finished', False):
@@ -157,7 +158,7 @@ class Dune:
 
             return (
                 f'*Xchange Top Pairs {chain_name_title}*\n\n'
-                f'Unable to get Dune data, please use the link below'
+                f'{self.error}'
                 )
 
         rows = response_data["result"]["rows"]
@@ -187,7 +188,7 @@ class Dune:
 
             return (
                 f'*Xchange Top Pairs {chain_name_title}*\n\n'
-                f'Unable to get Dune data, please use the link below'
+                f'{self.error}'
                 )
         
         for idx, item in enumerate(top_pairs, start=1):
@@ -229,7 +230,7 @@ class Dune:
             if not isinstance(response, dict):
                 return (
                     f'*Xchange Volume*\n\n'
-                    f'Unable to get Dune data, please use the link below'
+                    f'{self.error}'
                 )
 
             response_data = response
@@ -241,7 +242,7 @@ class Dune:
         if 'result' not in response_data:
             return (
                     f'*Xchange Volume*\n\n'
-                    f'Unable to get Dune data, please use the link below'
+                    f'{self.error}'
                     )
 
         try:
@@ -252,7 +253,7 @@ class Dune:
         except (KeyError, IndexError):
             return (
                     f'*Xchange Volume*\n\n'
-                    f'Unable to get Dune data, please use the link below'
+                    f'{self.error}'
                     )
 
         volume_text = (

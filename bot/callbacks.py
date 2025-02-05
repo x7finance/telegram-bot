@@ -162,7 +162,7 @@ async def confirm_conv(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     message = await context.bot.send_message(
         chat_id=query.message.chat_id,
-        text=f"Attempting to {operation} {amount} {token} ({chain_info.name}), please wait..."
+        text=f"{operation.capitalize}ing {amount} {token} ({chain_info.name}), Please wait..."
     )
 
     try:
@@ -215,7 +215,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
         if not existing_wallet:
-            await query.answer("You have not registered a wallet, please use /register in private.", show_alert=True)
+            await query.answer("You have not registered a wallet. Please use /register in private.", show_alert=True)
             return
     
     try:
@@ -224,7 +224,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         message = await context.bot.send_message(
             chat_id=query.message.chat_id,
-            text=f"Attempting to liquidate {loan_id} {chain_info.name}, please wait..."
+            text=f"Liquidating loan {loan_id} ({chain_info.name}), Please wait..."
         )
 
         result = functions.liquidate_loan(int(loan_id), chain, user_id)
@@ -251,7 +251,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
         if not existing_wallet:
-            await query.answer("You have not registered a wallet, please use /register in private.", show_alert=True)
+            await query.answer("You have not registered a wallet. Please use /register in private.", show_alert=True)
             return
 
     action, chain = query.data.split(":")
@@ -278,7 +278,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         message = await context.bot.send_message(
             chat_id=query.message.chat_id,
-            text=f"Attempting to push {contract_type}, please wait..."
+            text=f"Pushing {contract_type} ({chain_info.name}), Please wait..."
         )
 
         if contract_type == "hub":
