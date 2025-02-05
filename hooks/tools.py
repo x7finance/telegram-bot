@@ -67,16 +67,32 @@ def get_ill_number(term):
                 return ill_number
 
 
-def get_last_buyback(hub_address, chain):
+def get_last_action(address, chain):
     chain_native = chains.active_chains()[chain].native
-    hub = etherscan.get_internal_tx(hub_address, chain)
-    hub_filter = [d for d in hub["result"] if d["to"].lower() == ca.ROUTER(chain).lower()]
-    last_txn = hub_filter[0]
+    tx = etherscan.get_internal_tx(address, chain)
+
+    word = "txn"
+    filter = []
+
+    if address in [hub["address"] for hub in ca.HUBS(chain).values()]:  
+        word = "buy back"
+        filter = [d for d in tx["result"] if d["to"].lower() == ca.ROUTER(chain).lower()]
+
+    else:
+        for key, data in ca.SPLITTERS(chain).items():
+            if address == data["address"]:
+                word = "push"
+                recipient = data["recipient"]
+                filter = [d for d in tx["result"] if d["to"].lower() == recipient.lower()]
+        if not filter:
+            return f"Last {word}: None found"
+
+    last_txn = filter[0]
     value = int(last_txn["value"]) / 10**18
     dollar = float(value) * float(etherscan.get_native_price(chain_native))
-    timestamp = int(last_txn["timeStamp"])
-    
-    return value, dollar, timestamp
+    timestamp = get_time_difference(int(last_txn["timeStamp"]))
+
+    return f'Last {word}:\n{value:.3f} {chain_native.upper()} (${dollar:,.0f})\n{timestamp}'
 
 
 def get_random_pioneer():
