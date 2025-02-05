@@ -1705,7 +1705,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 liquidation_button = [
                     InlineKeyboardButton(
                         text=f"Liquidate Loan",
-                        callback_data=f"liquidate:{chain}:{loan_id}",
+                        callback_data=f"liquidate:{loan_id}:{chain}",
                     )
                 ]
         except Exception as e:

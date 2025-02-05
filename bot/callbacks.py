@@ -162,7 +162,7 @@ async def confirm_conv(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     message = await context.bot.send_message(
         chat_id=query.message.chat_id,
-        text=f"{operation.capitalize}ing {amount} {token} ({chain_info.name}), Please wait..."
+        text=f"{operation.capitalize()}ing {amount} {token} ({chain_info.name}), Please wait..."
     )
 
     try:
@@ -219,7 +219,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
     
     try:
-        _, chain, loan_id = query.data.split(":")
+        _, loan_id, chain = query.data.split(":")
         chain_info, error_message = chains.get_info(chain)
 
         message = await context.bot.send_message(
@@ -254,7 +254,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.answer("You have not registered a wallet. Please use /register in private.", show_alert=True)
             return
 
-    action, token, chain = query.data.split(":")
+    _, token, chain = query.data.split(":")
     chain_info, error_message = chains.get_info(chain)
     
     config = splitters.get_push_settings(chain)[token]
@@ -393,9 +393,7 @@ async def welcome_button(update: Update, context: CallbackContext):
 
 async def x7d_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    callback_data = query.data.split(":")
-    action = callback_data[0]
-    chain = callback_data[1]
+    action, chain = query.data.split(":")
 
     context.user_data["x7d_action"] = action
     context.user_data["x7d_chain"] = chain
@@ -451,9 +449,7 @@ async def x7d_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    callback_data = query.data.split(":")
-    action = callback_data[0]
-    chain = callback_data[1]
+    action, chain = query.data.split(":")
 
     context.user_data["withdraw_action"] = action
     context.user_data["withdraw_chain"] = chain

@@ -73,18 +73,17 @@ def get_last_action(address, chain):
     word = "txn"
     filter = []
 
-    if address in [hub for hub in ca.HUBS(chain).values()]:  
+    if address in [hub for hub in ca.HUBS(chain).values()]:
         word = "buy back"
         filter = [d for d in tx["result"] if d["to"].lower() == ca.ROUTER(chain).lower()]
 
-    else:
-        if address in ca.SPLITTERS(chain).values():
-            word = "push"
-            splitter = [key for key, value in ca.SPLITTERS(chain).items() if value == address][0]
-            recipient = splitters.get_push_settings(chain)[splitter]["recipient"]
-            filter = [d for d in tx["result"] if d["to"].lower() == recipient.lower()]
-        if not filter:
-            return f"Last {word}: None found"
+    elif address in ca.SPLITTERS(chain).values():
+        word = "push"
+        splitter = next(key for key, value in ca.SPLITTERS(chain).items() if value == address)
+        recipient = splitters.get_push_settings(chain)[splitter]["recipient"]
+        filter = [d for d in tx["result"] if d["to"].lower() == recipient.lower()]
+    if not filter:
+        return f"Last {word}: None found"
 
     last_txn = filter[0]
     value = int(last_txn["value"]) / 10**18
