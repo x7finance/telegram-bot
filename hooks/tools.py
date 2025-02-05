@@ -1,8 +1,7 @@
-from eth_utils import is_checksum_address, to_checksum_address
-import random, re, socket
+import random, socket
 from datetime import datetime
 
-from constants import abis, ca, chains, urls
+from constants import ca, chains, splitters, urls
 from hooks import api
 
 etherscan = api.Etherscan()
@@ -81,7 +80,8 @@ def get_last_action(address, chain):
     else:
         if address in ca.SPLITTERS(chain).values():
             word = "push"
-            recipient = abis.list(chain)[address]["recipient"]
+            splitter = [key for key, value in ca.SPLITTERS(chain).items() if value == address][0]
+            recipient = splitters.get_push_settings(chain)[splitter]["recipient"]
             filter = [d for d in tx["result"] if d["to"].lower() == recipient.lower()]
         if not filter:
             return f"Last {word}: None found"

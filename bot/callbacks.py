@@ -254,10 +254,10 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.answer("You have not registered a wallet. Please use /register in private.", show_alert=True)
             return
 
-    action, chain = query.data.split(":")
+    action, token, chain = query.data.split(":")
     chain_info, error_message = chains.get_info(chain)
     
-    config = splitters.get_push_settings(chain)[action]
+    config = splitters.get_push_settings(chain)[token]
     address = config["address"]
     abi = config["abi"]
     name = config["name"]

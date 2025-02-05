@@ -154,7 +154,7 @@ if __name__ == "__main__":
     application.add_handler(CallbackQueryHandler(callbacks.cancel, pattern="^cancel$"))
     application.add_handler(CallbackQueryHandler(callbacks.click_me, pattern=r"^click_button:\d+$"))
     application.add_handler(CallbackQueryHandler(callbacks.clicks_reset, pattern="^clicks_reset$"))
-    application.add_handler(CallbackQueryHandler(callbacks.pushall, pattern="^push_(eco|treasury|x7r|x7dao|x710[1-5]):"))
+    application.add_handler(CallbackQueryHandler(callbacks.pushall, pattern="^push:(eco|treasury|x7r|x7dao|x710[1-5]):"))
     application.add_handler(CallbackQueryHandler(callbacks.liquidate, pattern=r"^liquidate:[a-zA-Z0-9-]+:\d+$"))
     application.add_handler(CallbackQueryHandler(callbacks.confirm_simple, pattern="^question:.*"))
     application.add_handler(CallbackQueryHandler(callbacks.settings_toggle, pattern="^settings_toggle_"))

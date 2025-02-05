@@ -99,8 +99,8 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
-    if token.upper() in tokens.TOKENS:
-        pairs = tokens.TOKENS[token.upper()][chain].pairs
+    if token.upper() in tokens.get_tokens():
+        pairs = tokens.get_tokens()[token.upper()][chain].pairs
 
         message = await update.message.reply_text(f"Getting {token.upper()} ({chain_info.name}) arbitrage opportunities, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
@@ -147,9 +147,9 @@ async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif token in ["x7101", "x7102", "x7103", "x7104", "x7105"]:
             price_x = dextools.get_pool_price(pairs, chain)
             prices = {
-                t: dextools.get_pool_price(tokens.TOKENS[t.upper()][chain].pairs, chain)
+                t: dextools.get_pool_price(tokens.get_tokens()[t.upper()][chain].pairs, chain)
                 for t in ["x7101", "x7102", "x7103", "x7104", "x7105"]
-                if chain in tokens.TOKENS[t.upper()]
+                if chain in tokens.get_tokens()[t.upper()]
             }
 
             if price_x is not None:
@@ -507,7 +507,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     x7token = context.args[0].lower()
-    if x7token.upper() not in tokens.TOKENS:
+    if x7token.upper() not in tokens.get_tokens():
 
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
@@ -545,7 +545,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         x7_supply = ca.SUPPLY
 
-    token_ca = tokens.TOKENS[x7token.upper()][chain].ca
+    token_ca = tokens.get_tokens()[x7token.upper()][chain].ca
     x7_price, _ = dextools.get_price(token_ca, chain)
     x7_market_cap = float(x7_price) * float(x7_supply)
 
@@ -648,8 +648,8 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if error_message:
         await update.message.reply_text(error_message)
         return
-    if token.upper() in tokens.TOKENS:
-        ca = tokens.TOKENS[token.upper()][chain].ca
+    if token.upper() in tokens.get_tokens():
+        ca = tokens.get_tokens()[token.upper()][chain].ca
         price, _ = dextools.get_price(ca, chain)
             
             
@@ -1168,7 +1168,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     eth_balance = etherscan.get_native_balance(address, chain)
     eth_dollar = eth_balance * eth_price
 
-    config = splitters.get_push_settings(chain)[f"push_{token}"]
+    config = splitters.get_push_settings(chain)[token]
     threshold = config["threshold"]
     abi = config["abi"]
 
@@ -1187,7 +1187,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         cost_str =  f"Estimated process fees gas cost: {cost}"
 
         buttons.append(
-            [InlineKeyboardButton(text=f"Process {token.upper()} Fees", callback_data=f"push_{token}:{chain}")]
+            [InlineKeyboardButton(text=f"Process {token.upper()} Fees", callback_data=f"push:{token}:{chain}")]
         )
     
     await message.delete()
@@ -1271,8 +1271,8 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     message = await update.message.reply_text(f"Getting {chain_info.name} liquidity data, Please wait...")
 
-    x7r_pair = tokens.TOKENS["X7R"].get(chain).pairs[0]
-    x7dao_pair = tokens.TOKENS["X7DAO"].get(chain).pairs[0]
+    x7r_pair = tokens.get_tokens()["X7R"].get(chain).pairs[0]
+    x7dao_pair = tokens.get_tokens()["X7DAO"].get(chain).pairs[0]
 
     total_x7r_liquidity = 0
     total_x7dao_liquidity = 0
@@ -1812,7 +1812,7 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
     caps_info = {}
     caps = {}
 
-    for token, chains_info in tokens.TOKENS.items():
+    for token, chains_info in tokens.get_tokens().items():
         token_info = chains_info.get(chain)
         if token_info:
             address = token_info.ca
@@ -1839,10 +1839,10 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo=tools.get_random_pioneer(),
         caption=
             f"*X7 Finance Market Cap Info ({chain_info.name})*\n\n"
-            f'`X7R: `            {caps[ca.X7R(chain)]}\n'
-            f'`X7DAO:`         {caps[ca.X7DAO(chain)]}\n'
-            f'`X7100:`         ${total_cons:,.0f}\n\n'
-            f'`Total Market Cap:` ${total_mcap:,.0f}',
+            f'X7R: {caps[ca.X7R(chain)]}\n'
+            f'X7DAO: {caps[ca.X7DAO(chain)]}\n'
+            f'X7100: ${total_cons:,.0f}\n\n'
+            f'Total Market Cap: ${total_mcap:,.0f}',
         parse_mode="Markdown"
     )
 
@@ -1907,7 +1907,7 @@ async def me(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    token_names = [token.lower() for token in tokens.TOKENS.keys()]
+    token_names = [token.lower() for token in tokens.get_tokens().keys()]
     token_dirs = [urls.TOKEN_IMG_DIR(token) for token in token_names]
     token_dirs_str = "\n".join(token_dirs)
     caption = f"*X7 Finance Media*\n\n{token_dirs_str}"
@@ -2459,7 +2459,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Pushing {chain_info.name} splitters, Please wait..."
     )
 
-    eco_config = splitters.get_push_settings(chain)["push_eco"]
+    eco_config = splitters.get_push_settings(chain)["eco"]
     address = eco_config["address"]
     abi = eco_config["abi"]
     name = eco_config["name"]
@@ -2481,7 +2481,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(result)
 
     if chain.lower() == "eth":
-        treasury_config = splitters.get_push_settings(chain)["push_treasury"]
+        treasury_config = splitters.get_push_settings(chain)["treasury"]
         address = treasury_config["address"]
         abi = treasury_config["abi"]
         name = treasury_config["name"]
@@ -2767,7 +2767,7 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for location, (share, percentage) in eco_distribution.items():
         eco_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
-    config = splitters.get_push_settings(chain)["push_eco"]
+    config = splitters.get_push_settings(chain)["eco"]
     threshold = config["threshold"]
     abi = config["abi"]
 
@@ -2794,7 +2794,7 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         cost = functions.estimate_gas(chain, "push")
         cost_str = f"\nEstimated push gas cost: {cost}"
         buttons.append(
-            [InlineKeyboardButton(text=f"Push {chain_info.name} Ecosystem Splitter", callback_data=f"push_eco:{chain}")]
+            [InlineKeyboardButton(text=f"Push {chain_info.name} Ecosystem Splitter", callback_data=f"push:eco:{chain}")]
         )
 
     treasury_splitter_text = ""
@@ -2808,7 +2808,7 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for location, (share, percentage) in treasury_distribution.items():
             treasury_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
-        config = splitters.get_push_settings(chain)["push_treasury"]
+        config = splitters.get_push_settings(chain)["treasury"]
         threshold = config["threshold"]
         abi = config["abi"]
 
@@ -2832,7 +2832,7 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 cost_str = f"\nEstimated push gas cost: {cost}"
 
             buttons.append(
-                [InlineKeyboardButton(text=f"Push {chain_info.name} Treasury Splitter", callback_data=f"push_treasury:{chain}")]
+                [InlineKeyboardButton(text=f"Push {chain_info.name} Treasury Splitter", callback_data=f"push:treasury:{chain}")]
             )
     else:
         treasury_dollar = 0
@@ -3356,7 +3356,7 @@ async def x7_token(update: Update, context: ContextTypes.DEFAULT_TYPE, token_nam
     
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    pairs = tokens.TOKENS[token_name][chain].pairs
+    pairs = tokens.get_tokens()[token_name][chain].pairs
     if isinstance(pairs, str):
         pair = pairs 
     elif isinstance(pairs, list) and pairs:
