@@ -316,27 +316,19 @@ def XCHANGE_CREATE(chain):
 
 def HUBS(chain):
     return {
-        "x7r": {
-            "address": X7R_LIQ_HUB(chain),
-        },
-        "x7dao": {
-            "address": X7DAO_LIQ_HUB(chain),
-        },
-        **{f"x710{i}": {
-            "address": X7100_LIQ_HUB(chain)} for i in range(1, 6)}
+        "x7r": X7R_LIQ_HUB(chain),
+        "x7dao": X7DAO_LIQ_HUB(chain),
+        **{
+            f"x710{i}": X7100_LIQ_HUB(chain)
+            for i in range(1, 6)
+        }
     }
 
 
 def SPLITTERS(chain):
     return {
-        "eco": {
-            "address": ECO_SPLITTER(chain),
-            "recipient": LPOOL_RESERVE(chain)
-        },
-        "treasury": {
-            "address": TREASURY_SPLITTER(chain),
-            "recipient": DAO_MULTI(chain)
-        }
+        "eco": ECO_SPLITTER(chain),
+        "treasury": TREASURY_SPLITTER(chain)
     }
 
 

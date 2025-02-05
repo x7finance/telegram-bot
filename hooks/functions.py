@@ -129,9 +129,10 @@ def liquidate_loan(loan_id, chain, user_id):
             sender_address = wallet["wallet"]
             sender_private_key = wallet["private_key"]
 
-        chain_lpool = ca.LPOOL(chain)
+        address = ca.LPOOL(chain)
         contract = chain_info.w3.eth.contract(
-            address=chain_info.w3.to_checksum_address(chain_lpool), abi=abis.read("lendingpool")
+            address=chain_info.w3.to_checksum_address(address),
+            abi=abis.read("lendingpool")
         )
 
         liquidate_function_selector = '0x415f1240'
@@ -144,7 +145,7 @@ def liquidate_loan(loan_id, chain, user_id):
 
         transaction = {
             'from': sender_address,
-            'to': chain_info.w3.to_checksum_address(chain_lpool),
+            'to': chain_info.w3.to_checksum_address(address),
             'data': transaction_data,
             'gas': gas_estimate,
             'gasPrice': gas_price,
@@ -165,7 +166,7 @@ def liquidate_loan(loan_id, chain, user_id):
         return f"Error liquidating loan ({chain_info.name.upper()}): {str(e)}"
 
 
-def splitter_push(contract_type, splitter_address, chain, user_id, token_address=None):
+def splitter_push(contract_type, address, abi, chain, user_id, token_address=None):
     try:
         chain_info, _ = chains.get_info(chain)
 
@@ -190,14 +191,18 @@ def splitter_push(contract_type, splitter_address, chain, user_id, token_address
         transaction_data = function_selector
         nonce = chain_info.w3.eth.get_transaction_count(sender_address)
 
-        contract = chain_info.w3.eth.contract(address=splitter_address, abi=etherscan.get_abi(splitter_address, chain))
+        contract = chain_info.w3.eth.contract(
+            address=address,
+            abi=abi
+        )
+
         function_to_call = getattr(contract.functions, function_name)
         gas_estimate = function_to_call(*function_args).estimate_gas({"from": sender_address})
         gas_price = chain_info.w3.eth.gas_price
 
         transaction = {
             'from': sender_address,
-            'to': splitter_address,
+            'to': address,
             'data': transaction_data,
             'gas': gas_estimate,
             'gasPrice': gas_price,
@@ -330,7 +335,8 @@ def x7d_mint(amount, chain, user_id):
 
         address = ca.LPOOL_RESERVE(chain)
         contract = chain_info.w3.eth.contract(
-            address=chain_info.w3.to_checksum_address(address), abi=etherscan.get_abi(address, chain)
+            address=chain_info.w3.to_checksum_address(address),
+            abi=abis.read("lendingpoolreserve")
         )
 
         nonce = chain_info.w3.eth.get_transaction_count(sender_address)
@@ -379,7 +385,7 @@ def x7d_redeem(amount, chain, user_id):
         address = ca.LPOOL_RESERVE(chain)
         contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(address),
-            abi=etherscan.get_abi(address, chain)
+            abi=abis.read("lendingpoolreserve")
         )
 
         amount_in_wei = chain_info.w3.to_wei(amount, 'ether')

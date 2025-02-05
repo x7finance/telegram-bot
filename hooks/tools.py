@@ -2,7 +2,7 @@ from eth_utils import is_checksum_address, to_checksum_address
 import random, re, socket
 from datetime import datetime
 
-from constants import ca, chains, urls
+from constants import abis, ca, chains, urls
 from hooks import api
 
 etherscan = api.Etherscan()
@@ -74,16 +74,15 @@ def get_last_action(address, chain):
     word = "txn"
     filter = []
 
-    if address in [hub["address"] for hub in ca.HUBS(chain).values()]:  
+    if address in [hub for hub in ca.HUBS(chain).values()]:  
         word = "buy back"
         filter = [d for d in tx["result"] if d["to"].lower() == ca.ROUTER(chain).lower()]
 
     else:
-        for key, data in ca.SPLITTERS(chain).items():
-            if address == data["address"]:
-                word = "push"
-                recipient = data["recipient"]
-                filter = [d for d in tx["result"] if d["to"].lower() == recipient.lower()]
+        if address in ca.SPLITTERS(chain).values():
+            word = "push"
+            recipient = abis.list(chain)[address]["recipient"]
+            filter = [d for d in tx["result"] if d["to"].lower() == recipient.lower()]
         if not filter:
             return f"Last {word}: None found"
 
@@ -135,7 +134,7 @@ def get_time_difference(timestamp):
     elif minutes > 0:
         return f"{minutes} minute{'s' if minutes > 1 else ''} {suffix}"
     else:
-        return "just now" if not is_future else "in a moment"
+        return "Just now" if not is_future else "In a moment"
 
 
 def is_local():

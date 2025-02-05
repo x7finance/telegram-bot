@@ -258,21 +258,22 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain_info, error_message = chains.get_info(chain)
     
     config = splitters.get_push_settings(chain)[action]
-    splitter_address = config["splitter_address"]
-    splitter_name = config["splitter_name"]
+    address = config["address"]
+    abi = config["abi"]
+    name = config["name"]
     threshold = config["threshold"]
     contract_type = config["contract_type"]
-    token_address = config.get("token_address")
+    token_address = config["token_address"]
 
     contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(splitter_address),
-        abi=etherscan.get_abi(splitter_address, chain),
+        address=chain_info.w3.to_checksum_address(address),
+        abi=abi
     )
 
     available_tokens = config["calculate_tokens"](contract)
 
     if float(available_tokens) < float(threshold):
-        await query.answer(f"{chain_info.name} {splitter_name} balance to low to push.", show_alert=True)
+        await query.answer(f"{chain_info.name} {name} balance to low to push.", show_alert=True)
         return
 
     try:
@@ -282,9 +283,9 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         if contract_type == "hub":
-            result = functions.splitter_push(contract_type, splitter_address, chain, user_id, token_address)
+            result = functions.splitter_push(contract_type, address, abi, chain, user_id, token_address)
         else:
-            result = functions.splitter_push(contract_type, splitter_address, chain, user_id)
+            result = functions.splitter_push(contract_type, address, abi, chain, user_id)
 
         if result.startswith("Error"):
             await query.answer(result, show_alert=True)
@@ -297,7 +298,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     except Exception as e:
         await message.delete()
-        await query.answer(f"Error during {splitter_name} push: {str(e)}", show_alert=True)
+        await query.answer(f"Error during {name} push: {str(e)}", show_alert=True)
 
 
 async def settings_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):

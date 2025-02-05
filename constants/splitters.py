@@ -1,16 +1,18 @@
-from constants import ca, chains, tokens
+from constants import abis, ca, chains, tokens
 from hooks import api
 
 dextools = api.Dextools()
 etherscan = api.Etherscan()
 
 
-def generate_eco_split(chain, eth_value):
+def generate_eco_split(chain):
     if chain in chains.active_chains():
         chain_info, _ = chains.get_info(chain)
+
+    address = ca.ECO_SPLITTER(chain)
     contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(ca.ECO_SPLITTER(chain)),
-        abi=etherscan.get_abi(ca.ECO_SPLITTER(chain), chain),
+        address=chain_info.w3.to_checksum_address(address),
+        abi=abis.read("ecosystemsplitter")
         )
             
     x7r_percentage = contract.functions.outletShare(1).call() / 10
@@ -47,12 +49,13 @@ def generate_eco_split(chain, eth_value):
     }
     
 
-def generate_hub_split(chain, hub_address, token):
+def generate_hub_split(chain, address, token):
     if chain in chains.active_chains():
         chain_info, _ = chains.get_info(chain)
 
     contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(hub_address), abi=etherscan.get_abi(hub_address, chain)
+        address=chain_info.w3.to_checksum_address(address),
+        abi=abis.list(chain)[address]["abi"]
     )
 
     distribute, liquidity, treasury, liquidity_ratio_target, balance_threshold = ("N/A",) * 5
@@ -84,8 +87,7 @@ def generate_hub_split(chain, hub_address, token):
 
     if token.upper() in tokens.TOKENS:
         token_info = tokens.TOKENS[token.upper()].get(chain)
-        address = token_info.ca
-        price, _ = dextools.get_price(address, chain)
+        price, _ = dextools.get_price(token_info.ca, chain)
 
     if token == "x7r":
         try:
@@ -106,7 +108,7 @@ def generate_hub_split(chain, hub_address, token):
 
     elif token in ["x7101", "x7102", "x7103", "x7104", "x7105"]:
         try:
-            token_liquidity_balance = contract.functions.liquidityTokenBalance(address).call() / 10 ** 18
+            token_liquidity_balance = contract.functions.liquidityTokenBalance(token_info.ca).call() / 10 ** 18
             lending_pool = contract.functions.lendingPoolShare().call() / 10
             lending_pool_balance = contract.functions.lendingPoolBalance().call() / 10 ** 18
             liquidity_balance_threshold = contract.functions.liquidityBalanceThreshold().call() / 10 ** 18
@@ -117,7 +119,7 @@ def generate_hub_split(chain, hub_address, token):
         except Exception:
             pass
 
-    balance = (float(etherscan.get_token_balance(hub_address, address, chain)) / 10 ** 18)  - float(token_liquidity_balance)
+    balance = (float(etherscan.get_token_balance(address, token_info.ca, chain)) / 10 ** 18)  - float(token_liquidity_balance)
     balance_dollar = float(price) * float(balance)
     balance_text = f"{balance:,.0f} {token.upper()} (${balance_dollar:,.0f})"
 
@@ -132,12 +134,14 @@ def generate_hub_split(chain, hub_address, token):
     )
 
 
-def generate_treasury_split(chain, eth_value):
+def generate_treasury_split(chain):
     if chain in chains.active_chains():
         chain_info, _ = chains.get_info(chain)
+
+    address = ca.TREASURY_SPLITTER(chain)
     contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(ca.TREASURY_SPLITTER(chain)),
-        abi=etherscan.get_abi(ca.TREASURY_SPLITTER(chain), chain),
+        address=chain_info.w3.to_checksum_address(address),
+        abi=abis.read("treasurysplitter")
     )
     
     profit_percentage = contract.functions.outletShare(1).call() / 1000
@@ -149,11 +153,6 @@ def generate_treasury_split(chain, eth_value):
     reward_pool_balance = contract.functions.outletBalance(2).call() / 10 ** 18
     slot_1_balance = contract.functions.outletBalance(3).call() / 10 ** 18
     slot_2_balance = contract.functions.outletBalance(4).call() / 10 ** 18
-
-    profit_balance = eth_value * profit_percentage / 100
-    reward_pool_balance = eth_value * reward_pool_percentage / 100
-    slot_1_balance = eth_value * slot_1_percentage / 100
-    slot_2_balance = eth_value * slot_2_percentage / 100
 
     slot_names = {
         "eth": ("Pioneer Pool", "Community Multi Sig", "Utility Deployer"),
@@ -180,6 +179,7 @@ def get_push_settings(chain):
     return {
         "push_eco": {
             "splitter_address": ca.ECO_SPLITTER(chain),
+            "abi": abis.read("ecosystemsplitter"),
             "splitter_name": "Ecosystem Splitter",
             "threshold": 0.01 if chain.lower() == "eth" else 0.0001,
             "contract_type": "splitter",
@@ -187,14 +187,16 @@ def get_push_settings(chain):
         },
         "push_treasury": {
             "splitter_address": ca.TREASURY_SPLITTER(chain),
+            "abi": abis.read("treasurysplitter"),
             "splitter_name": "Treasury Splitter",
             "threshold": 0.01 if chain.lower() == "eth" else 0.0001,
             "contract_type": "splitter",
             "calculate_tokens": lambda _: etherscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain)
         },
         "push_x7r": {
-            "splitter_address": ca.X7R_LIQ_HUB(chain),
-            "splitter_name": "X7R Liquidity Hub",
+            "address": ca.X7R_LIQ_HUB(chain),
+            "abi": abis.read("x7rliquidityhub"),
+            "name": "X7R Liquidity Hub",
             "token_address": ca.X7R(chain),
             "threshold": 10000,
             "contract_type": "hub",
@@ -203,8 +205,9 @@ def get_push_settings(chain):
                 ) - contract.functions.x7rLiquidityBalance().call()
         },
         "push_x7dao": {
-            "splitter_address": ca.X7DAO_LIQ_HUB(chain),
-            "splitter_name": "X7DAO Liquidity Hub",
+            "address": ca.X7DAO_LIQ_HUB(chain),
+            "abi": abis.read("x7daoliquidityhub"),
+            "name": "X7DAO Liquidity Hub",
             "token_address": ca.X7DAO(chain),
             "threshold": 10000,
             "contract_type": "hub",
@@ -213,40 +216,45 @@ def get_push_settings(chain):
                 ) - contract.functions.x7daoLiquidityBalance().call()
         },
         "push_x7101": {
-            "splitter_address": ca.X7100_LIQ_HUB(chain),
-            "splitter_name": "X7100 Liquidity Hub",
+            "address": ca.X7100_LIQ_HUB(chain),
+            "abi": abis.read("x7100liquidityhub"),
+            "name": "X7100 Liquidity Hub",
             "token_address": ca.X7101(chain),
             "threshold": 10000,
             "contract_type": "hub",
             "calculate_tokens": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7101(chain), chain)
         },
         "push_x7102": {
-            "splitter_address": ca.X7100_LIQ_HUB(chain),
-            "splitter_name": "X7100 Liquidity Hub",
+            "address": ca.X7100_LIQ_HUB(chain),
+            "abi": abis.read("x7100liquidityhub"),
+            "name": "X7100 Liquidity Hub",
             "token_address": ca.X7102(chain),
             "threshold": 10000,
             "contract_type": "hub",
             "calculate_tokens": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7102(chain), chain)
         },
         "push_x7103": {
-            "splitter_address": ca.X7100_LIQ_HUB(chain),
-            "splitter_name": "X7100 Liquidity Hub",
+            "address": ca.X7100_LIQ_HUB(chain),
+            "abi": abis.read("x7100liquidityhub"),
+            "name": "X7100 Liquidity Hub",
             "token_address": ca.X7103(chain),
             "threshold": 10000,
             "contract_type": "hub",
             "calculate_tokens": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7103(chain), chain)
         },
         "push_x7104": {
-            "splitter_address": ca.X7100_LIQ_HUB(chain),
-            "splitter_name": "X7100 Liquidity Hub",
+            "address": ca.X7100_LIQ_HUB(chain),
+            "abi": abis.read("x7100liquidityhub"),
+            "name": "X7100 Liquidity Hub",
             "token_address": ca.X7104(chain),
             "threshold": 10000,
             "contract_type": "hub",
             "calculate_tokens": lambda _: etherscan.get_token_balance(ca.X7100_LIQ_HUB(chain), ca.X7104(chain), chain)
         },
         "push_x7105": {
-            "splitter_address": ca.X7100_LIQ_HUB(chain),
-            "splitter_name": "X7100 Liquidity Hub",
+            "address": ca.X7100_LIQ_HUB(chain),
+            "abi": abis.read("x7100liquidityhub"),
+            "name": "X7100 Liquidity Hub",
             "token_address": ca.X7105(chain),
             "threshold": 10000,
             "contract_type": "hub",

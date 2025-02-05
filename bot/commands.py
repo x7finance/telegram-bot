@@ -249,17 +249,20 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     loan_info = ""
     native_price = etherscan.get_native_price(chain)
     borrow_usd = native_price * float(amount)
+
     lending_pool = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)), abi=abis.read("lendingpool")
+        address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)),
+        abi=abis.read("lendingpool")
     )
+
+    loan_contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(ca.ILL_ADDRESSES[chain]["005"]),
+        abi=abis.read("ill005")
+    )
+
     liquidation_fee = lending_pool.functions.liquidationReward().call() / 10 ** 18
     liquidation_dollar = liquidation_fee * native_price
 
-
-    loan_contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(ca.ILL_ADDRESSES[chain]["005"]), abi=etherscan.get_abi(ca.ILL_ADDRESSES[chain]["005"], chain)
-    )
-    
     loan_name = loan_contract.functions.name().call()
     loan_data = loan_contract.functions.getQuote(int(amount_in_wei)).call()
     
@@ -1149,36 +1152,39 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
-    if token in ca.HUBS(chain).keys():
+    if token in ca.HUBS(chain):
         message = await update.message.reply_text(f"Getting {token.upper()} ({chain_info.name}) liquidity hub data, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-        hub_address = ca.HUBS(chain)[token]["address"]
-        split_text = splitters.generate_hub_split(chain, hub_address, token)
+        address = ca.HUBS(chain)[token]
+        
+        split_text = splitters.generate_hub_split(chain, address, token)
     else:
         await update.message.reply_text("Please follow the command with an X7 token name")
         return
 
-    buy_back_text = tools.get_last_action(hub_address, chain)
+    buy_back_text = tools.get_last_action(address, chain)
     eth_price = etherscan.get_native_price(chain)
-    eth_balance = etherscan.get_native_balance(hub_address, chain)
+    eth_balance = etherscan.get_native_balance(address, chain)
     eth_dollar = eth_balance * eth_price
 
     config = splitters.get_push_settings(chain)[f"push_{token}"]
     threshold = config["threshold"]
+    abi = config["abi"]
 
     contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(hub_address),
-        abi=etherscan.get_abi(hub_address, chain),
+        address=chain_info.w3.to_checksum_address(address),
+        abi=abi
     )
 
     available_tokens = config["calculate_tokens"](contract)
 
     buttons = []
+    cost_str = ""
 
     if float(available_tokens) > float(threshold):
         cost = functions.estimate_gas(chain, "processfees")
-        split_text += f"\n\nEstimated process fees gas cost: {cost}"
+        cost_str =  f"Estimated process fees gas cost: {cost}"
 
         buttons.append(
             [InlineKeyboardButton(text=f"Process {token.upper()} Fees", callback_data=f"push_{token}:{chain}")]
@@ -1191,7 +1197,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"*{token.upper()} Liquidity Hub ({chain_info.name})*\n\n"
             f"{eth_balance:,.4f} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
             f"{split_text}\n\n"
-            f"{buy_back_text}",
+            f"{buy_back_text}\n\n{cost_str}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -1374,7 +1380,8 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)), abi=abis.read("lendingpool")
+        address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)),
+        abi=abis.read("lendingpool")
     )
 
     reward = contract.functions.liquidationReward().call() / 10 ** 18
@@ -1464,6 +1471,89 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) == 1 and not context.args[0].isdigit():
+        chain = context.args[0].lower()
+
+        chain_info, error_message = chains.get_info(chain)
+        if error_message:
+            await update.message.reply_text(error_message)
+            return
+
+        message = await update.message.reply_text(f"Getting Loan Info for {chain_info.name}, Please wait...")
+        await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
+        contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)),
+            abi=abis.read("lendingpool")
+        )
+
+        amount = contract.functions.nextLoanID().call() - 1
+        live_loans = contract.functions.liquidationEscrow().call() / contract.functions.liquidationReward().call()
+
+        latest_loan_text = ""
+        ill_number = None
+        token_by_id = None
+
+        if chain != "eth":
+            adjusted_amount = max(0, amount - 20)
+            latest_loan = amount
+            amount = adjusted_amount
+        else:
+            latest_loan = amount
+
+        if amount > 0:
+            latest_loan_text = f"Latest ID: {latest_loan}"
+
+            term = contract.functions.loanTermLookup(int(latest_loan)).call()
+            term_contract = chain_info.w3.eth.contract(
+                address=chain_info.w3.to_checksum_address(term),
+                abi=abis.read("ill005")
+            )
+
+            index = 0
+            while True:
+                try:
+                    token_id = term_contract.functions.tokenByIndex(index).call()
+                    if token_id == int(latest_loan):
+                        token_by_id = index
+                        break
+                    index += 1
+                except Exception:
+                    break
+
+            ill_number = tools.get_ill_number(term)
+
+        loan_text = f"Total: {amount}\nLive: {live_loans:.0f}\n{latest_loan_text}\n"
+
+        buttons = [
+            [
+                InlineKeyboardButton(
+                    text="Loans Dashboard",
+                    url=f"{urls.XCHANGE}lending"
+                )
+            ]
+        ]
+
+        if ill_number is not None and token_by_id is not None:
+            buttons.append([
+                InlineKeyboardButton(
+                    text=f"Latest Loan - ID: {latest_loan}",
+                    url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}"
+                )
+            ])
+
+        await message.delete()
+        await update.message.reply_photo(
+            photo=tools.get_random_pioneer(),
+            caption=(
+                f"*X7 Finance Loan Count ({chain_info.name})*\n\n"
+                f"{loan_text}\n"
+            ),
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+        return
+
     if len(context.args) < 1:
         message = await update.message.reply_text("Getting Loan Info, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
@@ -1474,9 +1564,10 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         for chain in chains.active_chains():
             chain_info, error_message = chains.get_info(chain)
+            
             contract = chain_info.w3.eth.contract(
                 address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)),
-                abi=abis.read("lendingpool"),
+                abi=abis.read("lendingpool")
             )
 
             amount = contract.functions.nextLoanID().call() - 1
@@ -1492,9 +1583,9 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 latest_loan = amount
 
             if amount != 0:
-                latest_loan_text = f"- Latest ID:   `{latest_loan}`"
+                latest_loan_text = f"- Latest ID: {latest_loan}"
 
-            loan_text += f"{chain_info.name}:   `{live_loans:.0f}`/`{amount}`   {latest_loan_text}\n"
+            loan_text += f"{chain_info.name}: {live_loans:.0f}/{amount} {latest_loan_text}\n"
             
             total_live += live_loans
             total += amount
@@ -1505,8 +1596,8 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             caption=
                 f"*X7 Finance Loan Count*\n\n"
                 f"{loan_text}\n"
-                f"Total:  `{total}`\n"
-                f"Total Live: `{total_live:.0f}`",
+                f"Total: {total}\n"
+                f"Total Live: {total_live:.0f}",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -1552,14 +1643,14 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain_lpool = ca.LPOOL(chain, int(loan_id))
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(chain_lpool),
-        abi=abis.read("lendingpool"),
+        abi=abis.read("lendingpool")
     )
 
     try:
         term = contract.functions.loanTermLookup(int(loan_id)).call()
         term_contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(term),
-            abi=etherscan.get_abi(term, chain),
+            abi=abis.read("ill005")
         )
 
         schedule1 = contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
@@ -1581,8 +1672,9 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         term = contract.functions.loanTermLookup(int(loan_id)).call()
         term_contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(term),
-            abi=etherscan.get_abi(term, chain),
+            abi=abis.read("ill005")
         )
+
         index = 0
         token_by_id = None
         while True:
@@ -1622,7 +1714,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [
                 InlineKeyboardButton(
-                    text=f"Chart",
+                    text="Chart",
                     url=urls.DEX_TOOLS(chain_info.dext, pair)
                 )
             ],
@@ -1665,7 +1757,7 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(ca.TIME_LOCK(chain)), 
-        abi=etherscan.get_abi(ca.TIME_LOCK(chain), chain)
+        abi=abis.read("timelock")
     )
     
     def get_lock_info(pair):
@@ -1961,18 +2053,61 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    pair_text = ""
-    total = 0
-    for chain in chains.active_chains():
+    if len(context.args) == 1:
+        chain = context.args[0].lower()
+
         chain_info, error_message = chains.get_info(chain)
+        if error_message:
+            await update.message.reply_text(error_message)
+            return
+
         contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(ca.FACTORY(chain)),
-            abi=abis.read("factory"),
+            abi=abis.read("factory")
         )
+
         amount = contract.functions.allPairsLength().call()
+
         if chain == "eth":
             amount += 141
-        pair_text += f"{chain_info.name}:   `{amount}`\n"
+
+        await update.message.reply_photo(
+            photo=tools.get_random_pioneer(),
+            caption=(
+                f"*X7 Finance Pair Count*\n\n"
+                f"{chain_info.name} Pairs: {amount:,.0f}\n"
+            ),
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            text="Xchange Pairs Dashboard",
+                            url=f"{urls.XCHANGE}liquidity?=all-pools"
+                        )
+                    ]
+                ]
+            )
+        )
+        return
+
+    pair_text = ""
+    total = 0
+
+    for chain in chains.active_chains():
+        chain_info, error_message = chains.get_info(chain)
+
+        contract = chain_info.w3.eth.contract(
+            address=chain_info.w3.to_checksum_address(ca.FACTORY(chain)),
+            abi=abis.read("factory")
+        )
+
+        amount = contract.functions.allPairsLength().call()
+
+        if chain == "eth":
+            amount += 141
+
+        pair_text += f"{chain_info.name}: {amount:,.0f}\n"
         total += amount
 
     await update.message.reply_photo(
@@ -1980,7 +2115,7 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"*X7 Finance Pair Count*\n\n"
             f"{pair_text}\n"
-            f"TOTAL:    `{total}`",
+            f"Total: {total:,.0f}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [
@@ -2024,10 +2159,12 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     pioneer_id = " ".join(context.args)
     chain = "eth"
     chain_info, error_message = chains.get_info(chain)
+
     contract = chain_info.w3.eth.contract(
-                address=chain_info.w3.to_checksum_address(ca.PIONEER),
-                abi=etherscan.get_abi(chain_info.w3.to_checksum_address(ca.PIONEER), chain),
-                )
+        address=chain_info.w3.to_checksum_address(ca.PIONEER),
+        abi=abis.read("pioneer")
+        )
+    
     native_price = etherscan.get_native_price(chain)
     if pioneer_id == "":
         floor = blockspan.get_nft_data(ca.PIONEER, chain)
@@ -2210,8 +2347,9 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             contract = chain_info.w3.eth.contract(
                 address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)),
-                abi=abis.read("lendingpool"),
+                abi=abis.read("lendingpool")
             )
+
             count = contract.functions.nextLoanID().call()
             total_borrowed = 0
 
@@ -2322,42 +2460,44 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     eco_config = splitters.get_push_settings(chain)["push_eco"]
-    splitter_address = eco_config["splitter_address"]
-    splitter_name = eco_config["splitter_name"]
+    address = eco_config["address"]
+    abi = eco_config["abi"]
+    name = eco_config["name"]
     threshold = eco_config["threshold"]
 
     contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(splitter_address),
-        abi=etherscan.get_abi(splitter_address, chain),
+        address=chain_info.w3.to_checksum_address(address),
+        abi=abi
     )
 
     available_tokens = eco_config["calculate_tokens"](contract)
 
     if float(available_tokens) < float(threshold):
         await message.delete()
-        await update.message.reply_text(f"{chain_info.name} {splitter_name} balance too low to push.")
+        await update.message.reply_text(f"{chain_info.name} {name} balance too low to push.")
     else:
-        result = functions.splitter_push("splitter", splitter_address, chain, user_id)
+        result = functions.splitter_push("splitter", address, abi, chain, user_id)
         await message.delete()
         await update.message.reply_text(result)
 
     if chain.lower() == "eth":
         treasury_config = splitters.get_push_settings(chain)["push_treasury"]
-        splitter_address = treasury_config["splitter_address"]
-        splitter_name = treasury_config["splitter_name"]
+        address = treasury_config["address"]
+        abi = treasury_config["abi"]
+        name = treasury_config["name"]
         threshold = treasury_config["threshold"]
 
         contract = chain_info.w3.eth.contract(
-            address=chain_info.w3.to_checksum_address(splitter_address),
-            abi=etherscan.get_abi(splitter_address, chain),
+            address=chain_info.w3.to_checksum_address(address),
+            abi=abi
         )
 
         available_tokens = treasury_config["calculate_tokens"](contract)
 
         if float(available_tokens) < float(threshold):
-            await update.message.reply_text(f"{chain_info.name} {splitter_name} balance too low to push.")
+            await update.message.reply_text(f"{chain_info.name} {name} balance too low to push.")
         else:
-            result = functions.splitter_push("splitter", splitter_address, chain, user_id)
+            result = functions.splitter_push("splitter", address, abi, chain, user_id)
             await update.message.reply_text(result)
 
 
@@ -2623,16 +2763,17 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     eco_dollar = eco_eth * native_price
 
     eco_splitter_text = "Distribution:\n"
-    eco_distribution = splitters.generate_eco_split(chain, eco_eth)
+    eco_distribution = splitters.generate_eco_split(chain)
     for location, (share, percentage) in eco_distribution.items():
         eco_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
     config = splitters.get_push_settings(chain)["push_eco"]
     threshold = config["threshold"]
+    abi = config["abi"]
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(eco_address),
-        abi=etherscan.get_abi(eco_address, chain),
+        abi=abi
     )
 
     available_tokens = config["calculate_tokens"](contract)
@@ -2663,16 +2804,17 @@ async def splitters_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         treasury_dollar = treasury_eth * native_price
 
         treasury_splitter_text = "Distribution:\n"
-        treasury_distribution = splitters.generate_treasury_split(chain, treasury_eth)
+        treasury_distribution = splitters.generate_treasury_split(chain)
         for location, (share, percentage) in treasury_distribution.items():
             treasury_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
         config = splitters.get_push_settings(chain)["push_treasury"]
         threshold = config["threshold"]
+        abi = config["abi"]
 
         contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(treasury_address),
-            abi=etherscan.get_abi(treasury_address, chain),
+            abi=abi
         )
 
         available_tokens = config["calculate_tokens"](contract)

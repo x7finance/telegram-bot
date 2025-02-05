@@ -38,9 +38,17 @@ async def log_loop(chain, poll_interval):
     while True:
         try:
             w3 = chains.MAINNETS[chain].w3
-            factory = w3.eth.contract(address=ca.FACTORY(chain), abi=abis.read("factory"))
-            xchange_create = w3.eth.contract(address=ca.XCHANGE_CREATE(chain), abi=etherscan.get_abi(ca.XCHANGE_CREATE(chain), chain))
-            
+
+            factory = w3.eth.contract(
+                address=ca.FACTORY(chain),
+                abi=abis.read("factory")
+            )
+
+            xchange_create = w3.eth.contract(
+                address=ca.XCHANGE_CREATE(chain),
+                abi=abis.read("xchangecreate")
+            )
+
             pair_filter = factory.events.PairCreated.create_filter(fromBlock="latest")
             token_filter = xchange_create.events.TokenDeployed.create_filter(fromBlock="latest")
             
@@ -48,7 +56,10 @@ async def log_loop(chain, poll_interval):
             ill_addresses = ca.ILL_ADDRESSES.get(chain, {})
 
             for ill_key, ill_address in ill_addresses.items():
-                contract = w3.eth.contract(address=ill_address, abi=etherscan.get_abi(ill_address, chain))
+                contract = w3.eth.contract(
+                    address=ill_address,
+                    abi=abis.read("ill005")
+                )
                 loan_filters[ill_key] = contract.events.LoanOriginated.create_filter(fromBlock="latest")
 
             while True:
@@ -78,21 +89,21 @@ async def log_loop(chain, poll_interval):
 async def loan_alert(event, chain):
     chain_info, error_message = chains.get_info(chain)
     loan_id = event["args"]["loanID"]
-    term_contract_address = event["address"]
-    term_contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(term_contract_address),
-        abi=etherscan.get_abi(term_contract_address, chain)
+    ill_address = event["address"]
+    ill_contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(ill_address),
+        abi=abis.read("ill005")
     )
 
-    liability = term_contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
-    schedule1 = term_contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
-    schedule2 = term_contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
+    liability = ill_contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
+    schedule1 = ill_contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
+    schedule2 = ill_contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
     schedule = tools.format_schedule(schedule1, schedule2, chain_info.native.upper(), isComplete=False)
 
     index, token_by_id = 0, None
     while True:
         try:
-            token_id = term_contract.functions.tokenByIndex(index).call()
+            token_id = ill_contract.functions.tokenByIndex(index).call()
             if token_id == int(loan_id):
                 token_by_id = index
                 break
@@ -102,7 +113,7 @@ async def loan_alert(event, chain):
 
     pool_contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)),
-        abi=etherscan.get_abi(ca.LPOOL(chain), chain)
+        abi=abis.read("lendingpool")
     )
 
     token = pool_contract.functions.loanToken(int(loan_id)).call()
@@ -111,7 +122,7 @@ async def loan_alert(event, chain):
     token_name = token_info["name"]
     token_symbol = token_info["symbol"]
 
-    ill_number = tools.get_ill_number(term_contract_address)
+    ill_number = tools.get_ill_number(ill_address)
 
     im1 = Image.open(random.choice(media.BLACKHOLE)).convert("RGBA")
     try:
