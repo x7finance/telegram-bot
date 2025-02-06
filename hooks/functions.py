@@ -41,11 +41,11 @@ async def burn_x7r(amount, chain):
         }
 
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.raw_transaction)
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
 
         if receipt.status == 1:
-            return f"{amount} X7R ({chain_info.name.upper()}) Burnt\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"{amount} X7R ({chain_info.name.upper()}) Burnt\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed while burning {amount} X7R ({chain_info.name.upper()})"
 
@@ -134,31 +134,26 @@ def liquidate_loan(loan_id, chain, user_id):
             address=chain_info.w3.to_checksum_address(address),
             abi=abis.read("lendingpool")
         )
-
-        liquidate_function_selector = '0x415f1240'
-        loan_id_hex = hex(loan_id)[2:].rjust(64, '0')
-        transaction_data = liquidate_function_selector + loan_id_hex
-
+     
         nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+        
         gas_estimate = contract.functions.liquidate(loan_id).estimate_gas({"from": sender_address})
         gas_price = chain_info.w3.eth.gas_price
 
-        transaction = {
+        transaction = contract.functions.liquidate(loan_id).build_transaction({
             'from': sender_address,
-            'to': chain_info.w3.to_checksum_address(address),
-            'data': transaction_data,
             'gas': gas_estimate,
             'gasPrice': gas_price,
             'nonce': nonce,
             'chainId': int(chain_info.id)
-        }
+        })
 
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction._rransaction)
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
-            return f"Loan {loan_id} ({chain_info.name.upper()}) liquidated successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"Loan {loan_id} ({chain_info.name.upper()}) liquidated successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed while liquidating loan {loan_id} ({chain_info.name.upper()})"
 
@@ -179,43 +174,38 @@ def splitter_push(contract_type, address, abi, chain, user_id, token_address=Non
             sender_private_key = wallet["private_key"]
 
         if contract_type == "splitter":
-            function_selector = "0x11ec9d34"
             function_name = "pushAll"
             function_args = []
             
         elif contract_type == "hub":
-            function_selector = "0x61582eaa"
             function_name = "processFees"
             function_args = [token_address]
-
-        transaction_data = function_selector
-        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
 
         contract = chain_info.w3.eth.contract(
             address=address,
             abi=abi
         )
 
+        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
         function_to_call = getattr(contract.functions, function_name)
+
         gas_estimate = function_to_call(*function_args).estimate_gas({"from": sender_address})
         gas_price = chain_info.w3.eth.gas_price
 
-        transaction = {
+        transaction = function_to_call(*function_args).build_transaction({
             'from': sender_address,
-            'to': address,
-            'data': transaction_data,
             'gas': gas_estimate,
             'gasPrice': gas_price,
             'nonce': nonce,
             'chainId': int(chain_info.id)
-        }
+        })
 
         signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.raw_transaction)
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
-            return f"{function_name} ({chain_info.name.upper()}) called successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"{function_name} ({chain_info.name.upper()}) called successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed on {function_name} ({chain_info.name.upper()})"
 
@@ -255,11 +245,11 @@ def stuck_tx(chain, user_id, gas_multiplier=1.5):
         }
 
         signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.raw_transaction)
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
-            return f"Stuck transaction successfully replaced ({chain_info.name.upper()})\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"Stuck transaction successfully replaced ({chain_info.name.upper()})\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed to replace stuck transaction ({chain_info.name.upper()})"
 
@@ -309,11 +299,11 @@ def withdraw(amount, chain, user_id, recipient_address):
         }
 
         signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.raw_transaction)
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
-            return f"Successfully withdrew {amount} {chain_info.native.upper()} ({chain_info.name.upper()})\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"Successfully withdrew {amount} {chain_info.native.upper()} ({chain_info.name.upper()})\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed during withdrawal ({chain_info.name.upper()})"
 
@@ -340,29 +330,28 @@ def x7d_mint(amount, chain, user_id):
         )
 
         nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+        
         gas_price = chain_info.w3.eth.gas_price
         gas_estimate = contract.functions.depositETH().estimate_gas({
             "from": sender_address,
             "value": chain_info.w3.to_wei(amount, 'ether')
         })
-
-        transaction = {
+        
+        transaction = contract.functions.depositETH().build_transaction({
             "from": sender_address,
-            "to": address,
             "value": chain_info.w3.to_wei(amount, 'ether'),
             "gas": gas_estimate,
             "gasPrice": gas_price,
             "nonce": nonce,
             "chainId": int(chain_info.id),
-            "data": contract.encodeABI(fn_name="depositETH")
-        }
+        })
 
         signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.raw_transaction)
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
-            return f"{amount} X7D ({chain_info.name.upper()}) minted successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"{amount} X7D ({chain_info.name.upper()}) minted successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed while minting X7D ({chain_info.name.upper()})"
 
@@ -387,33 +376,30 @@ def x7d_redeem(amount, chain, user_id):
             address=chain_info.w3.to_checksum_address(address),
             abi=abis.read("lendingpoolreserve")
         )
-
-        amount_in_wei = chain_info.w3.to_wei(amount, 'ether')
-        gas_estimate = contract.functions.withdrawETH(amount_in_wei).estimate_gas({"from": sender_address})
-        gas_price = chain_info.w3.eth.gas_price
-
-        function_selector = "0xf14210a6"
-        encoded_amount = f"{amount_in_wei:064x}"
-        data = function_selector + encoded_amount
-
+        
         nonce = chain_info.w3.eth.get_transaction_count(sender_address)
 
-        transaction = {
+        gas_price = chain_info.w3.eth.gas_price
+        gas_estimate = contract.functions.withdrawETH(
+            chain_info.w3.to_wei(amount, 'ether')).estimate_gas({
+            "from": sender_address
+        })
+        
+        transaction = contract.functions.withdrawETH(
+            chain_info.w3.to_wei(amount, 'ether')).build_transaction({
             'from': sender_address,
-            'to': chain_info.w3.to_checksum_address(address),
-            'data': data,
             'gas': gas_estimate,
             'gasPrice': gas_price,
             'nonce': nonce,
             'chainId': int(chain_info.id)
-        }
+        })
 
         signed_txn = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.raw_transaction)
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
         if receipt.status == 1:
-            return f"Redeemed {amount} X7D ({chain_info.name.upper()}) successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
+            return f"Redeemed {amount} X7D ({chain_info.name.upper()}) successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed while redeeming X7D ({chain_info.name.upper()})"
 

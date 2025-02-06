@@ -180,18 +180,18 @@ def generate_treasury_split(chain):
 def get_push_settings(chain):
     return {
         "eco": {
-            "splitter_address": ca.ECO_SPLITTER(chain),
+            "address": ca.ECO_SPLITTER(chain),
             "abi": abis.read("ecosystemsplitter"),
-            "splitter_name": "Ecosystem Splitter",
+            "name": "Ecosystem Splitter",
             "threshold": 0.01 if chain.lower() == "eth" else 0.0001,
             "contract_type": "splitter",
             "calculate_tokens": lambda contract: contract.functions.outletBalance(4).call() / 10 ** 18,
             "recipient": ca.LPOOL_RESERVE(chain)
         },
         "treasury": {
-            "splitter_address": ca.TREASURY_SPLITTER(chain),
+            "address": ca.TREASURY_SPLITTER(chain),
             "abi": abis.read("treasurysplitter"),
-            "splitter_name": "Treasury Splitter",
+            "name": "Treasury Splitter",
             "threshold": 0.01 if chain.lower() == "eth" else 0.0001,
             "contract_type": "splitter",
             "calculate_tokens": lambda _: etherscan.get_native_balance(ca.TREASURY_SPLITTER(chain), chain),

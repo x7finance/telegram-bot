@@ -2,10 +2,9 @@ import asyncio, requests, os, time, tweepy
 
 from farcaster import Warpcast
 from datetime import datetime, timedelta
-from pycoingecko import CoinGeckoAPI
 
 from constants import ca, chains
-        
+from hooks import tools
 
 class Blockspan:
     def __init__(self):
@@ -519,7 +518,7 @@ class Dextools:
                 }
             else:
                 return {
-                    "total_supply": None,
+                    "supply": None,
                     "mcap": None,
                     "holders": None
                 }
@@ -639,39 +638,35 @@ class CoinGecko:
 
     
     def get_price(self, token):
-        coingecko = CoinGeckoAPI()
-        data = coingecko.get_price(
-            ids=token,
-            vs_currencies="usd",
-            include_24hr_change="true",
-            include_24hr_vol="true",
-            include_market_cap="true")
-        if "e-" in str(data[token]["usd"]):
-            price = "{:.8f}".format(data[token]["usd"])
-        elif data[token]["usd"] < 1:
-            price = "{:.8f}".format(data[token]["usd"]) 
-        else:
-            price = "{:,.0f}".format(data[token]["usd"])
+        endpoint = f"simple/price?ids={token}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true"
+        response = requests.get(self.url + endpoint)
 
-        if "e-" in str(data[token]["usd_24h_vol"]):
-            volume = "${:.8f}".format(data[token]["usd_24h_vol"])
-        elif data[token]["usd_24h_vol"] < 1:
-            volume = "${:.8f}".format(data[token]["usd_24h_vol"]) 
-        else:
-            volume = "${:,.0f}".format(data[token]["usd_24h_vol"])
-            
-        price_change = data[token]["usd_24h_change"]
-        if price_change is None:
-            price_change = 0
-        else:
-            price_change = round(data[token]["usd_24h_change"], 2)
-        market_cap = data[token]["usd_market_cap"]
-        if market_cap is None or market_cap == 0:
-            market_cap_formatted = None
-        else:
-            market_cap_formatted = "${:0,.0f}".format(float(market_cap))
+        if response.status_code != 200:
+            return None
 
-        return {"price": price, "change": price_change, "mcap": market_cap_formatted, "volume": volume}
+        data = response.json()
+
+        if token not in data:
+            return None
+
+        price = float(data[token]["usd"])
+        if "e-" in str(price) or price < 1:
+            price = "{:.8f}".format(price)
+        else:
+            price = "{:,.2f}".format(price)
+
+        volume = tools.format_millions(float(data[token].get("usd_24h_vol", 0)))
+        market_cap = tools.format_millions(float(data[token].get("usd_market_cap", 0)))
+
+        price_change = round(data[token].get("usd_24h_change", 0), 2)
+
+        return {
+            "price": price,
+            "change": price_change,
+            "mcap": market_cap,
+            "volume": volume
+        }
+
 
 
     def search(self, token):

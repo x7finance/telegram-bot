@@ -263,7 +263,6 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     name = config["name"]
     threshold = config["threshold"]
     contract_type = config["contract_type"]
-    token_address = config["token_address"]
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(address),
@@ -283,6 +282,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         if contract_type == "hub":
+            token_address = config["token_address"]
             result = functions.splitter_push(contract_type, address, abi, chain, user_id, token_address)
         else:
             result = functions.splitter_push(contract_type, address, abi, chain, user_id)
