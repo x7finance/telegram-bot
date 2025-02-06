@@ -22,7 +22,6 @@ github = api.GitHub()
 opensea = api.Opensea()
 snapshot = api.Snapshot()
 twitter = api.Twitter()
-warpcast = api.WarpcastApi()
 
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -3114,64 +3113,6 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ]
             )
         )
-
-
-
-async def warpcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    name = " ".join(context.args).lower()
-    if name:
-        if name.startswith("@"):
-            name = name[1:]
-        last_cast = warpcast.get_cast(name)
-        if not last_cast:
-            await update.message.reply_text(f"{name} not found on Warpcast")
-            return
-    else:
-        name = "X7Finance"
-        last_cast = warpcast.get_cast()
-
-    casters = warpcast.get_recasters(last_cast[0].hash)
-    likes = last_cast[0].reactions.count if last_cast[0].reactions else 0
-    replies = last_cast[0].replies.count if last_cast[0].replies else 0
-    recasts =  last_cast[0].recasts.count if last_cast[0].recasts else 0
-
-    if casters is not None:
-        names = [caster.username for caster in casters[:20]]
-        remaining_count = len(casters) - 20
-        recasters_text = "\n\nRecasted by:\n" + "\n".join(names)
-        if remaining_count > 0:
-            recasters_text += f"\n...and {remaining_count} more"
-    else:
-        recasters_text = ""
-    timestamp = str(last_cast[0].timestamp)[:10]
-    when = tools.get_time_difference(timestamp)
-
-    if last_cast[0].embeds and last_cast[0].embeds.images:
-        photo_url = last_cast[0].embeds.images[0].url
-    else:
-        photo_url = tools.get_random_pioneer()
-
-    await update.message.reply_photo(
-        photo=photo_url,
-        caption=
-            f"*X7 Finance Warpcast*\n\n"
-            f"Latest Cast by {name}:\n{when}\n\n{tools.escape_markdown(last_cast[0].text)}\n\n"
-            f"Likes: {likes}\n"
-            f"Replies: {replies}\n"
-            f"Recasts: {recasts}"
-            f"{recasters_text}",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="Latest Cast",
-                        url=f"https://warpcast.com/{name}/{last_cast[0].hash}"
-                    )
-                ]
-            ]
-        )
-    )
 
 
 async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):

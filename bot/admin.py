@@ -3,7 +3,6 @@ from telegram.ext import ContextTypes
 
 import os, requests, tweepy
 from datetime import datetime, timedelta
-from farcaster import Warpcast
 
 from bot import auto
 from constants import ca, settings
@@ -176,14 +175,6 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 status.append(f"🔴 Twitter: Connection failed with status {status_code}")
             else:
                 status.append(f"🔴 Twitter: Connection failed (Unknown Error)")
-
-        warpcast_client = Warpcast(mnemonic=os.getenv("WARPCAST_API_KEY"))
-        warpcast_fid = "419688"
-        cast = warpcast_client.get_casts(warpcast_fid, None, 1)
-        if cast is not None:
-            status.append("🟢 Warpcast: Connected Successfully")
-        else:
-            status.append("🔴 Warpcast: Connection failed")
         
         await update.message.reply_text(
             "*X7 Finance Telegram Bot API Status*\n\n" + "\n".join(status),

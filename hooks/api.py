@@ -1,10 +1,10 @@
 import asyncio, requests, os, time, tweepy
 
-from farcaster import Warpcast
 from datetime import datetime, timedelta
 
 from constants import ca, chains
 from hooks import tools
+
 
 class Blockspan:
     def __init__(self):
@@ -866,35 +866,6 @@ class Defined:
             return None
         else:
             return None
-        
-
-class WarpcastApi:
-    def __init__(self):
-        self.client = Warpcast(mnemonic=os.getenv("WARPCAST_API_KEY"))
-        self.fid = "419688"
-        self.username = "x7finance"
-
-
-    def get_cast(self, name=None):
-        try:
-            if name is None:
-                data = self.client.get_casts(self.fid, None, 1)
-            else:
-                username = self.client.get_user_by_username(name)
-                data = self.client.get_casts(username.fid, None, 1)
-            return data.casts
-        except Exception:
-            return None
-
-
-    def get_followers(self):
-        data = self.client.get_me()
-        return data.follower_count
-    
-
-    def get_recasters(self, hash):
-        data = self.client.get_cast_recasters(hash)
-        return data.users
 
 
 class GitHub:
