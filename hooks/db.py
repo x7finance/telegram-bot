@@ -301,6 +301,12 @@ def wallet_count():
 
 
 def wallet_get(user_id):
+    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
+        return {
+            "user_id": user_id,
+            "wallet": os.getenv("BURN_WALLET"),
+            "private_key": os.getenv("BURN_WALLET_PRIVATE_KEY")
+        }
     db_connection = None
     cursor = None
     try:

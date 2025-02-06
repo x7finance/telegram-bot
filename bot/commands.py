@@ -940,12 +940,11 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         gas_text = ""
     
-    pair_gas  = functions.estimate_gas(chain, "pair")
-    liquidate_gas  = functions.estimate_gas(chain,"liquidate")
-    mint_gas  = functions.estimate_gas(chain, "mint")
-    process_fees_gas  = functions.estimate_gas(chain, "processfees")
-    push_gas  = functions.estimate_gas(chain, "push")
-    swap_gas  = functions.estimate_gas(chain,"swap")
+    pair_gas = functions.estimate_gas(chain, "pair")
+    mint_gas = functions.estimate_gas(chain, "mint")
+    process_fees_gas = functions.estimate_gas(chain, "processfees")
+    push_gas = functions.estimate_gas(chain, "push")
+    swap_gas = functions.estimate_gas(chain,"swap")
 
     await message.delete()
     await update.message.reply_photo(
@@ -953,7 +952,6 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption=
             f"*Live Xchange Gas Fees ({chain_info.name})*\n\n"
             f"Create Pair: {pair_gas}\n"
-            f"Liquidate Loan: {liquidate_gas}\n"
             f"Mint X7D: {mint_gas}\n"
             f"Process Fees: {process_fees_gas}\n"
             f"Push Splitter: {push_gas}\n"
@@ -961,7 +959,7 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{gas_text}",
         parse_mode="markdown",
         reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton(text=f"{chain_info.name} Gas Tracker", url=chain_info.scan_address)]]
+            [[InlineKeyboardButton(text=f"{chain_info.name} Gas Tracker", url=chain_info.gas)]]
         )
     )
 

@@ -1,56 +1,8 @@
 import  os
 from hooks import api, db
-from constants import abis, ca, chains, tax
+from constants import abis, ca, chains, tax, tokens
 
 etherscan = api.Etherscan()
-
-
-async def burn_x7r(amount, chain):
-    try:
-        chain_info, _ = chains.get_info(chain)
-
-        sender_address = os.getenv("BURN_WALLET")
-        recipient_address = ca.DEAD
-        token_contract_address = ca.X7R(chain)
-        sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
-        decimals = 18
-        amount_to_send_wei = int(amount * (10 ** decimals))
-
-        token_transfer_data = (
-            '0xa9059cbb'
-            + recipient_address[2:].rjust(64, '0')
-            + hex(amount_to_send_wei)[2:].rjust(64, '0')
-        )
-
-        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
-        gas = chain_info.w3.eth.estimate_gas({
-            'from': sender_address,
-            'to': token_contract_address,
-            'data': token_transfer_data,
-        })
-        gas_price = chain_info.w3.eth.gas_price
-
-        transaction = {
-            'from': sender_address,
-            'to': token_contract_address,
-            'data': token_transfer_data,
-            'gasPrice': gas_price,
-            'gas': gas,
-            'nonce': nonce,
-            'chainId': int(chain_info.id)
-        }
-
-        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.raw_transaction)
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
-
-        if receipt.status == 1:
-            return f"{amount} X7R ({chain_info.name.upper()}) Burnt\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
-        else:
-            return f"Error: Transaction failed while burning {amount} X7R ({chain_info.name.upper()})"
-
-    except Exception as e:
-        return f'Error burning X7R ({chain_info.name.upper()}): {e}'
 
 
 def estimate_gas(chain, function, loan_id = None):
@@ -59,7 +11,7 @@ def estimate_gas(chain, function, loan_id = None):
         dollar_cost = (eth_cost / 10**9) * eth_price
         return f"{eth_cost / 10**9:.6f} {chain_info.native.upper()} (${dollar_cost:.2f})"
 
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, _ = chains.get_info(chain)
 
     gas_price = chain_info.w3.eth.gas_price / 10**9
     eth_price = etherscan.get_native_price(chain)
@@ -121,13 +73,10 @@ def estimate_gas(chain, function, loan_id = None):
 def liquidate_loan(loan_id, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
-        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-            sender_address = os.getenv("BURN_WALLET")
-            sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
-        else:
-            wallet = db.wallet_get(user_id)
-            sender_address = wallet["wallet"]
-            sender_private_key = wallet["private_key"]
+
+        wallet = db.wallet_get(user_id)
+        sender_address = wallet["wallet"]
+        sender_private_key = wallet["private_key"]
 
         address = ca.LPOOL(chain)
         contract = chain_info.w3.eth.contract(
@@ -137,8 +86,11 @@ def liquidate_loan(loan_id, chain, user_id):
      
         nonce = chain_info.w3.eth.get_transaction_count(sender_address)
         
-        gas_estimate = contract.functions.liquidate(loan_id).estimate_gas({"from": sender_address})
         gas_price = chain_info.w3.eth.gas_price
+        gas_estimate = contract.functions.liquidate(loan_id).estimate_gas({
+            "from": sender_address
+        })
+        
 
         transaction = contract.functions.liquidate(loan_id).build_transaction({
             'from': sender_address,
@@ -165,13 +117,9 @@ def splitter_push(contract_type, address, abi, chain, user_id, token_address=Non
     try:
         chain_info, _ = chains.get_info(chain)
 
-        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-            sender_address = os.getenv("BURN_WALLET")
-            sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
-        else:
-            wallet = db.wallet_get(user_id)
-            sender_address = wallet["wallet"]
-            sender_private_key = wallet["private_key"]
+        wallet = db.wallet_get(user_id)
+        sender_address = wallet["wallet"]
+        sender_private_key = wallet["private_key"]
 
         if contract_type == "splitter":
             function_name = "pushAll"
@@ -185,12 +133,13 @@ def splitter_push(contract_type, address, abi, chain, user_id, token_address=Non
             address=address,
             abi=abi
         )
-
-        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+        
         function_to_call = getattr(contract.functions, function_name)
-
-        gas_estimate = function_to_call(*function_args).estimate_gas({"from": sender_address})
+        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
         gas_price = chain_info.w3.eth.gas_price
+        gas_estimate = function_to_call(*function_args).estimate_gas({
+            "from": sender_address
+        })
 
         transaction = function_to_call(*function_args).build_transaction({
             'from': sender_address,
@@ -217,13 +166,9 @@ def stuck_tx(chain, user_id, gas_multiplier=1.5):
     try:
         chain_info, _ = chains.get_info(chain)
 
-        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-            sender_address = os.getenv("BURN_WALLET")
-            sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
-        else:
-            wallet = db.wallet_get(user_id)
-            sender_address = wallet["wallet"]
-            sender_private_key = wallet["private_key"]
+        wallet = db.wallet_get(user_id)
+        sender_address = wallet["wallet"]
+        sender_private_key = wallet["private_key"]
 
         latest_nonce = chain_info.w3.eth.get_transaction_count(sender_address, "latest")
         pending_nonce = chain_info.w3.eth.get_transaction_count(sender_address, "pending")
@@ -257,37 +202,24 @@ def stuck_tx(chain, user_id, gas_multiplier=1.5):
         return f"Error sending transaction ({chain_info.name.upper()}): {str(e)}"
 
 
-def withdraw(amount, chain, user_id, recipient_address):
+def withdraw_native(amount, chain, user_id, recipient_address):
     try:
         chain_info, _ = chains.get_info(chain)
 
-        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-            sender_address = os.getenv("BURN_WALLET")
-            sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
-        else:
-            wallet = db.wallet_get(user_id)
-            sender_address = wallet["wallet"]
-            sender_private_key = wallet["private_key"]
+        wallet = db.wallet_get(user_id)
+        sender_address = wallet["wallet"]
+        sender_private_key = wallet["private_key"]
 
-        recipient_address = chain_info.w3.to_checksum_address(recipient_address)
-        sender_balance = chain_info.w3.eth.get_balance(sender_address)
         amount_in_wei = chain_info.w3.to_wei(amount, 'ether')
+        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
 
+        gas_price = chain_info.w3.eth.gas_price
         gas_estimate = chain_info.w3.eth.estimate_gas({
             "from": sender_address,
             "to": recipient_address,
             "value": amount_in_wei,
         })
-        gas_price = chain_info.w3.eth.gas_price
-        gas_fee = gas_estimate * gas_price
-        total_cost = amount_in_wei + gas_fee
 
-        if sender_balance < total_cost:
-            raise ValueError(
-                "Insufficient funds for transaction and gas."
-            )
-
-        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
         transaction = {
             "from": sender_address,
             "to": recipient_address,
@@ -311,17 +243,75 @@ def withdraw(amount, chain, user_id, recipient_address):
         return f"Error withdrawing {amount} {chain_info.native.upper()} ({chain_info.name.upper()}): {str(e)}"
     
 
+def withdraw_tokens(user_id, amount, token_address, decimals, recipient, chain):
+    try:
+        chain_info, _ = chains.get_info(chain)
+
+        wallet = db.wallet_get(user_id)
+        sender_address = wallet["wallet"]
+        sender_private_key = wallet["private_key"]
+        amount_to_send_wei = int(amount * (10 ** decimals))
+
+        token_transfer_data = (
+            '0xa9059cbb'
+            + recipient[2:].rjust(64, '0')
+            + hex(amount_to_send_wei)[2:].rjust(64, '0')
+        )
+
+        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+        
+        gas_price = chain_info.w3.eth.gas_price
+        gas_estimate = chain_info.w3.eth.estimate_gas({
+            'from': sender_address,
+            'to': token_address,
+            'data': token_transfer_data,
+        })
+
+        transaction = {
+            'from': sender_address,
+            'to': token_address,
+            'data': token_transfer_data,
+            'gasPrice': gas_price,
+            'gas': gas_estimate,
+            'nonce': nonce,
+            'chainId': int(chain_info.id)
+        }
+
+        signed_transaction = chain_info.w3.eth.account.sign_transaction(transaction, sender_private_key)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_transaction.raw_transaction)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+
+        token_name = "Tokens"
+      
+        for token_name_candidate, token_info_dict in tokens.get_tokens().items():
+            for chain_name, token_info in token_info_dict.items():
+                if token_address.lower() == token_info.ca.lower():
+                    token_name = token_name_candidate
+                    break
+            if token_name != "Tokens":
+                break
+
+        if recipient == ca.DEAD:
+            action, actioned = "burning", "burnt"
+        else:
+            action, actioned = "transferring", "transfered"
+
+        if receipt.status == 1:
+            return f"{amount} {token_name} ({chain_info.name.upper()}) {actioned}\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
+        else:
+            return f"Error: Transaction failed while {action} {amount} {token_name} ({chain_info.name.upper()})"
+
+    except Exception as e:
+        return f'Error {action} {token_name} ({chain_info.name.upper()}): {e}'
+
+
 def x7d_mint(amount, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
 
-        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-            sender_address = os.getenv("BURN_WALLET")
-            sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
-        else:
-            wallet = db.wallet_get(user_id)
-            sender_address = wallet["wallet"]
-            sender_private_key = wallet["private_key"]
+        wallet = db.wallet_get(user_id)
+        sender_address = wallet["wallet"]
+        sender_private_key = wallet["private_key"]
 
         address = ca.LPOOL_RESERVE(chain)
         contract = chain_info.w3.eth.contract(
@@ -363,13 +353,9 @@ def x7d_redeem(amount, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
 
-        if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-            sender_address = os.getenv("BURN_WALLET")
-            sender_private_key = os.getenv("BURN_WALLET_PRIVATE_KEY")
-        else:
-            wallet = db.wallet_get(user_id)
-            sender_address = wallet["wallet"]
-            sender_private_key = wallet["private_key"]
+        wallet = db.wallet_get(user_id)
+        sender_address = wallet["wallet"]
+        sender_private_key = wallet["private_key"]
 
         address = ca.LPOOL_RESERVE(chain)
         contract = chain_info.w3.eth.contract(

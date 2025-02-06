@@ -80,6 +80,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     if burn_active:
+        chain = "eth"
         clicks_needed = settings.CLICK_ME_BURN - (total_click_count % settings.CLICK_ME_BURN)
         message_text += f"Clicks till next X7R Burn: *{clicks_needed}*\n\n"
 
@@ -102,7 +103,15 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     if burn_active and total_click_count % settings.CLICK_ME_BURN == 0:
-        burn_message = await functions.burn_x7r(settings.burn_amount(), "eth")
+        burn_message = await functions.withdraw_tokens(
+            int(os.getenv("TELEGRAM_ADMIN_ID")),
+            settings.burn_amount(),
+            ca.X7R(chain),
+            18,
+            ca.DEAD,
+            chain
+        )
+        
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=f"🔥🔥🔥🔥🔥🔥🔥🔥\n\nThe button has been clicked a total of {total_click_count} times by all Pioneers!\n\n{burn_message}"
@@ -171,7 +180,7 @@ async def confirm_conv(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif operation == "redeem":
             result = functions.x7d_redeem(amount, chain, user_id)
         elif operation == "withdraw":
-            result = functions.withdraw(amount, chain, user_id, address)
+            result = functions.withdraw_native(amount, chain, user_id, address)
 
         await message.delete()
         await query.edit_message_text(text=result)
@@ -391,62 +400,6 @@ async def welcome_button(update: Update, context: CallbackContext):
             pass
 
 
-async def x7d_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    action, chain = query.data.split(":")
-
-    context.user_data["x7d_action"] = action
-    context.user_data["x7d_chain"] = chain
-
-    await query.message.reply_text(
-        text=f"How much do you want to {action}? Please reply with the amount (e.g., `0.5`).",
-    )
-
-    return X7D_AMOUNT
-
-
-async def x7d_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    action = context.user_data["x7d_action"]
-    chain = context.user_data["x7d_chain"]
-    amount = float(update.message.text)
-
-    chain_info, error_message = chains.get_info(chain)
-
-    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-        wallet = {
-            "wallet": os.getenv("BURN_WALLET")
-        }
-    else:
-        wallet = db.wallet_get(user_id)
-
-    if action == "mint":
-        balance = etherscan.get_native_balance(wallet["wallet"], chain)
-    elif action == "redeem":
-        balance = float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain)) / 10 ** 18
-
-    if amount <= 0 or amount > balance:
-        await update.message.reply_text(
-            f"Invalid amount. You have {balance} {chain_info.native.upper()} available to {action}"
-            )
-
-        return X7D_AMOUNT
-
-    context.user_data["x7d_amount"] = amount
-
-    await update.message.reply_text(
-        text=f"Are you sure you want to {action} {amount} X7D ({chain_info.name})?",
-        reply_markup=InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("Yes", callback_data=f"{action}:{chain}"),
-                InlineKeyboardButton("No", callback_data="cancel"),
-            ]
-        ]),
-    )
-
-    return X7D_CONFIRM
-
-
 async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     action, chain = query.data.split(":")
@@ -469,12 +422,7 @@ async def withdraw_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chain_info, error_message = chains.get_info(chain)
 
-    if user_id == int(os.getenv("TELEGRAM_ADMIN_ID")):
-        wallet = {
-            "wallet": os.getenv("BURN_WALLET")
-        }
-    else:
-        wallet = db.wallet_get(user_id)
+    wallet = db.wallet_get(user_id)
 
     balance = etherscan.get_native_balance(wallet["wallet"], chain)
     
@@ -525,3 +473,53 @@ async def withdraw_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     return WITHDRAW_CONFIRM
 
+
+async def x7d_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    action, chain = query.data.split(":")
+
+    context.user_data["x7d_action"] = action
+    context.user_data["x7d_chain"] = chain
+
+    await query.message.reply_text(
+        text=f"How much do you want to {action}? Please reply with the amount (e.g., `0.5`).",
+    )
+
+    return X7D_AMOUNT
+
+
+async def x7d_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    action = context.user_data["x7d_action"]
+    chain = context.user_data["x7d_chain"]
+    amount = float(update.message.text)
+
+    chain_info, error_message = chains.get_info(chain)
+
+    wallet = db.wallet_get(user_id)
+
+    if action == "mint":
+        balance = etherscan.get_native_balance(wallet["wallet"], chain)
+    elif action == "redeem":
+        balance = float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain)) / 10 ** 18
+
+    if amount <= 0 or amount > balance:
+        await update.message.reply_text(
+            f"Invalid amount. You have {balance} {chain_info.native.upper()} available to {action}"
+            )
+
+        return X7D_AMOUNT
+
+    context.user_data["x7d_amount"] = amount
+
+    await update.message.reply_text(
+        text=f"Are you sure you want to {action} {amount} X7D ({chain_info.name})?",
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("Yes", callback_data=f"{action}:{chain}"),
+                InlineKeyboardButton("No", callback_data="cancel"),
+            ]
+        ]),
+    )
+
+    return X7D_CONFIRM

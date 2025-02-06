@@ -1,6 +1,5 @@
 import random, socket
 from datetime import datetime
-import json
 
 from constants import abis, ca, chains, splitters, urls
 from hooks import api
