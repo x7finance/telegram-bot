@@ -1,7 +1,8 @@
 import random, socket
 from datetime import datetime
+import json
 
-from constants import ca, chains, splitters, urls
+from constants import abis, ca, chains, splitters, urls
 from hooks import api
 
 etherscan = api.Etherscan()
@@ -69,6 +70,17 @@ def format_schedule(schedule1, schedule2, native_token, isComplete):
         schedule.append(f"\nNext Payment Due:\n{next_payment_value} {native_token}\n{time_remaining_str}")
 
     return "\n".join(schedule)
+
+
+def get_event_topic(contract, event_name, chain):
+    chain_info, _ = chains.get_info(chain)
+    abi = json.loads(abis.read(contract))
+    for item in abi:
+        if item.get("type") == "event" and item["name"] == event_name:
+            event_inputs = ",".join([inp["type"] for inp in item["inputs"]])
+            event_signature = f"{event_name}({event_inputs})"
+            return "0x" + chain_info.w3.keccak(text=event_signature).hex()
+    return None
 
 
 def get_ill_number(term):

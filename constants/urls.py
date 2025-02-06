@@ -100,6 +100,11 @@ TG_ANNOUNCEMENTS = "t.me/x7announcements"
 TG_PORTAL= "t.me/x7portal"
 TG_DAO = "https://telegram.me/collablandbot?start=VFBDI1RFTCNDT01NIy0xMDAyMTM5MTc4NTQx"
 TG_XCHANGE_CREATE = "https://t.me/xchange_launcher_bot/"
+TG_ALERTS_CHANNELS = [
+    (TG_MAIN_CHANNEL_ID, None, TG_ALERTS),
+    (TG_MAIN_CHANNEL_ID, 892,TG_ALERTS),
+    (TG_ALERTS_CHANNEL_ID, None, TG_PORTAL)
+]
 
 
 # LINKS

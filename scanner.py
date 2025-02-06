@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder
 
-import asyncio, os, requests, random, sentry_sdk, traceback
+import asyncio, os, random, requests, sentry_sdk, traceback
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 
@@ -18,13 +18,10 @@ defined = api.Defined()
 dextools = api.Dextools()
 etherscan = api.Etherscan()
 
-channels = [
-    (urls.TG_MAIN_CHANNEL_ID, None, urls.TG_ALERTS),
-    (urls.TG_MAIN_CHANNEL_ID, 892, urls.TG_ALERTS),
-    (urls.TG_ALERTS_CHANNEL_ID, None, urls.TG_PORTAL)
-]
+FONT = ImageFont.truetype(media.FONT, 26)
+POLL_INTERVAL = 60 
+BLOCK_OVERLAP = 10 
 
-font = ImageFont.truetype(media.FONT, 26)
 
 async def error(context):
     sentry_sdk.capture_exception(
@@ -34,7 +31,7 @@ async def error(context):
     )
 
 
-async def log_loop(chain, poll_interval):
+async def log_loop(chain, poll_interval=POLL_INTERVAL):
     while True:
         try:
             w3 = chains.MAINNETS[chain].w3
@@ -49,41 +46,82 @@ async def log_loop(chain, poll_interval):
                 abi=abis.read("xchangecreate")
             )
 
-            pair_filter = factory.events.PairCreated.create_filter(fromBlock="latest")
-            token_filter = xchange_create.events.TokenDeployed.create_filter(fromBlock="latest")
-            
-            loan_filters = {}
-            ill_addresses = ca.ILL_ADDRESSES.get(chain, {})
-
-            for ill_key, ill_address in ill_addresses.items():
-                contract = w3.eth.contract(
+            ill_contracts = {
+                ill_key: w3.eth.contract(
                     address=ill_address,
-                    abi=abis.read("ill005")
-                )
-                loan_filters[ill_key] = contract.events.LoanOriginated.create_filter(fromBlock="latest")
+                    abi=abis.read("ill005"))
+                for ill_key, ill_address in ca.ILL_ADDRESSES.get(chain, {}).items()
+            }
+
+            latest_block = w3.eth.block_number
+
+            pair_created_topic = tools.get_event_topic("factory", "PairCreated", chain)
+            token_deployed_topic = tools.get_event_topic("xchangecreate", "TokenDeployed", chain)
+            loan_originated_topic = tools.get_event_topic("ill005", "LoanOriginated", chain)
 
             while True:
                 try:
-                    for PairCreated in pair_filter.get_new_entries():
-                        await pair_alert(PairCreated, chain)
+                    current_block = w3.eth.block_number
+                    from_block = max(latest_block + 1, 0)
 
-                    for TokenDeployed in token_filter.get_new_entries():
-                        await token_alert(TokenDeployed, chain)
+                    pair_logs = w3.eth.get_logs({
+                        "fromBlock": from_block,
+                        "toBlock": current_block,
+                        "address": factory.address,
+                        "topics": [pair_created_topic],
+                    })
 
-                    for ill_key, loan_filter in loan_filters.items():
-                        for LoanOriginated in loan_filter.get_new_entries():
-                            await loan_alert(LoanOriginated, chain)
+                    token_logs = w3.eth.get_logs({
+                        "fromBlock": from_block,
+                        "toBlock": current_block,
+                        "address": xchange_create.address,
+                        "topics": [token_deployed_topic],
+                    })
 
+                    loan_logs = []
+                    for ill_contract in ill_contracts.values():
+                        logs = w3.eth.get_logs({
+                            "fromBlock": from_block,
+                            "toBlock": current_block,
+                            "address": ill_contract.address,
+                            "topics": [loan_originated_topic],
+                        })
+                        loan_logs.extend(logs)
+
+                    for log in pair_logs:
+                        try:
+                            decoded_event = factory.events.PairCreated().process_log(log)
+                            await pair_alert(decoded_event, chain)
+                        except Exception as e:
+                            await error(f"Error decoding PairCreated: {str(e)}")
+
+                    for log in token_logs:
+                        try:
+                            decoded_event = xchange_create.events.TokenDeployed().process_log(log)
+                            await token_alert(decoded_event, chain)
+                        except Exception as e:
+                            await error(f"Error decoding TokenDeployed: {str(e)}")
+
+                    for log in loan_logs:
+                        try:
+                            contract_address = log["address"]
+                            ill_contract = ill_contracts.get(contract_address)
+                            if ill_contract:
+                                decoded_event = ill_contract.events.LoanOriginated().process_log(log)
+                                await loan_alert(decoded_event, chain)
+                        except Exception as e:
+                            await error(f"Error decoding LoanOriginated: {str(e)}")
+
+                    latest_block = current_block
                     await asyncio.sleep(poll_interval)
 
                 except Exception as e:
-                    await error(f"Error in inner loop for chain '{chain}': {str(e)}. Restarting loop.")
-                    await asyncio.sleep(5)
-                    break
+                    await error(f"Polling error on {chain}: {str(e)}. Retrying in {poll_interval} seconds...")
+                    await asyncio.sleep(poll_interval)
 
         except Exception as e:
-            await error(f"Error in log loop for chain '{chain}': {str(e)}. Retrying after 10 seconds.")
-            await asyncio.sleep(10)
+            await error(f"Web3 connection error on {chain}: {str(e)}. Retrying in {poll_interval} seconds...")
+            await asyncio.sleep(poll_interval)
 
 
 async def loan_alert(event, chain):
@@ -144,7 +182,7 @@ async def loan_alert(event, chain):
     i1.text(
         (26, 30),
         f"New Loan Originated ({chain_info.name.upper()})\n\n{message}",
-        font=font,
+        font=FONT,
         fill=(255, 255, 255)
     )
     image_path = r"media/blackhole.png"
@@ -178,7 +216,7 @@ async def loan_alert(event, chain):
         ]
     )
 
-    for channel, thread_id, link in channels:
+    for channel, thread_id, link in urls.TG_ALERTS_CHANNELS:
         with open(image_path, "rb") as photo:
             send_params = {
                 "chat_id": channel,
@@ -258,7 +296,7 @@ async def pair_alert(event, chain):
     i1.text(
         (26, 30),
         f"New Pair Created ({chain_info.name.upper()})\n\n{message}",
-        font=font,
+        font=FONT,
         fill=(255, 255, 255)
     )
     image_path = r"media/blackhole.png"
@@ -277,7 +315,7 @@ async def pair_alert(event, chain):
         ]
     )
 
-    for channel, thread_id, link in channels:
+    for channel, thread_id, link in urls.TG_ALERTS_CHANNELS:
         with open(image_path, "rb") as photo:
             send_params = {
                 "chat_id": channel,
@@ -323,16 +361,16 @@ async def token_alert(event, chain):
     i1.text(
         (26, 30),
         f"New Token Deployed ({chain_info.name.upper()})\n\n{message}",
-        font=font,
+        font=FONT,
         fill=(255, 255, 255)
     )
 
     wrapped_text = textwrap.fill(description, width=50)
     y_offset = 300
     for line in wrapped_text.split("\n"):
-        line_bbox = i1.textbbox((0, 0), line, font=font)
+        line_bbox = i1.textbbox((0, 0), line, font=FONT)
         line_height = line_bbox[3] - line_bbox[1]
-        i1.text((26, y_offset), line, font=font, fill=(255, 255, 255))
+        i1.text((26, y_offset), line, font=FONT, fill=(255, 255, 255))
         y_offset += line_height + 5
     
     image_path = r"media/blackhole.png"
@@ -357,7 +395,7 @@ async def token_alert(event, chain):
         button_list.append([InlineKeyboardButton(text=f"{token_name} Website", url=website_link)])
 
     buttons = InlineKeyboardMarkup(button_list)
-    for channel, thread_id, link in channels:
+    for channel, thread_id, link in urls.TG_ALERTS_CHANNELS:
         with open(image_path, "rb") as photo:
             send_params = {
                 "chat_id": channel,
@@ -375,8 +413,8 @@ async def token_alert(event, chain):
 
 async def main():
     tasks = [
-        log_loop(chain, 20) 
-        for chain, chain_info in chains.MAINNETS.items() 
+        asyncio.create_task(log_loop(chain))
+        for chain, chain_info in chains.MAINNETS.items()
         if chain_info.live
     ]
     await asyncio.gather(*tasks)
