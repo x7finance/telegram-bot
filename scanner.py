@@ -1,5 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder
+from telegram.ext import ApplicationBuilder, ContextTypes
 
 import asyncio, os, random, requests, sentry_sdk, traceback
 from PIL import Image, ImageDraw, ImageFont
@@ -20,7 +20,6 @@ etherscan = api.Etherscan()
 
 FONT = ImageFont.truetype(media.FONT, 26)
 POLL_INTERVAL = 60 
-BLOCK_OVERLAP = 10 
 
 
 async def error(context):
@@ -31,7 +30,7 @@ async def error(context):
     )
 
 
-async def log_loop(chain, poll_interval=POLL_INTERVAL):
+async def log_loop(chain, context: ContextTypes.DEFAULT_TYPE, poll_interval=POLL_INTERVAL):
     while True:
         try:
             w3 = chains.MAINNETS[chain].w3
@@ -53,7 +52,7 @@ async def log_loop(chain, poll_interval=POLL_INTERVAL):
                 for ill_key, ill_address in ca.ILL_ADDRESSES.get(chain, {}).items()
             }
 
-            latest_block = w3.eth.block_number
+            latest_block = context.bot_data.get(f'last_block_{chain}', w3.eth.block_number)
 
             pair_created_topic = tools.get_event_topic("factory", "PairCreated", chain)
             token_deployed_topic = tools.get_event_topic("xchangecreate", "TokenDeployed", chain)
@@ -62,7 +61,7 @@ async def log_loop(chain, poll_interval=POLL_INTERVAL):
             while True:
                 try:
                     current_block = w3.eth.block_number
-                    from_block = max(latest_block + 1, 0)
+                    from_block = latest_block + 1
 
                     pair_logs = w3.eth.get_logs({
                         "fromBlock": from_block,
@@ -112,7 +111,7 @@ async def log_loop(chain, poll_interval=POLL_INTERVAL):
                         except Exception as e:
                             await error(f"Error decoding LoanOriginated: {str(e)}")
 
-                    latest_block = current_block
+                    context.bot_data[f'last_block_{chain}'] = current_block
                     await asyncio.sleep(poll_interval)
 
                 except Exception as e:
@@ -413,7 +412,7 @@ async def token_alert(event, chain):
 
 async def main():
     tasks = [
-        asyncio.create_task(log_loop(chain))
+        asyncio.create_task(log_loop(chain, application))
         for chain, chain_info in chains.MAINNETS.items()
         if chain_info.live
     ]

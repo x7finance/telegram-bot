@@ -74,7 +74,7 @@ def format_schedule(schedule1, schedule2, native_token, isComplete):
 
 def get_event_topic(contract, event_name, chain):
     chain_info, _ = chains.get_info(chain)
-    abi = json.loads(abis.read(contract))
+    abi = abis.read(contract)
     for item in abi:
         if item.get("type") == "event" and item["name"] == event_name:
             event_inputs = ",".join([inp["type"] for inp in item["inputs"]])

@@ -201,7 +201,7 @@ if __name__ == "__main__":
                 name="Click Me",
             )
 
-        #scanners()
+        scanners()
     else:
         application.add_handler(CommandHandler("test", test_command))
         print("Running Bot locally for testing")
