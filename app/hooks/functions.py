@@ -123,7 +123,7 @@ def liquidate_loan(loan_id, chain, user_id):
             transaction, sender_private_key
         )
         tx_hash = chain_info.w3.eth.send_raw_transaction(
-            signed_transaction._rransaction
+            signed_transaction.raw_transaction
         )
 
         receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
