@@ -1,6 +1,6 @@
 from media import media_path
 
-BLACKHOLE = [media_path(f"blackhole{i}.jpg") for i in range(1, 8)]
+BLACKHOLE = [media_path(f"images/blackhole{i}.jpg") for i in range(1, 8)]
 BSC_LOGO = media_path("images/bsc.png")
 ARB_LOGO = media_path("images/arbitrum.png")
 POLY_LOGO = media_path("images/polygon.png")
