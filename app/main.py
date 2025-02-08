@@ -1,0 +1,288 @@
+from telegram import Message, Update
+from telegram.ext import (
+    ApplicationBuilder,
+    CallbackContext,
+    CallbackQueryHandler,
+    ChatMemberHandler,
+    CommandHandler,
+    ConversationHandler,
+    ContextTypes,
+    filters,
+    MessageHandler,
+)
+
+import os, sys, sentry_sdk, subprocess
+from pathlib import Path
+from telegram.warnings import PTBUserWarning
+from warnings import filterwarnings
+
+from bot import admin, auto, callbacks, commands
+from constants import settings, urls
+from hooks import db, tools
+
+filterwarnings(
+    action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning
+)
+
+application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+job_queue = application.job_queue
+
+
+sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
+
+
+async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    return
+
+
+async def error(update: Update, context: CallbackContext):
+    if update is None:
+        return
+    if update.edited_message is not None:
+        return
+    else:
+        message: Message = update.message
+        if message is not None and message.text is not None:
+            await update.message.reply_text(
+                "Uh oh! You trusted code and it failed you! Please try again"
+            )
+            print({context.error})
+            sentry_sdk.capture_exception(
+                Exception(f"{message.text} caused error: {context.error}")
+            )
+        else:
+            sentry_sdk.capture_exception(
+                Exception(f"Error occurred without a valid message: {context.error}")
+            )
+
+
+def run_alerts():
+    python_executable = sys.executable
+    script_path = Path(__file__).parent / "alerts.py"
+
+    if script_path.exists():
+        command = [python_executable, str(script_path)]
+        process = subprocess.Popen(command)
+        return process
+    else:
+        print(f"Error: {script_path} not found")
+
+
+if __name__ == "__main__":
+    application.add_error_handler(error)
+
+    application.add_handler(CommandHandler("about", commands.about))
+    application.add_handler(CommandHandler("admins", commands.admins))
+    application.add_handler(CommandHandler("alerts", commands.alerts))
+    application.add_handler(CommandHandler("announcements", commands.announcements))
+    application.add_handler(CommandHandler(["arb", "arbitrage"], commands.arb))
+    application.add_handler(CommandHandler("blocks", commands.blocks))
+    application.add_handler(CommandHandler("blog", commands.blog))
+    application.add_handler(CommandHandler("borrow", commands.borrow))
+    application.add_handler(CommandHandler("burn", commands.burn))
+    application.add_handler(CommandHandler("buy", commands.buy))
+    application.add_handler(CommandHandler("channels", commands.channels))
+    application.add_handler(CommandHandler(["chart", "charts"], commands.chart))
+    application.add_handler(CommandHandler("check", commands.check))
+    application.add_handler(CommandHandler("compare", commands.compare))
+    application.add_handler(
+        CommandHandler(
+            ["constellations", "constellation", "quints", "x7100"],
+            commands.constellations,
+        )
+    )
+    application.add_handler(
+        CommandHandler(["ca", "contract", "contracts"], commands.contracts)
+    )
+    application.add_handler(CommandHandler("contribute", commands.contribute))
+    application.add_handler(CommandHandler("convert", commands.convert))
+    application.add_handler(
+        CommandHandler(["dao", "vote", "snapshot", "propose"], commands.dao_command)
+    )
+    application.add_handler(
+        CommandHandler(
+            ["docs", "documents"],
+            commands.docs,
+        )
+    )
+    application.add_handler(CommandHandler(["ecosystem", "tokens"], commands.ecosystem))
+    application.add_handler(CommandHandler("factory", commands.factory))
+    application.add_handler(CommandHandler("faq", commands.faq))
+    application.add_handler(CommandHandler("feeto", commands.feeto))
+    application.add_handler(CommandHandler(["fg", "feargreed"], commands.fg))
+    application.add_handler(
+        CommandHandler(["fee", "fees", "costs", "gas"], commands.gas)
+    )
+    application.add_handler(CommandHandler("github", commands.github_command))
+    application.add_handler(CommandHandler("holders", commands.holders))
+    application.add_handler(CommandHandler(["hub", "hubs", "buybacks"], commands.hub))
+    application.add_handler(CommandHandler("leaderboard", commands.leaderboard))
+    application.add_handler(
+        CommandHandler(["links", "socials", "dune", "reddit"], commands.links)
+    )
+    application.add_handler(CommandHandler("liquidate", commands.liquidate))
+    application.add_handler(
+        CommandHandler(["liquidity", "liq", "supply"], commands.liquidity)
+    )
+    application.add_handler(CommandHandler(["loan", "loans"], commands.loan))
+    application.add_handler(CommandHandler("locks", commands.locks))
+    application.add_handler(CommandHandler(["me", "balance"], commands.me))
+    application.add_handler(CommandHandler(["mcap", "marketcap", "cap"], commands.mcap))
+    application.add_handler(CommandHandler("media", commands.media_command))
+    application.add_handler(CommandHandler(["nft", "nfts"], commands.nft))
+    application.add_handler(
+        CommandHandler(["on_chain", "onchain", "deployer"], commands.onchains)
+    )
+    application.add_handler(CommandHandler(["pair", "pairs"], commands.pair))
+    application.add_handler(CommandHandler("pioneer", commands.pioneer))
+    application.add_handler(
+        CommandHandler(["pool", "lpool", "lendingpool"], commands.pool)
+    )
+    application.add_handler(CommandHandler(["price", "prices"], commands.price))
+    application.add_handler(CommandHandler(["push_all", "pushall"], commands.pushall))
+    application.add_handler(CommandHandler("register", commands.register))
+    application.add_handler(CommandHandler("router", commands.router))
+    application.add_handler(CommandHandler(["space", "spaces"], commands.spaces))
+    application.add_handler(CommandHandler("smart", commands.smart))
+    application.add_handler(
+        CommandHandler(["split", "splitters", "splitter"], commands.splitters_command)
+    )
+    application.add_handler(CommandHandler(["tax", "slippage"], commands.tax_command))
+    application.add_handler(CommandHandler("timestamp", commands.timestamp_command))
+    application.add_handler(CommandHandler(["time", "clock"], commands.time_command))
+    application.add_handler(CommandHandler("treasury", commands.treasury))
+    application.add_handler(CommandHandler(["trending", "trend", "top"], commands.top))
+    application.add_handler(
+        CommandHandler(["twitter", "xtrader", "0xtrader"], commands.twitter_command)
+    )
+    application.add_handler(
+        CommandHandler(["website", "site", "swap", "dex", "xchange"], commands.website)
+    )
+    application.add_handler(CommandHandler(["volume"], commands.volume))
+    application.add_handler(CommandHandler("wei", commands.wei))
+    application.add_handler(CommandHandler("wallet", commands.wallet))
+    application.add_handler(CommandHandler(["website", "site"], commands.website))
+    application.add_handler(
+        CommandHandler(["whitepaper", "wp", "wpquote"], commands.wp)
+    )
+    application.add_handler(CommandHandler("x7r", commands.x7r))
+    application.add_handler(CommandHandler("x7d", commands.x7d))
+    application.add_handler(CommandHandler("x7dao", commands.x7dao))
+    application.add_handler(CommandHandler(["x7101", "101"], commands.x7101))
+    application.add_handler(CommandHandler(["x7102", "102"], commands.x7102))
+    application.add_handler(CommandHandler(["x7103", "103"], commands.x7103))
+    application.add_handler(CommandHandler(["x7104", "104"], commands.x7104))
+    application.add_handler(CommandHandler(["x7105", "105"], commands.x7105))
+    application.add_handler(CommandHandler("x", commands.x))
+
+    application.add_handler(CommandHandler("settings", admin.command))
+    application.add_handler(CommandHandler("clickme", admin.click_me))
+    application.add_handler(CommandHandler("remove", admin.remove))
+    application.add_handler(CommandHandler("status", admin.status))
+    application.add_handler(CommandHandler("wen", admin.wen))
+
+    application.add_handler(CallbackQueryHandler(callbacks.cancel, pattern="^cancel$"))
+    application.add_handler(
+        CallbackQueryHandler(callbacks.click_me, pattern=r"^click_button:\d+$")
+    )
+    application.add_handler(
+        CallbackQueryHandler(callbacks.clicks_reset, pattern="^clicks_reset$")
+    )
+    application.add_handler(
+        CallbackQueryHandler(callbacks.confirm_simple, pattern="^question:.*")
+    )
+    application.add_handler(
+        CallbackQueryHandler(callbacks.liquidate, pattern=r"^liquidate:\d+:[a-z]+$")
+    )
+    application.add_handler(
+        CallbackQueryHandler(
+            callbacks.pushall,
+            pattern=r"^push:(eco|treasury|x7r|x7dao|x710[1-5]):[a-z]+$",
+        )
+    )
+    application.add_handler(
+        CallbackQueryHandler(callbacks.settings_toggle, pattern="^settings_toggle_")
+    )
+    application.add_handler(CallbackQueryHandler(callbacks.stuck, pattern="^stuck:.*$"))
+    application.add_handler(
+        CallbackQueryHandler(callbacks.wallet_remove, pattern="^wallet_remove$")
+    )
+    application.add_handler(
+        CallbackQueryHandler(callbacks.welcome_button, pattern=r"unmute:.+")
+    )
+
+    x7d_conv_handler = ConversationHandler(
+        entry_points=[
+            CallbackQueryHandler(callbacks.x7d_start, pattern="^(mint|redeem):.*$")
+        ],
+        states={
+            callbacks.X7D_AMOUNT: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, callbacks.x7d_amount)
+            ],
+            callbacks.X7D_CONFIRM: [
+                CallbackQueryHandler(
+                    callbacks.confirm_conv, pattern="^(mint|redeem):.*$"
+                ),
+                CallbackQueryHandler(callbacks.cancel, pattern="^cancel$"),
+            ],
+        },
+        fallbacks=[CommandHandler("cancel", callbacks.cancel)],
+    )
+    application.add_handler(x7d_conv_handler)
+
+    withdraw_conv_handler = ConversationHandler(
+        entry_points=[
+            CallbackQueryHandler(callbacks.withdraw_start, pattern="^withdraw:.*$")
+        ],
+        states={
+            callbacks.WITHDRAW_TOKEN: [
+                CallbackQueryHandler(callbacks.withdraw_token, pattern="^withdraw:.*$")
+            ],
+            callbacks.WITHDRAW_AMOUNT: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, callbacks.withdraw_amount
+                )
+            ],
+            callbacks.WITHDRAW_ADDRESS: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, callbacks.withdraw_address
+                )
+            ],
+            callbacks.WITHDRAW_CONFIRM: [
+                CallbackQueryHandler(callbacks.confirm_conv, pattern="^withdraw:.*$"),
+                CallbackQueryHandler(callbacks.cancel, pattern="^cancel$"),
+            ],
+        },
+        fallbacks=[CommandHandler("cancel", callbacks.cancel)],
+    )
+    application.add_handler(withdraw_conv_handler)
+
+    application.add_handler(
+        ChatMemberHandler(auto.welcome_message, ChatMemberHandler.CHAT_MEMBER)
+    )
+    application.add_handler(
+        MessageHandler(
+            filters.StatusUpdate._NewChatMembers(Update)
+            | filters.StatusUpdate._LeftChatMember(Update),
+            auto.welcome_delete,
+        )
+    )
+    application.add_handler(
+        MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies)
+    )
+
+    if not tools.is_local():
+        print("Running on server")
+        if db.settings_get("click_me"):
+            job_queue.run_once(
+                auto.button_send,
+                settings.FIRST_BUTTON_TIME,
+                chat_id=urls.TG_MAIN_CHANNEL_ID,
+                name="Click Me",
+            )
+        run_alerts()
+    else:
+        application.add_handler(CommandHandler("test", test_command))
+        print("Running locally")
+
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
