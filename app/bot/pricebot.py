@@ -11,7 +11,9 @@ dextools = api.Dextools()
 etherscan = api.Etherscan()
 
 
-async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, chain):
+async def command(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, search, chain
+):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     if not is_address(search):
@@ -25,7 +27,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                 search = token
             else:
                 await update.message.reply_text(
-                    f"No result found",
+                    "No result found",
                 )
                 return
 
@@ -38,14 +40,14 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
                         break
             else:
                 await update.message.reply_text(
-                    f"No result found",
+                    "No result found",
                 )
                 return
         else:
             token_data = dextools.get_audit(search, chain)
             if not token_data:
                 await update.message.reply_text(
-                    f"No result found",
+                    "No result found",
                 )
                 return
 
@@ -65,7 +67,9 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             )
 
             is_honeypot = data.get("isHoneypot", "no")
-            honey_pot = "❌ Honey Pot" if is_honeypot == "yes" else "✅️ Not Honey Pot"
+            honey_pot = (
+                "❌ Honey Pot" if is_honeypot == "yes" else "✅️ Not Honey Pot"
+            )
 
             is_mintable = data.get("isMintable", "no")
             mint = "⚠️ Mintable" if is_mintable == "yes" else "✅️ Not Mintable"
@@ -90,7 +94,11 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE, search, ch
             )
 
             is_scam = data.get("isPotentiallyScam", "no")
-            scam = "⚠️ Is Potentially a Scam" if is_scam == "yes" else "✅️ Not a Scam"
+            scam = (
+                "⚠️ Is Potentially a Scam"
+                if is_scam == "yes"
+                else "✅️ Not a Scam"
+            )
 
         else:
             open_source = "❓ Contract Verification - Unknown"

@@ -1,4 +1,8 @@
-import asyncio, requests, os, time, tweepy
+import asyncio
+import requests
+import os
+import time
+import tweepy
 
 from datetime import datetime, timedelta
 
@@ -18,7 +22,9 @@ class Blockspan:
     def get_nft_data(self, nft, chain):
         try:
             chain_info = chains.active_chains()[chain]
-            endpoint = f"collections/contract/{nft}?chain={chain_info.blockspan}"
+            endpoint = (
+                f"collections/contract/{nft}?chain={chain_info.blockspan}"
+            )
             response = requests.get(self.url + endpoint, headers=self.headers)
             data = response.json()
 
@@ -56,9 +62,9 @@ class Dune:
         self.volume_text = ""
         self.volume_flag = False
         self.volume_timestamp = datetime.now().timestamp()
-        self.volume_last_date = datetime.fromtimestamp(self.volume_timestamp).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        self.volume_last_date = datetime.fromtimestamp(
+            self.volume_timestamp
+        ).strftime("%Y-%m-%d %H:%M:%S")
 
         self.top_text = {}
         self.top_flag = {}
@@ -82,7 +88,8 @@ class Dune:
 
     def get_query_status(self, execution_id):
         response = requests.get(
-            self.make_api_url("execution", "status", execution_id), headers=self.header
+            self.make_api_url("execution", "status", execution_id),
+            headers=self.header,
         )
         if response.status_code == 200:
             return response.json()
@@ -91,7 +98,8 @@ class Dune:
 
     def get_query_results(self, execution_id):
         response = requests.get(
-            self.make_api_url("execution", "results", execution_id), headers=self.header
+            self.make_api_url("execution", "results", execution_id),
+            headers=self.header,
         )
         if response.status_code == 200:
             return response.json()
@@ -100,7 +108,8 @@ class Dune:
 
     def cancel_query_execution(self, execution_id):
         response = requests.get(
-            self.make_api_url("execution", "cancel", execution_id), headers=self.header
+            self.make_api_url("execution", "cancel", execution_id),
+            headers=self.header,
         )
         if response.status_code == 200:
             return response.json()
@@ -108,7 +117,9 @@ class Dune:
             response.raise_for_status()
 
     async def get_top_tokens(self, chain):
-        chain_info, error_message = chains.get_info(chain) if chain else (None, None)
+        chain_info, error_message = (
+            chains.get_info(chain) if chain else (None, None)
+        )
         if error_message:
             return error_message
         chain_name = (
@@ -116,7 +127,9 @@ class Dune:
             if chain == "eth"
             else (chain_info.name.lower() if chain_info else "all")
         )
-        chain_name_title = f"({chain_info.name})" if chain_info else "(All chains)"
+        chain_name_title = (
+            f"({chain_info.name})" if chain_info else "(All chains)"
+        )
 
         if chain_name.upper() not in self.top_flag:
             self.top_text[chain_name.upper()] = ""
@@ -134,7 +147,9 @@ class Dune:
             next_update_time = (
                 self.top_timestamp[chain_name.upper()] + self.time_allowed
             )
-            remaining_time = max(0, int(next_update_time - datetime.now().timestamp()))
+            remaining_time = max(
+                0, int(next_update_time - datetime.now().timestamp())
+            )
             hours, remainder = divmod(remaining_time, 3600)
             minutes, seconds = divmod(remainder, 60)
             time_remaining_text = (
@@ -153,16 +168,16 @@ class Dune:
             try:
                 response_data = self.get_query_results(execution_id)
             except ValueError:
-
-                return f"*Xchange Top Pairs {chain_name_title}*\n\n" f"{self.error}"
+                return (
+                    f"*Xchange Top Pairs {chain_name_title}*\n\n{self.error}"
+                )
 
             if response_data.get("is_execution_finished", False):
                 break
             await asyncio.sleep(5)
 
         if not response_data or "result" not in response_data:
-
-            return f"*Xchange Top Pairs {chain_name_title}*\n\n" f"{self.error}"
+            return f"*Xchange Top Pairs {chain_name_title}*\n\n{self.error}"
 
         rows = response_data["result"]["rows"]
         if chain:
@@ -196,8 +211,7 @@ class Dune:
         top_text = f"*Xchange Top Pairs {chain_name_title}*\n\n"
 
         if not any(item.get("pair") for item in top_pairs):
-
-            return f"*Xchange Top Pairs {chain_name_title}*\n\n" f"{self.error}"
+            return f"*Xchange Top Pairs {chain_name_title}*\n\n{self.error}"
 
         for idx, item in enumerate(top_pairs, start=1):
             pair = item.get("pair")
@@ -217,11 +231,14 @@ class Dune:
 
     async def get_volume(self):
         if (
-            datetime.now().timestamp() - self.volume_timestamp < self.time_allowed
+            datetime.now().timestamp() - self.volume_timestamp
+            < self.time_allowed
             and self.volume_text
         ):
             next_update_time = self.volume_timestamp + self.time_allowed
-            remaining_time = max(0, int(next_update_time - datetime.now().timestamp()))
+            remaining_time = max(
+                0, int(next_update_time - datetime.now().timestamp())
+            )
             hours, remainder = divmod(remaining_time, 3600)
             minutes, seconds = divmod(remainder, 60)
             next_update_text = (
@@ -240,7 +257,7 @@ class Dune:
         for _ in range(10):
             response = self.get_query_results(execution_id)
             if not isinstance(response, dict):
-                return f"*Xchange Volume*\n\n" f"{self.error}"
+                return f"*Xchange Volume*\n\n{self.error}"
 
             response_data = response
 
@@ -249,7 +266,7 @@ class Dune:
             await asyncio.sleep(2)
 
         if "result" not in response_data:
-            return f"*Xchange Volume*\n\n" f"{self.error}"
+            return f"*Xchange Volume*\n\n{self.error}"
 
         try:
             last_24hr_amt = response_data["result"]["rows"][0]["last_24hr_amt"]
@@ -257,7 +274,7 @@ class Dune:
             last_7d_amt = response_data["result"]["rows"][0]["last_7d_amt"]
             lifetime_amt = response_data["result"]["rows"][0]["lifetime_amt"]
         except (KeyError, IndexError):
-            return f"*Xchange Volume*\n\n" f"{self.error}"
+            return f"*Xchange Volume*\n\n{self.error}"
 
         volume_text = (
             f"Total:       ${lifetime_amt:,.0f}\n"
@@ -267,9 +284,9 @@ class Dune:
         )
 
         self.volume_timestamp = datetime.now().timestamp()
-        self.volume_last_date = datetime.fromtimestamp(self.volume_timestamp).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        self.volume_last_date = datetime.fromtimestamp(
+            self.volume_timestamp
+        ).strftime("%Y-%m-%d %H:%M:%S")
         self.volume_flag = True
         self.volume_text = volume_text
 
@@ -308,7 +325,9 @@ class Etherscan:
         tx_response = requests.get(tx_url)
         tx_data = tx_response.json()
         if tx_data:
-            tx_entry_count = len(tx_data["result"]) if "result" in tx_data else 0
+            tx_entry_count = (
+                len(tx_data["result"]) if "result" in tx_data else 0
+            )
         else:
             tx_data = 0
         internal_tx_url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlist&address={contract}&startblock={block_yesterday}&endblock={block_now}&page=1&offset=1000&sort=asc&apikey={self.key}"
@@ -316,7 +335,9 @@ class Etherscan:
         internal_tx_data = internal_tx_response.json()
         if internal_tx_data:
             internal_tx_entry_count = (
-                len(internal_tx_data["result"]) if "result" in internal_tx_data else 0
+                len(internal_tx_data["result"])
+                if "result" in internal_tx_data
+                else 0
             )
         else:
             internal_tx_data = 0
@@ -358,7 +379,7 @@ class Etherscan:
             response = requests.get(url)
             data = response.json()
             return int(data["result"][:-6])
-        except Exception as e:
+        except Exception:
             return 0
 
     def get_supply(self, token, chain):
@@ -440,7 +461,7 @@ class Dextools:
                     and "exchange" in data["data"]
                     and "name" in data["data"]["exchange"]
                 ):
-                    return f'({data["data"]["exchange"]["name"]} pair)'
+                    return f"({data['data']['exchange']['name']} pair)"
                 else:
                     return ""
             else:
@@ -490,11 +511,13 @@ class Dextools:
 
             else:
                 price = None
-                change = f"📉 1HR Change: N/A\n📉 6HR Change: N/A\n📉 24HR Change: N/A"
+                change = "📉 1HR Change: N/A\n📉 6HR Change: N/A\n📉 24HR Change: N/A"
 
             return price, change
         else:
-            change = f"📉 1HR Change: N/A\n📉 6HR Change: N/A\n📉 24HR Change: N/A"
+            change = (
+                "📉 1HR Change: N/A\n📉 6HR Change: N/A\n📉 24HR Change: N/A"
+            )
             return None, change
 
     def get_token_info(self, address, chain):
@@ -583,7 +606,7 @@ class Dextools:
 
 class CoinGecko:
     def __init__(self):
-        self.url = f"https://api.coingecko.com/api/v3/"
+        self.url = "https://api.coingecko.com/api/v3/"
 
     def get_ath(self, token):
         endpoint = (
@@ -611,7 +634,10 @@ class CoinGecko:
             floor_price = data["floor_price"]["native_currency"]
             floor_price_usd = data["floor_price"]["usd"]
 
-            return {"floor_price": floor_price, "floor_price_usd": floor_price_usd}
+            return {
+                "floor_price": floor_price,
+                "floor_price_usd": floor_price_usd,
+            }
         else:
             return None
 
@@ -633,8 +659,12 @@ class CoinGecko:
         else:
             price = "{:,.2f}".format(price)
 
-        volume = tools.format_millions(float(data[token].get("usd_24h_vol", 0)))
-        market_cap = tools.format_millions(float(data[token].get("usd_market_cap", 0)))
+        volume = tools.format_millions(
+            float(data[token].get("usd_24h_vol", 0))
+        )
+        market_cap = tools.format_millions(
+            float(data[token].get("usd_market_cap", 0))
+        )
 
         price_change = round(data[token].get("usd_24h_change", 0), 2)
 
@@ -669,11 +699,15 @@ class Defined:
         chain_info = chains.active_chains()[chain]
 
         current_timestamp = int(datetime.now().timestamp()) - 300
-        one_hour_ago_timestamp = int((datetime.now() - timedelta(hours=1)).timestamp())
+        one_hour_ago_timestamp = int(
+            (datetime.now() - timedelta(hours=1)).timestamp()
+        )
         twenty_four_hours_ago_timestamp = int(
             (datetime.now() - timedelta(hours=24)).timestamp()
         )
-        seven_days_ago_timestamp = int((datetime.now() - timedelta(days=7)).timestamp())
+        seven_days_ago_timestamp = int(
+            (datetime.now() - timedelta(days=7)).timestamp()
+        )
 
         pricechange = f"""query {{
             getTokenPrices(
@@ -711,11 +745,17 @@ class Defined:
 
             current_price = data["data"]["getTokenPrices"][0]["priceUsd"]
             one_hour_ago_price = data["data"]["getTokenPrices"][1]["priceUsd"]
-            twenty_four_hours_ago_price = data["data"]["getTokenPrices"][2]["priceUsd"]
-            seven_days_ago_price = data["data"]["getTokenPrices"][3]["priceUsd"]
+            twenty_four_hours_ago_price = data["data"]["getTokenPrices"][2][
+                "priceUsd"
+            ]
+            seven_days_ago_price = data["data"]["getTokenPrices"][3][
+                "priceUsd"
+            ]
 
             one_hour_change = round(
-                ((current_price - one_hour_ago_price) / one_hour_ago_price) * 100, 2
+                ((current_price - one_hour_ago_price) / one_hour_ago_price)
+                * 100,
+                2,
             )
             twenty_four_hours_change = round(
                 (
@@ -726,7 +766,9 @@ class Defined:
                 2,
             )
             seven_days_change = round(
-                ((current_price - seven_days_ago_price) / seven_days_ago_price) * 100, 2
+                ((current_price - seven_days_ago_price) / seven_days_ago_price)
+                * 100,
+                2,
             )
 
             emoji_up = "📈"
@@ -741,7 +783,7 @@ class Defined:
                 f"{twenty_four_hours_change_str}\n"
                 f"{seven_days_change_str}"
             )
-        except Exception as e:
+        except Exception:
             result = "  1H Change: N/A\n  24H Change: N/A\n  7D Change: N/A"
         return result
 
@@ -756,7 +798,9 @@ class Defined:
             }}
         """
 
-        response = requests.post(self.url, headers=self.headers, json={"query": image})
+        response = requests.post(
+            self.url, headers=self.headers, json={"query": image}
+        )
         data = response.json()
         if "data" in data and "getTokenInfo" in data["data"]:
             token_info = data["data"]["getTokenInfo"]
@@ -826,7 +870,7 @@ class Defined:
                 "statsUsd"
             ]["volume"]["currentValue"]
             return "${:,.0f}".format(float(current_value))
-        except Exception as e:
+        except Exception:
             return None
 
     def search(self, address, chain=None):
@@ -894,7 +938,9 @@ class GitHub:
             if not data:
                 break
 
-            issues.extend([issue for issue in data if "pull_request" not in issue])
+            issues.extend(
+                [issue for issue in data if "pull_request" not in issue]
+            )
             page += 1
 
         if not issues:
@@ -923,7 +969,9 @@ class GitHub:
             )
 
         issue_count = len(issues)
-        return f"Total Open Issues: {issue_count}\n\n" + "\n".join(formatted_issues)
+        return f"Total Open Issues: {issue_count}\n\n" + "\n".join(
+            formatted_issues
+        )
 
     def get_latest_commit(self):
         endpoint = "commits"
@@ -951,9 +999,9 @@ class GitHub:
         url = latest_commit.get("html_url", "No URL")
 
         if created_at != "Unknown":
-            created_at = datetime.fromisoformat(created_at.replace("Z", "")).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
+            created_at = datetime.fromisoformat(
+                created_at.replace("Z", "")
+            ).strftime("%Y-%m-%d %H:%M:%S")
 
         return f"Latest Commit:\n{message}\nCreated By: {created_by}\nCreated At: {created_at}\nURL: {url}"
 
@@ -994,14 +1042,13 @@ class GitHub:
                 )
 
             formatted_prs.append(
-                f"{title}\n"
-                f"Creator: {creator}\n"
-                f"Created At: {date}\n"
-                f"URL: {url}\n"
+                f"{title}\nCreator: {creator}\nCreated At: {date}\nURL: {url}\n"
             )
 
         count = len(pull_requests)
-        return f"Total Open Pull Requests: {count}\n\n" + "\n".join(formatted_prs)
+        return f"Total Open Pull Requests: {count}\n\n" + "\n".join(
+            formatted_prs
+        )
 
 
 class Opensea:
@@ -1010,7 +1057,7 @@ class Opensea:
             "accept": "application/json",
             "X-API-KEY": os.getenv("OPENSEA_API_KEY"),
         }
-        self.url = f"https://api.opensea.io/v2/"
+        self.url = "https://api.opensea.io/v2/"
 
     def get_nft_collection(self, slug):
         endpoint = f"collections/{slug}"
@@ -1041,12 +1088,15 @@ class Snapshot:
 
 class Twitter:
     def __init__(self):
-        self.client = tweepy.Client(bearer_token=os.getenv("TWITTER_BEARER_TOKEN"))
+        self.client = tweepy.Client(
+            bearer_token=os.getenv("TWITTER_BEARER_TOKEN")
+        )
 
     def get_user_data(self, username):
         try:
             user = self.client.get_user(
-                username=username, user_fields=["public_metrics", "profile_image_url"]
+                username=username,
+                user_fields=["public_metrics", "profile_image_url"],
             )
             if user and user.data:
                 return {
@@ -1064,12 +1114,19 @@ class Twitter:
             tweets = self.client.get_users_tweets(
                 user_id,
                 max_results=5,
-                tweet_fields=["created_at", "public_metrics", "referenced_tweets"],
+                tweet_fields=[
+                    "created_at",
+                    "public_metrics",
+                    "referenced_tweets",
+                ],
             )
             if tweets and tweets.data:
                 tweet = tweets.data[0]
 
-                if hasattr(tweet, "referenced_tweets") and tweet.referenced_tweets:
+                if (
+                    hasattr(tweet, "referenced_tweets")
+                    and tweet.referenced_tweets
+                ):
                     ref_type = tweet.referenced_tweets[0].type
                     if ref_type == "replied_to":
                         tweet_type = "Reply"
@@ -1118,7 +1175,8 @@ class Twitter:
                 return None
 
             spaces = self.client.get_spaces(
-                user_ids=[user_id], space_fields=["title", "state", "scheduled_start"]
+                user_ids=[user_id],
+                space_fields=["title", "state", "scheduled_start"],
             )
             if spaces and spaces.data:
                 for space in spaces.data:
@@ -1126,9 +1184,13 @@ class Twitter:
                         return {
                             "title": space.title,
                             "state": (
-                                "Live Now" if space.state == "live" else "Scheduled"
+                                "Live Now"
+                                if space.state == "live"
+                                else "Scheduled"
                             ),
-                            "scheduled_start": getattr(space, "scheduled_start", None),
+                            "scheduled_start": getattr(
+                                space, "scheduled_start", None
+                            ),
                             "space_id": space.id,
                         }
             return None

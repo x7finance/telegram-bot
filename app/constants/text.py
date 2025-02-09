@@ -54,7 +54,7 @@ DISCOUNT = (
     "The NFTs provide a fixed percentage discount. The Borrowing Incentive NFT is consumed upon "
     "loan origination.\n\n"
     "The latter two discounts provide a linear sliding scale, based on the minimum and maximum loan amounts and "
-    f"loan periods. The starting values for these discounts are 0-10% discount.\n\n"
+    "loan periods. The starting values for these discounts are 0-10% discount.\n\n"
     "The time based discount is imposing an opportunity cost of lent funds - and incentivizing taking out the "
     "shortest loan possible.\n"
     "The amount based discount is recognizing that a loan origination now is more valuable than a possible loan "
@@ -105,7 +105,7 @@ QUOTES = [
     "Executive Summary\n\nX7 is an ecosystem of innovative smart contracts that provide those with visionary ideas "
     "access to leveraged seed capital without lenders incurring the risk of losing the principal.",
     "Total Addressable Market\n\nERC20 tokens have 24hr trading volume in the 100s of billions. We will "
-    f"consider X7 a success if 1% of all trading volume takes place on Xchange.",
+    "consider X7 a success if 1% of all trading volume takes place on Xchange.",
     "Customers And Use Cases\n\nUnderstanding who our customers are, and what their needs and use cases are, is "
     "fundamental to finding product-market fit. We have identified 4 primary user personas that have distinct needs and"
     " have optimized the system to meet their requirements.\n\nProject Launchers - Seeking Capital\nThe whole reason "
@@ -332,7 +332,7 @@ QUOTES = [
     " However, these durations may be changed (within hard-coded limits) to meet future governance needs.",
     "*Proposals and Voting*\n\nVoting will occur in multiple phases, each of which has either a minimum or maximum "
     "time phase duration.\n\n*Phase 1: Quorum-seeking*\nX7DAO token holders will be able to stake their tokens as "
-    f"X7sDAO, a non-transferable staked version of X7DAO.\n\nA quorum is reached when more than 50% of circulating "
+    "X7sDAO, a non-transferable staked version of X7DAO.\n\nA quorum is reached when more than 50% of circulating "
     "X7DAO has been staked as X7sDAO.\n\nOnce a quorum is reached and a minimum quorum-seeking time period has "
     "passed, the X7sDAO tokens are temporarily locked (and no more X7DAO tokens may be staked until the next Quorum "
     "seeking period) and the governance process moves to the next phase\n\n*Phase 2: Proposal creation*\nA proposal "
@@ -345,7 +345,7 @@ QUOTES = [
     "and the total amount of X7sDAO they have staked.\n\nProposals pass by a majority vote of the quorum of X7sDAO "
     "tokens.\n\nA parallel voting process will occur with Magister tokens, where each Magister token carries one "
     "vote.\n\nIf a majority of magister token holders vote against a proposal, the proposal must reach an X7sDAO vote "
-    f"of 75% of the quorum of X7sDAO tokens.\n\n*Phase 4: Proposal adoption*\nDuring this phase, proposals that have "
+    "of 75% of the quorum of X7sDAO tokens.\n\n*Phase 4: Proposal adoption*\nDuring this phase, proposals that have "
     "passed will be enqueued for execution. This step ensures proper ordering and is a guard against various forms of "
     "process griefing.\n\n*Phase 5: Proposal execution*\nAfter proposal adoption, all passed proposals must be executed"
     " before a new Quorum Seeking phase may commence.",

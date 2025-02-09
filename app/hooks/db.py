@@ -76,7 +76,11 @@ def clicks_fastest_time():
         )
         fastest_time_taken_data = cursor.fetchone()
         close_db_connection(db_connection, cursor)
-        return fastest_time_taken_data if fastest_time_taken_data else ("No user", 0)
+        return (
+            fastest_time_taken_data
+            if fastest_time_taken_data
+            else ("No user", 0)
+        )
     except mysql.connector.Error:
         return ("No user", 0)
 
@@ -267,7 +271,7 @@ def settings_get(setting_name: str) -> bool:
         db_connection.close()
 
         return result[0] == 1 if result else False
-    except mysql.connector.Error as e:
+    except mysql.connector.Error:
         return False
 
 
@@ -283,7 +287,7 @@ def settings_get_all():
         db_connection.close()
 
         return {setting: value == 1 for setting, value in results}
-    except mysql.connector.Error as e:
+    except mysql.connector.Error:
         return {}
 
 
@@ -362,7 +366,11 @@ def wallet_get(user_id):
 
         if result:
             wallet, private_key = result
-            return {"user_id": user_id, "wallet": wallet, "private_key": private_key}
+            return {
+                "user_id": user_id,
+                "wallet": wallet,
+                "private_key": private_key,
+            }
         else:
             return None
 

@@ -7,13 +7,13 @@ from telegram import (
 )
 from telegram.ext import ContextTypes
 
-import random, time
+import random
+import time
 from typing import Optional, Tuple
 
-from media import stickers, videos
-
-from hooks import db, tools
 from constants import text, urls
+from hooks import db, tools
+from media import stickers, videos
 
 welcome_rescrictions = {
     "can_send_messages": False,
@@ -34,7 +34,8 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
     if previous_click_me_id:
         try:
             await context.bot.delete_message(
-                chat_id=urls.TG_MAIN_CHANNEL_ID, message_id=previous_click_me_id
+                chat_id=urls.TG_MAIN_CHANNEL_ID,
+                message_id=previous_click_me_id,
             )
             await context.bot.delete_message(
                 chat_id=urls.TG_MAIN_CHANNEL_ID, message_id=previous_clicked_id
@@ -43,13 +44,16 @@ async def button_send(context: ContextTypes.DEFAULT_TYPE):
             pass
 
     current_button_data = str(random.randint(1, 100000000))
-    context.bot_data["current_button_data"] = f"click_button:{current_button_data}"
+    context.bot_data["current_button_data"] = (
+        f"click_button:{current_button_data}"
+    )
 
     keyboard = InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    "Click Me!", callback_data=context.bot_data["current_button_data"]
+                    "Click Me!",
+                    callback_data=context.bot_data["current_button_data"],
                 )
             ]
         ]
@@ -96,12 +100,10 @@ async def replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if keyword.startswith("https://"):
             if any(word.startswith(keyword) for word in words):
                 if "text" in response:
-
                     await update.message.reply_text(
                         response["text"], parse_mode=response["mode"]
                     )
                 elif "sticker" in response:
-
                     await update.message.reply_sticker(response["sticker"])
         else:
             if (
@@ -110,21 +112,20 @@ async def replies(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 or lower_message.endswith(" " + keyword)
             ):
                 if "text" in response:
-
                     await update.message.reply_text(
                         response["text"],
                         parse_mode=response["mode"],
                         disable_web_page_preview=True,
                     )
                 elif "sticker" in response:
-
                     await update.message.reply_sticker(response["sticker"])
 
 
 async def welcome_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         await context.bot.delete_message(
-            chat_id=update.effective_chat.id, message_id=update.effective_message.id
+            chat_id=update.effective_chat.id,
+            message_id=update.effective_message.id,
         )
     except Exception:
         return
@@ -156,7 +157,9 @@ async def welcome_member(
     return was_member, is_member
 
 
-async def welcome_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def welcome_message(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
     channel_id = update.effective_chat.id
     result = await welcome_member(update.chat_member)
     if result is None:
@@ -178,7 +181,9 @@ async def welcome_message(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         reply_markup = None
 
         if not was_member and is_member:
-            previous_welcome_message_id = context.bot_data.get("welcome_message_id")
+            previous_welcome_message_id = context.bot_data.get(
+                "welcome_message_id"
+            )
             if previous_welcome_message_id:
                 try:
                     await context.bot.delete_message(

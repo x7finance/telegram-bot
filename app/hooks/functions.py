@@ -10,9 +10,7 @@ def estimate_gas(chain, function, loan_id=None):
     def calculate_cost(gas_estimate):
         eth_cost = gas_price * gas_estimate
         dollar_cost = (eth_cost / 10**9) * eth_price
-        return (
-            f"{eth_cost / 10**9:.6f} {chain_info.native.upper()} (${dollar_cost:.2f})"
-        )
+        return f"{eth_cost / 10**9:.6f} {chain_info.native.upper()} (${dollar_cost:.2f})"
 
     chain_info, _ = chains.get_info(chain)
 
@@ -55,7 +53,9 @@ def estimate_gas(chain, function, loan_id=None):
             gas_estimate = chain_info.w3.eth.estimate_gas(
                 {
                     "from": chain_info.w3.to_checksum_address(ca.DEPLOYER),
-                    "to": chain_info.w3.to_checksum_address(ca.X7R_LIQ_HUB(chain)),
+                    "to": chain_info.w3.to_checksum_address(
+                        ca.X7R_LIQ_HUB(chain)
+                    ),
                     "data": data,
                 }
             )
@@ -65,7 +65,9 @@ def estimate_gas(chain, function, loan_id=None):
             gas_estimate = chain_info.w3.eth.estimate_gas(
                 {
                     "from": chain_info.w3.to_checksum_address(ca.DEPLOYER),
-                    "to": chain_info.w3.to_checksum_address(ca.LPOOL_RESERVE(chain)),
+                    "to": chain_info.w3.to_checksum_address(
+                        ca.LPOOL_RESERVE(chain)
+                    ),
                     "data": "0xf6326fb3",
                 }
             )
@@ -126,7 +128,9 @@ def liquidate_loan(loan_id, chain, user_id):
             signed_transaction.raw_transaction
         )
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+            tx_hash, timeout=30
+        )
         if receipt.status == 1:
             return f"Loan {loan_id} ({chain_info.name.upper()}) liquidated successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
@@ -136,7 +140,9 @@ def liquidate_loan(loan_id, chain, user_id):
         return f"Error: {str(e)}"
 
 
-def splitter_push(contract_type, address, abi, chain, user_id, token_address=None):
+def splitter_push(
+    contract_type, address, abi, chain, user_id, token_address=None
+):
     try:
         chain_info, _ = chains.get_info(chain)
 
@@ -178,7 +184,9 @@ def splitter_push(contract_type, address, abi, chain, user_id, token_address=Non
             signed_transaction.raw_transaction
         )
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+            tx_hash, timeout=30
+        )
         if receipt.status == 1:
             return f"{function_name} ({chain_info.name.upper()}) called successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
@@ -196,7 +204,9 @@ def stuck_tx(chain, user_id, gas_multiplier=1.5):
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
-        latest_nonce = chain_info.w3.eth.get_transaction_count(sender_address, "latest")
+        latest_nonce = chain_info.w3.eth.get_transaction_count(
+            sender_address, "latest"
+        )
         pending_nonce = chain_info.w3.eth.get_transaction_count(
             sender_address, "pending"
         )
@@ -220,9 +230,13 @@ def stuck_tx(chain, user_id, gas_multiplier=1.5):
         signed_txn = chain_info.w3.eth.account.sign_transaction(
             transaction, sender_private_key
         )
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.raw_transaction)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(
+            signed_txn.raw_transaction
+        )
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+            tx_hash, timeout=30
+        )
         if receipt.status == 1:
             return f"Stuck transaction (Nonce: {pending_nonce}) successfully replaced ({chain_info.name.upper()})\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
@@ -265,9 +279,13 @@ def withdraw_native(amount, chain, user_id, recipient_address):
         signed_txn = chain_info.w3.eth.account.sign_transaction(
             transaction, sender_private_key
         )
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.raw_transaction)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(
+            signed_txn.raw_transaction
+        )
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+            tx_hash, timeout=30
+        )
         if receipt.status == 1:
             return f"Successfully withdrew {amount} {chain_info.native.upper()} ({chain_info.name.upper()})\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
@@ -277,7 +295,9 @@ def withdraw_native(amount, chain, user_id, recipient_address):
         return f"Error: {str(e)}"
 
 
-def withdraw_tokens(user_id, amount, token_address, decimals, recipient, chain):
+def withdraw_tokens(
+    user_id, amount, token_address, decimals, recipient, chain
+):
     try:
         chain_info, _ = chains.get_info(chain)
 
@@ -289,7 +309,10 @@ def withdraw_tokens(user_id, amount, token_address, decimals, recipient, chain):
 
         token_name = "Tokens"
 
-        for token_name_candidate, token_info_dict in tokens.get_tokens().items():
+        for (
+            token_name_candidate,
+            token_info_dict,
+        ) in tokens.get_tokens().items():
             for chain_name, token_info in token_info_dict.items():
                 if token_address.lower() == token_info.ca.lower():
                     token_name = token_name_candidate
@@ -335,7 +358,9 @@ def withdraw_tokens(user_id, amount, token_address, decimals, recipient, chain):
         tx_hash = chain_info.w3.eth.send_raw_transaction(
             signed_transaction.raw_transaction
         )
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+            tx_hash, timeout=30
+        )
 
         if receipt.status == 1:
             return f"{amount} {token_name} ({chain_info.name.upper()}) {actioned}\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
@@ -364,7 +389,10 @@ def x7d_mint(amount, chain, user_id):
 
         gas_price = chain_info.w3.eth.gas_price
         gas_estimate = contract.functions.depositETH().estimate_gas(
-            {"from": sender_address, "value": chain_info.w3.to_wei(amount, "ether")}
+            {
+                "from": sender_address,
+                "value": chain_info.w3.to_wei(amount, "ether"),
+            }
         )
 
         transaction = contract.functions.depositETH().build_transaction(
@@ -381,9 +409,13 @@ def x7d_mint(amount, chain, user_id):
         signed_txn = chain_info.w3.eth.account.sign_transaction(
             transaction, sender_private_key
         )
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.raw_transaction)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(
+            signed_txn.raw_transaction
+        )
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+            tx_hash, timeout=30
+        )
         if receipt.status == 1:
             return f"{amount} X7D ({chain_info.name.upper()}) minted successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
@@ -429,9 +461,13 @@ def x7d_redeem(amount, chain, user_id):
         signed_txn = chain_info.w3.eth.account.sign_transaction(
             transaction, sender_private_key
         )
-        tx_hash = chain_info.w3.eth.send_raw_transaction(signed_txn.raw_transaction)
+        tx_hash = chain_info.w3.eth.send_raw_transaction(
+            signed_txn.raw_transaction
+        )
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(tx_hash, timeout=30)
+        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+            tx_hash, timeout=30
+        )
         if receipt.status == 1:
             return f"Redeemed {amount} X7D ({chain_info.name.upper()}) successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:

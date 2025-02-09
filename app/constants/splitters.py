@@ -37,7 +37,9 @@ def generate_eco_split(chain):
     }
 
     treasury_name = (
-        slot_names.get(chain) if slot_names.get(chain) else ("Treasury Splitter")
+        slot_names.get(chain)
+        if slot_names.get(chain)
+        else ("Treasury Splitter")
     )
 
     return {
@@ -59,19 +61,31 @@ def generate_hub_split(chain, address, token):
         address=chain_info.w3.to_checksum_address(address), abi=abi
     )
 
-    distribute, liquidity, treasury, liquidity_ratio_target, balance_threshold = (
-        "N/A",
-    ) * 5
+    (
+        distribute,
+        liquidity,
+        treasury,
+        liquidity_ratio_target,
+        balance_threshold,
+    ) = ("N/A",) * 5
     liquidity_balance, distribute_balance, treasury_balance = 0, 0, 0
 
     try:
         distribute = contract.functions.distributeShare().call() / 10
         liquidity = contract.functions.liquidityShare().call() / 10
         treasury = contract.functions.treasuryShare().call() / 10
-        liquidity_ratio_target = contract.functions.liquidityRatioTarget().call() / 10
-        balance_threshold = contract.functions.balanceThreshold().call() / 10**18
-        liquidity_balance = contract.functions.liquidityBalance().call() / 10**18
-        distribute_balance = contract.functions.distributeBalance().call() / 10**18
+        liquidity_ratio_target = (
+            contract.functions.liquidityRatioTarget().call() / 10
+        )
+        balance_threshold = (
+            contract.functions.balanceThreshold().call() / 10**18
+        )
+        liquidity_balance = (
+            contract.functions.liquidityBalance().call() / 10**18
+        )
+        distribute_balance = (
+            contract.functions.distributeBalance().call() / 10**18
+        )
         treasury_balance = contract.functions.treasuryBalance().call() / 10**18
     except Exception:
         pass
@@ -88,7 +102,11 @@ def generate_hub_split(chain, address, token):
 
     token_liquidity_balance = 0
     auxiliary, auxiliary_balance = "N/A", 0
-    lending_pool, lending_pool_balance, liquidity_balance_threshold = "N/A", 0, "N/A"
+    lending_pool, lending_pool_balance, liquidity_balance_threshold = (
+        "N/A",
+        0,
+        "N/A",
+    )
 
     if token.upper() in tokens.get_tokens():
         token_info = tokens.get_tokens()[token.upper()].get(chain)
@@ -108,7 +126,9 @@ def generate_hub_split(chain, address, token):
                 contract.functions.x7daoLiquidityBalance().call() / 10**18
             )
             auxiliary = contract.functions.auxiliaryShare().call() / 10
-            auxiliary_balance = contract.functions.auxiliaryBalance().call() / 10**18
+            auxiliary_balance = (
+                contract.functions.auxiliaryBalance().call() / 10**18
+            )
             split.update(
                 {
                     "> Auxiliary Share": f"{auxiliary:.0f}% - {auxiliary_balance:,.4f} {chain_info.native.upper()}",
@@ -120,7 +140,8 @@ def generate_hub_split(chain, address, token):
     elif token in ["x7101", "x7102", "x7103", "x7104", "x7105"]:
         try:
             token_liquidity_balance = (
-                contract.functions.liquidityTokenBalance(token_info.ca).call() / 10**18
+                contract.functions.liquidityTokenBalance(token_info.ca).call()
+                / 10**18
             )
             lending_pool = contract.functions.lendingPoolShare().call() / 10
             lending_pool_balance = (
@@ -139,7 +160,8 @@ def generate_hub_split(chain, address, token):
             pass
 
     balance = (
-        float(etherscan.get_token_balance(address, token_info.ca, chain)) / 10**18
+        float(etherscan.get_token_balance(address, token_info.ca, chain))
+        / 10**18
     ) - float(token_liquidity_balance)
     balance_dollar = float(price) * float(balance)
     balance_text = f"{balance:,.0f} {token.upper()} (${balance_dollar:,.0f})"
@@ -192,7 +214,10 @@ def generate_treasury_split(chain):
 
     return {
         "> DAO Multi Sig": (profit_balance, profit_percentage),
-        f"> {rewards_pool_name}": (reward_pool_balance, reward_pool_percentage),
+        f"> {rewards_pool_name}": (
+            reward_pool_balance,
+            reward_pool_percentage,
+        ),
         f"> {slot_1_name}": (slot_1_balance, slot_1_percentage),
         f"> {slot_2_name}": (slot_2_balance, slot_2_percentage),
     }
@@ -231,7 +256,9 @@ def get_push_settings(chain):
             "threshold": 10000,
             "contract_type": "hub",
             "calculate_tokens": lambda contract: float(
-                etherscan.get_token_balance(ca.X7R_LIQ_HUB(chain), ca.X7R(chain), chain)
+                etherscan.get_token_balance(
+                    ca.X7R_LIQ_HUB(chain), ca.X7R(chain), chain
+                )
             )
             - contract.functions.x7rLiquidityBalance().call(),
         },

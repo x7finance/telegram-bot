@@ -1,7 +1,9 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-import os, requests, tweepy
+import os
+import requests
+import tweepy
 from datetime import datetime, timedelta
 
 from bot import auto
@@ -50,7 +52,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if db.settings_get("click_me"):
             await auto.button_send(context)
         else:
-            await update.message.reply_text(f"Click Me is disabled")
+            await update.message.reply_text("Click Me is disabled")
 
 
 async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -71,7 +73,9 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "accept": "application/json",
             "X-API-KEY": os.getenv("BLOCKSPAN_API_KEY"),
         }
-        blockspan_response = requests.get(blockspan_url, headers=blockspan_headers)
+        blockspan_response = requests.get(
+            blockspan_url, headers=blockspan_headers
+        )
         if blockspan_response.status_code == 200:
             status.append("🟢 Blockspan: Connected Successfully")
         else:
@@ -113,14 +117,14 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"🔴 Defined: Connection failed with status {defined_response.status_code}"
             )
 
-        dextools_url = (
-            "http://public-api.dextools.io/trial/v2/token/ethereum/TOKEN_ADDRESS/price"
-        )
+        dextools_url = "http://public-api.dextools.io/trial/v2/token/ethereum/TOKEN_ADDRESS/price"
         dextools_headers = {
             "accept": "application/json",
             "x-api-key": os.getenv("DEXTOOLS_API_KEY"),
         }
-        dextools_response = requests.get(dextools_url, headers=dextools_headers)
+        dextools_response = requests.get(
+            dextools_url, headers=dextools_headers
+        )
         if dextools_response.status_code == 200:
             status.append("🟢 Dextools: Connected Successfully")
         else:
@@ -137,7 +141,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
         drpc_response = requests.post(drpc_url, json=drpc_payload)
         if drpc_response.status_code == 200:
-            status.append(f"🟢 DRPC: Connected Successfully")
+            status.append("🟢 DRPC: Connected Successfully")
         else:
             status.append(
                 f"🔴 DRPC: Connection failed with status {drpc_response.status_code}"
@@ -145,15 +149,13 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         etherscan_url = "https://api.etherscan.io/v2/api"
         etherscan_key = os.getenv("ETHERSCAN_API_KEY")
-        etherscan_url = (
-            f"{etherscan_url}?module=stats&action=ethprice&apikey={etherscan_key}"
-        )
+        etherscan_url = f"{etherscan_url}?module=stats&action=ethprice&apikey={etherscan_key}"
         etherscan_response = requests.get(etherscan_url)
         if etherscan_response.status_code == 200:
-            status.append(f"🟢 Etherscan: Connected Successfully")
+            status.append("🟢 Etherscan: Connected Successfully")
         else:
             status.append(
-                f"🔴 Etherscan: Connection failed with status {response.status_code}"
+                f"🔴 Etherscan: Connection failed with status {etherscan_response.status_code}"
             )
 
         github_url = "https://api.github.com/repos/x7finance/monorepo/issues"
@@ -166,9 +168,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"🔴 GitHub: Connection failed with status {response.status_code}"
             )
 
-        opensea_url = (
-            f"https://api.opensea.io/v2/chain/ethereum/contract/{ca.PIONEER}/nfts/2"
-        )
+        opensea_url = f"https://api.opensea.io/v2/chain/ethereum/contract/{ca.PIONEER}/nfts/2"
         opensea_headers = {
             "accept": "application/json",
             "X-API-KEY": os.getenv("OPENSEA_API_KEY"),
@@ -204,7 +204,9 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if response.data:
                 status.append("🟢 Twitter: Connected Successfully")
             else:
-                status.append("🔴 Twitter: Connection failed (No data returned)")
+                status.append(
+                    "🔴 Twitter: Connection failed (No data returned)"
+                )
         except tweepy.TweepyException as e:
             if hasattr(e, "response") and e.response is not None:
                 status_code = e.response.status_code
@@ -212,7 +214,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"🔴 Twitter: Connection failed with status {status_code}"
                 )
             else:
-                status.append(f"🔴 Twitter: Connection failed (Unknown Error)")
+                status.append("🔴 Twitter: Connection failed (Unknown Error)")
 
         await update.message.reply_text(
             "*X7 Finance Telegram Bot API Status*\n\n" + "\n".join(status),
@@ -230,7 +232,9 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 else:
                     time = settings.FIRST_BUTTON_TIME
                 target_timestamp = settings.RESTART_TIME + time
-                time_difference_seconds = target_timestamp - datetime.now().timestamp()
+                time_difference_seconds = (
+                    target_timestamp - datetime.now().timestamp()
+                )
                 time_difference = timedelta(seconds=time_difference_seconds)
                 hours, remainder = divmod(time_difference.seconds, 3600)
                 minutes, seconds = divmod(remainder, 60)
@@ -239,4 +243,6 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"Next Click Me:\n\n{hours} hours, {minutes} minutes, {seconds} seconds\n\n"
                 )
             else:
-                await update.message.reply_text(f"Next Click Me:\n\nDisabled\n\n")
+                await update.message.reply_text(
+                    "Next Click Me:\n\nDisabled\n\n"
+                )

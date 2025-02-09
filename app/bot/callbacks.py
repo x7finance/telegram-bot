@@ -2,7 +2,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext, ConversationHandler, ContextTypes
 from eth_utils import is_address
 
-import os, time
+import os
+import time
 from datetime import datetime
 
 from bot import auto, callbacks
@@ -21,9 +22,13 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
 
     try:
-        await query.edit_message_text(text="Action canceled. No changes were made.")
-    except Exception as e:
-        await update.message.reply_text(text="Action canceled. No changes were made.")
+        await query.edit_message_text(
+            text="Action canceled. No changes were made."
+        )
+    except Exception:
+        await update.message.reply_text(
+            text="Action canceled. No changes were made."
+        )
 
     context.user_data.clear()
     return ConversationHandler.END
@@ -33,10 +38,15 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     button_click_timestamp = time.time()
 
     current_button_data = context.bot_data.get("current_button_data")
-    if not current_button_data or update.callback_query.data != current_button_data:
+    if (
+        not current_button_data
+        or update.callback_query.data != current_button_data
+    ):
         return
 
-    button_generation_timestamp = context.bot_data.get("button_generation_timestamp")
+    button_generation_timestamp = context.bot_data.get(
+        "button_generation_timestamp"
+    )
     if not button_generation_timestamp:
         await update.callback_query.answer("Too slow!", show_alert=True)
         return
@@ -47,7 +57,9 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
     user_info = (
-        user.username or f"{user.first_name} {user.last_name}" or user.first_name
+        user.username
+        or f"{user.first_name} {user.last_name}"
+        or user.first_name
     )
 
     time_taken = button_click_timestamp - button_generation_timestamp
@@ -102,7 +114,9 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     else:
         clicked = await context.bot.send_message(
-            chat_id=update.effective_chat.id, text=message_text, parse_mode="Markdown"
+            chat_id=update.effective_chat.id,
+            text=message_text,
+            parse_mode="Markdown",
         )
 
     if burn_active and total_click_count % settings.CLICK_ME_BURN == 0:
@@ -143,7 +157,9 @@ async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
         result_text = db.clicks_reset()
         await query.edit_message_text(text=result_text)
     except Exception as e:
-        await query.answer(text=f"An error occurred: {str(e)}", show_alert=True)
+        await query.answer(
+            text=f"An error occurred: {str(e)}", show_alert=True
+        )
 
 
 async def confirm_conv(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -181,7 +197,9 @@ async def confirm_conv(update: Update, context: ContextTypes.DEFAULT_TYPE):
             result = functions.x7d_redeem(amount, chain, user_id)
         elif operation == "withdraw":
             if token == "native":
-                result = functions.withdraw_native(amount, chain, user_id, address)
+                result = functions.withdraw_native(
+                    amount, chain, user_id, address
+                )
             else:
                 result = functions.withdraw_tokens(
                     user_id, amount, ca.X7D(chain), 18, address, chain
@@ -198,7 +216,10 @@ async def confirm_conv(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def confirm_simple(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, amount=None, callback_data=None
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    amount=None,
+    callback_data=None,
 ):
     query = update.callback_query
 
@@ -262,7 +283,9 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         await message.delete()
-        await query.answer(f"Error during liquidation: {str(e)}", show_alert=True)
+        await query.answer(
+            f"Error during liquidation: {str(e)}", show_alert=True
+        )
 
 
 async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -296,7 +319,8 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if float(available_tokens) < float(threshold):
         await query.answer(
-            f"{chain_info.name} {name} balance to low to push.", show_alert=True
+            f"{chain_info.name} {name} balance to low to push.",
+            show_alert=True,
         )
         return
 
@@ -321,10 +345,14 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         await message.delete()
-        await context.bot.send_message(chat_id=query.message.chat_id, text=result)
+        await context.bot.send_message(
+            chat_id=query.message.chat_id, text=result
+        )
     except Exception as e:
         await message.delete()
-        await query.answer(f"Error during {name} push: {str(e)}", show_alert=True)
+        await query.answer(
+            f"Error during {name} push: {str(e)}", show_alert=True
+        )
 
 
 async def settings_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -383,7 +411,9 @@ async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await query.edit_message_text(text=result_text)
     except Exception as e:
-        await query.answer(text=f"An error occurred: {str(e)}", show_alert=True)
+        await query.answer(
+            text=f"An error occurred: {str(e)}", show_alert=True
+        )
 
 
 async def wallet_remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -395,7 +425,9 @@ async def wallet_remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await query.edit_message_text(text=result_text)
     except Exception as e:
-        await query.answer(text=f"An error occurred: {str(e)}", show_alert=True)
+        await query.answer(
+            text=f"An error occurred: {str(e)}", show_alert=True
+        )
 
 
 async def welcome_button(update: Update, context: CallbackContext):
@@ -412,9 +444,12 @@ async def welcome_button(update: Update, context: CallbackContext):
             permissions=user_restrictions,
         )
         try:
-            previous_welcome_message_id = context.bot_data.get("welcome_message_id")
+            previous_welcome_message_id = context.bot_data.get(
+                "welcome_message_id"
+            )
             await context.bot.delete_message(
-                chat_id=update.effective_chat.id, message_id=previous_welcome_message_id
+                chat_id=update.effective_chat.id,
+                message_id=previous_welcome_message_id,
             )
         except Exception:
             pass
@@ -427,7 +462,7 @@ async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain_info, _ = chains.get_info(chain)
 
     await query.message.reply_text(
-        text=f"Which token do you want to withdraw?",
+        text="Which token do you want to withdraw?",
         reply_markup=InlineKeyboardMarkup(
             [
                 [
@@ -435,7 +470,9 @@ async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         f"{chain_info.native.upper()}",
                         callback_data=f"withdraw:native:{chain}",
                     ),
-                    InlineKeyboardButton("X7D", callback_data=f"withdraw:x7d:{chain}"),
+                    InlineKeyboardButton(
+                        "X7D", callback_data=f"withdraw:x7d:{chain}"
+                    ),
                 ]
             ]
         ),
@@ -476,7 +513,9 @@ async def withdraw_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         amount = float(update.message.text)
     except ValueError:
-        await update.message.reply_text("Invalid amount. Please enter a valid number.")
+        await update.message.reply_text(
+            "Invalid amount. Please enter a valid number."
+        )
 
         return WITHDRAW_AMOUNT
 
@@ -488,7 +527,11 @@ async def withdraw_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         token_str = chain_info.native.upper()
     else:
         balance = (
-            float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain))
+            float(
+                etherscan.get_token_balance(
+                    wallet["wallet"], ca.X7D(chain), chain
+                )
+            )
             / 10**18
         )
         token_str = token.upper()
@@ -539,7 +582,8 @@ async def withdraw_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [
                 [
                     InlineKeyboardButton(
-                        "Yes", callback_data=f"withdraw:{chain}:{token}:{amount}"
+                        "Yes",
+                        callback_data=f"withdraw:{chain}:{token}:{amount}",
                     ),
                     InlineKeyboardButton("No", callback_data="cancel"),
                 ]
@@ -571,7 +615,9 @@ async def x7d_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         amount = float(update.message.text)
     except ValueError:
-        await update.message.reply_text("Invalid amount. Please enter a valid number.")
+        await update.message.reply_text(
+            "Invalid amount. Please enter a valid number."
+        )
 
         return X7D_AMOUNT
 
@@ -583,7 +629,11 @@ async def x7d_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         balance = etherscan.get_native_balance(wallet["wallet"], chain)
     elif action == "redeem":
         balance = (
-            float(etherscan.get_token_balance(wallet["wallet"], ca.X7D(chain), chain))
+            float(
+                etherscan.get_token_balance(
+                    wallet["wallet"], ca.X7D(chain), chain
+                )
+            )
             / 10**18
         )
 

@@ -1,4 +1,5 @@
-import random, socket
+import random
+import socket
 from datetime import datetime
 
 from constants import abis, ca, chains, splitters, urls
@@ -45,12 +46,18 @@ def format_schedule(schedule1, schedule2, native_token, isComplete):
     schedule = []
 
     for date in all_dates:
-        value1 = next((v for d, v in zip(schedule1[0], schedule1[1]) if d == date), 0)
-        value2 = next((v for d, v in zip(schedule2[0], schedule2[1]) if d == date), 0)
+        value1 = next(
+            (v for d, v in zip(schedule1[0], schedule1[1]) if d == date), 0
+        )
+        value2 = next(
+            (v for d, v in zip(schedule2[0], schedule2[1]) if d == date), 0
+        )
 
         total_value = value1 + value2
 
-        formatted_date = datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S")
+        formatted_date = datetime.fromtimestamp(date).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
         formatted_value = total_value / 10**18
         sch = f"{formatted_date} - {formatted_value:.3f} {native_token}"
         schedule.append(sch)
@@ -67,7 +74,9 @@ def format_schedule(schedule1, schedule2, native_token, isComplete):
         schedule.append("\nLoan Complete")
     elif next_payment_datetime:
         time_until_next_payment_timestamp = next_payment_datetime.timestamp()
-        time_remaining_str = get_time_difference(time_until_next_payment_timestamp)
+        time_remaining_str = get_time_difference(
+            time_until_next_payment_timestamp
+        )
 
         schedule.append(
             f"\nNext Payment Due:\n{next_payment_value} {native_token}\n{time_remaining_str}"
@@ -104,16 +113,22 @@ def get_last_action(address, chain):
     if address in [hub for hub in ca.HUBS(chain).values()]:
         word = "buy back"
         filter = [
-            d for d in tx["result"] if d["to"].lower() == ca.ROUTER(chain).lower()
+            d
+            for d in tx["result"]
+            if d["to"].lower() == ca.ROUTER(chain).lower()
         ]
 
     elif address in ca.SPLITTERS(chain).values():
         word = "push"
         splitter = next(
-            key for key, value in ca.SPLITTERS(chain).items() if value == address
+            key
+            for key, value in ca.SPLITTERS(chain).items()
+            if value == address
         )
         recipient = splitters.get_push_settings(chain)[splitter]["recipient"]
-        filter = [d for d in tx["result"] if d["to"].lower() == recipient.lower()]
+        filter = [
+            d for d in tx["result"] if d["to"].lower() == recipient.lower()
+        ]
     if not filter:
         return f"Last {word}: None found"
 
@@ -161,15 +176,13 @@ def get_time_difference(timestamp):
     elif weeks > 0:
         week_part = f"{weeks} week{'s' if weeks > 1 else ''}"
         day_part = f"{days} day{'s' if days > 1 else ''}" if days > 0 else ""
-        return (
-            f"{week_part}{' and ' if weeks > 0 and days > 0 else ''}{day_part} {suffix}"
-        )
+        return f"{week_part}{' and ' if weeks > 0 and days > 0 else ''}{day_part} {suffix}"
     elif days > 0 or hours > 0:
         day_part = f"{days} day{'s' if days > 1 else ''}" if days > 0 else ""
-        hour_part = f"{hours} hour{'s' if hours > 1 else ''}" if hours > 0 else ""
-        return (
-            f"{day_part}{' and ' if days > 0 and hours > 0 else ''}{hour_part} {suffix}"
+        hour_part = (
+            f"{hours} hour{'s' if hours > 1 else ''}" if hours > 0 else ""
         )
+        return f"{day_part}{' and ' if days > 0 and hours > 0 else ''}{hour_part} {suffix}"
     elif minutes > 0:
         return f"{minutes} minute{'s' if minutes > 1 else ''} {suffix}"
     else:
@@ -178,4 +191,6 @@ def get_time_difference(timestamp):
 
 def is_local():
     ip = socket.gethostbyname(socket.gethostname())
-    return ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"
+    return (
+        ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"
+    )

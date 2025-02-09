@@ -67,40 +67,37 @@ def contract_mappings(chain):
             ca.X7D(chain),
         ),
         "Ecosystem Splitter": (
-            ("setWETH\n" "setOutlet\n" "freezeOutletChange\n" "setShares\n"),
+            ("setWETH\nsetOutlet\nfreezeOutletChange\nsetShares\n"),
             ca.ECO_SPLITTER(chain),
         ),
         "Treasury Splitter": (
-            ("freezeOutlet\n" "setOutletRecipient\n" "setSlotShares"),
+            ("freezeOutlet\nsetOutletRecipient\nsetSlotShares"),
             ca.TREASURY_SPLITTER(chain),
         ),
         "Factory": (
             (
-                "setFeeTo\n"
-                "setDiscountAuthority\n"
-                "setTrusted\n"
-                "setFailsafeLiquidator"
+                "setFeeTo\nsetDiscountAuthority\nsetTrusted\nsetFailsafeLiquidator"
             ),
             ca.FACTORY(chain),
         ),
         "Borrowing Maxi": (
-            ("setMintFeeDestination\n" "setBaseURI\n" "setMintPrice"),
+            ("setMintFeeDestination\nsetBaseURI\nsetMintPrice"),
             ca.BORROW(chain),
         ),
         "DEX Maxi": (
-            ("setMintFeeDestination\n" "setBaseURI\n" "setMintPrice"),
+            ("setMintFeeDestination\nsetBaseURI\nsetMintPrice"),
             ca.DEX(chain),
         ),
         "Ecosystem Maxi": (
-            ("setMintFeeDestination\n" "setBaseURI\n" "setMintPrice"),
+            ("setMintFeeDestination\nsetBaseURI\nsetMintPrice"),
             ca.ECO(chain),
         ),
         "Liquidity Maxi": (
-            ("setMintFeeDestination\n" "setBaseURI\n" "setMintPrice"),
+            ("setMintFeeDestination\nsetBaseURI\nsetMintPrice"),
             ca.LIQ(chain),
         ),
         "Magister": (
-            ("setMintFeeDestination\n" "setBaseURI\n" "setMintPrice"),
+            ("setMintFeeDestination\nsetBaseURI\nsetMintPrice"),
             ca.MAGISTER(chain),
         ),
         "Lending Pool": (
@@ -138,22 +135,19 @@ def contract_mappings(chain):
             ),
             ca.TIME_LOCK(chain),
         ),
-        "Token Burner": (("setRouter\n" "setTargetToken"), ca.BURNER(chain)),
+        "Token Burner": (("setRouter\nsetTargetToken"), ca.BURNER(chain)),
         "X7100 Discount Authority": (
             (
-                "setEcosystemMaxiNFT\n"
-                "setLiquidityMaxiNFT\n"
-                "setMagisterNFT\n"
-                "setX7DAO\n"
+                "setEcosystemMaxiNFT\nsetLiquidityMaxiNFT\nsetMagisterNFT\nsetX7DAO\n"
             ),
             ca.X7100_DISCOUNT(chain),
         ),
         "X7DAO Discount Authority": (
-            ("setEcosystemMaxiNFT\n" "setLiquidityMaxiNFT\n"),
+            ("setEcosystemMaxiNFT\nsetLiquidityMaxiNFT\n"),
             ca.X7DAO_DISCOUNT(chain),
         ),
         "X7R Discount Authority": (
-            ("setEcosystemMaxiNFT\n" "setLiquidityMaxiNFT\n" "setMagisterNFT\n"),
+            ("setEcosystemMaxiNFT\nsetLiquidityMaxiNFT\nsetMagisterNFT\n"),
             ca.X7R_DISCOUNT(chain),
         ),
         "Lending Discount Authority": (
@@ -168,5 +162,8 @@ def contract_mappings(chain):
             ),
             ca.LENDING_DISCOUNT(chain),
         ),
-        "Xchange Discount Authority": (("setDEXMaxiNFT"), ca.XCHANGE_DISCOUNT(chain)),
+        "Xchange Discount Authority": (
+            ("setDEXMaxiNFT"),
+            ca.XCHANGE_DISCOUNT(chain),
+        ),
     }

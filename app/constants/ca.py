@@ -48,7 +48,13 @@ def X7105(chain):
 
 
 def X7100(chain):
-    return [X7101(chain), X7102(chain), X7103(chain), X7104(chain), X7105(chain)]
+    return [
+        X7101(chain),
+        X7102(chain),
+        X7103(chain),
+        X7104(chain),
+        X7105(chain),
+    ]
 
 
 def X7D(chain):
@@ -136,7 +142,6 @@ def ECO_SPLITTER(chain):
 
 
 def FACTORY(chain):
-
     return "0x8B76C05676D205563ffC1cbd11c0A6e3d83929c5"
 
 

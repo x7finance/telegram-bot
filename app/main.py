@@ -11,7 +11,10 @@ from telegram.ext import (
     MessageHandler,
 )
 
-import os, sys, sentry_sdk, subprocess
+import os
+import sys
+import sentry_sdk
+import subprocess
 from pathlib import Path
 from telegram.warnings import PTBUserWarning
 from warnings import filterwarnings
@@ -24,7 +27,9 @@ filterwarnings(
     action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning
 )
 
-application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+application = (
+    ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+)
 job_queue = application.job_queue
 
 
@@ -52,7 +57,9 @@ async def error(update: Update, context: CallbackContext):
             )
         else:
             sentry_sdk.capture_exception(
-                Exception(f"Error occurred without a valid message: {context.error}")
+                Exception(
+                    f"Error occurred without a valid message: {context.error}"
+                )
             )
 
 
@@ -74,7 +81,9 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("about", commands.about))
     application.add_handler(CommandHandler("admins", commands.admins))
     application.add_handler(CommandHandler("alerts", commands.alerts))
-    application.add_handler(CommandHandler("announcements", commands.announcements))
+    application.add_handler(
+        CommandHandler("announcements", commands.announcements)
+    )
     application.add_handler(CommandHandler(["arb", "arbitrage"], commands.arb))
     application.add_handler(CommandHandler("blocks", commands.blocks))
     application.add_handler(CommandHandler("blog", commands.blog))
@@ -82,7 +91,9 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("burn", commands.burn))
     application.add_handler(CommandHandler("buy", commands.buy))
     application.add_handler(CommandHandler("channels", commands.channels))
-    application.add_handler(CommandHandler(["chart", "charts"], commands.chart))
+    application.add_handler(
+        CommandHandler(["chart", "charts"], commands.chart)
+    )
     application.add_handler(CommandHandler("check", commands.check))
     application.add_handler(CommandHandler("compare", commands.compare))
     application.add_handler(
@@ -97,7 +108,9 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("contribute", commands.contribute))
     application.add_handler(CommandHandler("convert", commands.convert))
     application.add_handler(
-        CommandHandler(["dao", "vote", "snapshot", "propose"], commands.dao_command)
+        CommandHandler(
+            ["dao", "vote", "snapshot", "propose"], commands.dao_command
+        )
     )
     application.add_handler(
         CommandHandler(
@@ -105,7 +118,9 @@ if __name__ == "__main__":
             commands.docs,
         )
     )
-    application.add_handler(CommandHandler(["ecosystem", "tokens"], commands.ecosystem))
+    application.add_handler(
+        CommandHandler(["ecosystem", "tokens"], commands.ecosystem)
+    )
     application.add_handler(CommandHandler("factory", commands.factory))
     application.add_handler(CommandHandler("faq", commands.faq))
     application.add_handler(CommandHandler("feeto", commands.feeto))
@@ -115,8 +130,12 @@ if __name__ == "__main__":
     )
     application.add_handler(CommandHandler("github", commands.github_command))
     application.add_handler(CommandHandler("holders", commands.holders))
-    application.add_handler(CommandHandler(["hub", "hubs", "buybacks"], commands.hub))
-    application.add_handler(CommandHandler("leaderboard", commands.leaderboard))
+    application.add_handler(
+        CommandHandler(["hub", "hubs", "buybacks"], commands.hub)
+    )
+    application.add_handler(
+        CommandHandler("leaderboard", commands.leaderboard)
+    )
     application.add_handler(
         CommandHandler(["links", "socials", "dune", "reddit"], commands.links)
     )
@@ -127,7 +146,9 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler(["loan", "loans"], commands.loan))
     application.add_handler(CommandHandler("locks", commands.locks))
     application.add_handler(CommandHandler(["me", "balance"], commands.me))
-    application.add_handler(CommandHandler(["mcap", "marketcap", "cap"], commands.mcap))
+    application.add_handler(
+        CommandHandler(["mcap", "marketcap", "cap"], commands.mcap)
+    )
     application.add_handler(CommandHandler("media", commands.media_command))
     application.add_handler(CommandHandler(["nft", "nfts"], commands.nft))
     application.add_handler(
@@ -138,30 +159,52 @@ if __name__ == "__main__":
     application.add_handler(
         CommandHandler(["pool", "lpool", "lendingpool"], commands.pool)
     )
-    application.add_handler(CommandHandler(["price", "prices"], commands.price))
-    application.add_handler(CommandHandler(["push_all", "pushall"], commands.pushall))
+    application.add_handler(
+        CommandHandler(["price", "prices"], commands.price)
+    )
+    application.add_handler(
+        CommandHandler(["push_all", "pushall"], commands.pushall)
+    )
     application.add_handler(CommandHandler("register", commands.register))
     application.add_handler(CommandHandler("router", commands.router))
-    application.add_handler(CommandHandler(["space", "spaces"], commands.spaces))
+    application.add_handler(
+        CommandHandler(["space", "spaces"], commands.spaces)
+    )
     application.add_handler(CommandHandler("smart", commands.smart))
     application.add_handler(
-        CommandHandler(["split", "splitters", "splitter"], commands.splitters_command)
+        CommandHandler(
+            ["split", "splitters", "splitter"], commands.splitters_command
+        )
     )
-    application.add_handler(CommandHandler(["tax", "slippage"], commands.tax_command))
-    application.add_handler(CommandHandler("timestamp", commands.timestamp_command))
-    application.add_handler(CommandHandler(["time", "clock"], commands.time_command))
+    application.add_handler(
+        CommandHandler(["tax", "slippage"], commands.tax_command)
+    )
+    application.add_handler(
+        CommandHandler("timestamp", commands.timestamp_command)
+    )
+    application.add_handler(
+        CommandHandler(["time", "clock"], commands.time_command)
+    )
     application.add_handler(CommandHandler("treasury", commands.treasury))
-    application.add_handler(CommandHandler(["trending", "trend", "top"], commands.top))
     application.add_handler(
-        CommandHandler(["twitter", "xtrader", "0xtrader"], commands.twitter_command)
+        CommandHandler(["trending", "trend", "top"], commands.top)
     )
     application.add_handler(
-        CommandHandler(["website", "site", "swap", "dex", "xchange"], commands.website)
+        CommandHandler(
+            ["twitter", "xtrader", "0xtrader"], commands.twitter_command
+        )
+    )
+    application.add_handler(
+        CommandHandler(
+            ["website", "site", "swap", "dex", "xchange"], commands.website
+        )
     )
     application.add_handler(CommandHandler(["volume"], commands.volume))
     application.add_handler(CommandHandler("wei", commands.wei))
     application.add_handler(CommandHandler("wallet", commands.wallet))
-    application.add_handler(CommandHandler(["website", "site"], commands.website))
+    application.add_handler(
+        CommandHandler(["website", "site"], commands.website)
+    )
     application.add_handler(
         CommandHandler(["whitepaper", "wp", "wpquote"], commands.wp)
     )
@@ -181,7 +224,9 @@ if __name__ == "__main__":
     application.add_handler(CommandHandler("status", admin.status))
     application.add_handler(CommandHandler("wen", admin.wen))
 
-    application.add_handler(CallbackQueryHandler(callbacks.cancel, pattern="^cancel$"))
+    application.add_handler(
+        CallbackQueryHandler(callbacks.cancel, pattern="^cancel$")
+    )
     application.add_handler(
         CallbackQueryHandler(callbacks.click_me, pattern=r"^click_button:\d+$")
     )
@@ -192,7 +237,9 @@ if __name__ == "__main__":
         CallbackQueryHandler(callbacks.confirm_simple, pattern="^question:.*")
     )
     application.add_handler(
-        CallbackQueryHandler(callbacks.liquidate, pattern=r"^liquidate:\d+:[a-z]+$")
+        CallbackQueryHandler(
+            callbacks.liquidate, pattern=r"^liquidate:\d+:[a-z]+$"
+        )
     )
     application.add_handler(
         CallbackQueryHandler(
@@ -201,11 +248,17 @@ if __name__ == "__main__":
         )
     )
     application.add_handler(
-        CallbackQueryHandler(callbacks.settings_toggle, pattern="^settings_toggle_")
+        CallbackQueryHandler(
+            callbacks.settings_toggle, pattern="^settings_toggle_"
+        )
     )
-    application.add_handler(CallbackQueryHandler(callbacks.stuck, pattern="^stuck:.*$"))
     application.add_handler(
-        CallbackQueryHandler(callbacks.wallet_remove, pattern="^wallet_remove$")
+        CallbackQueryHandler(callbacks.stuck, pattern="^stuck:.*$")
+    )
+    application.add_handler(
+        CallbackQueryHandler(
+            callbacks.wallet_remove, pattern="^wallet_remove$"
+        )
     )
     application.add_handler(
         CallbackQueryHandler(callbacks.welcome_button, pattern=r"unmute:.+")
@@ -213,11 +266,15 @@ if __name__ == "__main__":
 
     x7d_conv_handler = ConversationHandler(
         entry_points=[
-            CallbackQueryHandler(callbacks.x7d_start, pattern="^(mint|redeem):.*$")
+            CallbackQueryHandler(
+                callbacks.x7d_start, pattern="^(mint|redeem):.*$"
+            )
         ],
         states={
             callbacks.X7D_AMOUNT: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, callbacks.x7d_amount)
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, callbacks.x7d_amount
+                )
             ],
             callbacks.X7D_CONFIRM: [
                 CallbackQueryHandler(
@@ -232,11 +289,15 @@ if __name__ == "__main__":
 
     withdraw_conv_handler = ConversationHandler(
         entry_points=[
-            CallbackQueryHandler(callbacks.withdraw_start, pattern="^withdraw:.*$")
+            CallbackQueryHandler(
+                callbacks.withdraw_start, pattern="^withdraw:.*$"
+            )
         ],
         states={
             callbacks.WITHDRAW_TOKEN: [
-                CallbackQueryHandler(callbacks.withdraw_token, pattern="^withdraw:.*$")
+                CallbackQueryHandler(
+                    callbacks.withdraw_token, pattern="^withdraw:.*$"
+                )
             ],
             callbacks.WITHDRAW_AMOUNT: [
                 MessageHandler(
@@ -249,7 +310,9 @@ if __name__ == "__main__":
                 )
             ],
             callbacks.WITHDRAW_CONFIRM: [
-                CallbackQueryHandler(callbacks.confirm_conv, pattern="^withdraw:.*$"),
+                CallbackQueryHandler(
+                    callbacks.confirm_conv, pattern="^withdraw:.*$"
+                ),
                 CallbackQueryHandler(callbacks.cancel, pattern="^cancel$"),
             ],
         },

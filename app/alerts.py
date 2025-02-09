@@ -1,7 +1,13 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, ContextTypes
 
-import asyncio, os, io, random, requests, sentry_sdk, traceback
+import asyncio
+import os
+import io
+import random
+import requests
+import sentry_sdk
+import traceback
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 
@@ -15,13 +21,15 @@ defined = api.Defined()
 dextools = api.Dextools()
 etherscan = api.Etherscan()
 
-FONT = ImageFont.truetype(fonts.BARTOMES, 26)
+FONT = fonts.BARTOMES
 POLL_INTERVAL = 60
 
 
 async def error(context):
     sentry_sdk.capture_exception(
-        Exception(f"Scanner Error: {context} | Traceback: {traceback.format_exc()}")
+        Exception(
+            f"Scanner Error: {context} | Traceback: {traceback.format_exc()}"
+        )
     )
 
 
@@ -37,19 +45,26 @@ async def log_loop(
             )
 
             xchange_create = w3.eth.contract(
-                address=ca.XCHANGE_CREATE(chain), abi=abis.read("xchangecreate")
+                address=ca.XCHANGE_CREATE(chain),
+                abi=abis.read("xchangecreate"),
             )
 
             ill_contracts = {
-                ill_key: w3.eth.contract(address=ill_address, abi=abis.read("ill005"))
-                for ill_key, ill_address in ca.ILL_ADDRESSES.get(chain, {}).items()
+                ill_key: w3.eth.contract(
+                    address=ill_address, abi=abis.read("ill005")
+                )
+                for ill_key, ill_address in ca.ILL_ADDRESSES.get(
+                    chain, {}
+                ).items()
             }
 
             latest_block = context.bot_data.get(
                 f"last_block_{chain}", w3.eth.block_number
             )
 
-            pair_created_topic = tools.get_event_topic("factory", "PairCreated", chain)
+            pair_created_topic = tools.get_event_topic(
+                "factory", "PairCreated", chain
+            )
             token_deployed_topic = tools.get_event_topic(
                 "xchangecreate", "TokenDeployed", chain
             )
@@ -94,35 +109,39 @@ async def log_loop(
 
                     for log in pair_logs:
                         try:
-                            decoded_event = factory.events.PairCreated().process_log(
-                                log
+                            decoded_event = (
+                                factory.events.PairCreated().process_log(log)
                             )
                             await pair_alert(decoded_event, chain)
                         except Exception as e:
-                            await error(f"Error decoding PairCreated: {str(e)}")
+                            await error(
+                                f"Error decoding PairCreated: {str(e)}"
+                            )
 
                     for log in token_logs:
                         try:
-                            decoded_event = (
-                                xchange_create.events.TokenDeployed().process_log(log)
+                            decoded_event = xchange_create.events.TokenDeployed().process_log(
+                                log
                             )
                             await token_alert(decoded_event, chain)
                         except Exception as e:
-                            await error(f"Error decoding TokenDeployed: {str(e)}")
+                            await error(
+                                f"Error decoding TokenDeployed: {str(e)}"
+                            )
 
                     for log in loan_logs:
                         try:
                             contract_address = log["address"]
                             ill_contract = ill_contracts.get(contract_address)
                             if ill_contract:
-                                decoded_event = (
-                                    ill_contract.events.LoanOriginated().process_log(
-                                        log
-                                    )
+                                decoded_event = ill_contract.events.LoanOriginated().process_log(
+                                    log
                                 )
                                 await loan_alert(decoded_event, chain)
                         except Exception as e:
-                            await error(f"Error decoding LoanOriginated: {str(e)}")
+                            await error(
+                                f"Error decoding LoanOriginated: {str(e)}"
+                            )
 
                     context.bot_data[f"last_block_{chain}"] = current_block
                     await asyncio.sleep(poll_interval)
@@ -145,14 +164,20 @@ async def loan_alert(event, chain):
     loan_id = event["args"]["loanID"]
     ill_address = event["address"]
     ill_contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(ill_address), abi=abis.read("ill005")
+        address=chain_info.w3.to_checksum_address(ill_address),
+        abi=abis.read("ill005"),
     )
 
     liability = (
-        ill_contract.functions.getRemainingLiability(int(loan_id)).call() / 10**18
+        ill_contract.functions.getRemainingLiability(int(loan_id)).call()
+        / 10**18
     )
-    schedule1 = ill_contract.functions.getPremiumPaymentSchedule(int(loan_id)).call()
-    schedule2 = ill_contract.functions.getPrincipalPaymentSchedule(int(loan_id)).call()
+    schedule1 = ill_contract.functions.getPremiumPaymentSchedule(
+        int(loan_id)
+    ).call()
+    schedule2 = ill_contract.functions.getPrincipalPaymentSchedule(
+        int(loan_id)
+    ).call()
     schedule = tools.format_schedule(
         schedule1, schedule2, chain_info.native.upper(), isComplete=False
     )
@@ -184,7 +209,9 @@ async def loan_alert(event, chain):
     im1 = Image.open(random.choice(images.BLACKHOLE)).convert("RGBA")
     try:
         image_url = defined.get_token_image(token, chain)
-        im2 = Image.open(requests.get(image_url, stream=True).raw).convert("RGBA")
+        im2 = Image.open(requests.get(image_url, stream=True).raw).convert(
+            "RGBA"
+        )
     except Exception:
         im2 = Image.open(chain_info.logo).convert("RGBA")
 
@@ -201,14 +228,16 @@ async def loan_alert(event, chain):
     i1.text(
         (26, 30),
         f"New Loan Originated ({chain_info.name.upper()})\n\n{message}",
-        font=FONT,
+        font=ImageFont.truetype(FONT, 26),
         fill=(255, 255, 255),
     )
     image_buffer = io.BytesIO()
     im1.save(image_buffer, format="JPEG")
     image_buffer.seek(0)
 
-    caption = f"*New Loan Originated ({chain_info.name.upper()})*\n\n" f"{message}\n\n"
+    caption = (
+        f"*New Loan Originated ({chain_info.name.upper()})*\n\n{message}\n\n"
+    )
 
     buttons = InlineKeyboardMarkup(
         [
@@ -304,19 +333,21 @@ async def pair_alert(event, chain):
     im1 = Image.open(random.choice(images.BLACKHOLE)).convert("RGBA")
     try:
         image_url = defined.get_token_image(token_address, chain)
-        im2 = Image.open(requests.get(image_url, stream=True).raw).convert("RGBA")
+        im2 = Image.open(requests.get(image_url, stream=True).raw).convert(
+            "RGBA"
+        )
     except Exception:
         im2 = Image.open(chain_info.logo).convert("RGBA")
 
     im1.paste(im2, (700, 20), im2)
 
-    message = f"{token_name} ({token_0_symbol}/{token_1_symbol})\n\n" f"{status}"
+    message = f"{token_name} ({token_0_symbol}/{token_1_symbol})\n\n{status}"
 
     i1 = ImageDraw.Draw(im1)
     i1.text(
         (26, 30),
         f"New Pair Created ({chain_info.name.upper()})\n\n{message}",
-        font=FONT,
+        font=ImageFont.truetype(FONT, 26),
         fill=(255, 255, 255),
     )
     image_buffer = io.BytesIO()
@@ -338,7 +369,8 @@ async def pair_alert(event, chain):
             ],
             [
                 InlineKeyboardButton(
-                    "Chart", url=urls.DEX_TOOLS(chain_info.dext, event["args"]["pair"])
+                    "Chart",
+                    url=urls.DEX_TOOLS(chain_info.dext, event["args"]["pair"]),
                 )
             ],
         ]
@@ -379,7 +411,9 @@ async def token_alert(event, chain):
 
     im1 = Image.open(random.choice(images.BLACKHOLE)).convert("RGBA")
     try:
-        im2 = Image.open(requests.get(token_uri, stream=True).raw).convert("RGBA")
+        im2 = Image.open(requests.get(token_uri, stream=True).raw).convert(
+            "RGBA"
+        )
     except Exception:
         im2 = Image.open(chain_info.logo).convert("RGBA")
 
@@ -391,16 +425,23 @@ async def token_alert(event, chain):
     i1.text(
         (26, 30),
         f"New Token Deployed ({chain_info.name.upper()})\n\n{message}",
-        font=FONT,
+        font=ImageFont.truetype(FONT, 26),
         fill=(255, 255, 255),
     )
 
     wrapped_text = textwrap.fill(description, width=50)
     y_offset = 300
     for line in wrapped_text.split("\n"):
-        line_bbox = i1.textbbox((0, 0), line, font=FONT)
+        line_bbox = i1.textbbox(
+            (0, 0), line, font=ImageFont.truetype(FONT, 26)
+        )
         line_height = line_bbox[3] - line_bbox[1]
-        i1.text((26, y_offset), line, font=FONT, fill=(255, 255, 255))
+        i1.text(
+            (26, y_offset),
+            line,
+            font=ImageFont.truetype(FONT, 26),
+            fill=(255, 255, 255),
+        )
         y_offset += line_height + 5
 
     image_buffer = io.BytesIO()
@@ -421,22 +462,35 @@ async def token_alert(event, chain):
         ],
         [
             InlineKeyboardButton(
-                text="Chart", url=urls.DEX_TOOLS(chain_info.dext, token_address)
+                text="Chart",
+                url=urls.DEX_TOOLS(chain_info.dext, token_address),
             )
         ],
     ]
 
     if twitter_link:
         button_list.append(
-            [InlineKeyboardButton(text=f"{token_name} Twitter", url=twitter_link)]
+            [
+                InlineKeyboardButton(
+                    text=f"{token_name} Twitter", url=twitter_link
+                )
+            ]
         )
     if telegram_link:
         button_list.append(
-            [InlineKeyboardButton(text=f"{token_name} Telegram", url=telegram_link)]
+            [
+                InlineKeyboardButton(
+                    text=f"{token_name} Telegram", url=telegram_link
+                )
+            ]
         )
     if website_link:
         button_list.append(
-            [InlineKeyboardButton(text=f"{token_name} Website", url=website_link)]
+            [
+                InlineKeyboardButton(
+                    text=f"{token_name} Website", url=website_link
+                )
+            ]
         )
 
     buttons = InlineKeyboardMarkup(button_list)
@@ -468,7 +522,9 @@ async def main():
 
 if __name__ == "__main__":
     application = (
-        ApplicationBuilder().token(os.getenv("TELEGRAM_SCANNER_BOT_TOKEN")).build()
+        ApplicationBuilder()
+        .token(os.getenv("TELEGRAM_SCANNER_BOT_TOKEN"))
+        .build()
     )
     application.add_error_handler(lambda update, context: error(context.error))
     asyncio.run(main())

@@ -225,7 +225,9 @@ ETH_CHAINS = {"eth", "base", "arb", "op", "eth-sepolia", "base-sepolia"}
 def active_chains():
     if tools.is_local():
         return {**MAINNETS, **TESTNETS}
-    return {**MAINNETS, **TESTNETS} if db.settings_get("testnets") else MAINNETS
+    return (
+        {**MAINNETS, **TESTNETS} if db.settings_get("testnets") else MAINNETS
+    )
 
 
 def full_names():
