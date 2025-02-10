@@ -1,3 +1,4 @@
-from media import media_path
+from pathlib import Path
 
-WELCOMEVIDEO = media_path("videos/welcomevideo.mp4")
+
+WELCOMEVIDEO = Path(__file__).resolve().parent / "welcomevideo.mp4"

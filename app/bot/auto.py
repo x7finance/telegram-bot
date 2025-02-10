@@ -9,11 +9,13 @@ from telegram.ext import ContextTypes
 
 import random
 import time
-from typing import Optional, Tuple
 
-from constants import text, urls
-from hooks import db, tools
+from constants.bot import text, urls
 from media import stickers, videos
+from utils import tools
+from services import get_mysql
+
+mysql = get_mysql()
 
 welcome_rescrictions = {
     "can_send_messages": False,
@@ -24,7 +26,7 @@ welcome_rescrictions = {
 
 
 async def button_send(context: ContextTypes.DEFAULT_TYPE):
-    if not db.settings_get("click_me"):
+    if not mysql.settings_get("click_me"):
         return
     context.bot_data["first_user_clicked"] = False
 
@@ -131,14 +133,11 @@ async def welcome_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-async def welcome_member(
-    chat_member_update: ChatMemberUpdated,
-) -> Optional[Tuple[bool, bool]]:
+async def welcome_member(chat_member_update: ChatMemberUpdated):
     status_change = chat_member_update.difference().get("status")
     old_is_member, new_is_member = chat_member_update.difference().get(
         "is_member", (None, None)
     )
-
     if status_change is None:
         return None
 
@@ -193,7 +192,7 @@ async def welcome_message(
                 except Exception:
                     pass
 
-            if db.settings_get("welcome_restrictions"):
+            if mysql.settings_get("welcome_restrictions"):
                 await context.bot.restrict_chat_member(
                     chat_id=update.effective_chat.id,
                     user_id=new_member_id,

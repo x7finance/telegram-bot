@@ -2,24 +2,27 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, ContextTypes
 
 import asyncio
-import os
 import io
+
+import os
 import random
 import requests
 import sentry_sdk
+import textwrap
 import traceback
 from PIL import Image, ImageDraw, ImageFont
-import textwrap
 
-from constants import abis, ca, urls, chains
-from hooks import api, tools
-from media import fonts, images
+from constants.bot import urls
+from constants.protocol import addresses, abis, chains
+from media import fonts, blackhole
+from utils import tools
+from services import get_defined, get_dextools, get_etherscan
+
+defined = get_defined()
+dextools = get_dextools()
+etherscan = get_etherscan()
 
 sentry_sdk.init(dsn=os.getenv("SCANNER_SENTRY_DSN"), traces_sample_rate=1.0)
-
-defined = api.Defined()
-dextools = api.Dextools()
-etherscan = api.Etherscan()
 
 FONT = fonts.BARTOMES
 POLL_INTERVAL = 60
@@ -41,11 +44,11 @@ async def log_loop(
             w3 = chains.MAINNETS[chain].w3
 
             factory = w3.eth.contract(
-                address=ca.FACTORY(chain), abi=abis.read("factory")
+                address=addresses.factory(chain), abi=abis.read("factory")
             )
 
             xchange_create = w3.eth.contract(
-                address=ca.XCHANGE_CREATE(chain),
+                address=addresses.xchange_create(chain),
                 abi=abis.read("xchangecreate"),
             )
 
@@ -53,8 +56,8 @@ async def log_loop(
                 ill_key: w3.eth.contract(
                     address=ill_address, abi=abis.read("ill005")
                 )
-                for ill_key, ill_address in ca.ILL_ADDRESSES.get(
-                    chain, {}
+                for ill_key, ill_address in addresses.ill_addresses(
+                    chain
                 ).items()
             }
 
@@ -194,7 +197,9 @@ async def loan_alert(event, chain):
             break
 
     pool_contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(ca.LPOOL(chain)),
+        address=chain_info.w3.to_checksum_address(
+            addresses.lending_pool(chain)
+        ),
         abi=abis.read("lendingpool"),
     )
 
@@ -206,7 +211,7 @@ async def loan_alert(event, chain):
 
     ill_number = tools.get_ill_number(ill_address)
 
-    im1 = Image.open(random.choice(images.BLACKHOLE)).convert("RGBA")
+    im1 = Image.open(random.choice(blackhole.RANDOM)).convert("RGBA")
     try:
         image_url = defined.get_token_image(token, chain)
         im2 = Image.open(requests.get(image_url, stream=True).raw).convert(
@@ -249,12 +254,13 @@ async def loan_alert(event, chain):
             ],
             [
                 InlineKeyboardButton(
-                    text="Buy", url=urls.XCHANGE_BUY(chain_info.id, token)
+                    text="Buy", url=urls.xchange_buy_link(chain_info.id, token)
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text="Chart", url=urls.DEX_TOOLS(chain_info.dext, pair)
+                    text="Chart",
+                    url=urls.dex_tools_link(chain_info.dext, pair),
                 )
             ],
         ]
@@ -279,7 +285,7 @@ async def loan_alert(event, chain):
 
 async def pair_alert(event, chain):
     chain_info, _ = chains.get_info(chain)
-    paired_token = ca.WETH(chain)
+    paired_token = addresses.weth(chain)
 
     token_0_info = dextools.get_token_name(event["args"]["token0"], chain)
     token_0_name = token_0_info["name"]
@@ -330,7 +336,7 @@ async def pair_alert(event, chain):
 
     status = f"{open_source}\n{tax}\n{renounced}"
 
-    im1 = Image.open(random.choice(images.BLACKHOLE)).convert("RGBA")
+    im1 = Image.open(random.choice(blackhole.RANDOM)).convert("RGBA")
     try:
         image_url = defined.get_token_image(token_address, chain)
         im2 = Image.open(requests.get(image_url, stream=True).raw).convert(
@@ -364,13 +370,16 @@ async def pair_alert(event, chain):
         [
             [
                 InlineKeyboardButton(
-                    "Buy", url=urls.XCHANGE_BUY(chain_info.id, token_address)
+                    "Buy",
+                    url=urls.xchange_buy_link(chain_info.id, token_address),
                 )
             ],
             [
                 InlineKeyboardButton(
                     "Chart",
-                    url=urls.DEX_TOOLS(chain_info.dext, event["args"]["pair"]),
+                    url=urls.dex_tools_link(
+                        chain_info.dext, event["args"]["pair"]
+                    ),
                 )
             ],
         ]
@@ -409,7 +418,7 @@ async def token_alert(event, chain):
     buy_tax = args.get("buyTax", 0)
     sell_tax = args.get("sellTax", 0)
 
-    im1 = Image.open(random.choice(images.BLACKHOLE)).convert("RGBA")
+    im1 = Image.open(random.choice(blackhole.RANDOME)).convert("RGBA")
     try:
         im2 = Image.open(requests.get(token_uri, stream=True).raw).convert(
             "RGBA"
@@ -457,13 +466,14 @@ async def token_alert(event, chain):
     button_list = [
         [
             InlineKeyboardButton(
-                text="Buy", url=urls.XCHANGE_BUY(chain_info.id, token_address)
+                text="Buy",
+                url=urls.xchange_buy_link(chain_info.id, token_address),
             )
         ],
         [
             InlineKeyboardButton(
                 text="Chart",
-                url=urls.DEX_TOOLS(chain_info.dext, token_address),
+                url=urls.dex_tools_link(chain_info.dext, token_address),
             )
         ],
     ]

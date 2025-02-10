@@ -1,18 +1,20 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext, ConversationHandler, ContextTypes
-from eth_utils import is_address
 
 import os
 import time
 from datetime import datetime
+from eth_utils import is_address
 
 from bot import auto, callbacks
-from constants import ca, chains, settings, splitters, urls
-from hooks import api, db, functions, tools
+from constants.bot import settings, urls
+from constants.protocol import addresses, chains, splitters
 from main import application
+from utils import onchain, tools
+from services import get_etherscan, get_mysql
 
-job_queue = application.job_queue
-etherscan = api.Etherscan()
+etherscan = get_etherscan()
+mysql = get_mysql()
 
 X7D_AMOUNT, X7D_CONFIRM = range(2)
 WITHDRAW_TOKEN, WITHDRAW_AMOUNT, WITHDRAW_ADDRESS, WITHDRAW_CONFIRM = range(4)
@@ -65,14 +67,14 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     time_taken = button_click_timestamp - button_generation_timestamp
     formatted_time_taken = tools.format_seconds(time_taken)
 
-    await db.clicks_update(user_info, time_taken)
+    await mysql.clicks_update(user_info, time_taken)
 
     context.bot_data["first_user_clicked"] = True
 
-    user_data = db.clicks_get_by_name(user_info)
+    user_data = mysql.clicks_get_by_name(user_info)
     clicks, _, streak = user_data
-    total_click_count = db.clicks_get_total()
-    burn_active = db.settings_get("burn")
+    total_click_count = mysql.clicks_get_total()
+    burn_active = mysql.settings_get("burn")
 
     if clicks == 1:
         user_count_message = "🎉🎉 This is their first button click! 🎉🎉"
@@ -81,7 +83,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         user_count_message = f"They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak!"
 
-    if db.clicks_check_is_fastest(time_taken):
+    if mysql.clicks_check_is_fastest(time_taken):
         user_count_message += (
             f"\n\n🎉🎉 {formatted_time_taken} is the new fastest time! 🎉🎉"
         )
@@ -120,12 +122,12 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     if burn_active and total_click_count % settings.CLICK_ME_BURN == 0:
-        burn_message = await functions.withdraw_tokens(
+        burn_message = await onchain.withdraw_tokens(
             int(os.getenv("TELEGRAM_ADMIN_ID")),
             settings.burn_amount(),
-            ca.X7R(chain),
+            settings.BURN_TOKEN,
             18,
-            ca.DEAD,
+            addresses.DEAD,
             chain,
         )
 
@@ -137,7 +139,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.bot_data["clicked_id"] = clicked.message_id
     settings.RESTART_TIME = datetime.now().timestamp()
     settings.BUTTON_TIME = settings.random_button_time()
-    job_queue.run_once(
+    application.job_queue.run_once(
         callbacks.click_me,
         settings.BUTTON_TIME,
         chat_id=urls.TG_MAIN_CHANNEL_ID,
@@ -147,19 +149,17 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    user_id = query.from_user.id
-
-    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
+    if tools.is_admin(update.effective_user.id):
+        try:
+            result_text = mysql.clicks_reset()
+            await query.edit_message_text(text=result_text)
+        except Exception as e:
+            await query.answer(
+                text=f"An error occurred: {str(e)}", show_alert=True
+            )
+    else:
         await query.answer(text="Admin only.", show_alert=True)
         return
-
-    try:
-        result_text = db.clicks_reset()
-        await query.edit_message_text(text=result_text)
-    except Exception as e:
-        await query.answer(
-            text=f"An error occurred: {str(e)}", show_alert=True
-        )
 
 
 async def confirm_conv(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -192,17 +192,17 @@ async def confirm_conv(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         if operation == "mint":
-            result = functions.x7d_mint(amount, chain, user_id)
+            result = onchain.x7d_mint(amount, chain, user_id)
         elif operation == "redeem":
-            result = functions.x7d_redeem(amount, chain, user_id)
+            result = onchain.x7d_redeem(amount, chain, user_id)
         elif operation == "withdraw":
             if token == "native":
-                result = functions.withdraw_native(
+                result = onchain.withdraw_native(
                     amount, chain, user_id, address
                 )
             else:
-                result = functions.withdraw_tokens(
-                    user_id, amount, ca.X7D(chain), 18, address, chain
+                result = onchain.withdraw_tokens(
+                    user_id, amount, addresses.x7d(chain), 18, address, chain
                 )
 
         await message.delete()
@@ -253,15 +253,14 @@ async def confirm_simple(
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.from_user.id
-    existing_wallet = db.wallet_get(user_id)
+    existing_wallet = mysql.wallet_get(user_id)
 
-    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
-        if not existing_wallet:
-            await query.answer(
-                "You have not registered a wallet. Please use /register in private.",
-                show_alert=True,
-            )
-            return
+    if not existing_wallet:
+        await query.answer(
+            "You have not registered a wallet. Please use /register in private.",
+            show_alert=True,
+        )
+        return
 
     try:
         _, loan_id, chain = query.data.split(":")
@@ -272,7 +271,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=f"Liquidating loan {loan_id} ({chain_info.name}), Please wait...",
         )
 
-        result = functions.liquidate_loan(int(loan_id), chain, user_id)
+        result = onchain.liquidate_loan(int(loan_id), chain, user_id)
 
         if result.startswith("Error"):
             await query.answer(result, show_alert=True)
@@ -291,15 +290,14 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.from_user.id
-    existing_wallet = db.wallet_get(user_id)
+    existing_wallet = mysql.wallet_get(user_id)
 
-    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
-        if not existing_wallet:
-            await query.answer(
-                "You have not registered a wallet. Please use /register in private.",
-                show_alert=True,
-            )
-            return
+    if not existing_wallet:
+        await query.answer(
+            "You have not registered a wallet. Please use /register in private.",
+            show_alert=True,
+        )
+        return
 
     _, token, chain = query.data.split(":")
     chain_info, _ = chains.get_info(chain)
@@ -332,11 +330,11 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if contract_type == "hub":
             token_address = config["token_address"]
-            result = functions.splitter_push(
+            result = onchain.splitter_push(
                 contract_type, address, abi, chain, user_id, token_address
             )
         else:
-            result = functions.splitter_push(
+            result = onchain.splitter_push(
                 contract_type, address, abi, chain, user_id
             )
 
@@ -357,48 +355,47 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def settings_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    user_id = query.from_user.id
 
-    if user_id != int(os.getenv("TELEGRAM_ADMIN_ID")):
+    if tools.is_admin(query.from_user.id):
+        callback_data = query.data
+
+        setting = callback_data.replace("settings_toggle_", "")
+
+        try:
+            current_status = mysql.settings_get(setting)
+            new_status = not current_status
+            mysql.settings_set(setting, new_status)
+
+            formatted_setting = setting.replace("_", " ").title()
+            await query.answer(
+                text=f"{formatted_setting} turned {'ON' if new_status else 'OFF'}."
+            )
+
+            settings = mysql.settings_get_all()
+            keyboard = [
+                [
+                    InlineKeyboardButton(
+                        f"{s.replace('_', ' ').title()}: {'ON' if v else 'OFF'}",
+                        callback_data=f"settings_toggle_{s}",
+                    )
+                ]
+                for s, v in settings.items()
+            ]
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        "Reset Clicks", callback_data="question:clicks_reset"
+                    )
+                ]
+            )
+
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_reply_markup(reply_markup=reply_markup)
+        except Exception as e:
+            await query.answer(text=f"Error: {e}", show_alert=True)
+    else:
         await query.answer(text="Admin only.", show_alert=True)
         return
-
-    callback_data = query.data
-
-    setting = callback_data.replace("settings_toggle_", "")
-
-    try:
-        current_status = db.settings_get(setting)
-        new_status = not current_status
-        db.settings_set(setting, new_status)
-
-        formatted_setting = setting.replace("_", " ").title()
-        await query.answer(
-            text=f"{formatted_setting} turned {'ON' if new_status else 'OFF'}."
-        )
-
-        settings = db.settings_get_all()
-        keyboard = [
-            [
-                InlineKeyboardButton(
-                    f"{s.replace('_', ' ').title()}: {'ON' if v else 'OFF'}",
-                    callback_data=f"settings_toggle_{s}",
-                )
-            ]
-            for s, v in settings.items()
-        ]
-        keyboard.append(
-            [
-                InlineKeyboardButton(
-                    "Reset Clicks", callback_data="question:clicks_reset"
-                )
-            ]
-        )
-
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_reply_markup(reply_markup=reply_markup)
-    except Exception as e:
-        await query.answer(text=f"Error: {e}", show_alert=True)
 
 
 async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -407,7 +404,7 @@ async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = query.from_user.id
 
     try:
-        result_text = functions.stuck_tx(chain, user_id)
+        result_text = onchain.stuck_tx(chain, user_id)
 
         await query.edit_message_text(text=result_text)
     except Exception as e:
@@ -421,7 +418,7 @@ async def wallet_remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = query.from_user.id
 
     try:
-        result_text = db.wallet_remove(user_id)
+        result_text = mysql.wallet_remove(user_id)
 
         await query.edit_message_text(text=result_text)
     except Exception as e:
@@ -520,7 +517,7 @@ async def withdraw_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return WITHDRAW_AMOUNT
 
     chain_info, _ = chains.get_info(chain)
-    wallet = db.wallet_get(user_id)
+    wallet = mysql.wallet_get(user_id)
 
     if token == "native":
         balance = etherscan.get_native_balance(wallet["wallet"], chain)
@@ -529,7 +526,7 @@ async def withdraw_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         balance = (
             float(
                 etherscan.get_token_balance(
-                    wallet["wallet"], ca.X7D(chain), chain
+                    wallet["wallet"], addresses.x7d(chain), chain
                 )
             )
             / 10**18
@@ -623,7 +620,7 @@ async def x7d_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chain_info, _ = chains.get_info(chain)
 
-    wallet = db.wallet_get(user_id)
+    wallet = mysql.wallet_get(user_id)
 
     if action == "mint":
         balance = etherscan.get_native_balance(wallet["wallet"], chain)
@@ -631,7 +628,7 @@ async def x7d_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         balance = (
             float(
                 etherscan.get_token_balance(
-                    wallet["wallet"], ca.X7D(chain), chain
+                    wallet["wallet"], addresses.x7d(chain), chain
                 )
             )
             / 10**18

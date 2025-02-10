@@ -19,9 +19,15 @@ from pathlib import Path
 from telegram.warnings import PTBUserWarning
 from warnings import filterwarnings
 
-from bot import admin, auto, callbacks, commands
-from constants import settings, urls
-from hooks import db, tools
+from constants.bot import settings
+from bot.commands import admin, general
+from bot import auto, callbacks
+from constants.bot import urls
+from utils.tools import is_local
+from media import videos
+from services import get_mysql
+
+mysql = get_mysql()
 
 filterwarnings(
     action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning
@@ -30,14 +36,16 @@ filterwarnings(
 application = (
     ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 )
-job_queue = application.job_queue
-
 
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
 
 
 async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    return
+    await update.effective_chat.send_video(
+        video=open(videos.WELCOMEVIDEO, "rb"),
+        caption="hello",
+        parse_mode="Markdown",
+    )
 
 
 async def error(update: Update, context: CallbackContext):
@@ -78,145 +86,139 @@ def run_alerts():
 if __name__ == "__main__":
     application.add_error_handler(error)
 
-    application.add_handler(CommandHandler("about", commands.about))
-    application.add_handler(CommandHandler("admins", commands.admins))
-    application.add_handler(CommandHandler("alerts", commands.alerts))
+    application.add_handler(CommandHandler("about", general.about))
+    application.add_handler(CommandHandler("admins", general.admins))
+    application.add_handler(CommandHandler("alerts", general.alerts))
     application.add_handler(
-        CommandHandler("announcements", commands.announcements)
+        CommandHandler("announcements", general.announcements)
     )
-    application.add_handler(CommandHandler(["arb", "arbitrage"], commands.arb))
-    application.add_handler(CommandHandler("blocks", commands.blocks))
-    application.add_handler(CommandHandler("blog", commands.blog))
-    application.add_handler(CommandHandler("borrow", commands.borrow))
-    application.add_handler(CommandHandler("burn", commands.burn))
-    application.add_handler(CommandHandler("buy", commands.buy))
-    application.add_handler(CommandHandler("channels", commands.channels))
-    application.add_handler(
-        CommandHandler(["chart", "charts"], commands.chart)
-    )
-    application.add_handler(CommandHandler("check", commands.check))
-    application.add_handler(CommandHandler("compare", commands.compare))
+    application.add_handler(CommandHandler(["arb", "arbitrage"], general.arb))
+    application.add_handler(CommandHandler("blocks", general.blocks))
+    application.add_handler(CommandHandler("blog", general.blog))
+    application.add_handler(CommandHandler("borrow", general.borrow))
+    application.add_handler(CommandHandler("burn", general.burn))
+    application.add_handler(CommandHandler("buy", general.buy))
+    application.add_handler(CommandHandler("channels", general.channels))
+    application.add_handler(CommandHandler(["chart", "charts"], general.chart))
+    application.add_handler(CommandHandler("check", general.check))
+    application.add_handler(CommandHandler("compare", general.compare))
     application.add_handler(
         CommandHandler(
             ["constellations", "constellation", "quints", "x7100"],
-            commands.constellations,
+            general.constellations,
         )
     )
     application.add_handler(
-        CommandHandler(["ca", "contract", "contracts"], commands.contracts)
+        CommandHandler(["ca", "contract", "contracts"], general.contracts)
     )
-    application.add_handler(CommandHandler("contribute", commands.contribute))
-    application.add_handler(CommandHandler("convert", commands.convert))
+    application.add_handler(CommandHandler("contribute", general.contribute))
+    application.add_handler(CommandHandler("convert", general.convert))
     application.add_handler(
         CommandHandler(
-            ["dao", "vote", "snapshot", "propose"], commands.dao_command
+            ["dao", "vote", "snapshot", "propose"], general.dao_command
         )
     )
     application.add_handler(
         CommandHandler(
             ["docs", "documents"],
-            commands.docs,
+            general.docs,
         )
     )
     application.add_handler(
-        CommandHandler(["ecosystem", "tokens"], commands.ecosystem)
+        CommandHandler(["ecosystem", "tokens"], general.ecosystem)
     )
-    application.add_handler(CommandHandler("factory", commands.factory))
-    application.add_handler(CommandHandler("faq", commands.faq))
-    application.add_handler(CommandHandler("feeto", commands.feeto))
-    application.add_handler(CommandHandler(["fg", "feargreed"], commands.fg))
+    application.add_handler(CommandHandler("factory", general.factory))
+    application.add_handler(CommandHandler("faq", general.faq))
+    application.add_handler(CommandHandler("feeto", general.feeto))
+    application.add_handler(CommandHandler(["fg", "feargreed"], general.fg))
     application.add_handler(
-        CommandHandler(["fee", "fees", "costs", "gas"], commands.gas)
+        CommandHandler(["fee", "fees", "costs", "gas"], general.gas)
     )
-    application.add_handler(CommandHandler("github", commands.github_command))
-    application.add_handler(CommandHandler("holders", commands.holders))
+    application.add_handler(CommandHandler("github", general.github_command))
+    application.add_handler(CommandHandler("holders", general.holders))
     application.add_handler(
-        CommandHandler(["hub", "hubs", "buybacks"], commands.hub)
+        CommandHandler(["hub", "hubs", "buybacks"], general.hub)
     )
+    application.add_handler(CommandHandler("leaderboard", general.leaderboard))
     application.add_handler(
-        CommandHandler("leaderboard", commands.leaderboard)
+        CommandHandler(["links", "socials", "dune", "reddit"], general.links)
     )
+    application.add_handler(CommandHandler("liquidate", general.liquidate))
     application.add_handler(
-        CommandHandler(["links", "socials", "dune", "reddit"], commands.links)
+        CommandHandler(["liquidity", "liq", "supply"], general.liquidity)
     )
-    application.add_handler(CommandHandler("liquidate", commands.liquidate))
+    application.add_handler(CommandHandler(["loan", "loans"], general.loan))
+    application.add_handler(CommandHandler("locks", general.locks))
+    application.add_handler(CommandHandler(["me", "balance"], general.me))
     application.add_handler(
-        CommandHandler(["liquidity", "liq", "supply"], commands.liquidity)
+        CommandHandler(["mcap", "marketcap", "cap"], general.mcap)
     )
-    application.add_handler(CommandHandler(["loan", "loans"], commands.loan))
-    application.add_handler(CommandHandler("locks", commands.locks))
-    application.add_handler(CommandHandler(["me", "balance"], commands.me))
+    application.add_handler(CommandHandler("media", general.media_command))
+    application.add_handler(CommandHandler(["nft", "nfts"], general.nft))
     application.add_handler(
-        CommandHandler(["mcap", "marketcap", "cap"], commands.mcap)
+        CommandHandler(["on_chain", "onchain", "deployer"], general.onchains)
     )
-    application.add_handler(CommandHandler("media", commands.media_command))
-    application.add_handler(CommandHandler(["nft", "nfts"], commands.nft))
+    application.add_handler(CommandHandler(["pair", "pairs"], general.pair))
+    application.add_handler(CommandHandler("pioneer", general.pioneer))
     application.add_handler(
-        CommandHandler(["on_chain", "onchain", "deployer"], commands.onchains)
+        CommandHandler(["pool", "lpool", "lendingpool"], general.pool)
     )
-    application.add_handler(CommandHandler(["pair", "pairs"], commands.pair))
-    application.add_handler(CommandHandler("pioneer", commands.pioneer))
+    application.add_handler(CommandHandler(["price", "prices"], general.price))
     application.add_handler(
-        CommandHandler(["pool", "lpool", "lendingpool"], commands.pool)
+        CommandHandler(["push_all", "pushall"], general.pushall)
     )
+    application.add_handler(CommandHandler("register", general.register))
+    application.add_handler(CommandHandler("router", general.router))
     application.add_handler(
-        CommandHandler(["price", "prices"], commands.price)
+        CommandHandler(["space", "spaces"], general.spaces)
     )
-    application.add_handler(
-        CommandHandler(["push_all", "pushall"], commands.pushall)
-    )
-    application.add_handler(CommandHandler("register", commands.register))
-    application.add_handler(CommandHandler("router", commands.router))
-    application.add_handler(
-        CommandHandler(["space", "spaces"], commands.spaces)
-    )
-    application.add_handler(CommandHandler("smart", commands.smart))
+    application.add_handler(CommandHandler("smart", general.smart))
     application.add_handler(
         CommandHandler(
-            ["split", "splitters", "splitter"], commands.splitters_command
+            ["split", "splitters", "splitter"], general.splitters_command
         )
     )
     application.add_handler(
-        CommandHandler(["tax", "slippage"], commands.tax_command)
+        CommandHandler(["tax", "slippage"], general.tax_command)
     )
     application.add_handler(
-        CommandHandler("timestamp", commands.timestamp_command)
+        CommandHandler("timestamp", general.timestamp_command)
     )
     application.add_handler(
-        CommandHandler(["time", "clock"], commands.time_command)
+        CommandHandler(["time", "clock"], general.time_command)
     )
-    application.add_handler(CommandHandler("treasury", commands.treasury))
+    application.add_handler(CommandHandler("treasury", general.treasury))
     application.add_handler(
-        CommandHandler(["trending", "trend", "top"], commands.top)
+        CommandHandler(["trending", "trend", "top"], general.top)
     )
     application.add_handler(
         CommandHandler(
-            ["twitter", "xtrader", "0xtrader"], commands.twitter_command
+            ["twitter", "xtrader", "0xtrader"], general.twitter_command
         )
     )
     application.add_handler(
         CommandHandler(
-            ["website", "site", "swap", "dex", "xchange"], commands.website
+            ["website", "site", "swap", "dex", "xchange"], general.website
         )
     )
-    application.add_handler(CommandHandler(["volume"], commands.volume))
-    application.add_handler(CommandHandler("wei", commands.wei))
-    application.add_handler(CommandHandler("wallet", commands.wallet))
+    application.add_handler(CommandHandler(["volume"], general.volume))
+    application.add_handler(CommandHandler("wei", general.wei))
+    application.add_handler(CommandHandler("wallet", general.wallet))
     application.add_handler(
-        CommandHandler(["website", "site"], commands.website)
+        CommandHandler(["website", "site"], general.website)
     )
     application.add_handler(
-        CommandHandler(["whitepaper", "wp", "wpquote"], commands.wp)
+        CommandHandler(["whitepaper", "wp", "wpquote"], general.wp)
     )
-    application.add_handler(CommandHandler("x7r", commands.x7r))
-    application.add_handler(CommandHandler("x7d", commands.x7d))
-    application.add_handler(CommandHandler("x7dao", commands.x7dao))
-    application.add_handler(CommandHandler(["x7101", "101"], commands.x7101))
-    application.add_handler(CommandHandler(["x7102", "102"], commands.x7102))
-    application.add_handler(CommandHandler(["x7103", "103"], commands.x7103))
-    application.add_handler(CommandHandler(["x7104", "104"], commands.x7104))
-    application.add_handler(CommandHandler(["x7105", "105"], commands.x7105))
-    application.add_handler(CommandHandler("x", commands.x))
+    application.add_handler(CommandHandler("x7r", general.x7r))
+    application.add_handler(CommandHandler("x7d", general.x7d))
+    application.add_handler(CommandHandler("x7dao", general.x7dao))
+    application.add_handler(CommandHandler(["x7101", "101"], general.x7101))
+    application.add_handler(CommandHandler(["x7102", "102"], general.x7102))
+    application.add_handler(CommandHandler(["x7103", "103"], general.x7103))
+    application.add_handler(CommandHandler(["x7104", "104"], general.x7104))
+    application.add_handler(CommandHandler(["x7105", "105"], general.x7105))
+    application.add_handler(CommandHandler("x", general.x))
 
     application.add_handler(CommandHandler("settings", admin.command))
     application.add_handler(CommandHandler("clickme", admin.click_me))
@@ -334,10 +336,10 @@ if __name__ == "__main__":
         MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies)
     )
 
-    if not tools.is_local():
+    if not is_local():
         print("Running on server")
-        if db.settings_get("click_me"):
-            job_queue.run_once(
+        if mysql.settings_get("click_me"):
+            application.job_queue.run_once(
                 auto.button_send,
                 settings.FIRST_BUTTON_TIME,
                 chat_id=urls.TG_MAIN_CHANNEL_ID,
