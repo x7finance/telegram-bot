@@ -2,7 +2,7 @@ import mysql.connector
 import os
 
 
-class MySql:
+class DBManager:
     def __init__(self):
         self.host = os.getenv("DB_HOST")
         self.user = os.getenv("DB_USER")

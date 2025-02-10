@@ -4,9 +4,9 @@ from constants.bot import urls
 from constants.protocol import addresses
 from media import chain_logos
 from utils import tools
-from services import get_mysql
+from services import get_dbmanager
 
-mysql = get_mysql()
+db = get_dbmanager()
 
 
 class ChainInfo:
@@ -56,9 +56,7 @@ def active_chains():
     if tools.is_local():
         return {**MAINNETS, **TESTNETS}
     return (
-        {**MAINNETS, **TESTNETS}
-        if mysql.settings_get("testnets")
-        else MAINNETS
+        {**MAINNETS, **TESTNETS} if db.settings_get("testnets") else MAINNETS
     )
 
 

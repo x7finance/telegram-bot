@@ -11,10 +11,10 @@ from constants.bot import settings, urls
 from constants.protocol import addresses, chains, splitters
 from main import application
 from utils import onchain, tools
-from services import get_etherscan, get_mysql
+from services import get_dbmanager, get_etherscan
 
+db = get_dbmanager()
 etherscan = get_etherscan()
-mysql = get_mysql()
 
 X7D_AMOUNT, X7D_CONFIRM = range(2)
 WITHDRAW_TOKEN, WITHDRAW_AMOUNT, WITHDRAW_ADDRESS, WITHDRAW_CONFIRM = range(4)
@@ -67,14 +67,14 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     time_taken = button_click_timestamp - button_generation_timestamp
     formatted_time_taken = tools.format_seconds(time_taken)
 
-    await mysql.clicks_update(user_info, time_taken)
+    await db.clicks_update(user_info, time_taken)
 
     context.bot_data["first_user_clicked"] = True
 
-    user_data = mysql.clicks_get_by_name(user_info)
+    user_data = db.clicks_get_by_name(user_info)
     clicks, _, streak = user_data
-    total_click_count = mysql.clicks_get_total()
-    burn_active = mysql.settings_get("burn")
+    total_click_count = db.clicks_get_total()
+    burn_active = db.settings_get("burn")
 
     if clicks == 1:
         user_count_message = "🎉🎉 This is their first button click! 🎉🎉"
@@ -83,7 +83,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         user_count_message = f"They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak!"
 
-    if mysql.clicks_check_is_fastest(time_taken):
+    if db.clicks_check_is_fastest(time_taken):
         user_count_message += (
             f"\n\n🎉🎉 {formatted_time_taken} is the new fastest time! 🎉🎉"
         )
@@ -151,7 +151,7 @@ async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     if tools.is_admin(update.effective_user.id):
         try:
-            result_text = mysql.clicks_reset()
+            result_text = db.clicks_reset()
             await query.edit_message_text(text=result_text)
         except Exception as e:
             await query.answer(
@@ -253,7 +253,7 @@ async def confirm_simple(
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.from_user.id
-    existing_wallet = mysql.wallet_get(user_id)
+    existing_wallet = db.wallet_get(user_id)
 
     if not existing_wallet:
         await query.answer(
@@ -290,7 +290,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.from_user.id
-    existing_wallet = mysql.wallet_get(user_id)
+    existing_wallet = db.wallet_get(user_id)
 
     if not existing_wallet:
         await query.answer(
@@ -362,16 +362,16 @@ async def settings_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
         setting = callback_data.replace("settings_toggle_", "")
 
         try:
-            current_status = mysql.settings_get(setting)
+            current_status = db.settings_get(setting)
             new_status = not current_status
-            mysql.settings_set(setting, new_status)
+            db.settings_set(setting, new_status)
 
             formatted_setting = setting.replace("_", " ").title()
             await query.answer(
                 text=f"{formatted_setting} turned {'ON' if new_status else 'OFF'}."
             )
 
-            settings = mysql.settings_get_all()
+            settings = db.settings_get_all()
             keyboard = [
                 [
                     InlineKeyboardButton(
@@ -418,7 +418,7 @@ async def wallet_remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = query.from_user.id
 
     try:
-        result_text = mysql.wallet_remove(user_id)
+        result_text = db.wallet_remove(user_id)
 
         await query.edit_message_text(text=result_text)
     except Exception as e:
@@ -517,7 +517,7 @@ async def withdraw_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return WITHDRAW_AMOUNT
 
     chain_info, _ = chains.get_info(chain)
-    wallet = mysql.wallet_get(user_id)
+    wallet = db.wallet_get(user_id)
 
     if token == "native":
         balance = etherscan.get_native_balance(wallet["wallet"], chain)
@@ -620,7 +620,7 @@ async def x7d_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chain_info, _ = chains.get_info(chain)
 
-    wallet = mysql.wallet_get(user_id)
+    wallet = db.wallet_get(user_id)
 
     if action == "mint":
         balance = etherscan.get_native_balance(wallet["wallet"], chain)

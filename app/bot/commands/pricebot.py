@@ -5,7 +5,6 @@ from eth_utils import is_address
 
 from constants.bot import urls
 from constants.protocol import chains, tokens
-
 from services import get_coingecko, get_defined, get_dextools, get_etherscan
 
 coingecko = get_coingecko()

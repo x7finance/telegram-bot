@@ -10,14 +10,14 @@ from bot import auto
 from constants.bot import settings
 from constants.protocol import addresses
 from utils import tools
-from services import get_mysql
+from services import get_dbmanager
 
-mysql = get_mysql()
+db = get_dbmanager()
 
 
 async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
-        settings = mysql.settings_get_all()
+        settings = db.settings_get_all()
         if not settings:
             await update.message.reply_text("Error fetching settings.")
             return
@@ -41,7 +41,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        count = mysql.wallet_count()
+        count = db.wallet_count()
         await update.message.reply_text(
             f"Wallet users: {count}", reply_markup=reply_markup
         )
@@ -49,7 +49,7 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
-        if mysql.settings_get("click_me"):
+        if db.settings_get("click_me"):
             await auto.button_send(context)
         else:
             await update.message.reply_text("Click Me is disabled")
@@ -58,7 +58,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
         user_to_remove = " ".join(context.args)
-        result = mysql.wallet_remove(user_to_remove)
+        result = db.wallet_remove(user_to_remove)
         await update.message.reply_text(result)
 
 
@@ -223,7 +223,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
         if update.effective_chat.type == "private":
-            if mysql.settings_get("click_me"):
+            if db.settings_get("click_me"):
                 if settings.BUTTON_TIME is not None:
                     time = settings.BUTTON_TIME
                 else:

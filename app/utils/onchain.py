@@ -1,10 +1,10 @@
 from decimal import Decimal
 
 from constants.protocol import abis, addresses, chains, tax, tokens
-from services import get_etherscan, get_mysql
+from services import get_etherscan, get_dbmanager
 
 etherscan = get_etherscan()
-mysql = get_mysql()
+db = get_dbmanager()
 
 
 def estimate_gas(chain, function, loan_id=None):
@@ -109,7 +109,7 @@ def liquidate_loan(loan_id, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
 
-        wallet = mysql.wallet_get(user_id)
+        wallet = db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -161,7 +161,7 @@ def splitter_push(
     try:
         chain_info, _ = chains.get_info(chain)
 
-        wallet = mysql.wallet_get(user_id)
+        wallet = db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -215,7 +215,7 @@ def stuck_tx(chain, user_id, gas_multiplier=1.5):
     try:
         chain_info, _ = chains.get_info(chain)
 
-        wallet = mysql.wallet_get(user_id)
+        wallet = db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -265,7 +265,7 @@ def withdraw_native(amount, chain, user_id, recipient_address):
     try:
         chain_info, _ = chains.get_info(chain)
 
-        wallet = mysql.wallet_get(user_id)
+        wallet = db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -316,7 +316,7 @@ def withdraw_tokens(
     try:
         chain_info, _ = chains.get_info(chain)
 
-        wallet = mysql.wallet_get(user_id)
+        wallet = db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
         amount = Decimal(str(amount))
@@ -390,7 +390,7 @@ def x7d_mint(amount, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
 
-        wallet = mysql.wallet_get(user_id)
+        wallet = db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -444,7 +444,7 @@ def x7d_redeem(amount, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
 
-        wallet = mysql.wallet_get(user_id)
+        wallet = db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 

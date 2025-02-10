@@ -13,9 +13,9 @@ import time
 from constants.bot import text, urls
 from media import stickers, videos
 from utils import tools
-from services import get_mysql
+from services import get_dbmanager
 
-mysql = get_mysql()
+db = get_dbmanager()
 
 welcome_rescrictions = {
     "can_send_messages": False,
@@ -26,7 +26,7 @@ welcome_rescrictions = {
 
 
 async def button_send(context: ContextTypes.DEFAULT_TYPE):
-    if not mysql.settings_get("click_me"):
+    if not db.settings_get("click_me"):
         return
     context.bot_data["first_user_clicked"] = False
 
@@ -192,7 +192,7 @@ async def welcome_message(
                 except Exception:
                     pass
 
-            if mysql.settings_get("welcome_restrictions"):
+            if db.settings_get("welcome_restrictions"):
                 await context.bot.restrict_chat_member(
                     chat_id=update.effective_chat.id,
                     user_id=new_member_id,

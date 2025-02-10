@@ -29,12 +29,12 @@ from media import x7_images
 from services import (
     get_blockspan,
     get_coingecko,
+    get_dbmanager,
     get_defined,
     get_dextools,
     get_dune,
     get_etherscan,
     get_github,
-    get_mysql,
     get_opensea,
     get_snapshot,
     get_twitter,
@@ -42,12 +42,12 @@ from services import (
 
 blockspan = get_blockspan()
 coingecko = get_coingecko()
+db = get_dbmanager()
 defined = get_defined()
 dextools = get_dextools()
 dune = get_dune()
 etherscan = get_etherscan()
 github = get_github()
-mysql = get_mysql()
 opensea = get_opensea()
 snapshot = get_snapshot()
 twitter = get_twitter()
@@ -1365,15 +1365,15 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def leaderboard(update: Update, context: CallbackContext):
-    board = mysql.clicks_get_leaderboard()
-    click_counts_total = mysql.clicks_get_total()
-    fastest_user, fastest_time = mysql.clicks_fastest_time()
-    streak_user, streak_value = mysql.clicks_check_highest_streak()
+    board = db.clicks_get_leaderboard()
+    click_counts_total = db.clicks_get_total()
+    fastest_user, fastest_time = db.clicks_fastest_time()
+    streak_user, streak_value = db.clicks_check_highest_streak()
     formatted_fastest_time = tools.format_seconds(fastest_time)
 
     year = datetime.now().year
 
-    burn_active = mysql.settings_get("burn")
+    burn_active = db.settings_get("burn")
     clicks_needed = (
         settings.CLICK_ME_BURN - (click_counts_total % settings.CLICK_ME_BURN)
         if burn_active
@@ -2077,7 +2077,7 @@ async def me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
     message = f"*X7 Finance Member Details*\n\nTelegram User ID:\n`{user.id}`"
 
-    wallet = mysql.wallet_get(user.id)
+    wallet = db.wallet_get(user.id)
 
     if not wallet:
         message += "\n\nUse /register to register an EVM wallet"
@@ -2748,7 +2748,7 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    existing_wallet = mysql.wallet_get(user_id)
+    existing_wallet = db.wallet_get(user_id)
 
     if not existing_wallet:
         await update.message.reply_text(
@@ -2818,7 +2818,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    existing_wallet = mysql.wallet_get(user_id)
+    existing_wallet = db.wallet_get(user_id)
     if existing_wallet:
         try:
             await context.bot.send_message(
@@ -2832,7 +2832,7 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     account = Account.create()
-    mysql.wallet_add(user_id, account.address, account.key.hex())
+    db.wallet_add(user_id, account.address, account.key.hex())
 
     message = (
         "*New EVM wallet created*\n\n"

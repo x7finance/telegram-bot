@@ -25,9 +25,9 @@ from bot import auto, callbacks
 from constants.bot import urls
 from utils.tools import is_local
 from media import videos
-from services import get_mysql
+from services import get_dbmanager
 
-mysql = get_mysql()
+db = get_dbmanager()
 
 filterwarnings(
     action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning
@@ -338,7 +338,7 @@ if __name__ == "__main__":
 
     if not is_local():
         print("Running on server")
-        if mysql.settings_get("click_me"):
+        if db.settings_get("click_me"):
             application.job_queue.run_once(
                 auto.button_send,
                 settings.FIRST_BUTTON_TIME,
