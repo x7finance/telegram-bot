@@ -16,7 +16,7 @@ class Blockspan:
 
     def get_nft_data(self, nft, chain):
         try:
-            chain_info = chains.active_chains()[chain]
+            chain_info = chains.get_active_chains()[chain]
             endpoint = (
                 f"collections/contract/{nft}?chain={chain_info.blockspan}"
             )

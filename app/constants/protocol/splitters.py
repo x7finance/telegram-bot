@@ -5,8 +5,8 @@ dextools = get_dextools()
 etherscan = get_etherscan()
 
 
-def generate_eco_split(chain):
-    if chain in chains.active_chains():
+def get_eco_split(chain):
+    if chain in chains.get_active_chains():
         chain_info, _ = chains.get_info(chain)
 
     address = addresses.eco_splitter(chain)
@@ -51,8 +51,8 @@ def generate_eco_split(chain):
     }
 
 
-def generate_hub_split(chain, address, token):
-    if chain in chains.active_chains():
+def get_hub_split(chain, address, token):
+    if chain in chains.get_active_chains():
         chain_info, _ = chains.get_info(chain)
 
     abi = get_push_settings(chain)[token]["abi"]
@@ -177,8 +177,8 @@ def generate_hub_split(chain, address, token):
     )
 
 
-def generate_treasury_split(chain):
-    if chain in chains.active_chains():
+def get_treasury_split(chain):
+    if chain in chains.get_active_chains():
         chain_info, _ = chains.get_info(chain)
 
     address = addresses.treasury_splitter(chain)

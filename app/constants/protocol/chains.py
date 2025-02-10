@@ -52,7 +52,7 @@ class ChainInfo:
         self.dao_multi = dao_multi
 
 
-def active_chains():
+def get_active_chains():
     if tools.is_local():
         return {**MAINNETS, **TESTNETS}
     return (
@@ -60,21 +60,21 @@ def active_chains():
     )
 
 
-def full_names():
-    chain_names = [chain.name for chain in MAINNETS.values()]
-    return "\n".join(chain_names)
-
-
 def get_chain(chat_id):
-    for chain_name, chain_info in active_chains().items():
+    for chain_name, chain_info in get_active_chains().items():
         if chat_id == chain_info.tg:
             return chain_name
     return "eth"
 
 
+def get_full_names():
+    chain_names = [chain.name for chain in MAINNETS.values()]
+    return "\n".join(chain_names)
+
+
 def get_info(chain, token=None):
-    if chain in active_chains():
-        chain_info = active_chains()[chain]
+    if chain in get_active_chains():
+        chain_info = get_active_chains()[chain]
 
         if token and not chain_info.trading:
             return None, f"{chain_info.name} tokens not launched yet!"
@@ -83,12 +83,12 @@ def get_info(chain, token=None):
     else:
         return (
             None,
-            f"Chain not recognised, Please use one of the following abbreviations:\n\n{short_names()}",
+            f"Chain not recognised, Please use one of the following abbreviations:\n\n{get_short_names()}",
         )
 
 
-def short_names():
-    chain_list = [key.upper() for key in active_chains().keys()]
+def get_short_names():
+    chain_list = [key.upper() for key in get_active_chains().keys()]
     return "\n".join(chain_list)
 
 

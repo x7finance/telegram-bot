@@ -14,7 +14,7 @@ class Defined:
         }
 
     def get_price_change(self, address, chain):
-        chain_info = chains.active_chains()[chain]
+        chain_info = chains.get_active_chains()[chain]
 
         current_timestamp = int(datetime.now().timestamp()) - 300
         one_hour_ago_timestamp = int(
@@ -106,7 +106,7 @@ class Defined:
         return result
 
     def get_token_image(self, token, chain):
-        chain_info = chains.active_chains()[chain]
+        chain_info = chains.get_active_chains()[chain]
 
         image = f"""
             query {{
@@ -132,7 +132,7 @@ class Defined:
             return None
 
     def get_pair(self, address, chain):
-        chain_info = chains.active_chains()[chain]
+        chain_info = chains.get_active_chains()[chain]
 
         pair_query = f"""query {{
             listPairsWithMetadataForToken (tokenAddress: "{address}" networkId: {chain_info.id}) {{
@@ -163,7 +163,7 @@ class Defined:
 
     def get_volume(self, pair, chain):
         try:
-            chain_info = chains.active_chains()[chain]
+            chain_info = chains.get_active_chains()[chain]
 
             volume = f"""
                 query {{
@@ -193,7 +193,7 @@ class Defined:
 
     def search(self, address, chain=None):
         if chain is not None:
-            chain_info = chains.active_chains()[chain]
+            chain_info = chains.get_active_chains()[chain]
             search_query = f"""query {{
                 filterTokens(phrase:"{address}", rankings: {{attribute:liquidity}} limit:1, filters: {{network:[{chain_info.id}]}}) {{
                     results{{

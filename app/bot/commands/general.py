@@ -246,7 +246,7 @@ async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         blocks = {
             chain: etherscan.get_block(chain, when)
-            for chain in chains.active_chains()
+            for chain in chains.get_active_chains()
         }
     except Exception:
         blocks = 0
@@ -796,7 +796,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = "eth"
     buttons = []
     input_contract = " ".join(context.args).lower()
-    contract_names = list(dao.contract_mappings(chain))
+    contract_names = list(dao.map(chain))
     formatted_contract_names = "\n".join(contract_names)
     keyboard = InlineKeyboardMarkup(
         [
@@ -867,14 +867,12 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         else:
             matching_contract = None
-            for contract in dao.contract_mappings(chain).keys():
+            for contract in dao.map(chain).keys():
                 if contract.lower() == input_contract:
                     matching_contract = contract
                     break
             if matching_contract:
-                contract_text, contract_ca = dao.contract_mappings(chain)[
-                    matching_contract
-                ]
+                contract_text, contract_ca = dao.map(chain)[matching_contract]
 
                 await update.message.reply_photo(
                     photo=tools.get_random_pioneer(),
@@ -975,9 +973,9 @@ async def ecosystem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def factory(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
-    for chain in chains.active_chains():
-        name = chains.active_chains()[chain].name
-        address = chains.active_chains()[chain].scan_address
+    for chain in chains.get_active_chains():
+        name = chains.get_active_chains()[chain].name
+        address = chains.get_active_chains()[chain].scan_address
         buttons.append(
             [
                 InlineKeyboardButton(
@@ -1314,7 +1312,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         address = tokens.get_tokens()[token.lower()][chain].hub
 
-        split_text = splitters.generate_hub_split(chain, address, token)
+        split_text = splitters.get_hub_split(chain, address, token)
     else:
         await update.message.reply_text(
             "Please follow the command with an X7 token name"
@@ -1760,7 +1758,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         total = 0
         total_live = 0
 
-        for chain in chains.active_chains():
+        for chain in chains.get_active_chains():
             chain_info, error_message = chains.get_info(chain)
 
             contract = chain_info.w3.eth.contract(
@@ -2218,6 +2216,7 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
         update.effective_message.message_thread_id
     )
     chain_info, error_message = chains.get_info(chain)
+
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -2227,58 +2226,7 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    chain_prices = nfts.mint_prices(chain)
-    chain_data = nfts.data(chain)
-    discount = nfts.discounts()
-
-    eco_price = chain_prices.get("eco")
-    liq_price = chain_prices.get("liq")
-    dex_price = chain_prices.get("dex")
-    borrow_price = chain_prices.get("borrow")
-    magister_price = chain_prices.get("magister")
-
-    eco_floor = chain_data.get("eco", {}).get("floor_price")
-    liq_floor = chain_data.get("liq", {}).get("floor_price")
-    dex_floor = chain_data.get("dex", {}).get("floor_price")
-    borrow_floor = chain_data.get("borrow", {}).get("floor_price")
-    magister_floor = chain_data.get("magister", {}).get("floor_price")
-
-    eco_count = chain_data.get("eco", {}).get("total_tokens")
-    liq_count = chain_data.get("liq", {}).get("total_tokens")
-    dex_count = chain_data.get("dex", {}).get("total_tokens")
-    borrow_count = chain_data.get("borrow", {}).get("total_tokens")
-    magister_count = chain_data.get("magister", {}).get("total_tokens")
-
-    eco_discount = discount.get("eco", {})
-    liq_discount = discount.get("liq", {})
-    dex_discount = discount.get("dex", {})
-    borrow_discount = discount.get("borrow", {})
-    magister_discount = discount.get("magister", {})
-
-    eco_discount_text = "\n".join(
-        [
-            f"> {discount}% discount on {token}"
-            for token, discount in eco_discount.items()
-        ]
-    )
-    liq_discount_text = "\n".join(
-        [
-            f"> {discount}% discount on {token}"
-            for token, discount in liq_discount.items()
-        ]
-    )
-    dex_discount_text = "\n".join(
-        [f"> {discount}" for discount in dex_discount]
-    )
-    borrow_discount_text = "\n".join(
-        [f"> {discount}" for discount in borrow_discount]
-    )
-    magister_discount_text = "\n".join(
-        [
-            f"> {discount}% discount on {token}"
-            for token, discount in magister_discount.items()
-        ]
-    )
+    nft_data = nfts.get_info(chain)
 
     buttons = [
         [
@@ -2315,22 +2263,7 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await message.delete()
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
-        caption=f"*NFT Info ({chain_info.name})*\n\n"
-        f"*Ecosystem Maxi*\n"
-        f"Available - {500 - eco_count}\n{eco_price}\nFloor price - {eco_floor} {chain_info.native.upper()}\n"
-        f"{eco_discount_text}\n\n"
-        f"*Liquidity Maxi*\n"
-        f"Available - {250 - liq_count}\n{liq_price}\nFloor price - {liq_floor} {chain_info.native.upper()}\n"
-        f"{liq_discount_text}\n\n"
-        f"*Dex Maxi*\n"
-        f"Available - {150 - dex_count}\n{dex_price}\nFloor price - {dex_floor} {chain_info.native.upper()}\n"
-        f"{dex_discount_text}\n\n"
-        f"*Borrow Maxi*\n"
-        f"Available - {100 - borrow_count}\n{borrow_price}\nFloor price - {borrow_floor} {chain_info.native.upper()}\n"
-        f"{borrow_discount_text}\n\n"
-        f"*Magister*\n"
-        f"Available - {49 - magister_count}\n{magister_price}\nFloor price - {magister_floor} {chain_info.native.upper()}\n"
-        f"{magister_discount_text}\n",
+        caption=f"*NFT Info ({chain_info.name})*\n\n{nft_data}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -2381,7 +2314,7 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
     pair_text = ""
     total = 0
 
-    for chain in chains.active_chains():
+    for chain in chains.get_active_chains():
         chain_info, error_message = chains.get_info(chain)
 
         contract = chain_info.w3.eth.contract(
@@ -2563,9 +2496,9 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         total_dollar = 0
         eth_price = None
 
-        for chain in chains.active_chains():
-            native = chains.active_chains()[chain].native.lower()
-            chain_name = chains.active_chains()[chain].name
+        for chain in chains.get_active_chains():
+            native = chains.get_active_chains()[chain].native.lower()
+            chain_name = chains.get_active_chains()[chain].name
             try:
                 if chain in chains.ETH_CHAINS and eth_price is None:
                     eth_price = etherscan.get_native_price(chain)
@@ -2853,9 +2786,9 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
-    for chain in chains.active_chains():
-        name = chains.active_chains()[chain].name
-        address = chains.active_chains()[chain].scan_address
+    for chain in chains.get_active_chains():
+        name = chains.get_active_chains()[chain].name
+        address = chains.get_active_chains()[chain].scan_address
         buttons.append(
             [
                 InlineKeyboardButton(
@@ -3051,7 +2984,7 @@ async def splitters_command(
     eco_dollar = eco_eth * native_price
 
     eco_splitter_text = "Distribution:\n"
-    eco_distribution = splitters.generate_eco_split(chain)
+    eco_distribution = splitters.get_eco_split(chain)
     for location, (share, percentage) in eco_distribution.items():
         eco_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
@@ -3096,7 +3029,7 @@ async def splitters_command(
         treasury_dollar = treasury_eth * native_price
 
         treasury_splitter_text = "Distribution:\n"
-        treasury_distribution = splitters.generate_treasury_split(chain)
+        treasury_distribution = splitters.get_treasury_split(chain)
         for location, (share, percentage) in treasury_distribution.items():
             treasury_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
@@ -3154,7 +3087,7 @@ async def tax_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(error_message)
         return
 
-    tax_info = tax.generate_info(chain)
+    tax_info = tax.get_info(chain)
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
@@ -3711,8 +3644,8 @@ async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
             search = " ".join(context.args[:-1])
             chain_name = context.args[-1].lower()
 
-            if chain_name in chains.active_chains():
-                chain = chains.active_chains()[chain_name].name.lower()
+            if chain_name in chains.get_active_chains():
+                chain = chains.get_active_chains()[chain_name].name.lower()
             else:
                 search = " ".join(context.args)
                 chain = None

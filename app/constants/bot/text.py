@@ -4,7 +4,7 @@ from utils import tools
 
 ABOUT = (
     "*X7 Finance - Home of Xchange*\n\n"
-    f"X7 Finance is an ecosystem of innovative smart contracts on:\n\n{chains.full_names()}\n\nAt the centre of the ecosystem is the X7 Finance"
+    f"X7 Finance is an ecosystem of innovative smart contracts on:\n\n{chains.get_full_names()}\n\nAt the centre of the ecosystem is the X7 Finance"
     ' Lending Pool, a pool that provides those with visionary ideas access to Initial Liquidity Loans "ILL".\n\n'
     "At its core, Initial Liquidity Loans will provide anyone with a good idea the ability to raise 10-1000X "
     "the amount of capital in their wallet to launch projects on Xchange.\n\n"
@@ -448,7 +448,7 @@ def welcome(user):
     return (
         f"Welcome {tools.escape_markdown(user)} to X7 Finance\n\n"
         f"Home of Xchange - A censorship resistant DEX offering initial loaned liquidity on\n\n"
-        f"{chains.full_names()}"
+        f"{chains.get_full_names()}"
     )
 
 

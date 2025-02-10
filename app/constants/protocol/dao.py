@@ -1,7 +1,7 @@
 from constants.protocol import addresses
 
 
-def contract_mappings(chain):
+def map(chain):
     return {
         "X7100 Liquidity Hub": (
             (

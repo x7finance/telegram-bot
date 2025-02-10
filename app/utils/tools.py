@@ -63,7 +63,7 @@ def get_ill_number(term: str) -> str | None:
 
 
 def get_last_action(address, chain):
-    chain_native = chains.active_chains()[chain].native
+    chain_native = chains.get_active_chains()[chain].native
     tx = etherscan.get_internal_tx(address, chain)
 
     word = "txn"
