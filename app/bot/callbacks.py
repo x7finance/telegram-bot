@@ -523,13 +523,8 @@ async def withdraw_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         balance = etherscan.get_native_balance(wallet["wallet"], chain)
         token_str = chain_info.native.upper()
     else:
-        balance = (
-            float(
-                etherscan.get_token_balance(
-                    wallet["wallet"], addresses.x7d(chain), chain
-                )
-            )
-            / 10**18
+        balance = etherscan.get_token_balance(
+            wallet["wallet"], addresses.x7d(chain), 18, chain
         )
         token_str = token.upper()
 
@@ -625,13 +620,8 @@ async def x7d_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if action == "mint":
         balance = etherscan.get_native_balance(wallet["wallet"], chain)
     elif action == "redeem":
-        balance = (
-            float(
-                etherscan.get_token_balance(
-                    wallet["wallet"], addresses.x7d(chain), chain
-                )
-            )
-            / 10**18
+        balance = etherscan.get_token_balance(
+            wallet["wallet"], addresses.x7d(chain), 18, chain
         )
 
     if amount <= 0 or amount > balance:

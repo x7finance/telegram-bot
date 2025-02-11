@@ -447,13 +447,8 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    burn = (
-        float(
-            etherscan.get_token_balance(
-                addresses.DEAD, addresses.x7r(chain), chain
-            )
-        )
-        / 10**18
+    burn = etherscan.get_token_balance(
+        addresses.DEAD, addresses.x7r(chain), 18, chain
     )
     percent = round(burn / addresses.SUPPLY * 100, 2)
     x7r_price = dextools.get_price(addresses.x7r(chain), chain)[0] or 0
@@ -2089,13 +2084,8 @@ async def me(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         native_balance = etherscan.get_native_balance(wallet["wallet"], chain)
-        x7d_balance = (
-            float(
-                etherscan.get_token_balance(
-                    wallet["wallet"], addresses.x7d(chain), chain
-                )
-            )
-            / 10**18
+        x7d_balance = etherscan.get_token_balance(
+            wallet["wallet"], addresses.x7d(chain), 18, chain
         )
         if native_balance > 0:
             buttons.append(
@@ -3233,33 +3223,18 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     native_price = etherscan.get_native_price(chain)
     eth_balance = etherscan.get_native_balance(chain_info.dao_multi, chain)
     eth_dollar = eth_balance * native_price
-    x7r_balance = (
-        float(
-            etherscan.get_token_balance(
-                chain_info.dao_multi, addresses.x7r(chain), chain
-            )
-        )
-        / 10**18
+    x7r_balance = etherscan.get_token_balance(
+        chain_info.dao_multi, addresses.x7r(chain), 18, chain
     )
     x7r_price = dextools.get_price(addresses.x7r(chain), chain)[0] or 0
     x7r_dollar = float(x7r_balance) * float(x7r_price)
-    x7dao_balance = (
-        float(
-            etherscan.get_token_balance(
-                chain_info.dao_multi, addresses.x7dao(chain), chain
-            )
-        )
-        / 10**18
+    x7dao_balance = etherscan.get_token_balance(
+        chain_info.dao_multi, addresses.x7dao(chain), 18, chain
     )
     x7dao_price = dextools.get_price(addresses.x7dao(chain), chain)[0] or 0
     x7dao_dollar = float(x7dao_balance) * float(x7dao_price)
-    x7d_balance = (
-        float(
-            etherscan.get_token_balance(
-                chain_info.dao_multi, addresses.x7d(chain), chain
-            )
-        )
-        / 10**18
+    x7d_balance = etherscan.get_token_balance(
+        chain_info.dao_multi, addresses.x7d(chain), 18, chain
     )
     x7d_dollar = x7d_balance * native_price
     total = x7r_dollar + eth_dollar + x7d_dollar + x7dao_dollar
@@ -3392,27 +3367,25 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     native_price = etherscan.get_native_price(chain)
     eth_balance = float(etherscan.get_native_balance(wallet, chain)) / 10**18
     dollar = eth_balance * native_price
+
     x7r_price = dextools.get_price(addresses.x7r(chain), chain)[0] or 0
     x7dao_price = dextools.get_price(addresses.x7dao(chain), chain)[0] or 0
 
-    x7r_balance = (
-        float(etherscan.get_token_balance(wallet, addresses.x7r(chain), chain))
-        / 10**18
+    x7r_balance = etherscan.get_token_balance(
+        wallet, addresses.x7r(chain), 18, chain
     )
     x7r_dollar = float(x7r_balance) * float(x7r_price)
-    x7dao_balance = (
-        float(
-            etherscan.get_token_balance(wallet, addresses.x7dao(chain), chain)
-        )
-        / 10**18
+
+    x7dao_balance = etherscan.get_token_balance(
+        wallet, addresses.x7dao(chain), 18, chain
     )
     x7dao_dollar = float(x7dao_balance) * float(x7dao_price)
 
-    x7d_balance = (
-        float(etherscan.get_token_balance(wallet, addresses.x7d(chain), chain))
-        / 10**18
+    x7d_balance = etherscan.get_token_balance(
+        wallet, addresses.x7d(chain), 18, chain
     )
     x7d_dollar = x7d_balance * native_price
+
     total = x7d_dollar + x7r_dollar + x7dao_dollar
 
     if x7dao_balance == 0:

@@ -97,13 +97,13 @@ class Etherscan:
         data = response.json()
         return data["result"]
 
-    def get_token_balance(self, wallet, token, chain):
+    def get_token_balance(self, wallet, token, decimals, chain):
         try:
             chain_info = chains.get_active_chains()[chain]
             url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={self.key}"
             response = requests.get(url)
             data = response.json()
-            return data["result"]
+            return float(data["result"]) / 10**decimals
         except Exception:
             return 0
 
@@ -139,13 +139,3 @@ class Etherscan:
         data = response.json()
         supply = addresses.SUPPLY - int(data["result"][:-18])
         return supply
-
-
-_etherscan_instance = None
-
-
-def get_etherscan():
-    global _etherscan_instance
-    if _etherscan_instance is None:
-        _etherscan_instance = Etherscan()
-    return _etherscan_instance

@@ -159,9 +159,8 @@ def get_hub_split(chain, address, token):
         except Exception:
             pass
 
-    balance = (
-        float(etherscan.get_token_balance(address, token_info.ca, chain))
-        / 10**18
+    balance = etherscan.get_token_balance(
+        address, token_info.ca, 18, chain
     ) - float(token_liquidity_balance)
     balance_dollar = float(price) * float(balance)
     balance_text = f"{balance:,.0f} {token.upper()} (${balance_dollar:,.0f})"
@@ -259,10 +258,11 @@ def get_push_settings(chain):
                 etherscan.get_token_balance(
                     addresses.x7r_liquidity_hub(chain),
                     addresses.x7r(chain),
+                    18,
                     chain,
                 )
             )
-            - contract.functions.x7rLiquidityBalance().call(),
+            - contract.functions.x7rLiquidityBalance().call() / 10**18,
         },
         "x7dao": {
             "address": addresses.x7dao_liquidity_hub(chain),
@@ -275,10 +275,11 @@ def get_push_settings(chain):
                 etherscan.get_token_balance(
                     addresses.x7dao_liquidity_hub(chain),
                     addresses.x7dao(chain),
+                    18,
                     chain,
                 )
             )
-            - contract.functions.x7daoLiquidityBalance().call(),
+            - contract.functions.x7daoLiquidityBalance().call() / 10**18,
         },
         "x7101": {
             "address": addresses.x7100_liquidity_hub(chain),
@@ -287,11 +288,16 @@ def get_push_settings(chain):
             "token_address": addresses.x7102(chain),
             "threshold": 10000,
             "contract_type": "hub",
-            "calculate_tokens": lambda _: etherscan.get_token_balance(
+            "calculate_tokens": lambda contract: etherscan.get_token_balance(
                 addresses.x7100_liquidity_hub(chain),
                 addresses.x7102(chain),
+                18,
                 chain,
-            ),
+            )
+            - contract.functions.liquidityTokenBalance(
+                addresses.x7101(chain)
+            ).call()
+            / 10**18,
         },
         "x7102": {
             "address": addresses.x7100_liquidity_hub(chain),
@@ -300,11 +306,16 @@ def get_push_settings(chain):
             "token_address": addresses.x7102(chain),
             "threshold": 10000,
             "contract_type": "hub",
-            "calculate_tokens": lambda _: etherscan.get_token_balance(
+            "calculate_tokens": lambda contract: etherscan.get_token_balance(
                 addresses.x7100_liquidity_hub(chain),
                 addresses.x7102(chain),
+                18,
                 chain,
-            ),
+            )
+            - contract.functions.liquidityTokenBalance(
+                addresses.x7102(chain)
+            ).call()
+            / 10**18,
         },
         "x7103": {
             "address": addresses.x7100_liquidity_hub(chain),
@@ -313,11 +324,16 @@ def get_push_settings(chain):
             "token_address": addresses.x7103(chain),
             "threshold": 10000,
             "contract_type": "hub",
-            "calculate_tokens": lambda _: etherscan.get_token_balance(
+            "calculate_tokens": lambda contract: etherscan.get_token_balance(
                 addresses.x7100_liquidity_hub(chain),
                 addresses.x7103(chain),
+                18,
                 chain,
-            ),
+            )
+            - contract.functions.liquidityTokenBalance(
+                addresses.x7103(chain)
+            ).call()
+            / 10**18,
         },
         "x7104": {
             "address": addresses.x7100_liquidity_hub(chain),
@@ -326,11 +342,16 @@ def get_push_settings(chain):
             "token_address": addresses.x7104(chain),
             "threshold": 10000,
             "contract_type": "hub",
-            "calculate_tokens": lambda _: etherscan.get_token_balance(
+            "calculate_tokens": lambda contract: etherscan.get_token_balance(
                 addresses.x7100_liquidity_hub(chain),
                 addresses.x7104(chain),
+                18,
                 chain,
-            ),
+            )
+            - contract.functions.liquidityTokenBalance(
+                addresses.x7104(chain)
+            ).call()
+            / 10**18,
         },
         "x7105": {
             "address": addresses.x7100_liquidity_hub(chain),
@@ -339,10 +360,15 @@ def get_push_settings(chain):
             "token_address": addresses.x7105(chain),
             "threshold": 10000,
             "contract_type": "hub",
-            "calculate_tokens": lambda _: etherscan.get_token_balance(
+            "calculate_tokens": lambda contract: etherscan.get_token_balance(
                 addresses.x7100_liquidity_hub(chain),
                 addresses.x7105(chain),
+                18,
                 chain,
-            ),
+            )
+            - contract.functions.liquidityTokenBalance(
+                addresses.x7105(chain)
+            ).call()
+            / 10**18,
         },
     }
