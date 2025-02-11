@@ -510,6 +510,25 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def ca(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chain = " ".join(context.args).lower() or chains.get_chain(
+        update.effective_message.message_thread_id
+    )
+    chain_info, error_message = chains.get_info(chain, token=True)
+    if error_message:
+        await update.message.reply_text(error_message)
+        return
+
+    await update.message.reply_photo(
+        photo=tools.get_random_pioneer(),
+        caption=f"*X7 Finance Contract Addresses ({chain_info.name})*\n\n"
+        f"*X7R - Rewards Token *\n`{addresses.x7r(chain)}`\n\n"
+        f"*X7DAO - Governance Token*\n`{addresses.x7dao(chain)}`\n\n"
+        f"For advanced trading and arbitrage opportunities see `/constellations`",
+        parse_mode="Markdown",
+    )
+
+
 async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
         [InlineKeyboardButton(text="X7 Portal", url=urls.TG_PORTAL)],
@@ -698,25 +717,6 @@ async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"`{addresses.x7104(chain)}`\n\n"
         f"X7105\n"
         f"`{addresses.x7105(chain)}`",
-        parse_mode="Markdown",
-    )
-
-
-async def contracts(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
-        update.effective_message.message_thread_id
-    )
-    chain_info, error_message = chains.get_info(chain, token=True)
-    if error_message:
-        await update.message.reply_text(error_message)
-        return
-
-    await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
-        caption=f"*X7 Finance Contract Addresses ({chain_info.name})*\n\n"
-        f"*X7R - Rewards Token *\n`{addresses.x7r(chain)}`\n\n"
-        f"*X7DAO - Governance Token*\n`{addresses.x7dao(chain)}`\n\n"
-        f"For advanced trading and arbitrage opportunities see `/constellations`",
         parse_mode="Markdown",
     )
 
@@ -3644,12 +3644,12 @@ LIST = [
         (borrow, "Loan rates"),
         (burn, "Burn info"),
         (buy, "Buy links"),
+        (ca, "Contract addresses"),
         (channels, "X7 channels"),
         (chart, "Charts links"),
         (check, "Check valid input"),
         (compare, "Compare token metrics"),
         (constellations, "Constellations"),
-        (contracts, "Contract addresses"),
         (contribute, "Contribute to X7"),
         (convert, "Convert token values"),
         (dao_command, "DAO info"),
