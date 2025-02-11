@@ -82,6 +82,8 @@ async def log_loop(
                 try:
                     current_block = w3.eth.block_number
                     from_block = latest_block + 1
+                    if from_block > current_block:
+                        from_block = current_block
 
                     pair_logs = w3.eth.get_logs(
                         {
@@ -150,6 +152,8 @@ async def log_loop(
                             )
 
                     context.bot_data[f"last_block_{chain}"] = current_block
+                    latest_block = current_block
+
                     await asyncio.sleep(poll_interval)
 
                 except Exception as e:
