@@ -240,7 +240,7 @@ async def loan_alert(event, chain):
         fill=(255, 255, 255),
     )
     image_buffer = io.BytesIO()
-    im1.save(image_buffer, format="JPEG")
+    im1.save(image_buffer, format="PNG")
     image_buffer.seek(0)
 
     caption = (
@@ -360,7 +360,7 @@ async def pair_alert(event, chain):
         fill=(255, 255, 255),
     )
     image_buffer = io.BytesIO()
-    im1.save(image_buffer, format="JPEG")
+    im1.save(image_buffer, format="PNG")
     image_buffer.seek(0)
 
     caption = (
@@ -457,7 +457,7 @@ async def token_alert(event, chain):
         y_offset += line_height + 5
 
     image_buffer = io.BytesIO()
-    im1.save(image_buffer, format="JPEG")
+    im1.save(image_buffer, format="PNG")
     image_buffer.seek(0)
 
     caption = (

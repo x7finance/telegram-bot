@@ -1693,7 +1693,6 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 address=chain_info.w3.to_checksum_address(term),
                 abi=abis.read("ill005"),
             )
-            print("yees")
             index = 0
             while True:
                 try:
@@ -1708,7 +1707,6 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     break
 
             ill_number = tools.get_ill_number(term)
-            print(ill_number)
 
         loan_text = (
             f"Total: {amount}\nLive: {live_loans:.0f}\n{latest_loan_text}\n"
