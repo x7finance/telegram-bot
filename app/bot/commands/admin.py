@@ -15,7 +15,22 @@ from services import get_dbmanager
 db = get_dbmanager()
 
 
-async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def clickme(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if tools.is_admin(update.effective_user.id):
+        if db.settings_get("click_me"):
+            await auto.button_send(context)
+        else:
+            await update.message.reply_text("Click Me is disabled")
+
+
+async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if tools.is_admin(update.effective_user.id):
+        user_to_remove = " ".join(context.args)
+        result = db.wallet_remove(user_to_remove)
+        await update.message.reply_text(result)
+
+
+async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
         settings = db.settings_get_all()
         if not settings:
@@ -45,21 +60,6 @@ async def command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"Wallet users: {count}", reply_markup=reply_markup
         )
-
-
-async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if tools.is_admin(update.effective_user.id):
-        if db.settings_get("click_me"):
-            await auto.button_send(context)
-        else:
-            await update.message.reply_text("Click Me is disabled")
-
-
-async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if tools.is_admin(update.effective_user.id):
-        user_to_remove = " ".join(context.args)
-        result = db.wallet_remove(user_to_remove)
-        await update.message.reply_text(result)
 
 
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -215,7 +215,8 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 status.append("🔴 Twitter: Connection failed (Unknown Error)")
 
         await update.message.reply_text(
-            "*X7 Finance Telegram Bot API Status*\n\n" + "\n".join(status),
+            "*X7 Finance Telegram Bot Services Status*\n\n"
+            + "\n".join(status),
             parse_mode="Markdown",
         )
 
@@ -243,3 +244,15 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(
                     "Next Click Me:\n\nDisabled\n\n"
                 )
+
+
+LIST = [
+    (func.__name__.split("_")[0], func, description)
+    for func, description in [
+        (settings_command, "Bot settings"),
+        (clickme, "Click me feature"),
+        (remove, "Remove an entry"),
+        (status, "View bot status"),
+        (wen, "Check wen details"),
+    ]
+]

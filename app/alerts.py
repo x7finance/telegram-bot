@@ -39,6 +39,7 @@ async def error(context):
 async def log_loop(
     chain, context: ContextTypes.DEFAULT_TYPE, poll_interval=POLL_INTERVAL
 ):
+    print(f"🔄 Initializing {chain.upper()} alerts...")
     while True:
         try:
             w3 = chains.MAINNETS[chain].w3
@@ -64,6 +65,8 @@ async def log_loop(
             latest_block = context.bot_data.get(
                 f"last_block_{chain}", w3.eth.block_number
             )
+
+            print(f"✅ {chain.upper()} alerts initialized")
 
             pair_created_topic = tools.get_event_topic(
                 "factory", "PairCreated", chain
@@ -522,6 +525,7 @@ async def token_alert(event, chain):
 
 
 async def main():
+    print("🔄 initializing alerts...")
     tasks = [
         asyncio.create_task(log_loop(chain, application))
         for chain, chain_info in chains.MAINNETS.items()

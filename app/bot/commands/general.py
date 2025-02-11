@@ -112,7 +112,7 @@ async def announcements(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def arb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def arbitrage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) == 0:
         await update.message.reply_text(
             "Please follow the command with an X7 token name"
@@ -3631,3 +3631,80 @@ async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     await pricebot.command(update, context, search, chain)
+
+
+LIST = [
+    (func.__name__.split("_")[0], func, description)
+    for func, description in [
+        (about, "About X7 Finance"),
+        (admins, "List of admins"),
+        (alerts, "Xchange Alerts Channel"),
+        (announcements, "Latest announcements"),
+        (arbitrage, "Arbitrage opportunities"),
+        (blocks, "Block info"),
+        (blog, "Read the latest blog posts"),
+        (borrow, "Loan rates"),
+        (burn, "Burn info"),
+        (buy, "Buy links"),
+        (channels, "X7 channels"),
+        (chart, "Charts links"),
+        (check, "Check valid input"),
+        (compare, "Compare token metrics"),
+        (constellations, "Constellations"),
+        (contracts, "Contract addresses"),
+        (contribute, "Contribute to X7"),
+        (convert, "Convert token values"),
+        (dao_command, "DAO info"),
+        (docs, "View documentation"),
+        (ecosystem, "View ecosystem tokens"),
+        (factory, "Factory contracts"),
+        (fg, "Market fear greed data"),
+        (faq, "Frequently Asked Questions"),
+        (feeto, "X7 FeeTo info"),
+        (gas, "Check gas fees"),
+        (github_command, "View GitHub repository"),
+        (holders, "Check token holders"),
+        (hub, "View hubs and buybacks"),
+        (leaderboard, "View leaderboard"),
+        (links, "View important links"),
+        (liquidate, "Liquidate loans"),
+        (liquidity, "View liquidity details"),
+        (loan, "Check active loans"),
+        (locks, "View token locks"),
+        (me, "Check your balance"),
+        (mcap, "Check market cap"),
+        (media_command, "View media links"),
+        (nft, "View NFTs"),
+        (onchains, "View onchain messages"),
+        (pair, "Check trading pairs"),
+        (pioneer, "Pioneer information"),
+        (pool, "View lending pool"),
+        (price, "Check token prices"),
+        (pushall, "Push X7 splitters"),
+        (register, "Register a wallet"),
+        (router, "View router contracts"),
+        (smart, "X7 smart contracts"),
+        (spaces, "Check available spaces"),
+        (splitters_command, "View splitters"),
+        (tax_command, "Check tax"),
+        (timestamp_command, "Convert timestamps"),
+        (time_command, "View system time"),
+        (treasury, "View treasury details"),
+        (top, "View trending tokens"),
+        (twitter_command, "Twitter link"),
+        (volume, "Check trading volume"),
+        (wallet, "View wallet information"),
+        (website, "Website link"),
+        (wei, "Convert values to Wei"),
+        (wp, "Read the whitepaper"),
+        (x7r, "View X7R details"),
+        (x7d, "View X7D details"),
+        (x7dao, "View X7DAO details"),
+        (x7101, "View X7101 details"),
+        (x7102, "View X7102 details"),
+        (x7103, "View X7103 details"),
+        (x7104, "View X7104 details"),
+        (x7105, "View X7105 details"),
+        (x, "X7 Price Bot"),
+    ]
+]
