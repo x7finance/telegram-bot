@@ -8,6 +8,15 @@ class Twitter:
             bearer_token=os.getenv("TWITTER_BEARER_TOKEN")
         )
 
+    def ping(self):
+        try:
+            response = self.client.get_user(username="x7_finance")
+            if response and response.data:
+                return True
+            return "🔴 Twitter: Connection failed (No data returned)"
+        except tweepy.TweepyException as e:
+            return f"🔴 Twitter: Connection failed: {e}"
+
     def get_user_data(self, username):
         try:
             user = self.client.get_user(

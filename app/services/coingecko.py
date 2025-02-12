@@ -7,6 +7,15 @@ class Coingecko:
     def __init__(self):
         self.url = "https://api.coingecko.com/api/v3/"
 
+    def ping(self):
+        try:
+            response = requests.get(f"{self.url}ping", timeout=5)
+            if response.status_code == 200:
+                return True
+            return f"🔴 CoinGecko: Connection failed: {response.status_code}"
+        except requests.RequestException as e:
+            return f"🔴 CoinGecko: Connection failed: {str(e)}"
+
     def get_ath(self, token):
         endpoint = (
             f"coins/{token.lower()}?localization=false&tickers=false&market_data="

@@ -10,6 +10,20 @@ class Etherscan:
         self.url = "https://api.etherscan.io/v2/api"
         self.key = os.getenv("ETHERSCAN_API_KEY")
 
+    def ping(self):
+        try:
+            params = {
+                "module": "proxy",
+                "action": "eth_blockNumber",
+                "apikey": self.key,
+            }
+            response = requests.get(self.url, params=params, timeout=5)
+            if response.status_code == 200:
+                return True
+            return f"🔴 Etherscan: Connection failed: {response.status_code}"
+        except requests.RequestException as e:
+            return f"🔴 Etherscan: Connection failed: {str(e)}"
+
     def get_abi(self, contract, chain):
         chain_info = chains.get_active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=contract&action=getsourcecode&address={contract}&apikey={self.key}"

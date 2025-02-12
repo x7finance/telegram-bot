@@ -2,7 +2,7 @@ import os
 import requests
 from datetime import datetime
 
-from constants.protocol import chains
+from constants.protocol import addresses, chains
 
 
 class Blockspan:
@@ -13,6 +13,18 @@ class Blockspan:
             "accept": "application/json",
             "X-API-KEY": os.getenv("BLOCKSPAN_API_KEY"),
         }
+
+    def ping(self):
+        try:
+            endpoint = (
+                f"collections/contract/{addresses.PIONEER}?chain=eth-main"
+            )
+            response = requests.get(self.url + endpoint, headers=self.headers)
+            if response.status_code == 200:
+                return True
+            return f"🔴 Blockspan: Connection failed: {response.status_code} - {response.text}"
+        except requests.RequestException as e:
+            return f"🔴 Blockspan: Connection failed: {str(e)}"
 
     def get_nft_data(self, nft, chain):
         try:

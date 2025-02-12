@@ -10,6 +10,19 @@ class Opensea:
         }
         self.url = "https://api.opensea.io/v2/"
 
+    def ping(self):
+        try:
+            response = requests.get(
+                self.url + "collections/opensea",
+                headers=self.headers,
+                timeout=5,
+            )
+            if response.status_code == 200:
+                return True
+            return f"🔴 OpenSea: Connection failed: {response.status_code} {response.text}"
+        except requests.RequestException as e:
+            return f"🔴 OpenSea: Connection Failed: {e}"
+
     def get_nft_collection(self, slug):
         endpoint = f"collections/{slug}"
         response = requests.get(self.url + endpoint, headers=self.headers)

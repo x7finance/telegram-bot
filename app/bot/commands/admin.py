@@ -3,16 +3,34 @@ from telegram.ext import ContextTypes
 
 import os
 import requests
-import tweepy
 from datetime import datetime, timedelta
 
 from bot import auto
 from constants.bot import settings
-from constants.protocol import addresses
 from utils import tools
-from services import get_dbmanager
+from services import (
+    get_blockspan,
+    get_coingecko,
+    get_dbmanager,
+    get_dextools,
+    get_dune,
+    get_etherscan,
+    get_github,
+    get_opensea,
+    get_snapshot,
+    get_twitter,
+)
 
+blockspan = get_blockspan()
+cg = get_coingecko()
 db = get_dbmanager()
+dextools = get_dextools()
+dune = get_dune()
+etherscan = get_etherscan()
+github = get_github()
+opensea = get_opensea()
+snapshot = get_snapshot()
+twitter = get_twitter()
 
 
 async def clickme(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -66,69 +84,35 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
         status = []
 
-        blockspan_url = f"https://api.blockspan.com/v1/collections/contract/{addresses.PIONEER}?chain=eth-main"
-        blockspan_headers = {
-            "accept": "application/json",
-            "X-API-KEY": os.getenv("BLOCKSPAN_API_KEY"),
-        }
-        blockspan_response = requests.get(
-            blockspan_url, headers=blockspan_headers
-        )
-        if blockspan_response.status_code == 200:
-            status.append("🟢 Blockspan: Connected Successfully")
+        blockspan_result = blockspan.ping()
+        if blockspan_result is True:
+            status.append("🟢 Bloackspan: Connected Successfully")
         else:
-            status.append(
-                f"🔴 Blockspan: Connection failed with status {blockspan_response.status_code}"
-            )
+            status.append(blockspan_result)
 
-        cg_url = "https://api.coingecko.com/api/v3/ping"
-        cg_response = requests.get(cg_url)
-        if cg_response.status_code == 200:
+        cg_result = cg.ping()
+        if cg_result is True:
             status.append("🟢 CoinGecko: Connected Successfully")
         else:
-            status.append(
-                f"🔴 CoinGecko: Connection failed with status {cg_response.status_code}"
-            )
+            status.append(cg_result)
 
-        defined_headers = {
-            "Content-Type": "application/json",
-            "Authorization": os.getenv("DEFINED_API_KEY"),
-        }
-        defined_query = f"""query {{
-            listPairsWithMetadataForToken (tokenAddress: "{addresses.x7r("eth")}" networkId: 1) {{
-                results {{
-                    pair {{
-                        address
-                    }}
-                }}
-            }}
-            }}"""
-        defined_response = requests.post(
-            "https://graph.defined.fi/graphql",
-            headers=defined_headers,
-            json={"query": defined_query},
-        )
-        if defined_response.status_code == 200:
+        db_result = db.ping()
+        if db_result is True:
+            status.append("🟢 MySql: Connected Successfully")
+        else:
+            status.append(db_result)
+
+        defined_result = dextools.ping()
+        if defined_result is True:
             status.append("🟢 Defined: Connected Successfully")
         else:
-            status.append(
-                f"🔴 Defined: Connection failed with status {defined_response.status_code}"
-            )
+            status.append(defined_result)
 
-        dextools_url = "http://public-api.dextools.io/trial/v2/token/ethereum/TOKEN_ADDRESS/price"
-        dextools_headers = {
-            "accept": "application/json",
-            "x-api-key": os.getenv("DEXTOOLS_API_KEY"),
-        }
-        dextools_response = requests.get(
-            dextools_url, headers=dextools_headers
-        )
-        if dextools_response.status_code == 200:
+        dextools_result = dextools.ping()
+        if dextools_result is True:
             status.append("🟢 Dextools: Connected Successfully")
         else:
-            status.append(
-                f"🔴 Dextools: Connection failed with status {dextools_response.status_code}"
-            )
+            status.append(dextools_result)
 
         drpc_url = f"https://lb.drpc.org/ogrpc?network=ethereum&dkey={os.getenv('DRPC_API_KEY')}"
         drpc_payload = {
@@ -137,86 +121,55 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "params": [],
             "id": 1,
         }
-        drpc_response = requests.post(drpc_url, json=drpc_payload)
-        if drpc_response.status_code == 200:
-            status.append("🟢 DRPC: Connected Successfully")
-        else:
-            status.append(
-                f"🔴 DRPC: Connection failed with status {drpc_response.status_code}"
-            )
+        try:
+            drpc_response = requests.post(drpc_url, json=drpc_payload)
+            if drpc_response.status_code == 200:
+                status.append("🟢 DRPC: Connected Successfully")
+            else:
+                status.append(
+                    f"🔴 DRPC: Connection failed: {drpc_response.status_code}"
+                )
+        except Exception as e:
+            status.append(f"🔴 DRPC: Connection failed: {str(e)}")
 
-        etherscan_url = "https://api.etherscan.io/v2/api"
-        etherscan_key = os.getenv("ETHERSCAN_API_KEY")
-        etherscan_url = f"{etherscan_url}?module=stats&action=ethprice&apikey={etherscan_key}"
-        etherscan_response = requests.get(etherscan_url)
-        if etherscan_response.status_code == 200:
+        dune_result = dune.ping()
+        if dune_result is True:
+            status.append("🟢 Dune: Connected Successfully")
+        else:
+            status.append(dune_result)
+
+        etherscan_result = etherscan.ping()
+        if etherscan_result is True:
             status.append("🟢 Etherscan: Connected Successfully")
         else:
-            status.append(
-                f"🔴 Etherscan: Connection failed with status {etherscan_response.status_code}"
-            )
+            status.append(etherscan_result)
 
-        github_url = "https://api.github.com/repos/x7finance/monorepo/issues"
-        github_headers = {"Authorization": f"token {os.getenv('GITHUB_PAT')}"}
-        response = requests.get(github_url, headers=github_headers)
-        if response.status_code == 200:
+        github_result = github.ping()
+        if github_result is True:
             status.append("🟢 GitHub: Connected Successfully")
         else:
-            status.append(
-                f"🔴 GitHub: Connection failed with status {response.status_code}"
-            )
+            status.append(github_result)
 
-        opensea_url = f"https://api.opensea.io/v2/chain/ethereum/contract/{addresses.PIONEER}/nfts/2"
-        opensea_headers = {
-            "accept": "application/json",
-            "X-API-KEY": os.getenv("OPENSEA_API_KEY"),
-        }
-        opensea_response = requests.get(opensea_url, headers=opensea_headers)
-        if opensea_response.status_code == 200:
+        opensea_result = opensea.ping()
+        if opensea_result is True:
             status.append("🟢 Opensea: Connected Successfully")
         else:
-            status.append(
-                f"🔴 Opensea: Connection failed with status {opensea_response.status_code}"
-            )
+            status.append(opensea_result)
 
-        snapshot_url = "https://hub.snapshot.org/graphql"
-        snapshot_query = {
-            "query": 'query { proposals ( first: 1, skip: 0, where: { space_in: ["x7finance.eth"]}, '
-            'orderBy: "created", orderDirection: desc ) { id title start end snapshot state choices '
-            "scores scores_total author }}"
-        }
-        snapshot_response = requests.get(snapshot_url, snapshot_query)
-
-        if snapshot_response.status_code == 200:
+        snapshot_result = snapshot.ping()
+        if snapshot_result is True:
             status.append("🟢 Snapshot: Connected Successfully")
-        else:
-            status.append(
-                f"🔴 Snashot: Connection failed with status {response.status_code}"
-            )
+        elif isinstance(snapshot_result, str):
+            status.append(snapshot_result)
 
-        try:
-            twitter_client = tweepy.Client(
-                bearer_token=os.getenv("TWITTER_BEARER_TOKEN")
-            )
-            response = twitter_client.get_user(username="x7_finance")
-            if response.data:
-                status.append("🟢 Twitter: Connected Successfully")
-            else:
-                status.append(
-                    "🔴 Twitter: Connection failed (No data returned)"
-                )
-        except tweepy.TweepyException as e:
-            if hasattr(e, "response") and e.response is not None:
-                status_code = e.response.status_code
-                status.append(
-                    f"🔴 Twitter: Connection failed with status {status_code}"
-                )
-            else:
-                status.append("🔴 Twitter: Connection failed (Unknown Error)")
+        twitter_result = twitter.ping()
+        if twitter_result is True:
+            status.append("🟢 Twitter: Connected Successfully")
+        else:
+            status.append(twitter_result)
 
         await update.message.reply_text(
-            "*X7 Finance Telegram Bot Services Status*\n\n"
-            + "\n".join(status),
+            "X7 Finance Telegram Bot Services Status\n\n" + "\n".join(status),
             parse_mode="Markdown",
         )
 

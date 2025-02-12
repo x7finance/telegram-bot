@@ -9,6 +9,17 @@ class GitHub:
         self.url = "https://api.github.com/repos/x7finance/monorepo/"
         self.headers = {"Authorization": f"token {os.getenv('GITHUB_PAT')}"}
 
+    def ping(self):
+        try:
+            response = requests.get(
+                self.url.rstrip("/"), headers=self.headers, timeout=5
+            )
+            if response.status_code == 200:
+                return True
+            return f"🔴 GitHub: Connection failed: {response.status_code} {response.text}"
+        except requests.RequestException as e:
+            return f"🔴 GitHub: Connection failed: {e}"
+
     def get_issues(self):
         endpoint = "issues"
         issues = []
@@ -95,7 +106,7 @@ class GitHub:
         return f"Latest Commit:\n{message}\nCreated By: {created_by}\nCreated At: {created_at}\nURL: {url}"
 
     def get_pull_requests(self):
-        endpoint = "pulls"
+        endpoint = "/pulls"
         pull_requests = []
         page = 1
 

@@ -30,6 +30,20 @@ class Dune:
         self.top_last_date = {}
         self.error = "Unable to get Dune data. Please use the link below"
 
+    def ping(self):
+        try:
+            response = requests.post(
+                f"{self.base_url}query/{self.volume_id}/execute",
+                headers=self.header,
+                params={"performance": "small"},
+                timeout=5,
+            )
+            if response.status_code == 200:
+                return True
+            return f"🔴 Dune: Connection failed: {response.status_code}"
+        except requests.RequestException as e:
+            return f"🔴 Dune: Connection failed: {str(e)}"
+
     def make_api_url(self, module, action, identifier):
         return f"{self.base_url}{module}/{identifier}/{action}"
 

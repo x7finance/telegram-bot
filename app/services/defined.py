@@ -13,6 +13,21 @@ class Defined:
             "Authorization": os.getenv("DEFINED_API_KEY"),
         }
 
+    def ping(self):
+        try:
+            query = """query { getTokenPrices(inputs: []) { priceUsd } }"""
+            response = requests.post(
+                self.url,
+                headers=self.headers,
+                json={"query": query},
+                timeout=5,
+            )
+            if response.status_code == 200:
+                return True
+            return f"🔴 Defined: Connection failed: {response.status_code}"
+        except requests.RequestException as e:
+            return f"🔴 Defined: Connection failed: {str(e)}"
+
     def get_price_change(self, address, chain):
         chain_info = chains.get_active_chains()[chain]
 

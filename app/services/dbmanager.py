@@ -50,6 +50,16 @@ class DBManager:
             if connection:
                 connection.close()
 
+    def ping(self):
+        try:
+            connection = self._connect()
+            if connection.is_connected():
+                connection.close()
+                return True
+            return "🔴 MySql: Connection failed: (Unknown error)"
+        except mysql.connector.Error as e:
+            return f"🔴 MySql: Connection failed: {str(e)}"
+
     def clicks_check_is_fastest(self, time_to_check):
         query = "SELECT MIN(time_taken) FROM leaderboard WHERE time_taken IS NOT NULL"
         fastest_time = self._execute_query(query, fetch_one=True)

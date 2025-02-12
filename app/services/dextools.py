@@ -13,6 +13,16 @@ class Dextools:
         }
         self.url = f"http://public-api.dextools.io/{self.plan}/v2/"
 
+    def ping(self):
+        try:
+            endpoint = "token/ethereum/TOKEN_ADDRESS/price"
+            response = requests.get(self.url + endpoint, headers=self.headers)
+            if response.status_code == 200:
+                return True
+            return f"🔴 Dextools: Connection failed: {response.status_code}"
+        except requests.RequestException as e:
+            return f"🔴 Dextools: Connection failed: {str(e)}"
+
     def get_audit(self, address, chain):
         chain_info = chains.get_active_chains()[chain]
         endpoint = f"token/{chain_info.dext}/{address}/audit"
