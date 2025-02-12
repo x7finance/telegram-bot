@@ -51,8 +51,7 @@ def get_event_topic(contract, event_name, chain):
 
 
 def get_ill_number(term: str) -> str | None:
-    """Returns the ill_number for a given contract address, or None if not found."""
-    for chain in ["eth", "base", "arb", "bsc", "op", "poly"]:
+    for chain in chains.get_active_chains():
         for ill_number, contract_address in addresses.ill_addresses(
             chain
         ).items():

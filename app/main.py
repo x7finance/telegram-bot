@@ -64,7 +64,7 @@ async def error(update: Update, context: CallbackContext):
 
 
 def init_alerts_bot():
-    print("🔄 initializing alerts bot...")
+    print("🔄 Initializing alerts bot...")
     python_executable = sys.executable
     script_path = Path(__file__).parent / "alerts.py"
 
@@ -74,7 +74,7 @@ def init_alerts_bot():
 
 
 def init_main_bot():
-    print("🔄 initializing main bot...")
+    print("🔄 Initializing main bot...")
     application.add_error_handler(error)
 
     for cmd, handler, _ in general.LIST:

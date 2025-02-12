@@ -529,7 +529,7 @@ async def token_alert(event, chain):
 
 
 async def main():
-    print("🔄 initializing alerts...")
+    print("🔄 Initializing alerts...")
     tasks = [
         asyncio.create_task(log_loop(chain, application))
         for chain, chain_info in chains.MAINNETS.items()
