@@ -82,11 +82,16 @@ async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
+        message = await update.message.reply_text(
+            "Pinging services, Please wait..."
+        )
+        await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
         status = []
 
         blockspan_result = blockspan.ping()
         if blockspan_result is True:
-            status.append("🟢 Bloackspan: Connected Successfully")
+            status.append("🟢 Blockspan: Connected Successfully")
         else:
             status.append(blockspan_result)
 
@@ -168,6 +173,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             status.append(twitter_result)
 
+        await message.delete()
         await update.message.reply_text(
             "X7 Finance Telegram Bot Services Status\n\n" + "\n".join(status),
             parse_mode="Markdown",
@@ -203,9 +209,9 @@ LIST = [
     (func.__name__.split("_")[0], func, description)
     for func, description in [
         (settings_command, "Bot settings"),
-        (clickme, "Click me feature"),
-        (remove, "Remove an entry"),
+        (clickme, "Send Click Me!"),
+        (remove, "Remove an wallet"),
         (status, "View bot status"),
-        (wen, "Check wen details"),
+        (wen, "Next Click Me!"),
     ]
 ]

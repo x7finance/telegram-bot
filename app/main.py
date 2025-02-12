@@ -78,7 +78,11 @@ def init_main_bot():
     application.add_error_handler(error)
 
     for cmd, handler, _ in general.LIST:
-        application.add_handler(CommandHandler(cmd, handler))
+        if isinstance(cmd, list):
+            for alias in cmd:
+                application.add_handler(CommandHandler(alias, handler))
+        else:
+            application.add_handler(CommandHandler(cmd, handler))
 
     for cmd, handler, _ in admin.LIST:
         application.add_handler(CommandHandler(cmd, handler))
@@ -183,9 +187,19 @@ def update_bot_commands():
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     url = f"https://api.telegram.org/bot{token}/setMyCommands"
 
-    general_commands = []
-    for cmd, _, desc in general.LIST:
-        general_commands.append({"command": cmd, "description": desc})
+    general_commands = [
+        {
+            "command": cmd[0] if isinstance(cmd, list) else cmd,
+            "description": desc,
+        }
+        for cmd, _, desc in general.LIST
+    ]
+
+    admin_commands = [
+        {"command": cmd, "description": desc} for cmd, _, desc in admin.LIST
+    ]
+
+    all_commands = general_commands + admin_commands
 
     user_response = requests.post(
         url, json={"commands": general_commands, "scope": {"type": "default"}}
@@ -196,15 +210,14 @@ def update_bot_commands():
     else:
         print(f"⚠️ Failed to update general commands: {user_response.text}")
 
-    admin_commands = []
-    for cmd, _, desc in admin.LIST:
-        admin_commands.append({"command": cmd, "description": desc})
-
     admin_response = requests.post(
         url,
         json={
-            "commands": admin_commands,
-            "scope": {"type": "all_chat_administrators"},
+            "commands": all_commands,
+            "scope": {
+                "type": "chat",
+                "chat_id": int(os.getenv("TELEGRAM_ADM_ID")),
+            },
         },
     )
 

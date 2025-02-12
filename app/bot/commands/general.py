@@ -3706,3 +3706,8 @@ LIST = [
         (x, "X7 Price Bot"),
     ]
 ]
+LIST.extend(
+    [
+        (["0xtrader"], twitter_command, "0xTrader Twitter link"),
+    ]
+)
