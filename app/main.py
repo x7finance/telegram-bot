@@ -216,7 +216,7 @@ def update_bot_commands():
             "commands": all_commands,
             "scope": {
                 "type": "chat",
-                "chat_id": int(os.getenv("TELEGRAM_ADM_ID")),
+                "chat_id": int(os.getenv("TELEGRAM_ADMIN_ID")),
             },
         },
     )
