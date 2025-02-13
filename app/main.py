@@ -1,17 +1,13 @@
 from telegram import Message, Update
 from telegram.ext import (
     ApplicationBuilder,
-    CallbackContext,
     CallbackQueryHandler,
-    ChatMemberHandler,
     CommandHandler,
     ConversationHandler,
-    filters,
-    MessageHandler,
+    ContextTypes,
 )
 
 import os
-import requests
 import sys
 import sentry_sdk
 import subprocess
@@ -21,7 +17,7 @@ from warnings import filterwarnings
 
 from constants.bot import settings
 from bot.commands import admin, general
-from bot import auto, callbacks
+from bot import auto, callbacks, conversations
 from constants.bot import urls
 from utils import tools
 from services import get_dbmanager
@@ -39,7 +35,7 @@ application = (
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
 
 
-async def error(update: Update, context: CallbackContext):
+async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update is None:
         return
     if update.edited_message is not None:
@@ -77,157 +73,39 @@ def init_main_bot():
     print("🔄 Initializing main bot...")
     application.add_error_handler(error)
 
-    for cmd, handler, _ in general.LIST:
+    for cmd, handler, _ in general.HANDLERS:
         if isinstance(cmd, list):
             for alias in cmd:
                 application.add_handler(CommandHandler(alias, handler))
         else:
             application.add_handler(CommandHandler(cmd, handler))
 
-    for cmd, handler, _ in admin.LIST:
+    for cmd, handler, _ in admin.HANDLERS:
         application.add_handler(CommandHandler(cmd, handler))
 
-    callback_query_handlers = [
-        (callbacks.cancel, r"^cancel$"),
-        (callbacks.click_me, r"^click_button:\d+$"),
-        (callbacks.clicks_reset, r"^clicks_reset$"),
-        (callbacks.confirm_simple, r"^question:.*"),
-        (callbacks.liquidate, r"^liquidate:\d+:[a-z]+$"),
-        (
-            callbacks.pushall,
-            r"^push:(eco|treasury|x7r|x7dao|x710[1-5]):[a-z]+$",
-        ),
-        (callbacks.settings_toggle, r"^settings_toggle_"),
-        (callbacks.stuck, r"^stuck:.*$"),
-        (callbacks.wallet_remove, r"^wallet_remove$"),
-        (callbacks.welcome_button, r"unmute:.+"),
-    ]
-
-    for handler, pattern in callback_query_handlers:
+    for handler, pattern in callbacks.HANDLERS:
         application.add_handler(CallbackQueryHandler(handler, pattern=pattern))
 
-    x7d_conv_handler = ConversationHandler(
-        entry_points=[
-            CallbackQueryHandler(
-                callbacks.x7d_start, pattern="^(mint|redeem):.*$"
-            )
-        ],
-        states={
-            callbacks.X7D_AMOUNT: [
-                MessageHandler(
-                    filters.TEXT & ~filters.COMMAND, callbacks.x7d_amount
-                )
-            ],
-            callbacks.X7D_CONFIRM: [
-                CallbackQueryHandler(
-                    callbacks.confirm_conv, pattern="^(mint|redeem):.*$"
-                ),
-                CallbackQueryHandler(callbacks.cancel, pattern="^cancel$"),
-            ],
-        },
-        fallbacks=[CommandHandler("cancel", callbacks.cancel)],
-    )
-    application.add_handler(x7d_conv_handler)
-
-    withdraw_conv_handler = ConversationHandler(
-        entry_points=[
-            CallbackQueryHandler(
-                callbacks.withdraw_start, pattern="^withdraw:.*$"
-            )
-        ],
-        states={
-            callbacks.WITHDRAW_TOKEN: [
-                CallbackQueryHandler(
-                    callbacks.withdraw_token, pattern="^withdraw:.*$"
-                )
-            ],
-            callbacks.WITHDRAW_AMOUNT: [
-                MessageHandler(
-                    filters.TEXT & ~filters.COMMAND, callbacks.withdraw_amount
-                )
-            ],
-            callbacks.WITHDRAW_ADDRESS: [
-                MessageHandler(
-                    filters.TEXT & ~filters.COMMAND, callbacks.withdraw_address
-                )
-            ],
-            callbacks.WITHDRAW_CONFIRM: [
-                CallbackQueryHandler(
-                    callbacks.confirm_conv, pattern="^withdraw:.*$"
-                ),
-                CallbackQueryHandler(callbacks.cancel, pattern="^cancel$"),
-            ],
-        },
-        fallbacks=[CommandHandler("cancel", callbacks.cancel)],
-    )
-    application.add_handler(withdraw_conv_handler)
-
-    auto_handlers = [
-        (
-            ChatMemberHandler(
-                auto.welcome_message, ChatMemberHandler.CHAT_MEMBER
-            )
-        ),
-        (
-            MessageHandler(
-                filters.StatusUpdate._NewChatMembers(Update)
-                | filters.StatusUpdate._LeftChatMember(Update),
-                auto.welcome_delete,
-            )
-        ),
-        (MessageHandler(filters.TEXT & (~filters.COMMAND), auto.replies)),
-    ]
-
-    for handler in auto_handlers:
+    for handler in auto.HANDLERS:
         application.add_handler(handler)
+
+    for handler in conversations.HANDLERS:
+        application.add_handler(
+            ConversationHandler(
+                entry_points=handler["entry_points"],
+                states=handler["states"],
+                fallbacks=handler.get(
+                    "fallbacks", [CommandHandler("cancel", callbacks.cancel)]
+                ),
+            )
+        )
+
     print("✅ Main bot initialized")
 
 
-def update_bot_commands():
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    url = f"https://api.telegram.org/bot{token}/setMyCommands"
+def start():
+    init_main_bot()
 
-    general_commands = [
-        {
-            "command": cmd[0] if isinstance(cmd, list) else cmd,
-            "description": desc,
-        }
-        for cmd, _, desc in general.LIST
-    ]
-
-    admin_commands = [
-        {"command": cmd, "description": desc} for cmd, _, desc in admin.LIST
-    ]
-
-    all_commands = general_commands + admin_commands
-
-    user_response = requests.post(
-        url, json={"commands": general_commands, "scope": {"type": "default"}}
-    )
-
-    if user_response.status_code == 200:
-        print("✅ General commands updated")
-    else:
-        print(f"⚠️ Failed to update general commands: {user_response.text}")
-
-    admin_response = requests.post(
-        url,
-        json={
-            "commands": all_commands,
-            "scope": {
-                "type": "chat",
-                "chat_id": int(os.getenv("TELEGRAM_ADMIN_ID")),
-            },
-        },
-    )
-
-    if admin_response.status_code == 200:
-        print("✅ Admin commands updated")
-    else:
-        print(f"⚠️ Failed to update admin commands: {admin_response.text}")
-
-
-if __name__ == "__main__":
     if not tools.is_local():
         print("✅ Bot Running on server")
 
@@ -239,11 +117,17 @@ if __name__ == "__main__":
                 name="Click Me",
             )
 
-        update_bot_commands()
+        general_commands, admin_commands = tools.update_bot_commands()
+        print(general_commands)
+        print(admin_commands)
+
         init_alerts_bot()
 
     else:
         print("✅ Bot Running locally")
 
-    init_main_bot()
     application.run_polling(allowed_updates=Update.ALL_TYPES)
+
+
+if __name__ == "__main__":
+    start()

@@ -205,7 +205,7 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
 
 
-LIST = [
+HANDLERS = [
     (func.__name__.split("_")[0], func, description)
     for func, description in [
         (settings_command, "Bot settings"),

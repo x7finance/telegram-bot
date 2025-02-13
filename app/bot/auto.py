@@ -5,7 +5,12 @@ from telegram import (
     InlineKeyboardMarkup,
     Update,
 )
-from telegram.ext import ContextTypes
+from telegram.ext import (
+    ChatMemberHandler,
+    ContextTypes,
+    MessageHandler,
+    filters,
+)
 
 import random
 import time
@@ -218,3 +223,14 @@ async def welcome_message(
 
         if welcome_message:
             context.bot_data["welcome_message_id"] = welcome_message.message_id
+
+
+HANDLERS = [
+    ChatMemberHandler(welcome_message, ChatMemberHandler.CHAT_MEMBER),
+    MessageHandler(
+        filters.StatusUpdate.NEW_CHAT_MEMBERS
+        | filters.StatusUpdate.LEFT_CHAT_MEMBER,
+        welcome_delete,
+    ),
+    MessageHandler(filters.TEXT & ~filters.COMMAND, replies),
+]

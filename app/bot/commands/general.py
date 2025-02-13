@@ -1,5 +1,5 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
-from telegram.ext import CallbackContext, ContextTypes
+from telegram.ext import ContextTypes
 
 import math
 import os
@@ -1357,7 +1357,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def leaderboard(update: Update, context: CallbackContext):
+async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     board = db.clicks_get_leaderboard()
     click_counts_total = db.clicks_get_total()
     fastest_user, fastest_time = db.clicks_fastest_time()
@@ -2115,7 +2115,7 @@ async def me(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{chain_info.native.upper()} Balance: {native_balance:.4f}\n"
             f"X7D Balance: {x7d_balance}\n\n"
             f"To view balances on other chains, use `/me chain-name`\n\n"
-            f"If your TXs are failing or returning blank TXs, you likely have a stuck TX, use to the button to clear it."
+            f"If your TXs are failing, you likely have a stuck nonce, use to the button to attempt to clear it."
         )
 
         buttons.append(
@@ -3109,7 +3109,7 @@ async def timestamp_command(
         await update.message.reply_text("Timestamp not recognised")
 
 
-async def time_command(update: Update, context: CallbackContext):
+async def time_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message.text.split(" ")
     timezones = [
         ("America/Los_Angeles", "PST"),
@@ -3631,7 +3631,7 @@ async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await pricebot.command(update, context, search, chain)
 
 
-LIST = [
+HANDLERS = [
     (func.__name__.split("_")[0], func, description)
     for func, description in [
         (about, "About X7 Finance"),
@@ -3706,7 +3706,7 @@ LIST = [
         (x, "X7 Price Bot"),
     ]
 ]
-LIST.extend(
+HANDLERS.extend(
     [
         (["0xtrader"], twitter_command, "0xTrader Twitter link"),
     ]
