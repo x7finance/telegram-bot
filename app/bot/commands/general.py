@@ -27,7 +27,6 @@ from constants.protocol import (
 )
 from media import x7_images
 from services import (
-    get_blockspan,
     get_coingecko,
     get_dbmanager,
     get_defined,
@@ -40,7 +39,6 @@ from services import (
     get_twitter,
 )
 
-blockspan = get_blockspan()
 coingecko = get_coingecko()
 db = get_dbmanager()
 defined = get_defined()
@@ -2354,18 +2352,9 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
 
     native_price = etherscan.get_native_price(chain)
     if pioneer_id == "":
-        floor = blockspan.get_nft_data(addresses.PIONEER, chain)
-        if "floor_price" in floor:
-            floor_price = floor["floor_price"]
-            floor_dollar = floor_price * float(native_price)
-        else:
-            floor = coingecko.get_nft_floor(addresses.PIONEER)
-            if floor:
-                floor_price = floor["floor_price"]
-                floor_dollar = floor["floor_price_usd"]
-            else:
-                floor_price = 0
-                floor_dollar = 0
+        data = opensea.get_nft_by_slug("x7-pioneer")
+        floor_price = data["total"]["floor_price"]
+        floor_dollar = floor_price * float(native_price)
         pioneer_pool = etherscan.get_native_balance(addresses.PIONEER, "eth")
         total_dollar = float(pioneer_pool) * float(native_price)
         tx = etherscan.get_tx(addresses.PIONEER, "eth")
@@ -2423,7 +2412,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             ),
         )
     else:
-        data = opensea.get_nft_id(addresses.PIONEER, pioneer_id)
+        data = opensea.get_nft_by_id(addresses.PIONEER, pioneer_id)
         if "nft" in data and data["nft"]:
             status = data["nft"]["traits"][0]["value"]
             image_url = data["nft"]["image_url"]

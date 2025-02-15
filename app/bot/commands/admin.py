@@ -9,7 +9,6 @@ from bot import auto
 from constants.bot import settings
 from utils import tools
 from services import (
-    get_blockspan,
     get_coingecko,
     get_dbmanager,
     get_dextools,
@@ -21,7 +20,6 @@ from services import (
     get_twitter,
 )
 
-blockspan = get_blockspan()
 cg = get_coingecko()
 db = get_dbmanager()
 dextools = get_dextools()
@@ -88,12 +86,6 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
         status = []
-
-        blockspan_result = blockspan.ping()
-        if blockspan_result is True:
-            status.append("🟢 Blockspan: Connected Successfully")
-        else:
-            status.append(blockspan_result)
 
         cg_result = cg.ping()
         if cg_result is True:

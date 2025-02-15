@@ -25,7 +25,6 @@ class ChainInfo:
         gas: str,
         dext: str,
         opensea: str,
-        blockspan: str,
         tg: str,
         rpc_url: str,
         com_multi: str,
@@ -44,7 +43,6 @@ class ChainInfo:
         self.gas = gas
         self.dext = dext
         self.opensea = opensea
-        self.blockspan = blockspan
         self.tg = tg
         self.w3 = Web3(Web3.HTTPProvider(rpc_url))
         self.w3async = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(rpc_url))
@@ -107,7 +105,6 @@ MAINNETS = {
         gas=urls.scan_gas("eth"),
         dext="ether",
         opensea="",
-        blockspan="eth-main",
         tg=5,
         rpc_url=urls.rpc_link("eth"),
         com_multi=addresses.community_multi_sig("eth"),
@@ -127,7 +124,6 @@ MAINNETS = {
         gas=urls.scan_gas("eth"),
         dext="base",
         opensea="-base",
-        blockspan="base-main",
         tg=2,
         rpc_url=urls.rpc_link("base"),
         com_multi=addresses.community_multi_sig("base"),
@@ -147,7 +143,6 @@ MAINNETS = {
         gas=urls.scan_gas("bsc"),
         dext="bnb",
         opensea="-binance",
-        blockspan="",
         tg=797,
         rpc_url=urls.rpc_link("bsc"),
         com_multi=addresses.community_multi_sig("bsc"),
@@ -167,7 +162,6 @@ MAINNETS = {
         gas=urls.scan_gas("eth"),
         dext="arbitrum",
         opensea="-arbitrum",
-        blockspan="arbitrum-main",
         tg=793,
         rpc_url=urls.rpc_link("arb"),
         com_multi=addresses.community_multi_sig("arb"),
@@ -187,7 +181,6 @@ MAINNETS = {
         gas=urls.scan_gas("eth"),
         dext="optimism",
         opensea="-optimism",
-        blockspan="optimism-main",
         tg=795,
         rpc_url=urls.rpc_link("op"),
         com_multi=addresses.community_multi_sig("op"),
@@ -207,7 +200,6 @@ MAINNETS = {
         gas=urls.scan_gas("poly"),
         dext="polygon",
         opensea="-polygon",
-        blockspan="poly-main",
         tg=799,
         rpc_url=urls.rpc_link("poly"),
         com_multi=addresses.community_multi_sig("poly"),
@@ -231,7 +223,6 @@ TESTNETS = {
         gas=urls.scan_gas("eth"),
         dext="ether",
         opensea="",
-        blockspan="eth-sepolia",
         tg=5,
         rpc_url=urls.rpc_link("eth-sepolia"),
         com_multi=addresses.community_multi_sig("eth-sepolia"),
@@ -251,7 +242,6 @@ TESTNETS = {
         gas=urls.scan_gas("eth"),
         dext="base-testnet",
         opensea="-base-testnet",
-        blockspan="base-testnet",
         tg=2,
         rpc_url=urls.rpc_link("base-sepolia"),
         com_multi=addresses.community_multi_sig("base-sepolia"),

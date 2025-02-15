@@ -1,7 +1,6 @@
 import inspect
 import sys
 
-from .blockspan import Blockspan
 from .coingecko import Coingecko
 from .defined import Defined
 from .dextools import Dextools
@@ -21,10 +20,6 @@ def get_service(service_class):
     if service_class not in _cached_services:
         _cached_services[service_class] = service_class()
     return _cached_services[service_class]
-
-
-def get_blockspan() -> Blockspan:
-    return get_service(Blockspan)
 
 
 def get_coingecko() -> Coingecko:

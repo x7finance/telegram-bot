@@ -1,19 +1,3 @@
-from constants.protocol import addresses
-from services import get_blockspan
-
-blockspan = get_blockspan()
-
-
-def get_data(chain):
-    return {
-        "eco": blockspan.get_nft_data(addresses.eco_maxi(chain), chain),
-        "liq": blockspan.get_nft_data(addresses.liq_maxi(chain), chain),
-        "dex": blockspan.get_nft_data(addresses.dex_maxi(chain), chain),
-        "borrow": blockspan.get_nft_data(addresses.borrow_maxi(chain), chain),
-        "magister": blockspan.get_nft_data(addresses.magister(chain), chain),
-    }
-
-
 def get_discounts(chain):
     map = {
         "eth": {
@@ -113,7 +97,6 @@ def get_mint_prices(chain):
 def get_info(chain):
     data = {
         "chain": chain,
-        "data": get_data(chain),
         "discounts": get_discounts(chain),
         "mint_prices": get_mint_prices(chain),
     }
@@ -133,15 +116,6 @@ def get_info(chain):
         mint_price_text = data["mint_prices"].get(
             key, "Mint Price Not Available"
         )
-        total_supply = (
-            int(mint_price_text.split("\n")[0].split("-")[1].strip())
-            if "Supply" in mint_price_text
-            else 0
-        )
-        minted = data["data"].get(key, {}).get("total_tokens", 0)
-        available = total_supply - minted
-        floor_price = data["data"].get(key, {}).get("floor_price", 0)
-
         discount_info = data["discounts"].get(key, {})
         if isinstance(discount_info, dict):
             discount_text = "\n".join(
@@ -154,11 +128,7 @@ def get_info(chain):
             discount_text = f"> {discount_info}" if discount_info else ""
 
         output.append(
-            f"*{display_name}*\n"
-            f"Available - {available}\n"
-            f"{mint_price_text}\n"
-            f"Floor price - {floor_price} ETH\n"
-            f"{discount_text}\n"
+            f"*{display_name}*\n{mint_price_text}\n{discount_text}\n"
         )
 
     return "\n".join(output).strip()
