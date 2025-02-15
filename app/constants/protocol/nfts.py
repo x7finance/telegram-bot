@@ -1,3 +1,29 @@
+import time
+
+from constants.protocol import addresses
+from services import get_moralis
+
+moralis = get_moralis()
+
+
+def get_data(chain):
+    map = {
+        "eco": addresses.eco_maxi(chain),
+        "liq": addresses.liq_maxi(chain),
+        "dex": addresses.dex_maxi(chain),
+        "borrow": addresses.borrow_maxi(chain),
+        "magister": addresses.magister(chain),
+    }
+
+    results = {}
+
+    for key, contract_address in map.items():
+        results[key] = moralis.get_nft_stats(contract_address, chain)
+        time.sleep(1)
+
+    return results
+
+
 def get_discounts(chain):
     map = {
         "eth": {
@@ -97,6 +123,7 @@ def get_mint_prices(chain):
 def get_info(chain):
     data = {
         "chain": chain,
+        "data": get_data(chain),
         "discounts": get_discounts(chain),
         "mint_prices": get_mint_prices(chain),
     }
@@ -116,6 +143,13 @@ def get_info(chain):
         mint_price_text = data["mint_prices"].get(
             key, "Mint Price Not Available"
         )
+        total_supply = (
+            int(mint_price_text.split("\n")[0].split("-")[1].strip())
+            if "Supply" in mint_price_text
+            else 0
+        )
+        minted = int(data["data"].get(key, {}).get("total_tokens", 0))
+        available = total_supply - minted
         discount_info = data["discounts"].get(key, {})
         if isinstance(discount_info, dict):
             discount_text = "\n".join(
@@ -128,7 +162,7 @@ def get_info(chain):
             discount_text = f"> {discount_info}" if discount_info else ""
 
         output.append(
-            f"*{display_name}*\n{mint_price_text}\n{discount_text}\n"
+            f"*{display_name}*\nAvailable - {available}\n{mint_price_text}\n{discount_text}\n"
         )
 
     return "\n".join(output).strip()

@@ -22,7 +22,7 @@ defined = get_defined()
 dextools = get_dextools()
 etherscan = get_etherscan()
 
-sentry_sdk.init(dsn=os.getenv("SCANNER_SENTRY_DSN"), traces_sample_rate=1.0)
+sentry_sdk.init(dsn=os.getenv("SENTRY_SCANNER_DSN"), traces_sample_rate=1.0)
 
 FONT = fonts.BARTOMES
 POLL_INTERVAL = 60

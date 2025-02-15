@@ -8,6 +8,7 @@ from .dbmanager import DBManager
 from .dune import Dune
 from .etherscan import Etherscan
 from .github import GitHub
+from .moralis import Moralis
 from .opensea import Opensea
 from .snapshot import Snapshot
 from .twitter import Twitter
@@ -48,6 +49,10 @@ def get_etherscan() -> Etherscan:
 
 def get_github() -> GitHub:
     return get_service(GitHub)
+
+
+def get_moralis() -> Moralis:
+    return get_service(Moralis)
 
 
 def get_opensea() -> Opensea:
