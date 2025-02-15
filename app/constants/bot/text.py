@@ -2,22 +2,23 @@ from constants.protocol import chains
 from utils import tools
 
 
-ABOUT = (
-    "*X7 Finance - Home of Xchange*\n\n"
-    f"X7 Finance is an ecosystem of innovative smart contracts on:\n\n{chains.get_full_names()}\n\nAt the centre of the ecosystem is the X7 Finance"
-    ' Lending Pool, a pool that provides those with visionary ideas access to Initial Liquidity Loans "ILL".\n\n'
-    "At its core, Initial Liquidity Loans will provide anyone with a good idea the ability to raise 10-1000X "
-    "the amount of capital in their wallet to launch projects on Xchange.\n\n"
-    "• The network effect of project launches will result in billions of dollars in trading volume on Xchange, "
-    "a percentage of this volume will flow back into the ecosystem into our native X7 tokens.\n\n"
-    "• X7 Finance has a novel DAO governance structure that ensures complete decentralization "
-    "and censorship-resistance.\n\n"
-    "Our Telegram network and X are community-run, in the spirit of decentralization.\n\n"
-    f"• First target - Capturing 1% of the $100b daily trading volume on the EVM networks.\n\n"
-    '`"X7’s founding team believes that capital should be available to those with great ideas and that the '
-    "unflinching reliability of code and distributed consensus can provide capital while eliminating significant "
-    "downside risk.`\n\n#LongLiveDefi"
-)
+def about():
+    return (
+        "*X7 Finance - Home of Xchange*\n\n"
+        f"X7 Finance is an ecosystem of innovative smart contracts on:\n\n{chains.get_full_names()}\n\nAt the centre of the ecosystem is the X7 Finance"
+        ' Lending Pool, a pool that provides those with visionary ideas access to Initial Liquidity Loans "ILL".\n\n'
+        "At its core, Initial Liquidity Loans will provide anyone with a good idea the ability to raise 10-1000X "
+        "the amount of capital in their wallet to launch projects on Xchange.\n\n"
+        "• The network effect of project launches will result in billions of dollars in trading volume on Xchange, "
+        "a percentage of this volume will flow back into the ecosystem into our native X7 tokens.\n\n"
+        "• X7 Finance has a novel DAO governance structure that ensures complete decentralization "
+        "and censorship-resistance.\n\n"
+        "Our Telegram network and X are community-run, in the spirit of decentralization.\n\n"
+        f"• First target - Capturing 1% of the $100b daily trading volume on the EVM networks.\n\n"
+        '`"X7’s founding team believes that capital should be available to those with great ideas and that the '
+        "unflinching reliability of code and distributed consensus can provide capital while eliminating significant "
+        "downside risk.`\n\n#LongLiveDefi"
+    )
 
 
 CONTRIBUTE = (

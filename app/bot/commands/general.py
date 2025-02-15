@@ -53,7 +53,7 @@ twitter = get_twitter()
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        text.ABOUT,
+        text.about(),
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton(text="X7Finance.org", url=urls.XCHANGE)]]
