@@ -33,22 +33,6 @@ class Coingecko:
         else:
             return None
 
-    def get_nft_floor(self, nft):
-        endpoint = f"nfts/ethereum/contract/{nft}"
-        response = requests.get(self.url + endpoint)
-        data = response.json()
-        if response.status_code == 200:
-            data = response.json()
-            floor_price = data["floor_price"]["native_currency"]
-            floor_price_usd = data["floor_price"]["usd"]
-
-            return {
-                "floor_price": floor_price,
-                "floor_price_usd": floor_price_usd,
-            }
-        else:
-            return None
-
     def get_price(self, token):
         endpoint = f"simple/price?ids={token}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true"
         response = requests.get(self.url + endpoint)

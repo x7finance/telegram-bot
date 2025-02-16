@@ -66,6 +66,13 @@ class Etherscan:
         entry_count = tx_entry_count + internal_tx_entry_count
         return entry_count
 
+    def get_burnt_supply(self, token, chain):
+        chain_info = chains.get_active_chains()[chain]
+        url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={token}&address={addresses.DEAD}&tag=latest&apikey={self.key}"
+        response = requests.get(url)
+        data = response.json()
+        return int(data["result"][:-18])
+
     def get_gas(self, chain):
         chain_info = chains.get_active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=gastracker&action=gasoracle&apikey={self.key}"
@@ -94,16 +101,6 @@ class Etherscan:
         data = response.json()
         return float(data["result"][field]) / 1**18
 
-    def get_stables_balance(self, wallet, token, chain):
-        try:
-            chain_info = chains.get_active_chains()[chain]
-            url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={self.key}"
-            response = requests.get(url)
-            data = response.json()
-            return int(data["result"][:-6])
-        except Exception:
-            return 0
-
     def get_supply(self, token, chain):
         chain_info = chains.get_active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=stats&action=tokensupply&contractaddress={token}&apikey={self.key}"
@@ -121,12 +118,6 @@ class Etherscan:
         except Exception:
             return 0
 
-    def get_tx_from_hash(self, tx, chain):
-        chain_info = chains.get_active_chains()[chain]
-        url = f"{self.url}?chainid={chain_info.id}&module=proxy&action=eth_getTransactionByHash&txhash={tx}&apikey={self.key}"
-        response = requests.get(url)
-        return response.json()
-
     def get_tx(self, address, chain):
         chain_info = chains.get_active_chains()[chain]
         url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlist&sort=desc&address={address}&apikey={self.key}"
@@ -138,18 +129,3 @@ class Etherscan:
         url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlistinternal&sort=desc&address={address}&apikey={self.key}"
         response = requests.get(url)
         return response.json()
-
-    def get_verified(self, contract, chain):
-        chain_info = chains.get_active_chains()[chain]
-        url = f"{self.url}?chainid={chain_info.id}&module=contract&action=getsourcecode&address={contract}&apikey={self.key}"
-        response = requests.get(url)
-        data = response.json()
-        return True if "SourceCode" in data["result"][0] else False
-
-    def get_x7r_supply(self, chain):
-        chain_info = chains.get_active_chains()[chain]
-        url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={addresses.x7r(chain)}&address={addresses.DEAD}&tag=latest&apikey={self.key}"
-        response = requests.get(url)
-        data = response.json()
-        supply = addresses.SUPPLY - int(data["result"][:-18])
-        return supply

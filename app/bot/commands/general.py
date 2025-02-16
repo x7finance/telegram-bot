@@ -657,7 +657,9 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     token_market_cap = coingecko.get_mcap(token_id)
     if x7token == "x7r":
-        x7_supply = etherscan.get_x7r_supply(chain)
+        x7_supply = addresses.SUPPLY - etherscan.get_burnt_supply(
+            addresses.x7r(chain), chain
+        )
     else:
         x7_supply = addresses.SUPPLY
 
@@ -676,7 +678,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"{token2.upper()} Market Cap:\n"
         f"${token_market_cap:,.0f}\n\n"
         f"Token value of {x7token.upper()} at {token2.upper()} Market Cap:\n"
-        f"${token_value:,.3f}\n"
+        f"${token_value:,.2f}\n"
         f"{percent:,.0f}%\n"
         f"{x:,.3f}x",
         parse_mode="Markdown",
@@ -2351,24 +2353,37 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
     )
 
     native_price = etherscan.get_native_price(chain)
+
     if pioneer_id == "":
         data = simplehash.get_nft_data(addresses.PIONEER, chain)
-        floor_price = (
-            data.get("collections", [{}])[0].get("floor_prices") or [0]
-        )[0]
-        floor_dollar = floor_price * float(native_price)
-        pioneer_pool = etherscan.get_native_balance(addresses.PIONEER, "eth")
+
+        floor_prices = data.get("collections", [{}])[0].get("floor_prices", [])
+
+        if floor_prices:
+            lowest_floor = min(
+                floor_prices, key=lambda x: x.get("value", float("inf"))
+            )
+            floor_price_eth = lowest_floor["value"] / 10**18
+            floor_price_usd = lowest_floor.get("value_usd_cents", 0) / 100
+        else:
+            floor_price_eth, floor_price_usd = 0, 0
+
+        pioneer_pool = etherscan.get_native_balance(addresses.PIONEER, chain)
         total_dollar = float(pioneer_pool) * float(native_price)
-        tx = etherscan.get_tx(addresses.PIONEER, "eth")
+
+        tx = etherscan.get_tx(addresses.PIONEER, chain)
+
         tx_filter = [
             d
             for d in tx["result"]
             if addresses.PIONEER.lower() in d["to"].lower()
             and d.get("functionName", "") == "claimRewards(uint256[] _pids)"
         ]
+
         recent_tx = max(
             tx_filter, key=lambda tx: int(tx["timeStamp"]), default=None
         )
+
         unlock_fee = contract.functions.transferUnlockFee().call() / 10**18
         unlock_fee_dollar = float(unlock_fee) * float(native_price)
 
@@ -2391,7 +2406,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=f"*X7 Pioneer NFT Info*\n\n"
-            f"Floor Price: {floor_price:,.3f} ETH (${floor_dollar:,.0f})\n"
+            f"Floor Price: {floor_price_eth:,.3f} ETH (${floor_price_usd:,.0f})\n"
             f"Total Unclaimed Rewards: {pioneer_pool:.3f} ETH (${total_dollar:,.0f})\n"
             f"Total Claimed Rewards: {total_claimed:.3f} ETH (${total_claimed_dollar:,.0f})\n"
             f"Unlock Fee: {unlock_fee:.2f} ETH (${unlock_fee_dollar:,.0f})\n\n"
@@ -3355,7 +3370,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     native_price = etherscan.get_native_price(chain)
-    eth_balance = float(etherscan.get_native_balance(wallet, chain)) / 10**18
+    eth_balance = etherscan.get_native_balance(wallet, chain)
     dollar = eth_balance * native_price
 
     x7r_price = dextools.get_price(addresses.x7r(chain), chain)[0] or 0
@@ -3386,7 +3401,13 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
         x7r_percent = 0
     else:
         x7r_percent = round(
-            x7r_balance / etherscan.get_x7r_supply(chain) * 100, 2
+            x7r_balance
+            / (
+                addresses.SUPPLY
+                - etherscan.get_burnt_supply(addresses.x7r(chain), chain)
+            )
+            * 100,
+            2,
         )
     txs = etherscan.get_daily_tx_count(wallet, chain)
 
@@ -3405,7 +3426,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"{x7dao_balance:,.0f} X7DAO (${x7dao_dollar:,.0f}) - {x7dao_percentage}%\n"
         f"{x7d_balance:.3f} X7D (${x7d_dollar:,.0f})\n\n"
         f"{txs} tx's in the last 24 hours\n\n"
-        f"Total X7 Finance token value ${total:,.0f}",
+        f"Total X7 Finance token value:\n${total:,.0f}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [

@@ -1,4 +1,4 @@
-from constants.protocol import addresses
+from constants.protocol import addresses, chains
 from services import get_simplehash
 
 simplehash = get_simplehash()
@@ -133,6 +133,8 @@ def get_info(chain):
         "magister": "Magister",
     }
 
+    native = chains.get_active_chains()[chain].native.upper()
+
     output = []
 
     for key in names:
@@ -140,19 +142,37 @@ def get_info(chain):
         mint_price_text = data["mint_prices"].get(
             key, "Mint Price Not Available"
         )
+
         total_supply = (
             int(mint_price_text.split("\n")[0].split("-")[1].strip())
             if "Supply" in mint_price_text
             else 0
         )
+
         minted = int(
             data["data"]
             .get(key, {})
             .get("collections", [{}])[0]
             .get("total_quantity", 0)
         )
+
+        floor_prices = (
+            data["data"]
+            .get(key, {})
+            .get("collections", [{}])[0]
+            .get("floor_prices", [])
+        )
+
+        floor_price = (
+            min(floor_prices, key=lambda x: x["value"])["value"] / 10**18
+            if floor_prices
+            else 0
+        )
+
         available = total_supply - minted
+
         discount_info = data["discounts"].get(key, {})
+
         if isinstance(discount_info, dict):
             discount_text = "\n".join(
                 [
@@ -164,7 +184,7 @@ def get_info(chain):
             discount_text = f"> {discount_info}" if discount_info else ""
 
         output.append(
-            f"*{display_name}*\nAvailable - {available}\n{mint_price_text}\n{discount_text}\n"
+            f"*{display_name}*\nAvailable - {available}\n{mint_price_text}\nFloor Price - {floor_price} {native} \n{discount_text}\n"
         )
 
     return "\n".join(output).strip()
