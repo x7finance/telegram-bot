@@ -15,8 +15,7 @@ from services import (
     get_dune,
     get_etherscan,
     get_github,
-    get_moralis,
-    get_opensea,
+    get_simplehash,
     get_snapshot,
     get_twitter,
 )
@@ -27,8 +26,7 @@ dextools = get_dextools()
 dune = get_dune()
 etherscan = get_etherscan()
 github = get_github()
-moralis = get_moralis()
-opensea = get_opensea()
+simplehash = get_simplehash()
 snapshot = get_snapshot()
 twitter = get_twitter()
 
@@ -149,17 +147,11 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             status.append(github_result)
 
-        moralis_result = moralis.ping()
-        if moralis_result is True:
-            status.append("🟢 Moralis: Connected Successfully")
+        simplehash_result = simplehash.ping()
+        if simplehash_result is True:
+            status.append("🟢 Simplehash: Connected Successfully")
         else:
-            status.append(moralis_result)
-
-        opensea_result = opensea.ping()
-        if opensea_result is True:
-            status.append("🟢 Opensea: Connected Successfully")
-        else:
-            status.append(opensea_result)
+            status.append(simplehash_result)
 
         snapshot_result = snapshot.ping()
         if snapshot_result is True:

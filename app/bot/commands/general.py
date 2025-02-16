@@ -34,7 +34,7 @@ from services import (
     get_dune,
     get_etherscan,
     get_github,
-    get_opensea,
+    get_simplehash,
     get_snapshot,
     get_twitter,
 )
@@ -46,7 +46,7 @@ dextools = get_dextools()
 dune = get_dune()
 etherscan = get_etherscan()
 github = get_github()
-opensea = get_opensea()
+simplehash = get_simplehash()
 snapshot = get_snapshot()
 twitter = get_twitter()
 
@@ -2352,8 +2352,10 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
 
     native_price = etherscan.get_native_price(chain)
     if pioneer_id == "":
-        data = opensea.get_nft_by_slug("x7-pioneer")
-        floor_price = data["total"]["floor_price"]
+        data = simplehash.get_nft_data(addresses.PIONEER, chain)
+        floor_price = (
+            data.get("collections", [{}])[0].get("floor_prices") or [0]
+        )[0]
         floor_dollar = floor_price * float(native_price)
         pioneer_pool = etherscan.get_native_balance(addresses.PIONEER, "eth")
         total_dollar = float(pioneer_pool) * float(native_price)
@@ -2412,10 +2414,12 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             ),
         )
     else:
-        data = opensea.get_nft_by_id(addresses.PIONEER, pioneer_id)
-        if "nft" in data and data["nft"]:
-            status = data["nft"]["traits"][0]["value"]
-            image_url = data["nft"]["image_url"]
+        data = simplehash.get_nft_by_id_data(
+            addresses.PIONEER, pioneer_id, chain
+        )
+        if data:
+            status = data["extra_metadata"]["attributes"][0]["value"]
+            image_url = data["image_url"]
             unclaimed = (
                 contract.functions.unclaimedRewards(int(pioneer_id)).call()
                 / 10**18
@@ -2436,8 +2440,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             caption=f"*X7 Pioneer {pioneer_id} NFT Info*\n\n"
             f"Transfer Lock Status: {status}\n"
             f"Unclaimed Rewards: {unclaimed:.3f} ETH (${unclaimed_dollar:,.0f})\n"
-            f"Claimed Rewards: {claimed:.3f} ETH (${claimed_dollar:,.0f})\n\n"
-            f"https://pro.opensea.io/nft/ethereum/{addresses.PIONEER}/{pioneer_id}",
+            f"Claimed Rewards: {claimed:.3f} ETH (${claimed_dollar:,.0f})",
             parse_mode="markdown",
             reply_markup=InlineKeyboardMarkup(
                 [

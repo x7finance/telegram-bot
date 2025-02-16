@@ -8,8 +8,7 @@ from .dbmanager import DBManager
 from .dune import Dune
 from .etherscan import Etherscan
 from .github import GitHub
-from .moralis import Moralis
-from .opensea import Opensea
+from .simplehash import Simplehash
 from .snapshot import Snapshot
 from .twitter import Twitter
 
@@ -51,12 +50,8 @@ def get_github() -> GitHub:
     return get_service(GitHub)
 
 
-def get_moralis() -> Moralis:
-    return get_service(Moralis)
-
-
-def get_opensea() -> Opensea:
-    return get_service(Opensea)
+def get_simplehash() -> Simplehash:
+    return get_service(Simplehash)
 
 
 def get_snapshot() -> Snapshot:

@@ -1,9 +1,7 @@
-import time
-
 from constants.protocol import addresses
-from services import get_moralis
+from services import get_simplehash
 
-moralis = get_moralis()
+simplehash = get_simplehash()
 
 
 def get_data(chain):
@@ -18,8 +16,7 @@ def get_data(chain):
     results = {}
 
     for key, contract_address in map.items():
-        results[key] = moralis.get_nft_stats(contract_address, chain)
-        time.sleep(1)
+        results[key] = simplehash.get_nft_data(contract_address, chain)
 
     return results
 
@@ -148,7 +145,12 @@ def get_info(chain):
             if "Supply" in mint_price_text
             else 0
         )
-        minted = int(data["data"].get(key, {}).get("total_tokens", 0))
+        minted = int(
+            data["data"]
+            .get(key, {})
+            .get("collections", [{}])[0]
+            .get("total_quantity", 0)
+        )
         available = total_supply - minted
         discount_info = data["discounts"].get(key, {})
         if isinstance(discount_info, dict):
