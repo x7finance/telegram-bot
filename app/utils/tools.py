@@ -91,8 +91,8 @@ async def get_last_action(address, chain):
             for key, value in addresses.splitters(chain).items()
             if value == address
         )
-        settings = await splitters.get_push_settings(chain)
-        recipient = settings[splitter]["recipient"]
+        settings = await splitters.get_push_settings(chain, splitter)
+        recipient = settings["recipient"]
         filter = [
             d for d in tx["result"] if d["to"].lower() == recipient.lower()
         ]

@@ -1323,15 +1323,15 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     eth_balance = etherscan.get_native_balance(address, chain)
     eth_dollar = eth_balance * eth_price
 
-    config = await splitters.get_push_settings(chain)
-    threshold = config[token]["threshold"]
-    abi = config[token]["abi"]
+    config = await splitters.get_push_settings(chain, token)
+    threshold = config["threshold"]
+    abi = config["abi"]
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(address), abi=abi
     )
 
-    available_tokens = await config[token]["calculate_tokens"](contract)
+    available_tokens = await config["calculate_tokens"](contract)
 
     buttons = []
     cost_str = ""
@@ -2723,11 +2723,11 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Pushing {chain_info.name} splitters, Please wait..."
     )
 
-    config = await splitters.get_push_settings(chain)
-    eco_address = config["eco"]["address"]
-    eco_abi = config["eco"]["abi"]
-    eco_name = config["eco"]["name"]
-    eco_threshold = config["eco"]["threshold"]
+    config = await splitters.get_push_settings(chain, "eco")
+    eco_address = config["address"]
+    eco_abi = config["abi"]
+    eco_name = config["name"]
+    eco_threshold = config["threshold"]
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(eco_address), abi=eco_abi
@@ -2748,10 +2748,11 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(result)
 
     if chain.lower() == "eth":
-        treasury_address = config["treasury"]["address"]
-        treasury_abi = config["treasury"]["abi"]
-        treasury_name = config["treasury"]["name"]
-        treasury_threshold = config["treasury"]["threshold"]
+        config = await splitters.get_push_settings(chain, "treasury")
+        treasury_address = config["address"]
+        treasury_abi = config["abi"]
+        treasury_name = config["name"]
+        treasury_threshold = config["threshold"]
 
         contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(treasury_address),
@@ -3010,15 +3011,15 @@ async def splitters_command(
     for location, (share, percentage) in eco_distribution.items():
         eco_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
-    config = await splitters.get_push_settings(chain)
-    threshold = config["eco"]["threshold"]
-    abi = config["eco"]["abi"]
+    config = await splitters.get_push_settings(chain, "eco")
+    threshold = config["threshold"]
+    abi = config["abi"]
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(eco_address), abi=abi
     )
 
-    available_tokens = await config["eco"]["calculate_tokens"](contract)
+    available_tokens = await config["calculate_tokens"](contract)
 
     push_text = await tools.get_last_action(eco_address, chain)
 
@@ -3055,16 +3056,16 @@ async def splitters_command(
         for location, (share, percentage) in treasury_distribution.items():
             treasury_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
-        config = await splitters.get_push_settings(chain)
-        threshold = config["treasury"]["threshold"]
-        abi = config["treasury"]["abi"]
+        config = await splitters.get_push_settings(chain, "treasury")
+        threshold = config["threshold"]
+        abi = config["abi"]
 
         contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(treasury_address),
             abi=abi,
         )
 
-        available_tokens = config["treasury"]["calculate_tokens"](contract)
+        available_tokens = config["calculate_tokens"](contract)
 
         push_text = await tools.get_last_action(treasury_address, chain)
 

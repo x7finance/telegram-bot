@@ -61,8 +61,8 @@ async def get_hub_split(chain, address, token):
     if chain in chains.get_active_chains():
         chain_info, _ = chains.get_info(chain)
 
-    settings = await get_push_settings(chain)
-    abi = settings[token]["abi"]
+    settings = await get_push_settings(chain, token)
+    abi = settings["abi"]
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(address), abi=abi
@@ -237,7 +237,7 @@ def get_treasury_split(chain):
     }
 
 
-async def get_push_settings(chain):
+async def get_push_settings(chain, token):
     async def calculate_eco_tokens(contract):
         return await contract.functions.outletBalance(4).call() / 10**18
 
@@ -291,7 +291,7 @@ async def get_push_settings(chain):
         )
         return balance - contract_balance
 
-    return {
+    map = {
         "eco": {
             "address": addresses.eco_splitter(chain),
             "abi": abis.read("ecosystemsplitter"),
@@ -384,3 +384,5 @@ async def get_push_settings(chain):
             ),
         },
     }
+
+    return map[token]
