@@ -28,7 +28,7 @@ class Defined:
             return f"🔴 Defined: Connection failed: {str(e)}"
 
     def get_pair(self, address, chain):
-        chain_info = chains.get_active_chains()[chain]
+        chain_info, _ = chains.get_info(chain)
 
         pair_query = f"""query {{
             listPairsWithMetadataForToken (tokenAddress: "{address}" networkId: {chain_info.id}) {{
@@ -57,9 +57,35 @@ class Defined:
         else:
             return None
 
+    def get_token_image(self, token, chain):
+        chain_info, _ = chains.get_info(chain)
+
+        image = f"""
+            query {{
+                getTokenInfo(address:"{token}", networkId:{chain_info.id}) {{
+                    imageLargeUrl
+                }}
+            }}
+        """
+
+        response = requests.post(
+            self.url, headers=self.headers, json={"query": image}
+        )
+        data = response.json()
+        if "data" in data and "getTokenInfo" in data["data"]:
+            token_info = data["data"]["getTokenInfo"]
+
+            if token_info and "imageLargeUrl" in token_info:
+                image_url = token_info["imageLargeUrl"]
+                return image_url
+            else:
+                return None
+        else:
+            return None
+
     def get_volume(self, pair, chain):
         try:
-            chain_info = chains.get_active_chains()[chain]
+            chain_info, _ = chains.get_info(chain)
 
             volume = f"""
                 query {{
@@ -89,7 +115,7 @@ class Defined:
 
     def search(self, address, chain=None):
         if chain is not None:
-            chain_info = chains.get_active_chains()[chain]
+            chain_info, _ = chains.get_info(chain)
             search_query = f"""query {{
                 filterTokens(phrase:"{address}", rankings: {{attribute:liquidity}} limit:1, filters: {{network:[{chain_info.id}]}}) {{
                     results{{

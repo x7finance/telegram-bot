@@ -24,13 +24,13 @@ class Dextools:
             return f"🔴 Dextools: Connection failed: {str(e)}"
 
     def get_audit(self, address, chain):
-        chain_info = chains.get_active_chains()[chain]
+        chain_info, _ = chains.get_info(chain)
         endpoint = f"token/{chain_info.dext}/{address}/audit"
         response = requests.get(self.url + endpoint, headers=self.headers)
         return response.json()
 
     def get_dex(self, address, chain):
-        chain_info = chains.get_active_chains()[chain]
+        chain_info, _ = chains.get_info(chain)
         endpoint = f"pool/{chain_info.dext}/{address}"
 
         response = requests.get(self.url + endpoint, headers=self.headers)
@@ -51,7 +51,7 @@ class Dextools:
             return ""
 
     def get_price(self, address, chain):
-        chain_info = chains.get_active_chains()[chain]
+        chain_info, _ = chains.get_info(chain)
         endpoint = f"token/{chain_info.dext}/{address}/price"
 
         response = requests.get(self.url + endpoint, headers=self.headers)
@@ -102,7 +102,7 @@ class Dextools:
             return None, change
 
     def get_token_info(self, address, chain):
-        chain_info = chains.get_active_chains()[chain]
+        chain_info, _ = chains.get_info(chain)
         endpoint = f"token/{chain_info.dext}/{address}/info"
         response = requests.get(self.url + endpoint, headers=self.headers)
 
@@ -133,7 +133,7 @@ class Dextools:
             return {"supply": None, "mcap": None, "holders": None}
 
     def get_token_name(self, address, chain):
-        chain_info = chains.get_active_chains()[chain]
+        chain_info, _ = chains.get_info(chain)
         endpoint = f"token/{chain_info.dext}/{address}"
         response = requests.get(self.url + endpoint, headers=self.headers)
         if response.status_code == 200:
@@ -149,7 +149,7 @@ class Dextools:
             return {"name": "Unknown Token", "symbol": ""}
 
     def get_liquidity(self, address, chain):
-        chain_info = chains.get_active_chains()[chain]
+        chain_info, _ = chains.get_info(chain)
 
         endpoint = f"pool/{chain_info.dext}/{address}/liquidity"
         response = requests.get(self.url + endpoint, headers=self.headers)
@@ -172,7 +172,7 @@ class Dextools:
         return liquidity_data
 
     def get_pool_price(self, address, chain):
-        chain_info = chains.get_active_chains()[chain]
+        chain_info, _ = chains.get_info(chain)
         endpoint = f"pool/{chain_info.dext}/{address}/price"
         price = 0
 

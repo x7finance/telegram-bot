@@ -29,7 +29,8 @@ class Simplehash:
         if chain == "eth":
             chain_name = "ethereum"
         else:
-            chain_name = chains.get_active_chains().get(chain).name.lower()
+            chain_info, _ = chains.get_info(chain)
+            chain_name = chain_info.name.lower()
 
         endpoint = f"collections/{chain_name}/{nft}?limit=1"
         response = requests.get(self.url + endpoint, headers=self.headers)
@@ -40,7 +41,8 @@ class Simplehash:
         if chain == "eth":
             chain_name = "ethereum"
         else:
-            chain_name = chains.get_active_chains().get(chain).name.lower()
+            chain_info, _ = chains.get_info(chain)
+            chain_name = chain_info.name.lower()
 
         endpoint = f"{chain_name}/{nft}/{id}"
         response = requests.get(self.url + endpoint, headers=self.headers)

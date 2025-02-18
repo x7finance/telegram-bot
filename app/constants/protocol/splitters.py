@@ -6,8 +6,7 @@ etherscan = get_etherscan()
 
 
 async def get_eco_split(chain):
-    if chain in chains.get_active_chains():
-        chain_info, _ = chains.get_info(chain)
+    chain_info, _ = chains.get_info(chain)
 
     address = addresses.eco_splitter(chain)
     contract = chain_info.w3.eth.contract(
@@ -58,8 +57,7 @@ async def get_eco_split(chain):
 
 
 async def get_hub_split(chain, address, token):
-    if chain in chains.get_active_chains():
-        chain_info, _ = chains.get_info(chain)
+    chain_info, _ = chains.get_info(chain)
 
     settings = await get_push_settings(chain, token)
     abi = settings["abi"]
@@ -192,8 +190,7 @@ async def get_hub_split(chain, address, token):
 
 
 def get_treasury_split(chain):
-    if chain in chains.get_active_chains():
-        chain_info, _ = chains.get_info(chain)
+    chain_info, _ = chains.get_info(chain)
 
     address = addresses.treasury_splitter(chain)
     contract = chain_info.w3.eth.contract(

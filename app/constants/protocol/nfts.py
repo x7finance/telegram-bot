@@ -132,8 +132,7 @@ def get_info(chain):
         "borrow": "Borrow Maxi",
         "magister": "Magister",
     }
-
-    native = chains.get_active_chains()[chain].native.upper()
+    chain_info, _ = chains.get_info(chain)
 
     output = []
 
@@ -184,7 +183,7 @@ def get_info(chain):
             discount_text = f"> {discount_info}" if discount_info else ""
 
         output.append(
-            f"*{display_name}*\nAvailable - {available}\n{mint_price_text}\nFloor Price - {floor_price} {native} \n{discount_text}\n"
+            f"*{display_name}*\nAvailable - {available}\n{mint_price_text}\nFloor Price - {floor_price} {chain_info.native.upper()} \n{discount_text}\n"
         )
 
     return "\n".join(output).strip()

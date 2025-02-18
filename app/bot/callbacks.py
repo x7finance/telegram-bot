@@ -62,7 +62,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     time_taken = button_click_timestamp - button_generation_timestamp
     formatted_time_taken = tools.format_seconds(time_taken)
 
-    await db.clicks_update(user_info, time_taken)
+    db.clicks_update(user_info, time_taken)
 
     context.bot_data["first_user_clicked"] = True
 

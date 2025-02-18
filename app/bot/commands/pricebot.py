@@ -119,7 +119,7 @@ def send_dextools_response(search, chain, token_data):
 
     data = token_data.get("data", {})
 
-    chain_info = chains.get_active_chains().get(chain)
+    chain_info, _ = chains.get_info(chain)
     if not chain_info:
         chain_name, chain_dext, chain_id = "Unknown", "", ""
     else:

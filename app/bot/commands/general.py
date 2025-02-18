@@ -973,8 +973,9 @@ async def ecosystem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def factory(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
     for chain in chains.get_active_chains():
-        name = chains.get_active_chains()[chain].name
-        address = chains.get_active_chains()[chain].scan_address
+        chain_info, _ = chains.get_info(chain)
+        name = chain_info.name
+        address = chain_info.scan_address
         buttons.append(
             [
                 InlineKeyboardButton(
@@ -2517,8 +2518,9 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         eth_price = None
 
         for chain in chains.get_active_chains():
-            native = chains.get_active_chains()[chain].native.lower()
-            chain_name = chains.get_active_chains()[chain].name
+            chain_info, _ = chains.get_info(chain)
+            native = chain_info.native.upper()
+            chain_name = chain_info.name
             try:
                 if chain in chains.ETH_CHAINS and eth_price is None:
                     eth_price = etherscan.get_native_price(chain)
@@ -2810,8 +2812,9 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
     for chain in chains.get_active_chains():
-        name = chains.get_active_chains()[chain].name
-        address = chains.get_active_chains()[chain].scan_address
+        chain_info, _ = chains.get_info(chain)
+        name = chain_info.name
+        address = chain_info.scan_address
         buttons.append(
             [
                 InlineKeyboardButton(
@@ -3657,7 +3660,8 @@ async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
             chain_name = context.args[-1].lower()
 
             if chain_name in chains.get_active_chains():
-                chain = chains.get_active_chains()[chain_name].name.lower()
+                chain = chains.get_chain(chain_name.lower())
+
             else:
                 search = " ".join(context.args)
                 chain = None
