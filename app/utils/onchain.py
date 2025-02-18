@@ -7,7 +7,7 @@ etherscan = get_etherscan()
 db = get_dbmanager()
 
 
-def estimate_gas(chain, function, loan_id=None):
+async def estimate_gas(chain, function, loan_id=None):
     def calculate_cost(gas_estimate):
         eth_cost = gas_price * gas_estimate
         dollar_cost = (eth_cost / 10**9) * eth_price
@@ -15,7 +15,7 @@ def estimate_gas(chain, function, loan_id=None):
 
     chain_info, _ = chains.get_info(chain)
 
-    gas_price = chain_info.w3.eth.gas_price / 10**9
+    gas_price = await chain_info.w3async.eth.gas_price / 10**9
     eth_price = etherscan.get_native_price(chain)
 
     try:
@@ -28,7 +28,7 @@ def estimate_gas(chain, function, loan_id=None):
                 + addresses.weth(chain)[2:].rjust(64, "0")
                 + addresses.DEAD[2:].rjust(64, "0")
             )
-            gas_estimate = chain_info.w3.eth.estimate_gas(
+            gas_estimate = await chain_info.w3async.eth.estimate_gas(
                 {
                     "from": chain_info.w3.to_checksum_address(
                         addresses.DEPLOYER
@@ -42,7 +42,7 @@ def estimate_gas(chain, function, loan_id=None):
             return calculate_cost(gas_estimate)
 
         elif function == "push":
-            gas_estimate = chain_info.w3.eth.estimate_gas(
+            gas_estimate = await chain_info.w3async.eth.estimate_gas(
                 {
                     "from": chain_info.w3.to_checksum_address(
                         addresses.DEPLOYER
@@ -57,7 +57,7 @@ def estimate_gas(chain, function, loan_id=None):
 
         elif function == "processfees":
             data = "0x61582eaa" + addresses.x7r(chain)[2:].rjust(64, "0")
-            gas_estimate = chain_info.w3.eth.estimate_gas(
+            gas_estimate = await chain_info.w3async.eth.estimate_gas(
                 {
                     "from": chain_info.w3.to_checksum_address(
                         addresses.DEPLOYER
@@ -71,7 +71,7 @@ def estimate_gas(chain, function, loan_id=None):
             return calculate_cost(gas_estimate)
 
         elif function == "mint":
-            gas_estimate = chain_info.w3.eth.estimate_gas(
+            gas_estimate = await chain_info.w3async.eth.estimate_gas(
                 {
                     "from": chain_info.w3.to_checksum_address(
                         addresses.DEPLOYER
@@ -86,7 +86,7 @@ def estimate_gas(chain, function, loan_id=None):
 
         elif function == "liquidate":
             data = "0x415f1240" + hex(loan_id)[2:].rjust(64, "0")
-            gas_estimate = chain_info.w3.eth.estimate_gas(
+            gas_estimate = await chain_info.w3async.eth.estimate_gas(
                 {
                     "from": chain_info.w3.to_checksum_address(
                         addresses.DEPLOYER
@@ -105,7 +105,7 @@ def estimate_gas(chain, function, loan_id=None):
         return "N/A"
 
 
-def liquidate_loan(loan_id, chain, user_id):
+async def liquidate_loan(loan_id, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
 
@@ -119,9 +119,11 @@ def liquidate_loan(loan_id, chain, user_id):
             abi=abis.read("lendingpool"),
         )
 
-        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+        nonce = await chain_info.w3async.eth.get_transaction_count(
+            sender_address
+        )
 
-        gas_price = chain_info.w3.eth.gas_price
+        gas_price = await chain_info.w3async.eth.gas_price
         gas_estimate = contract.functions.liquidate(loan_id).estimate_gas(
             {"from": sender_address}
         )
@@ -136,16 +138,17 @@ def liquidate_loan(loan_id, chain, user_id):
             }
         )
 
-        signed_transaction = chain_info.w3.eth.account.sign_transaction(
+        signed_tx = chain_info.w3.eth.account.sign_transaction(
             transaction, sender_private_key
         )
-        tx_hash = chain_info.w3.eth.send_raw_transaction(
-            signed_transaction.raw_transaction
+        tx_hash = await chain_info.w3async.eth.send_raw_transaction(
+            signed_tx.raw_transaction
         )
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+        receipt = await chain_info.w3async.eth.wait_for_transaction_receipt(
             tx_hash, timeout=30
         )
+
         if receipt.status == 1:
             return f"Loan {loan_id} ({chain_info.name.upper()}) liquidated successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
         else:
@@ -155,7 +158,7 @@ def liquidate_loan(loan_id, chain, user_id):
         return f"Error: {str(e)}"
 
 
-def splitter_push(
+async def splitter_push(
     contract_type, address, abi, chain, user_id, token_address=None
 ):
     try:
@@ -168,7 +171,6 @@ def splitter_push(
         if contract_type == "splitter":
             function_name = "pushAll"
             function_args = []
-
         elif contract_type == "hub":
             function_name = "processFees"
             function_args = [token_address]
@@ -176,8 +178,10 @@ def splitter_push(
         contract = chain_info.w3.eth.contract(address=address, abi=abi)
 
         function_to_call = getattr(contract.functions, function_name)
-        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
-        gas_price = chain_info.w3.eth.gas_price
+        nonce = await chain_info.w3async.eth.get_transaction_count(
+            sender_address
+        )
+        gas_price = await chain_info.w3async.eth.gas_price
         gas_estimate = function_to_call(*function_args).estimate_gas(
             {"from": sender_address}
         )
@@ -192,14 +196,14 @@ def splitter_push(
             }
         )
 
-        signed_transaction = chain_info.w3.eth.account.sign_transaction(
+        signed_tx = chain_info.w3.eth.account.sign_transaction(
             transaction, sender_private_key
         )
-        tx_hash = chain_info.w3.eth.send_raw_transaction(
-            signed_transaction.raw_transaction
+        tx_hash = await chain_info.w3async.eth.send_raw_transaction(
+            signed_tx.raw_transaction
         )
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+        receipt = await chain_info.w3async.eth.wait_for_transaction_receipt(
             tx_hash, timeout=30
         )
         if receipt.status == 1:
@@ -211,7 +215,7 @@ def splitter_push(
         return f"Error: {str(e)}"
 
 
-def stuck_tx(chain, user_id, gas_multiplier=1.5):
+async def stuck_tx(chain, user_id, gas_multiplier=1.5):
     try:
         chain_info, _ = chains.get_info(chain)
 
@@ -219,17 +223,17 @@ def stuck_tx(chain, user_id, gas_multiplier=1.5):
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
-        latest_nonce = chain_info.w3.eth.get_transaction_count(
+        latest_nonce = await chain_info.w3async.eth.get_transaction_count(
             sender_address, "latest"
         )
-        pending_nonce = chain_info.w3.eth.get_transaction_count(
+        pending_nonce = await chain_info.w3async.eth.get_transaction_count(
             sender_address, "pending"
         )
 
         if pending_nonce == latest_nonce:
             return "No pending transactions found. No action needed."
 
-        gas_price = chain_info.w3.eth.gas_price
+        gas_price = await chain_info.w3async.eth.gas_price
         adjusted_gas_price = int(gas_price * gas_multiplier)
 
         transaction = {
@@ -242,14 +246,14 @@ def stuck_tx(chain, user_id, gas_multiplier=1.5):
             "chainId": int(chain_info.id),
         }
 
-        signed_txn = chain_info.w3.eth.account.sign_transaction(
+        signed_tx = chain_info.w3.eth.account.sign_transaction(
             transaction, sender_private_key
         )
-        tx_hash = chain_info.w3.eth.send_raw_transaction(
-            signed_txn.raw_transaction
+        tx_hash = await chain_info.w3async.eth.send_raw_transaction(
+            signed_tx.raw_transaction
         )
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+        receipt = await chain_info.w3async.eth.wait_for_transaction_receipt(
             tx_hash, timeout=30
         )
         if receipt.status == 1:
@@ -261,7 +265,7 @@ def stuck_tx(chain, user_id, gas_multiplier=1.5):
         return f"Error: {str(e)}"
 
 
-def withdraw_native(amount, chain, user_id, recipient_address):
+async def withdraw_native(amount, chain, user_id, recipient_address):
     try:
         chain_info, _ = chains.get_info(chain)
 
@@ -270,10 +274,12 @@ def withdraw_native(amount, chain, user_id, recipient_address):
         sender_private_key = wallet["private_key"]
 
         amount_in_wei = chain_info.w3.to_wei(amount, "ether")
-        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+        nonce = await chain_info.w3async.eth.get_transaction_count(
+            sender_address
+        )
 
-        gas_price = chain_info.w3.eth.gas_price
-        gas_estimate = chain_info.w3.eth.estimate_gas(
+        gas_price = await chain_info.w3async.eth.gas_price
+        gas_estimate = await chain_info.w3async.eth.estimate_gas(
             {
                 "from": sender_address,
                 "to": recipient_address,
@@ -291,14 +297,14 @@ def withdraw_native(amount, chain, user_id, recipient_address):
             "chainId": int(chain_info.id),
         }
 
-        signed_txn = chain_info.w3.eth.account.sign_transaction(
+        signed_tx = chain_info.w3.eth.account.sign_transaction(
             transaction, sender_private_key
         )
-        tx_hash = chain_info.w3.eth.send_raw_transaction(
-            signed_txn.raw_transaction
+        tx_hash = await chain_info.w3async.eth.send_raw_transaction(
+            signed_tx.raw_transaction
         )
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+        receipt = await chain_info.w3async.eth.wait_for_transaction_receipt(
             tx_hash, timeout=30
         )
         if receipt.status == 1:
@@ -310,7 +316,7 @@ def withdraw_native(amount, chain, user_id, recipient_address):
         return f"Error: {str(e)}"
 
 
-def withdraw_tokens(
+async def withdraw_tokens(
     user_id, amount, token_address, decimals, recipient, chain
 ):
     try:
@@ -346,10 +352,12 @@ def withdraw_tokens(
             + hex(amount_to_send_wei)[2:].rjust(64, "0")
         )
 
-        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+        nonce = await chain_info.w3async.eth.get_transaction_count(
+            sender_address
+        )
 
-        gas_price = chain_info.w3.eth.gas_price
-        gas_estimate = chain_info.w3.eth.estimate_gas(
+        gas_price = await chain_info.w3async.eth.gas_price
+        gas_estimate = await chain_info.w3async.eth.estimate_gas(
             {
                 "from": sender_address,
                 "to": token_address,
@@ -367,13 +375,13 @@ def withdraw_tokens(
             "chainId": int(chain_info.id),
         }
 
-        signed_transaction = chain_info.w3.eth.account.sign_transaction(
+        signed_tx = chain_info.w3.eth.account.sign_transaction(
             transaction, sender_private_key
         )
-        tx_hash = chain_info.w3.eth.send_raw_transaction(
-            signed_transaction.raw_transaction
+        tx_hash = await chain_info.w3async.eth.send_raw_transaction(
+            signed_tx.raw_transaction
         )
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+        receipt = await chain_info.w3async.eth.wait_for_transaction_receipt(
             tx_hash, timeout=30
         )
 
@@ -386,7 +394,7 @@ def withdraw_tokens(
         return f"Error: {e}"
 
 
-def x7d_mint(amount, chain, user_id):
+async def x7d_mint(amount, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
 
@@ -400,9 +408,11 @@ def x7d_mint(amount, chain, user_id):
             abi=abis.read("lendingpoolreserve"),
         )
 
-        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+        nonce = await chain_info.w3async.eth.get_transaction_count(
+            sender_address
+        )
 
-        gas_price = chain_info.w3.eth.gas_price
+        gas_price = await chain_info.w3async.eth.gas_price
         gas_estimate = contract.functions.depositETH().estimate_gas(
             {
                 "from": sender_address,
@@ -421,14 +431,14 @@ def x7d_mint(amount, chain, user_id):
             }
         )
 
-        signed_txn = chain_info.w3.eth.account.sign_transaction(
+        signed_tx = chain_info.w3.eth.account.sign_transaction(
             transaction, sender_private_key
         )
-        tx_hash = chain_info.w3.eth.send_raw_transaction(
-            signed_txn.raw_transaction
+        tx_hash = await chain_info.w3async.eth.send_raw_transaction(
+            signed_tx.raw_transaction
         )
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+        receipt = await chain_info.w3async.eth.wait_for_transaction_receipt(
             tx_hash, timeout=30
         )
         if receipt.status == 1:
@@ -440,7 +450,7 @@ def x7d_mint(amount, chain, user_id):
         return f"Error: {str(e)}"
 
 
-def x7d_redeem(amount, chain, user_id):
+async def x7d_redeem(amount, chain, user_id):
     try:
         chain_info, _ = chains.get_info(chain)
 
@@ -454,9 +464,11 @@ def x7d_redeem(amount, chain, user_id):
             abi=abis.read("lendingpoolreserve"),
         )
 
-        nonce = chain_info.w3.eth.get_transaction_count(sender_address)
+        nonce = await chain_info.w3async.eth.get_transaction_count(
+            sender_address
+        )
 
-        gas_price = chain_info.w3.eth.gas_price
+        gas_price = await chain_info.w3async.eth.gas_price
         gas_estimate = contract.functions.withdrawETH(
             chain_info.w3.to_wei(amount, "ether")
         ).estimate_gas({"from": sender_address})
@@ -473,14 +485,14 @@ def x7d_redeem(amount, chain, user_id):
             }
         )
 
-        signed_txn = chain_info.w3.eth.account.sign_transaction(
+        signed_tx = chain_info.w3.eth.account.sign_transaction(
             transaction, sender_private_key
         )
-        tx_hash = chain_info.w3.eth.send_raw_transaction(
-            signed_txn.raw_transaction
+        tx_hash = await chain_info.w3async.eth.send_raw_transaction(
+            signed_tx.raw_transaction
         )
 
-        receipt = chain_info.w3.eth.wait_for_transaction_receipt(
+        receipt = await chain_info.w3async.eth.wait_for_transaction_receipt(
             tx_hash, timeout=30
         )
         if receipt.status == 1:

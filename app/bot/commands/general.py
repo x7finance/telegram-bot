@@ -1069,11 +1069,11 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         gas_text = ""
 
-    pair_gas = onchain.estimate_gas(chain, "pair")
-    mint_gas = onchain.estimate_gas(chain, "mint")
-    process_fees_gas = onchain.estimate_gas(chain, "processfees")
-    push_gas = onchain.estimate_gas(chain, "push")
-    swap_gas = onchain.estimate_gas(chain, "swap")
+    pair_gas = await onchain.estimate_gas(chain, "pair")
+    mint_gas = await onchain.estimate_gas(chain, "mint")
+    process_fees_gas = await onchain.estimate_gas(chain, "processfees")
+    push_gas = await onchain.estimate_gas(chain, "push")
+    swap_gas = await onchain.estimate_gas(chain, "swap")
 
     await message.delete()
     await update.message.reply_photo(
@@ -1333,7 +1333,7 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cost_str = ""
 
     if float(available_tokens) > float(threshold):
-        cost = onchain.estimate_gas(chain, "processfees")
+        cost = await onchain.estimate_gas(chain, "processfees")
         cost_str = f"Estimated process fees gas cost: {cost}"
 
         buttons.append(
@@ -1593,7 +1593,9 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if liquidatable_loans > 0:
             liquidation_instructions = f"Use `/liquidate loanID {chain}`"
-            cost = onchain.estimate_gas(chain, "liquidate", first_loan_id)
+            cost = await onchain.estimate_gas(
+                chain, "liquidate", first_loan_id
+            )
             results_text = "\n".join(results)
             output = (
                 f"{liquidatable_loans_text}\n\n"
@@ -1638,7 +1640,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(
                 f"Liquidating Loan {loan_id} ({chain_info.name})..."
             )
-            result = onchain.liquidate_loan(loan_id, chain, user_id)
+            result = await onchain.liquidate_loan(loan_id, chain, user_id)
             await update.message.reply_text(result)
 
         except Exception as e:
@@ -1902,7 +1904,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             liquidation = contract.functions.canLiquidate(int(loan_id)).call()
             if liquidation != 0:
                 reward = contract.functions.liquidationReward().call() / 10**18
-                cost = onchain.estimate_gas(chain, "liquidate", loan_id)
+                cost = await onchain.estimate_gas(chain, "liquidate", loan_id)
                 liquidation_status = (
                     f"\n\n*Eligible For Liquidation*\n"
                     f"Reward: {reward} {chain_info.native.upper()}\n"
@@ -2714,7 +2716,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"{chain_info.name} {name} balance too low to push."
         )
     else:
-        result = onchain.splitter_push(
+        result = await onchain.splitter_push(
             "splitter", address, abi, chain, user_id
         )
         await message.delete()
@@ -2738,7 +2740,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"{chain_info.name} {name} balance too low to push."
             )
         else:
-            result = onchain.splitter_push(
+            result = await onchain.splitter_push(
                 "splitter", address, abi, chain, user_id
             )
             await update.message.reply_text(result)
@@ -3006,7 +3008,7 @@ async def splitters_command(
     cost = None
 
     if float(available_tokens) > float(threshold):
-        cost = onchain.estimate_gas(chain, "push")
+        cost = await onchain.estimate_gas(chain, "push")
         cost_str = f"\nEstimated push gas cost: {cost}"
         buttons.append(
             [
@@ -3048,7 +3050,7 @@ async def splitters_command(
 
         if float(available_tokens) > float(threshold):
             if cost is None:
-                cost = onchain.estimate_gas(chain, "push")
+                cost = await onchain.estimate_gas(chain, "push")
                 cost_str = f"\nEstimated push gas cost: {cost}"
 
             buttons.append(

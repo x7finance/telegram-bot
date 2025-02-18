@@ -50,16 +50,16 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         if operation == "mint":
-            result = onchain.x7d_mint(amount, chain, user_id)
+            result = await onchain.x7d_mint(amount, chain, user_id)
         elif operation == "redeem":
-            result = onchain.x7d_redeem(amount, chain, user_id)
+            result = await onchain.x7d_redeem(amount, chain, user_id)
         elif operation == "withdraw":
             if token == "native":
-                result = onchain.withdraw_native(
+                result = await onchain.withdraw_native(
                     amount, chain, user_id, address
                 )
             else:
-                result = onchain.withdraw_tokens(
+                result = await onchain.withdraw_tokens(
                     user_id, amount, addresses.x7d(chain), 18, address, chain
                 )
 

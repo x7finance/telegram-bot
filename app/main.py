@@ -73,6 +73,17 @@ def init_main_bot():
     print("🔄 Initializing main bot...")
     application.add_error_handler(error)
 
+    for handler in conversations.HANDLERS:
+        application.add_handler(
+            ConversationHandler(
+                entry_points=handler["entry_points"],
+                states=handler["states"],
+                fallbacks=handler.get(
+                    "fallbacks", [CommandHandler("cancel", callbacks.cancel)]
+                ),
+            )
+        )
+
     for cmd, handler, _ in general.HANDLERS:
         if isinstance(cmd, list):
             for alias in cmd:
@@ -88,17 +99,6 @@ def init_main_bot():
 
     for handler in auto.HANDLERS:
         application.add_handler(handler)
-
-    for handler in conversations.HANDLERS:
-        application.add_handler(
-            ConversationHandler(
-                entry_points=handler["entry_points"],
-                states=handler["states"],
-                fallbacks=handler.get(
-                    "fallbacks", [CommandHandler("cancel", callbacks.cancel)]
-                ),
-            )
-        )
 
     print("✅ Main bot initialized")
 

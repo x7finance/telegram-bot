@@ -213,7 +213,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=f"Liquidating loan {loan_id} ({chain_info.name}), Please wait...",
         )
 
-        result = onchain.liquidate_loan(int(loan_id), chain, user_id)
+        result = await onchain.liquidate_loan(int(loan_id), chain, user_id)
 
         if result.startswith("Error"):
             await query.answer(result, show_alert=True)
@@ -272,11 +272,11 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if contract_type == "hub":
             token_address = config["token_address"]
-            result = onchain.splitter_push(
+            result = await onchain.splitter_push(
                 contract_type, address, abi, chain, user_id, token_address
             )
         else:
-            result = onchain.splitter_push(
+            result = await onchain.splitter_push(
                 contract_type, address, abi, chain, user_id
             )
 
@@ -346,7 +346,7 @@ async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = query.from_user.id
 
     try:
-        result_text = onchain.stuck_tx(chain, user_id)
+        result_text = await onchain.stuck_tx(chain, user_id)
 
         await query.edit_message_text(text=result_text)
     except Exception as e:
