@@ -179,13 +179,13 @@ async def loan_alert(event, chain):
     )
 
     liability = (
-        ill_contract.functions.getRemainingLiability(int(loan_id)).call()
+        await ill_contract.functions.getRemainingLiability(int(loan_id)).call()
         / 10**18
     )
-    schedule1 = ill_contract.functions.getPremiumPaymentSchedule(
+    schedule1 = await ill_contract.functions.getPremiumPaymentSchedule(
         int(loan_id)
     ).call()
-    schedule2 = ill_contract.functions.getPrincipalPaymentSchedule(
+    schedule2 = await ill_contract.functions.getPrincipalPaymentSchedule(
         int(loan_id)
     ).call()
     schedule = tools.format_schedule(
@@ -195,7 +195,7 @@ async def loan_alert(event, chain):
     index, token_by_id = 0, None
     while True:
         try:
-            token_id = ill_contract.functions.tokenByIndex(index).call()
+            token_id = await ill_contract.functions.tokenByIndex(index).call()
             if token_id == int(loan_id):
                 token_by_id = index
                 break
@@ -210,8 +210,8 @@ async def loan_alert(event, chain):
         abi=abis.read("lendingpool"),
     )
 
-    token = pool_contract.functions.loanToken(int(loan_id)).call()
-    pair = pool_contract.functions.loanPair(int(loan_id)).call()
+    token = await pool_contract.functions.loanToken(int(loan_id)).call()
+    pair = await pool_contract.functions.loanPair(int(loan_id)).call()
     token_info = dextools.get_token_name(token, chain)
     token_name = token_info["name"]
     token_symbol = token_info["symbol"]
@@ -425,7 +425,7 @@ async def token_alert(event, chain):
     buy_tax = args.get("buyTax", 0)
     sell_tax = args.get("sellTax", 0)
 
-    im1 = Image.open(random.choice(blackhole.RANDOME)).convert("RGBA")
+    im1 = Image.open(random.choice(blackhole.RANDOM)).convert("RGBA")
     try:
         im2 = Image.open(requests.get(token_uri, stream=True).raw).convert(
             "RGBA"

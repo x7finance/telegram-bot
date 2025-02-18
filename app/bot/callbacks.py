@@ -244,12 +244,12 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     _, token, chain = query.data.split(":")
     chain_info, _ = chains.get_info(chain)
 
-    config = splitters.get_push_settings(chain)[token]
-    address = config["address"]
-    abi = config["abi"]
-    name = config["name"]
-    threshold = config["threshold"]
-    contract_type = config["contract_type"]
+    config = await splitters.get_push_settings(chain)
+    address = config[token]["address"]
+    abi = config[token]["abi"]
+    name = config[token]["name"]
+    threshold = config[token]["threshold"]
+    contract_type = config[token]["contract_type"]
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(address), abi=abi

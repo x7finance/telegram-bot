@@ -63,7 +63,7 @@ def get_ill_number(term: str) -> str | None:
     return None
 
 
-def get_last_action(address, chain):
+async def get_last_action(address, chain):
     chain_native = chains.get_active_chains()[chain].native
     tx = etherscan.get_internal_tx(address, chain)
 
@@ -91,7 +91,8 @@ def get_last_action(address, chain):
             for key, value in addresses.splitters(chain).items()
             if value == address
         )
-        recipient = splitters.get_push_settings(chain)[splitter]["recipient"]
+        settings = await splitters.get_push_settings(chain)
+        recipient = settings[splitter]["recipient"]
         filter = [
             d for d in tx["result"] if d["to"].lower() == recipient.lower()
         ]

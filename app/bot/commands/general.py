@@ -332,37 +332,39 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     liquidation_fee = (
-        lending_pool.functions.liquidationReward().call() / 10**18
+        await lending_pool.functions.liquidationReward().call() / 10**18
     )
     liquidation_dollar = liquidation_fee * native_price
 
-    loan_name = loan_contract.functions.name().call()
-    loan_data = loan_contract.functions.getQuote(int(amount_in_wei)).call()
+    loan_name = await loan_contract.functions.name().call()
+    loan_data = await loan_contract.functions.getQuote(
+        int(amount_in_wei)
+    ).call()
 
-    min_loan = loan_contract.functions.minimumLoanAmount().call()
-    max_loan = loan_contract.functions.maximumLoanAmount().call()
+    min_loan = await loan_contract.functions.minimumLoanAmount().call()
+    max_loan = await loan_contract.functions.maximumLoanAmount().call()
     min_loan_duration = (
-        loan_contract.functions.minimumLoanLengthSeconds().call()
+        await loan_contract.functions.minimumLoanLengthSeconds().call()
     )
     max_loan_duration = (
-        loan_contract.functions.maximumLoanLengthSeconds().call()
+        await loan_contract.functions.maximumLoanLengthSeconds().call()
     )
 
     x7100_share = (
-        lending_pool.functions.X7100PremiumShare().call()
-        + lending_pool.functions.X7100OriginationShare().call()
+        await lending_pool.functions.X7100PremiumShare().call()
+        + await lending_pool.functions.X7100OriginationShare().call()
     )
     x7dao_share = (
-        lending_pool.functions.X7DAOPremiumShare().call()
-        + lending_pool.functions.X7DAOOriginationShare().call()
+        await lending_pool.functions.X7DAOPremiumShare().call()
+        + await lending_pool.functions.X7DAOOriginationShare().call()
     )
     ecosystem_share = (
-        lending_pool.functions.ecosystemSplitterPremiumShare().call()
-        + lending_pool.functions.ecosystemSplitterOriginationShare().call()
+        await lending_pool.functions.ecosystemSplitterPremiumShare().call()
+        + await lending_pool.functions.ecosystemSplitterOriginationShare().call()
     )
     lpool_share = (
-        lending_pool.functions.lendingPoolPremiumShare().call()
-        + lending_pool.functions.lendingPoolOriginationShare().call()
+        await lending_pool.functions.lendingPoolPremiumShare().call()
+        + await lending_pool.functions.lendingPoolOriginationShare().call()
     )
 
     total_share = x7100_share + x7dao_share + ecosystem_share + lpool_share
@@ -400,7 +402,9 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Origination Fee: {origination_fee} {chain_info.native.upper()} (${origination_dollar:,.2f})\n"
     )
 
-    premium_periods = loan_contract.functions.numberOfPremiumPeriods().call()
+    premium_periods = (
+        await loan_contract.functions.numberOfPremiumPeriods().call()
+    )
     if premium_periods > 0:
         per_period_premium = premium_fee / premium_periods
         per_period_premium_dollar = premium_fee_dollar / premium_periods
@@ -1307,27 +1311,27 @@ async def hub(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         address = tokens.get_tokens()[token.lower()][chain].hub
 
-        split_text = splitters.get_hub_split(chain, address, token)
+        split_text = await splitters.get_hub_split(chain, address, token)
     else:
         await update.message.reply_text(
             "Please follow the command with an X7 token name"
         )
         return
 
-    buy_back_text = tools.get_last_action(address, chain)
+    buy_back_text = await tools.get_last_action(address, chain)
     eth_price = etherscan.get_native_price(chain)
     eth_balance = etherscan.get_native_balance(address, chain)
     eth_dollar = eth_balance * eth_price
 
-    config = splitters.get_push_settings(chain)[token]
-    threshold = config["threshold"]
-    abi = config["abi"]
+    config = await splitters.get_push_settings(chain)
+    threshold = config[token]["threshold"]
+    abi = config[token]["abi"]
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(address), abi=abi
     )
 
-    available_tokens = config["calculate_tokens"](contract)
+    available_tokens = await config[token]["calculate_tokens"](contract)
 
     buttons = []
     cost_str = ""
@@ -1553,8 +1557,8 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         abi=abis.read("lendingpool"),
     )
 
-    reward = contract.functions.liquidationReward().call() / 10**18
-    escrow = contract.functions.liquidationEscrow().call() / 10**18
+    reward = await contract.functions.liquidationReward().call() / 10**18
+    escrow = await contract.functions.liquidationEscrow().call() / 10**18
 
     if escrow > 0:
         live_loans = escrow / reward
@@ -1567,7 +1571,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-        num_loans = contract.functions.nextLoanID().call()
+        num_loans = await contract.functions.nextLoanID().call()
         liquidatable_loans = 0
         results = []
         ignored_loans = range(21, 25)
@@ -1576,7 +1580,9 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if chain == "eth-sepolia" and loan in ignored_loans:
                 continue
             try:
-                result = contract.functions.canLiquidate(int(loan)).call()
+                result = await contract.functions.canLiquidate(
+                    int(loan)
+                ).call()
                 if result > 0:
                     if liquidatable_loans == 0:
                         first_loan_id = loan
@@ -1625,7 +1631,9 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         try:
             try:
-                can = contract.functions.canLiquidate(int(loan_id)).call()
+                can = await contract.functions.canLiquidate(
+                    int(loan_id)
+                ).call()
                 if not can or can == 0:
                     await update.message.reply_text(
                         f"Loan {loan_id} is not eligible for liquidation"
@@ -1670,10 +1678,10 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             abi=abis.read("lendingpool"),
         )
 
-        amount = contract.functions.nextLoanID().call() - 1
+        amount = await contract.functions.nextLoanID().call() - 1
         live_loans = (
-            contract.functions.liquidationEscrow().call()
-            / contract.functions.liquidationReward().call()
+            await contract.functions.liquidationEscrow().call()
+            / await contract.functions.liquidationReward().call()
         )
 
         latest_loan_text = ""
@@ -1690,7 +1698,9 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if amount > 0:
             latest_loan_text = f"Latest ID: {latest_loan}"
 
-            term = contract.functions.loanTermLookup(int(latest_loan)).call()
+            term = await contract.functions.loanTermLookup(
+                int(latest_loan)
+            ).call()
             term_contract = chain_info.w3.eth.contract(
                 address=chain_info.w3.to_checksum_address(term),
                 abi=abis.read("ill005"),
@@ -1698,7 +1708,7 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
             index = 0
             while True:
                 try:
-                    token_id = term_contract.functions.tokenByIndex(
+                    token_id = await term_contract.functions.tokenByIndex(
                         index
                     ).call()
                     if token_id == int(latest_loan):
@@ -1763,10 +1773,10 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 abi=abis.read("lendingpool"),
             )
 
-            amount = contract.functions.nextLoanID().call() - 1
+            amount = await contract.functions.nextLoanID().call() - 1
             live_loans = (
-                contract.functions.liquidationEscrow().call()
-                / contract.functions.liquidationReward().call()
+                await contract.functions.liquidationEscrow().call()
+                / await contract.functions.liquidationReward().call()
             )
 
             latest_loan_text = ""
@@ -1846,19 +1856,19 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     try:
-        term = contract.functions.loanTermLookup(int(loan_id)).call()
+        term = await contract.functions.loanTermLookup(int(loan_id)).call()
         term_contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(term),
             abi=abis.read("ill005"),
         )
 
-        schedule1 = contract.functions.getPremiumPaymentSchedule(
+        schedule1 = await contract.functions.getPremiumPaymentSchedule(
             int(loan_id)
         ).call()
-        schedule2 = contract.functions.getPrincipalPaymentSchedule(
+        schedule2 = await contract.functions.getPrincipalPaymentSchedule(
             int(loan_id)
         ).call()
-        isComplete = term_contract.functions.isComplete(loan_id).call()
+        isComplete = await term_contract.functions.isComplete(loan_id).call()
 
         schedule = tools.format_schedule(
             schedule1, schedule2, chain_info.native.upper(), isComplete
@@ -1866,18 +1876,20 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if not isComplete:
             liability = (
-                contract.functions.getRemainingLiability(int(loan_id)).call()
+                await contract.functions.getRemainingLiability(
+                    int(loan_id)
+                ).call()
                 / 10**18
             )
             remaining = f"Total Remaining Liability:\n{liability} {chain_info.native.upper()}"
         else:
             remaining = ""
 
-        token = contract.functions.loanToken(int(loan_id)).call()
+        token = await contract.functions.loanToken(int(loan_id)).call()
         name = dextools.get_token_name(token, chain)["name"]
-        pair = contract.functions.loanPair(int(loan_id)).call()
+        pair = await contract.functions.loanPair(int(loan_id)).call()
 
-        term = contract.functions.loanTermLookup(int(loan_id)).call()
+        term = await contract.functions.loanTermLookup(int(loan_id)).call()
         term_contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(term),
             abi=abis.read("ill005"),
@@ -1887,7 +1899,9 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         token_by_id = None
         while True:
             try:
-                token_id = term_contract.functions.tokenByIndex(index).call()
+                token_id = await term_contract.functions.tokenByIndex(
+                    index
+                ).call()
                 if token_id == int(loan_id):
                     token_by_id = index
                     break
@@ -1901,9 +1915,14 @@ async def loan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         liquidation_button = []
 
         try:
-            liquidation = contract.functions.canLiquidate(int(loan_id)).call()
+            liquidation = await contract.functions.canLiquidate(
+                int(loan_id)
+            ).call()
             if liquidation != 0:
-                reward = contract.functions.liquidationReward().call() / 10**18
+                reward = (
+                    await contract.functions.liquidationReward().call()
+                    / 10**18
+                )
                 cost = await onchain.estimate_gas(chain, "liquidate", loan_id)
                 liquidation_status = (
                     f"\n\n*Eligible For Liquidation*\n"
@@ -1973,8 +1992,8 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
         abi=abis.read("timelock"),
     )
 
-    def get_lock_info(pair):
-        effective_timestamp = contract.functions.getTokenUnlockTimestamp(
+    async def get_lock_info(pair):
+        effective_timestamp = await contract.functions.getTokenUnlockTimestamp(
             chain_info.w3.to_checksum_address(pair)
         ).call()
 
@@ -2277,7 +2296,7 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
             abi=abis.read("factory"),
         )
 
-        amount = contract.functions.allPairsLength().call()
+        amount = await contract.functions.allPairsLength().call()
 
         if chain == "eth":
             amount += 141
@@ -2314,7 +2333,7 @@ async def pair(update: Update, context: ContextTypes.DEFAULT_TYPE):
             abi=abis.read("factory"),
         )
 
-        amount = contract.functions.allPairsLength().call()
+        amount = await contract.functions.allPairsLength().call()
 
         if chain == "eth":
             amount += 141
@@ -2386,12 +2405,14 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             tx_filter, key=lambda tx: int(tx["timeStamp"]), default=None
         )
 
-        unlock_fee = contract.functions.transferUnlockFee().call() / 10**18
+        unlock_fee = (
+            await contract.functions.transferUnlockFee().call() / 10**18
+        )
         unlock_fee_dollar = float(unlock_fee) * float(native_price)
 
         total_claimed = (
-            contract.functions.totalRewards().call()
-            - contract.functions.lastETHBalance().call()
+            await contract.functions.totalRewards().call()
+            - await contract.functions.lastETHBalance().call()
         ) / 10**18
         total_claimed_dollar = float(total_claimed) * float(native_price)
 
@@ -2438,12 +2459,14 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             status = data["extra_metadata"]["attributes"][0]["value"]
             image_url = data["image_url"]
             unclaimed = (
-                contract.functions.unclaimedRewards(int(pioneer_id)).call()
+                await contract.functions.unclaimedRewards(
+                    int(pioneer_id)
+                ).call()
                 / 10**18
             )
             unclaimed_dollar = float(unclaimed) * float(native_price)
             claimed = (
-                contract.functions.rewardsClaimed(int(pioneer_id)).call()
+                await contract.functions.rewardsClaimed(int(pioneer_id)).call()
                 / 10**18
             )
             claimed_dollar = float(claimed) * float(native_price)
@@ -2577,7 +2600,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 abi=abis.read("lendingpool"),
             )
 
-            count = contract.functions.nextLoanID().call()
+            count = await contract.functions.nextLoanID().call()
             total_borrowed = 0
 
             ignored_loans = range(21, 25)
@@ -2587,7 +2610,9 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     continue
 
                 borrowed = (
-                    contract.functions.getRemainingLiability(loan_id).call()
+                    await contract.functions.getRemainingLiability(
+                        loan_id
+                    ).call()
                     / 10**18
                 )
                 total_borrowed += borrowed
@@ -2698,50 +2723,50 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Pushing {chain_info.name} splitters, Please wait..."
     )
 
-    eco_config = splitters.get_push_settings(chain)["eco"]
-    address = eco_config["address"]
-    abi = eco_config["abi"]
-    name = eco_config["name"]
-    threshold = eco_config["threshold"]
+    config = await splitters.get_push_settings(chain)
+    eco_address = config["eco"]["address"]
+    eco_abi = config["eco"]["abi"]
+    eco_name = config["eco"]["name"]
+    eco_threshold = config["eco"]["threshold"]
 
     contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(address), abi=abi
+        address=chain_info.w3.to_checksum_address(eco_address), abi=eco_abi
     )
 
-    available_tokens = eco_config["calculate_tokens"](contract)
+    available_tokens = config["calculate_tokens"](contract)
 
-    if float(available_tokens) < float(threshold):
+    if float(available_tokens) < float(eco_threshold):
         await message.delete()
         await update.message.reply_text(
-            f"{chain_info.name} {name} balance too low to push."
+            f"{chain_info.name} {eco_name} balance too low to push."
         )
     else:
         result = await onchain.splitter_push(
-            "splitter", address, abi, chain, user_id
+            "splitter", eco_address, eco_abi, chain, user_id
         )
         await message.delete()
         await update.message.reply_text(result)
 
     if chain.lower() == "eth":
-        treasury_config = splitters.get_push_settings(chain)["treasury"]
-        address = treasury_config["address"]
-        abi = treasury_config["abi"]
-        name = treasury_config["name"]
-        threshold = treasury_config["threshold"]
+        treasury_address = config["treasury"]["address"]
+        treasury_abi = config["treasury"]["abi"]
+        treasury_name = config["treasury"]["name"]
+        treasury_threshold = config["treasury"]["threshold"]
 
         contract = chain_info.w3.eth.contract(
-            address=chain_info.w3.to_checksum_address(address), abi=abi
+            address=chain_info.w3.to_checksum_address(treasury_address),
+            abi=treasury_abi,
         )
 
-        available_tokens = treasury_config["calculate_tokens"](contract)
+        available_tokens = config["calculate_tokens"](contract)
 
-        if float(available_tokens) < float(threshold):
+        if float(available_tokens) < float(treasury_threshold):
             await update.message.reply_text(
-                f"{chain_info.name} {name} balance too low to push."
+                f"{chain_info.name} {treasury_name} balance too low to push."
             )
         else:
             result = await onchain.splitter_push(
-                "splitter", address, abi, chain, user_id
+                "splitter", treasury_address, treasury_abi, chain, user_id
             )
             await update.message.reply_text(result)
 
@@ -2981,21 +3006,21 @@ async def splitters_command(
     eco_dollar = eco_eth * native_price
 
     eco_splitter_text = "Distribution:\n"
-    eco_distribution = splitters.get_eco_split(chain)
+    eco_distribution = await splitters.get_eco_split(chain)
     for location, (share, percentage) in eco_distribution.items():
         eco_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
-    config = splitters.get_push_settings(chain)["eco"]
-    threshold = config["threshold"]
-    abi = config["abi"]
+    config = await splitters.get_push_settings(chain)
+    threshold = config["eco"]["threshold"]
+    abi = config["eco"]["abi"]
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(eco_address), abi=abi
     )
 
-    available_tokens = config["calculate_tokens"](contract)
+    available_tokens = await config["eco"]["calculate_tokens"](contract)
 
-    push_text = tools.get_last_action(eco_address, chain)
+    push_text = await tools.get_last_action(eco_address, chain)
 
     caption = (
         f"*X7 Finance Splitters ({chain_info.name})*\n\n"
@@ -3030,18 +3055,18 @@ async def splitters_command(
         for location, (share, percentage) in treasury_distribution.items():
             treasury_splitter_text += f"{location}: {share:.4f} {chain_info.native.upper()} ({percentage:.0f}%)\n"
 
-        config = splitters.get_push_settings(chain)["treasury"]
-        threshold = config["threshold"]
-        abi = config["abi"]
+        config = await splitters.get_push_settings(chain)
+        threshold = config["treasury"]["threshold"]
+        abi = config["treasury"]["abi"]
 
         contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(treasury_address),
             abi=abi,
         )
 
-        available_tokens = config["calculate_tokens"](contract)
+        available_tokens = config["treasury"]["calculate_tokens"](contract)
 
-        push_text = tools.get_last_action(treasury_address, chain)
+        push_text = await tools.get_last_action(treasury_address, chain)
 
         caption += (
             f"\n*Treasury Splitter*\n{treasury_eth:.4f} {chain_info.native.upper()} (${treasury_dollar:,.0f})\n"

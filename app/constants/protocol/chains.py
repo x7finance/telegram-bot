@@ -1,4 +1,4 @@
-from web3 import AsyncWeb3, Web3
+from web3 import AsyncWeb3
 
 from constants.bot import urls
 from constants.protocol import addresses
@@ -44,8 +44,7 @@ class ChainInfo:
         self.dext = dext
         self.opensea = opensea
         self.tg = tg
-        self.w3 = Web3(Web3.HTTPProvider(rpc_url))
-        self.w3async = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(rpc_url))
+        self.w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(rpc_url))
         self.com_multi = com_multi
         self.dao_multi = dao_multi
 
