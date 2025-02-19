@@ -177,17 +177,6 @@ def update_bot_commands():
 
     results = []
 
-    reset_response = requests.post(
-        url,
-        json={"commands": [], "scope": {"type": "all_chat_administrators"}},
-    )
-
-    results.append(
-        "✅ Group Admin commands reset"
-        if reset_response.status_code == 200
-        else f"⚠️ Failed to reset group admin commands: {reset_response.text}"
-    )
-
     response = requests.post(
         url, json={"commands": general_commands, "scope": {"type": "default"}}
     )

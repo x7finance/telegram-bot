@@ -189,7 +189,7 @@ async def get_hub_split(chain, address, token):
     )
 
 
-def get_treasury_split(chain):
+async def get_treasury_split(chain):
     chain_info, _ = chains.get_info(chain)
 
     address = addresses.treasury_splitter(chain)
@@ -198,15 +198,19 @@ def get_treasury_split(chain):
         abi=abis.read("treasurysplitter"),
     )
 
-    profit_percentage = contract.functions.outletShare(1).call() / 1000
-    reward_pool_percentage = contract.functions.outletShare(2).call() / 1000
-    slot_1_percentage = contract.functions.outletShare(3).call() / 1000
-    slot_2_percentage = contract.functions.outletShare(4).call() / 1000
+    profit_percentage = await contract.functions.outletShare(1).call() / 1000
+    reward_pool_percentage = (
+        await contract.functions.outletShare(2).call() / 1000
+    )
+    slot_1_percentage = await contract.functions.outletShare(3).call() / 1000
+    slot_2_percentage = await contract.functions.outletShare(4).call() / 1000
 
-    profit_balance = contract.functions.outletBalance(1).call() / 10**18
-    reward_pool_balance = contract.functions.outletBalance(2).call() / 10**18
-    slot_1_balance = contract.functions.outletBalance(3).call() / 10**18
-    slot_2_balance = contract.functions.outletBalance(4).call() / 10**18
+    profit_balance = await contract.functions.outletBalance(1).call() / 10**18
+    reward_pool_balance = (
+        await contract.functions.outletBalance(2).call() / 10**18
+    )
+    slot_1_balance = await contract.functions.outletBalance(3).call() / 10**18
+    slot_2_balance = await contract.functions.outletBalance(4).call() / 10**18
 
     slot_names = {
         "eth": ("Pioneer Pool", "Community Multi Sig", "Utility Deployer"),
