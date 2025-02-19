@@ -2002,14 +2002,16 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
         date = datetime.fromtimestamp(effective_timestamp)
         return date.strftime("%Y-%m-%d %H:%M"), when
 
-    x7r_date, x7r_remaining_time = get_lock_info(addresses.x7r_pair(chain)[0])
-    x7dao_date, x7dao_remaining_time = get_lock_info(
+    x7r_date, x7r_remaining_time = await get_lock_info(
+        addresses.x7r_pair(chain)[0]
+    )
+    x7dao_date, x7dao_remaining_time = await get_lock_info(
         addresses.x7dao_pair(chain)[0]
     )
-    x7100_date, x7100_remaining_time = get_lock_info(
+    x7100_date, x7100_remaining_time = await get_lock_info(
         addresses.x7101_pair(chain)
     )
-    x7d_date, x7d_remaining_time = get_lock_info(addresses.x7d(chain))
+    x7d_date, x7d_remaining_time = await get_lock_info(addresses.x7d(chain))
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),

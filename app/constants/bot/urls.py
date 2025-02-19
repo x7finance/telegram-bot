@@ -32,55 +32,29 @@ def rpc_link(chain):
     return map.get(chain)
 
 
-def scan_address(chain):
+def scan_url(chain, category):
     map = {
-        "eth": "https://etherscan.io/address/",
-        "bsc": "https://bscscan.com/address/",
-        "poly": "https://polygonscan.com/address/",
-        "arb": "https://arbiscan.io/address/",
-        "op": "https://optimistic.etherscan.io/address/",
-        "base": "https://basescan.org/address/",
-        "eth-sepolia": "https://sepolia.etherscan.io/address/",
-        "base-sepolia": "https://sepolia.basescan.org/address/",
+        "eth": "https://etherscan.io/",
+        "bsc": "https://bscscan.com/",
+        "poly": "https://polygonscan.com/",
+        "arb": "https://arbiscan.io/",
+        "op": "https://optimistic.etherscan.io/",
+        "base": "https://basescan.org/",
+        "eth-sepolia": "https://sepolia.etherscan.io/",
+        "base-sepolia": "https://sepolia.basescan.org/",
     }
-    return map.get(chain)
 
-
-def scan_gas(chain):
-    map = {
-        "eth": "https://etherscan.io/gastracker/",
-        "bsc": "https://bscscan.com/gastracker/",
-        "poly": "https://polygonscan.com/gastracker/",
+    categories = {
+        "address": "address/",
+        "gas": "gastracker/",
+        "token": "token/",
+        "tx": "tx/",
     }
-    return map.get(chain)
 
+    base_url = map.get(chain)
+    category_path = categories.get(category)
 
-def scan_token(chain):
-    map = {
-        "eth": "https://etherscan.io/token/",
-        "bsc": "https://bscscan.com/token/",
-        "poly": "https://polygonscan.com/token/",
-        "arb": "https://arbiscan.io/token/",
-        "op": "https://optimistic.etherscan.io/token/",
-        "base": "https://basescan.org/token/",
-        "eth-sepolia": "https://sepolia.etherscan.io/token/",
-        "base-sepolia": "https://sepolia.basescan.org/token/",
-    }
-    return map.get(chain)
-
-
-def scan_tx(chain):
-    map = {
-        "eth": "https://etherscan.io/tx/",
-        "bsc": "https://bscscan.com/tx/",
-        "poly": "https://polygonscan.com/tx/",
-        "arb": "https://arbiscan.io/tx/",
-        "op": "https://optimistic.etherscan.io/tx/",
-        "base": "https://basescan.org/tx/",
-        "eth-sepolia": "https://sepolia.etherscan.io/tx/",
-        "base-sepolia": "https://sepolia.basescan.org/tx/",
-    }
-    return map.get(chain)
+    return base_url + category_path
 
 
 def token_img_link(token):
