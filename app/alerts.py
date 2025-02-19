@@ -63,7 +63,7 @@ async def log_loop(
             }
 
             latest_block = context.bot_data.get(
-                f"last_block_{chain}", w3.eth.block_number
+                f"last_block_{chain}", await w3.eth.block_number
             )
 
             print(f"✅ {chain.upper()} alerts initialized")
@@ -80,12 +80,12 @@ async def log_loop(
 
             while True:
                 try:
-                    current_block = w3.eth.block_number
+                    current_block = await w3.eth.block_number
                     from_block = latest_block + 1
                     if from_block > current_block:
                         from_block = current_block
 
-                    pair_logs = w3.eth.get_logs(
+                    pair_logs = await w3.eth.get_logs(
                         {
                             "fromBlock": from_block,
                             "toBlock": current_block,
@@ -94,7 +94,7 @@ async def log_loop(
                         }
                     )
 
-                    token_logs = w3.eth.get_logs(
+                    token_logs = await w3.eth.get_logs(
                         {
                             "fromBlock": from_block,
                             "toBlock": current_block,
@@ -105,7 +105,7 @@ async def log_loop(
 
                     loan_logs = []
                     for ill_contract in ill_contracts.values():
-                        logs = w3.eth.get_logs(
+                        logs = await w3.eth.get_logs(
                             {
                                 "fromBlock": from_block,
                                 "toBlock": current_block,
