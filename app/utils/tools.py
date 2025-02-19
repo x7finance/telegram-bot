@@ -175,18 +175,30 @@ def update_bot_commands():
 
     all_commands = general_commands + admin_commands
 
-    user_response = requests.post(
+    results = []
+
+    reset_response = requests.post(
+        url,
+        json={"commands": [], "scope": {"type": "all_chat_administrators"}},
+    )
+
+    results.append(
+        "✅ Group Admin commands reset"
+        if reset_response.status_code == 200
+        else f"⚠️ Failed to reset group admin commands: {reset_response.text}"
+    )
+
+    response = requests.post(
         url, json={"commands": general_commands, "scope": {"type": "default"}}
     )
 
-    if user_response.status_code == 200:
-        general_result = "✅ General commands updated"
-    else:
-        general_result = (
-            f"⚠️ Failed to update general commands: {user_response.text}"
-        )
+    results.append(
+        "✅ General commands updated"
+        if response.status_code == 200
+        else f"⚠️ Failed to update commands: {response.text}"
+    )
 
-    admin_response = requests.post(
+    response = requests.post(
         url,
         json={
             "commands": all_commands,
@@ -197,11 +209,10 @@ def update_bot_commands():
         },
     )
 
-    if admin_response.status_code == 200:
-        admin_result = "✅ Admin commands updated"
-    else:
-        admin_result = (
-            f"⚠️ Failed to update admin commands: {admin_response.text}"
-        )
+    results.append(
+        "✅ Admin commands updated"
+        if response.status_code == 200
+        else f"⚠️ Failed to update Admin commands: {response.text}"
+    )
 
-    return general_result, admin_result
+    return "\n".join(results)

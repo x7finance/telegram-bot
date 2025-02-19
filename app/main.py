@@ -117,9 +117,7 @@ def start():
                 name="Click Me",
             )
 
-        general_commands, admin_commands = tools.update_bot_commands()
-        print(general_commands)
-        print(admin_commands)
+        print(tools.update_bot_commands())
 
         init_alerts_bot()
 
