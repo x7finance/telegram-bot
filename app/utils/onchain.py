@@ -122,11 +122,13 @@ async def liquidate_loan(loan_id, chain, user_id):
         nonce = await chain_info.w3.eth.get_transaction_count(sender_address)
 
         gas_price = await chain_info.w3.eth.gas_price
-        gas_estimate = contract.functions.liquidate(loan_id).estimate_gas(
-            {"from": sender_address}
-        )
+        gas_estimate = await contract.functions.liquidate(
+            loan_id
+        ).estimate_gas({"from": sender_address})
 
-        transaction = contract.functions.liquidate(loan_id).build_transaction(
+        transaction = await contract.functions.liquidate(
+            loan_id
+        ).build_transaction(
             {
                 "from": sender_address,
                 "gas": gas_estimate,
@@ -178,11 +180,11 @@ async def splitter_push(
         function_to_call = getattr(contract.functions, function_name)
         nonce = await chain_info.w3.eth.get_transaction_count(sender_address)
         gas_price = await chain_info.w3.eth.gas_price
-        gas_estimate = function_to_call(*function_args).estimate_gas(
+        gas_estimate = await function_to_call(*function_args).estimate_gas(
             {"from": sender_address}
         )
 
-        transaction = function_to_call(*function_args).build_transaction(
+        transaction = await function_to_call(*function_args).build_transaction(
             {
                 "from": sender_address,
                 "gas": gas_estimate,
@@ -272,7 +274,7 @@ async def withdraw_native(amount, chain, user_id, recipient_address):
         amount_in_wei = chain_info.w3.to_wei(amount, "ether")
         nonce = await chain_info.w3.eth.get_transaction_count(sender_address)
 
-        gas_price = await chain_info.wc.eth.gas_price
+        gas_price = await chain_info.w3.eth.gas_price
         gas_estimate = await chain_info.w3.eth.estimate_gas(
             {
                 "from": sender_address,
@@ -403,14 +405,14 @@ async def x7d_mint(amount, chain, user_id):
         nonce = await chain_info.w3.eth.get_transaction_count(sender_address)
 
         gas_price = await chain_info.w3.eth.gas_price
-        gas_estimate = contract.functions.depositETH().estimate_gas(
+        gas_estimate = await contract.functions.depositETH().estimate_gas(
             {
                 "from": sender_address,
                 "value": chain_info.w3.to_wei(amount, "ether"),
             }
         )
 
-        transaction = contract.functions.depositETH().build_transaction(
+        transaction = await contract.functions.depositETH().build_transaction(
             {
                 "from": sender_address,
                 "value": chain_info.w3.to_wei(amount, "ether"),
@@ -457,11 +459,11 @@ async def x7d_redeem(amount, chain, user_id):
         nonce = await chain_info.w3.eth.get_transaction_count(sender_address)
 
         gas_price = await chain_info.w3.eth.gas_price
-        gas_estimate = contract.functions.withdrawETH(
+        gas_estimate = await contract.functions.withdrawETH(
             chain_info.w3.to_wei(amount, "ether")
         ).estimate_gas({"from": sender_address})
 
-        transaction = contract.functions.withdrawETH(
+        transaction = await contract.functions.withdrawETH(
             chain_info.w3.to_wei(amount, "ether")
         ).build_transaction(
             {

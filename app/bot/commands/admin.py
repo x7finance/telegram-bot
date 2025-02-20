@@ -195,15 +195,3 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(
                     "Next Click Me:\n\nDisabled\n\n"
                 )
-
-
-HANDLERS = [
-    (func.__name__.split("_")[0], func, description)
-    for func, description in [
-        (settings_command, "Bot settings"),
-        (clickme, "Send Click Me!"),
-        (remove, "Remove an wallet"),
-        (status, "View bot status"),
-        (wen, "Next Click Me!"),
-    ]
-]

@@ -3304,10 +3304,7 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     command = update.message.text.lower()
-
-    if any(
-        keyword in command for keyword in ["xtrader", "0xtrader", "0xtraderai"]
-    ):
+    if command == "/0xtrader":
         username = "0xtraderai"
         display_name = "0xTraderAi Twitter/X"
         image = x7_images.XTRADER_LOGO
@@ -3324,28 +3321,39 @@ async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         image = tools.get_random_pioneer()
 
     tweet_data = twitter.get_latest_tweet(username)
-    followers = twitter.get_user_data(username)["followers"]
 
-    created_at = tweet_data.get("created_at", "")
-    when = (
-        tools.get_time_difference(created_at.timestamp()) if created_at else ""
-    )
+    if tweet_data:
+        followers = twitter.get_user_data(username)["followers"]
+        created_at = tweet_data.get("created_at", "")
+        when = (
+            tools.get_time_difference(created_at.timestamp())
+            if created_at
+            else ""
+        )
 
-    tweet = (
-        f"Latest {tweet_data['type']} - {when}\n\n"
-        f"{tools.escape_markdown(tweet_data['text'])}\n\n"
-        f"Likes: {tweet_data['likes']}\n"
-        f"Retweets: {tweet_data['retweets']}\n"
-        f"Replies: {tweet_data['replies']}\n\n"
-        f"{random.choice(text.X_REPLIES)}"
-    )
+        caption = (
+            f"*{display_name}*\n\n"
+            f"Followers: {followers}\n\n"
+            f"Latest {tweet_data['type']} - {when}\n\n"
+            f"{tools.escape_markdown(tweet_data['text'])}\n\n"
+            f"Likes: {tweet_data['likes']})\n"
+            f"Retweets: {tweet_data['retweets']}\n"
+            f"Replies: {tweet_data['replies']}\n\n"
+            f"{random.choice(text.X_REPLIES)}"
+        )
+        url = tweet_data["url"]
+        url_string = "Latest Tweet"
+    else:
+        caption = ""
+        url = f"https://twitter.com/{username}"
+        url_string = display_name
 
     await update.message.reply_photo(
         photo=image,
-        caption=f"*{display_name}*\n\nFollowers: {followers}\n\n{tweet}",
+        caption=caption,
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton(text="Tweet", url=tweet_data["url"])]]
+            [[InlineKeyboardButton(text=url_string, url=url)]]
         ),
     )
 
@@ -3676,96 +3684,3 @@ async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     await pricebot.command(update, context, search, chain)
-
-
-HANDLERS = []
-ALIAS = {
-    "arbitrage": ["arb"],
-    "constellations": ["quints", "x7100"],
-    "hubs": ["hub"],
-    "loans": ["loan"],
-    "mcap": ["marketcap"],
-    "pairs": ["pair"],
-    "splitters": ["split", "splitter"],
-    "top": ["trending"],
-}
-
-for func, description in [
-    (about, "About X7 Finance"),
-    (admins, "List of admins"),
-    (alerts, "Xchange Alerts Channel"),
-    (announcements, "Latest announcements"),
-    (arbitrage, "Arbitrage opportunities"),
-    (blocks, "Block info"),
-    (blog, "Read the latest blog posts"),
-    (borrow, "Loan rates"),
-    (burn, "Burn info"),
-    (buy, "Buy links"),
-    (ca, "Contract addresses"),
-    (channels, "X7 channels"),
-    (chart, "Charts links"),
-    (check, "Check valid input"),
-    (compare, "Compare token metrics"),
-    (constellations, "Constellations"),
-    (contribute, "Contribute to X7"),
-    (convert, "Convert token values"),
-    (dao_command, "DAO info"),
-    (docs, "View documentation"),
-    (ecosystem, "View ecosystem tokens"),
-    (factory, "Factory contracts"),
-    (fg, "Market fear greed data"),
-    (faq, "Frequently Asked Questions"),
-    (feeto, "X7 FeeTo info"),
-    (gas, "Check gas fees"),
-    (github_command, "View GitHub repository"),
-    (holders, "Check token holders"),
-    (hubs, "View hubs and buybacks"),
-    (leaderboard, "View leaderboard"),
-    (links, "View important links"),
-    (liquidate, "Liquidate loans"),
-    (liquidity, "View liquidity details"),
-    (loans, "Check active loans"),
-    (locks, "View token locks"),
-    (me, "Check your balance"),
-    (mcap, "Check market cap"),
-    (media_command, "View media links"),
-    (nft, "View NFTs"),
-    (onchains, "View onchain messages"),
-    (pairs, "Check trading pairs"),
-    (pioneer, "Pioneer information"),
-    (pool, "View lending pool"),
-    (price, "Check token prices"),
-    (pushall, "Push X7 splitters"),
-    (register, "Register a wallet"),
-    (router, "View router contracts"),
-    (smart, "X7 smart contracts"),
-    (spaces, "Check available spaces"),
-    (splitters_command, "View splitters"),
-    (tax_command, "Check tax"),
-    (timestamp_command, "Convert timestamps"),
-    (time_command, "View system time"),
-    (treasury, "View treasury details"),
-    (top, "View trending tokens"),
-    (twitter_command, "Twitter link"),
-    (volume, "Check trading volume"),
-    (wallet, "View wallet information"),
-    (website, "Website link"),
-    (wei, "Convert values to Wei"),
-    (wp, "Read the whitepaper"),
-    (x7r, "View X7R details"),
-    (x7d, "View X7D details"),
-    (x7dao, "View X7DAO details"),
-    (x7101, "View X7101 details"),
-    (x7102, "View X7102 details"),
-    (x7103, "View X7103 details"),
-    (x7104, "View X7104 details"),
-    (x7105, "View X7105 details"),
-    (x, "X7 Price Bot"),
-]:
-    base_command = func.__name__.split("_")[0]
-    commands = [base_command] + ALIAS.get(base_command, [])
-    HANDLERS.append((commands, func, description))
-
-HANDLERS.append(
-    (["0xtrader"], twitter_command, "0xTrader Twitter link"),
-)

@@ -4,9 +4,9 @@ import requests
 import socket
 from datetime import datetime
 
+from bot import commands
 from constants.bot import urls
 from constants.protocol import abis, addresses, chains, splitters, tokens
-from bot.commands import admin, general
 from services import get_etherscan
 
 etherscan = get_etherscan()
@@ -165,12 +165,12 @@ def update_bot_commands():
             "command": cmd[0] if isinstance(cmd, list) else cmd,
             "description": desc,
         }
-        for cmd, _, desc in general.HANDLERS
+        for cmd, _, desc in commands.GENERAL_HANDLERS
     ]
 
     admin_commands = [
         {"command": cmd, "description": desc}
-        for cmd, _, desc in admin.HANDLERS
+        for cmd, _, desc in commands.ADMIN_HANDLERS
     ]
 
     all_commands = general_commands + admin_commands

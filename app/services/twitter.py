@@ -73,25 +73,9 @@ class Twitter:
                     "created_at": tweet.created_at,
                     "type": tweet_type,
                 }
-            return {
-                "text": "No tweets found",
-                "url": f"https://twitter.com/{username}",
-                "likes": "N/A",
-                "retweets": "N/A",
-                "replies": "N/A",
-                "created_at": "",
-                "type": "Tweet",
-            }
+            return None
         except Exception:
-            return {
-                "text": "No tweets found",
-                "url": f"https://twitter.com/{username}",
-                "likes": "N/A",
-                "retweets": "N/A",
-                "replies": "N/A",
-                "created_at": "",
-                "type": "Tweet",
-            }
+            return None
 
     def get_next_space(self, username):
         try:

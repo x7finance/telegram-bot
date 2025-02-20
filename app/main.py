@@ -15,10 +15,8 @@ from pathlib import Path
 from telegram.warnings import PTBUserWarning
 from warnings import filterwarnings
 
-from constants.bot import settings
-from bot.commands import admin, general
-from bot import auto, callbacks, conversations
-from constants.bot import urls
+from bot import auto, callbacks, commands, conversations
+from constants.bot import settings, urls
 from utils import tools
 from services import get_dbmanager
 
@@ -84,14 +82,14 @@ def init_main_bot():
             )
         )
 
-    for cmd, handler, _ in general.HANDLERS:
+    for cmd, handler, _ in commands.GENERAL_HANDLERS:
         if isinstance(cmd, list):
             for alias in cmd:
                 application.add_handler(CommandHandler(alias, handler))
         else:
             application.add_handler(CommandHandler(cmd, handler))
 
-    for cmd, handler, _ in admin.HANDLERS:
+    for cmd, handler, _ in commands.ADMIN_HANDLERS:
         application.add_handler(CommandHandler(cmd, handler))
 
     for handler, pattern in callbacks.HANDLERS:
