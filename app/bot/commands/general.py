@@ -2737,7 +2737,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         address=chain_info.w3.to_checksum_address(eco_address), abi=eco_abi
     )
 
-    available_tokens = config["calculate_tokens"](contract)
+    available_tokens = await config["calculate_tokens"](contract)
 
     if float(available_tokens) < float(eco_threshold):
         await message.delete()
@@ -2763,7 +2763,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
             abi=treasury_abi,
         )
 
-        available_tokens = config["calculate_tokens"](contract)
+        available_tokens = await config["calculate_tokens"](contract)
 
         if float(available_tokens) < float(treasury_threshold):
             await update.message.reply_text(

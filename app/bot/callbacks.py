@@ -255,7 +255,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         address=chain_info.w3.to_checksum_address(address), abi=abi
     )
 
-    available_tokens = config["calculate_tokens"](contract)
+    available_tokens = await config["calculate_tokens"](contract)
 
     if float(available_tokens) < float(threshold):
         await query.answer(
