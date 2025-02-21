@@ -1686,8 +1686,8 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         latest_loan_text = ""
-        ill_number = None
-        token_by_id = None
+        ill_number = 0
+        token_by_id = 0
 
         if chain != "eth":
             adjusted_amount = max(0, amount - 20)
@@ -1702,23 +1702,7 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
             term = await contract.functions.loanTermLookup(
                 int(latest_loan)
             ).call()
-            term_contract = chain_info.w3.eth.contract(
-                address=chain_info.w3.to_checksum_address(term),
-                abi=abis.read("ill005"),
-            )
-            index = 0
-            while True:
-                try:
-                    token_id = await term_contract.functions.tokenByIndex(
-                        index
-                    ).call()
-                    if token_id == int(latest_loan):
-                        token_by_id = index
-                        break
-                    index += 1
-                except Exception:
-                    break
-
+            token_by_id = await tools.get_loan_token_id(latest_loan, chain)
             ill_number = tools.get_ill_number(term, chain)
 
         loan_text = (
@@ -1730,18 +1714,14 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 InlineKeyboardButton(
                     text="Loans Dashboard", url=f"{urls.XCHANGE}lending"
                 )
-            ]
+            ],
+            [
+                InlineKeyboardButton(
+                    text=f"Latest Loan - ID: {latest_loan}",
+                    url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}",
+                )
+            ],
         ]
-
-        if ill_number is not None and token_by_id is not None:
-            buttons.append(
-                [
-                    InlineKeyboardButton(
-                        text=f"Latest Loan - ID: {latest_loan}",
-                        url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}",
-                    )
-                ]
-            )
 
         await message.delete()
         await update.message.reply_photo(
@@ -1886,30 +1866,16 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             remaining = ""
 
+        loan_amount = (
+            await term_contract.functions.loanAmount(int(loan_id)).call()
+            / 10**18
+        )
+
         token = await contract.functions.loanToken(int(loan_id)).call()
         name = dextools.get_token_name(token, chain)["name"]
         pair = await contract.functions.loanPair(int(loan_id)).call()
 
-        term = await contract.functions.loanTermLookup(int(loan_id)).call()
-        term_contract = chain_info.w3.eth.contract(
-            address=chain_info.w3.to_checksum_address(term),
-            abi=abis.read("ill005"),
-        )
-
-        index = 0
-        token_by_id = None
-        while True:
-            try:
-                token_id = await term_contract.functions.tokenByIndex(
-                    index
-                ).call()
-                if token_id == int(loan_id):
-                    token_by_id = index
-                    break
-                index += 1
-            except Exception:
-                break
-
+        token_by_id = await tools.get_loan_token_id(loan_id, chain)
         ill_number = tools.get_ill_number(term, chain)
 
         liquidation_status = ""
@@ -1962,6 +1928,7 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
             photo=tools.get_random_pioneer(),
             caption=f"*X7 Finance Initial Liquidity Loan - {loan_id} ({chain_info.name})*\n\n"
             f"{name}\n\n"
+            f"{loan_amount} {chain_info.native.upper()}\n\n"
             f"Payment Schedule UTC:\n{schedule}\n\n"
             f"{remaining}"
             f"{liquidation_status}",

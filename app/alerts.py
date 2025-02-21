@@ -1,5 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, ContextTypes
+from telegram.ext import ApplicationBuilder
 
 import asyncio
 import io
@@ -8,7 +8,6 @@ import os
 import random
 import requests
 import sentry_sdk
-import textwrap
 import websockets
 from PIL import Image, ImageDraw, ImageFont
 
@@ -16,172 +15,237 @@ from constants.bot import urls
 from constants.protocol import addresses, abis, chains
 from media import fonts, blackhole
 from utils import tools
-from services import get_defined, get_dextools, get_etherscan
+from services import get_defined, get_dextools
 
 defined = get_defined()
 dextools = get_dextools()
-etherscan = get_etherscan()
 
 sentry_sdk.init(dsn=os.getenv("SENTRY_SCANNER_DSN"), traces_sample_rate=1.0)
 
-FONT = fonts.BARTOMES
+TITLE_FONT = fonts.BARTOMES
+FONT = fonts.FREE_MONO_BOLD
 LIVE_LOAN = "005"
 
 
-async def error(context: ContextTypes.DEFAULT_TYPE):
-    print(context.error)
-    sentry_sdk.capture_exception(context.error)
+async def error(context):
+    print(context)
+    sentry_sdk.capture_exception(Exception(context))
 
 
-async def build_alerts(chain):
+async def create_image(token_image, title, message, chain_info):
+    im1 = Image.open(random.choice(blackhole.RANDOM)).convert("RGBA")
+
+    try:
+        im2 = Image.open(requests.get(token_image, stream=True).raw).convert(
+            "RGBA"
+        )
+    except Exception:
+        im2 = Image.open(chain_info.logo).convert("RGBA")
+
+    im1.paste(im2, (700, 20), im2)
+    i1 = ImageDraw.Draw(im1)
+
+    i1.text(
+        xy=(26, 30),
+        text=f"{title} ({chain_info.name.upper()})\n\n\n",
+        font=ImageFont.truetype(TITLE_FONT, 30),
+        fill=(255, 255, 255),
+    )
+
+    i1.text(
+        xy=(26, 80),
+        text=message,
+        font=ImageFont.truetype(FONT, 26),
+        fill=(255, 255, 255),
+    )
+
+    image_buffer = io.BytesIO()
+    im1.save(image_buffer, format="PNG")
+    image_buffer.seek(0)
+
+    return image_buffer
+
+
+async def handle_log(log_data, chain, contracts):
+    try:
+        factory, ill_term, xchange_create = contracts
+        chain_info, _ = chains.get_info(chain)
+
+        topics = log_data.get("topics", [])
+        if not topics:
+            return
+
+        event_signature = topics[0]
+        token_deployed = False
+
+        if event_signature == xchange_create.events.TokenDeployed().topic:
+            log = xchange_create.events.TokenDeployed().process_log(log_data)
+            await format_token_alert(log, chain)
+            token_deployed = True
+
+        elif event_signature == ill_term.events.LoanOriginated().topic:
+            log = ill_term.events.LoanOriginated().process_log(log_data)
+            await format_loan_alert(log, chain, is_completed=False)
+
+        elif event_signature == ill_term.events.LoanComplete().topic:
+            tx = await chain_info.w3.eth.get_transaction(
+                log_data["transactionHash"]
+            )
+            input_sig = tx["input"][:10]
+            was_liquidated = input_sig == "0x415f1240"
+
+            log = ill_term.events.LoanComplete().process_log(log_data)
+            await format_loan_alert(
+                log,
+                chain,
+                is_completed=True,
+                was_liquidated=was_liquidated,
+            )
+
+        elif event_signature == factory.events.PairCreated().topic:
+            if not token_deployed:
+                log = factory.events.PairCreated().process_log(log_data)
+                await format_pair_alert(log, chain)
+
+    except Exception as e:
+        await error(f"Error processing log: {e}")
+
+
+async def initialize_alerts(chain):
     print(f"🔄 Initializing {chain.upper()} alerts...")
-    ws_url = urls.rpc_link(chain, use_ws=True)
+    retry_delay = 10
+    first_connect = True
+    retry_count = 0
+    MAX_RETRIES = 6
 
     while True:
+        ws = None
         try:
+            w3 = chains.MAINNETS[chain].w3_ws
+            factory, ill_term, xchange_create = await initialize_contracts(
+                w3, chain
+            )
+
+            ws_url = chains.MAINNETS[chain].ws_rpc_url
             async with websockets.connect(ws_url) as ws:
-                factory = chains.MAINNETS[chain].w3_ws.eth.contract(
-                    address=addresses.factory(chain), abi=abis.read("factory")
-                )
+                sub_payload = {
+                    "id": 1,
+                    "method": "eth_subscribe",
+                    "params": [
+                        "logs",
+                        {
+                            "address": [
+                                factory.address,
+                                ill_term.address,
+                                xchange_create.address,
+                            ]
+                        },
+                    ],
+                }
 
-                xchange_create = chains.MAINNETS[chain].w3_ws.eth.contract(
-                    address=addresses.xchange_create(chain),
-                    abi=abis.read("xchangecreate"),
-                )
+                await ws.send(json.dumps(sub_payload))
+                response = await ws.recv()
+                sub_id = json.loads(response)["result"]
 
-                ill_contract = chains.MAINNETS[chain].w3_ws.eth.contract(
-                    address=addresses.ill_addresses(chain)[LIVE_LOAN],
-                    abi=abis.read("ill005"),
-                )
+                if first_connect:
+                    print(f"✅ {chain.upper()} alerts initialized")
+                    first_connect = False
 
-                subscribe_payload = json.dumps(
-                    {
-                        "jsonrpc": "2.0",
-                        "id": 1,
-                        "method": "eth_subscribe",
-                        "params": [
-                            "logs",
-                            {
-                                "address": [
-                                    factory.address,
-                                    xchange_create.address,
-                                    ill_contract.address,
-                                ]
-                            },
-                        ],
-                    }
-                )
-                await ws.send(subscribe_payload)
+                retry_count = 0
 
-                response = json.loads(await ws.recv())
-                if "result" in response:
-                    subscription_id = response["result"]
-                    print(
-                        f"✅ {chain.upper()} Alerts initialized - ID: {subscription_id}"
-                    )
-                else:
-                    print(
-                        f"❌ {chain.upper()} Alerts failed to initialize - {response}"
-                    )
-                    await asyncio.sleep(10)
-                    continue
-
-                async for message in ws:
+                while True:
                     try:
-                        log = json.loads(message)
-
-                        if "error" in log:
-                            error_code = log["error"].get("code", "Unknown")
-                            error_message = log["error"].get(
-                                "message", "No message"
-                            )
-                            error(
-                                f"⚠️ WebSocket error response on {chain.upper()}: Code {error_code} - {error_message}"
-                            )
-                            await asyncio.sleep(10)
-                            break
+                        message = await ws.recv()
+                        data = json.loads(message)
 
                         if (
-                            "params" not in log
-                            or "result" not in log["params"]
+                            "method" in data
+                            and data["method"] == "eth_subscription"
                         ):
-                            error(
-                                f"⚠️ Invalid WebSocket recieved on {chain.upper()}: {log}"
-                            )
-                            continue
-
-                        event_data = log["params"]["result"]
-                        address = event_data["address"]
-
-                        if address == factory.address:
-                            decoded_event = (
-                                factory.events.PairCreated().process_log(
-                                    event_data
+                            if data["params"]["subscription"] == sub_id:
+                                await handle_log(
+                                    data["params"]["result"],
+                                    chain,
+                                    (factory, ill_term, xchange_create),
                                 )
-                            )
-                            await pair_alert(decoded_event, chain)
 
-                        elif address == xchange_create.address:
-                            decoded_event = xchange_create.events.TokenDeployed().process_log(
-                                event_data
-                            )
-                            await token_alert(decoded_event, chain)
+                    except websockets.ConnectionClosed:
+                        break
 
-                        elif address == ill_contract.address:
-                            decoded_event = ill_contract.events.LoanOriginated().process_log(
-                                event_data
-                            )
-                            await loan_alert(decoded_event, chain)
-
-                    except Exception as e:
-                        error(f"❌ Error processing log: {str(e)}")
-
-        except websockets.ConnectionClosedError as e:
-            error(
-                f"⚠️ WebSocket closed unexpectedly on {chain.upper()}: {e}. Reconnecting in 5 seconds..."
-            )
-            await asyncio.sleep(5)
+        except asyncio.CancelledError:
+            if ws and not ws.closed:
+                if sub_id:
+                    unsub_payload = {
+                        "id": 1,
+                        "method": "eth_unsubscribe",
+                        "params": [sub_id],
+                    }
+                    await ws.send(json.dumps(unsub_payload))
+                    await ws.recv()
+                await ws.close()
+            raise
 
         except Exception as e:
-            error(
-                f"❌ WebSocket error on {chain.upper()}: {str(e)}. Reconnecting in 5 seconds..."
-            )
-            await asyncio.sleep(5)
-
-
-async def loan_alert(event, chain):
-    chain_info, _ = chains.get_info(chain)
-    loan_id = event["args"]["loanID"]
-    ill_address = event["address"]
-    ill_contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(ill_address),
-        abi=abis.read("ill005"),
-    )
-
-    liability = (
-        await ill_contract.functions.getRemainingLiability(int(loan_id)).call()
-        / 10**18
-    )
-    schedule1 = await ill_contract.functions.getPremiumPaymentSchedule(
-        int(loan_id)
-    ).call()
-    schedule2 = await ill_contract.functions.getPrincipalPaymentSchedule(
-        int(loan_id)
-    ).call()
-    schedule = tools.format_schedule(
-        schedule1, schedule2, chain_info.native.upper(), isComplete=False
-    )
-
-    index, token_by_id = 0, None
-    while True:
-        try:
-            token_id = await ill_contract.functions.tokenByIndex(index).call()
-            if token_id == int(loan_id):
-                token_by_id = index
+            retry_count += 1
+            if retry_count >= MAX_RETRIES:
+                await error(
+                    f"{chain.upper()} max retries ({MAX_RETRIES}) reached, stopping alerts"
+                )
                 break
-            index += 1
-        except Exception:
-            break
+
+            await error(
+                f"{chain.upper()} connection error: {e} (attempt {retry_count}/{MAX_RETRIES})"
+            )
+            if ws and not ws.closed:
+                if sub_id:
+                    try:
+                        unsub_payload = {
+                            "id": 1,
+                            "method": "eth_unsubscribe",
+                            "params": [sub_id],
+                        }
+                        await ws.send(json.dumps(unsub_payload))
+                        await ws.recv()
+                    except Exception:
+                        pass
+                await ws.close()
+
+            await asyncio.sleep(retry_delay)
+
+
+async def initialize_contracts(w3, chain):
+    factory = w3.eth.contract(
+        address=addresses.factory(chain),
+        abi=abis.read("factory"),
+    )
+
+    ill_term = w3.eth.contract(
+        address=addresses.ill_addresses(chain)[LIVE_LOAN],
+        abi=abis.read(f"ill{LIVE_LOAN}"),
+    )
+
+    xchange_create = w3.eth.contract(
+        address=addresses.xchange_create(chain), abi=abis.read("xchangecreate")
+    )
+
+    return factory, ill_term, xchange_create
+
+
+async def format_loan_alert(
+    log, chain, is_completed=False, was_liquidated=False
+):
+    chain_info, _ = chains.get_info(chain)
+
+    loan_id = log["args"]["loanID"]
+    ill_address = addresses.ill_addresses(chain)[LIVE_LOAN]
+
+    ill_contract = chain_info.w3.eth.contract(
+        address=ill_address, abi=abis.read(f"ill{LIVE_LOAN}")
+    )
+
+    loan_amount = (
+        await ill_contract.functions.loanAmount(int(loan_id)).call() / 10**18
+    )
 
     pool_contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(
@@ -190,46 +254,47 @@ async def loan_alert(event, chain):
         abi=abis.read("lendingpool"),
     )
 
-    token = await pool_contract.functions.loanToken(int(loan_id)).call()
-    pair = await pool_contract.functions.loanPair(int(loan_id)).call()
-    token_info = dextools.get_token_name(token, chain)
-    token_name = token_info["name"]
-    token_symbol = token_info["symbol"]
+    token_address = await pool_contract.functions.loanToken(
+        int(loan_id)
+    ).call()
+    pair_address = await pool_contract.functions.loanPair(int(loan_id)).call()
 
-    ill_number = tools.get_ill_number(ill_address, chain)
+    token_info = dextools.get_token_name(token_address, chain)
 
-    im1 = Image.open(random.choice(blackhole.RANDOM)).convert("RGBA")
-    try:
-        image_url = defined.get_token_image(token, chain)
-        im2 = Image.open(requests.get(image_url, stream=True).raw).convert(
-            "RGBA"
-        )
-    except Exception:
-        im2 = Image.open(chain_info.logo).convert("RGBA")
+    if is_completed:
+        title = "Loan Liquidated" if was_liquidated else "Loan Completed"
+    else:
+        title = "Loan Originated"
 
-    im1.paste(im2, (700, 20), im2)
+    schedule1 = await ill_contract.functions.getPremiumPaymentSchedule(
+        int(loan_id)
+    ).call()
+    schedule2 = await ill_contract.functions.getPrincipalPaymentSchedule(
+        int(loan_id)
+    ).call()
+    schedule = tools.format_schedule(
+        schedule1,
+        schedule2,
+        chain_info.native.upper(),
+        isComplete=is_completed,
+    )
 
     message = (
-        f"{token_name} ({token_symbol})\n\n"
-        f"{liability} {chain_info.native.upper()}\n\n"
-        f"Loan ID: {loan_id}\n\n"
-        f"Payment Schedule UTC:\n{schedule}"
+        f"{token_info['name']} ({token_info['symbol']})\n\n{loan_amount} {chain_info.native.upper()}\n\nLoan ID: {loan_id}\n\n"
+        f"Payment Schedule (UTC):\n{schedule}"
     )
 
-    i1 = ImageDraw.Draw(im1)
-    i1.text(
-        (26, 30),
-        f"New Loan Originated ({chain_info.name.upper()})\n\n{message}",
-        font=ImageFont.truetype(FONT, 26),
-        fill=(255, 255, 255),
+    image_buffer = await create_image(
+        defined.get_token_image(token_address, chain),
+        title,
+        message,
+        chain_info,
     )
-    image_buffer = io.BytesIO()
-    im1.save(image_buffer, format="PNG")
-    image_buffer.seek(0)
 
-    caption = (
-        f"*New Loan Originated ({chain_info.name.upper()})*\n\n{message}\n\n"
-    )
+    caption = f"*{title} ({chain_info.name.upper()})*\n\n{message}\n\n"
+
+    token_by_id = await tools.get_loan_token_id(loan_id, chain)
+    ill_number = tools.get_ill_number(ill_address, chain)
 
     buttons = InlineKeyboardMarkup(
         [
@@ -241,52 +306,41 @@ async def loan_alert(event, chain):
             ],
             [
                 InlineKeyboardButton(
-                    text="Buy", url=urls.xchange_buy_link(chain_info.id, token)
+                    text="Buy",
+                    url=urls.xchange_buy_link(chain_info.id, token_address),
                 )
             ],
             [
                 InlineKeyboardButton(
                     text="Chart",
-                    url=urls.dex_tools_link(chain_info.dext, pair),
+                    url=urls.dex_tools_link(chain_info.dext, pair_address),
                 )
             ],
         ]
     )
 
-    for channel, thread_id, link in urls.TG_ALERTS_CHANNELS:
-        send_params = {
-            "chat_id": channel,
-            "photo": image_buffer,
-            "caption": f"{caption}{tools.escape_markdown(link)}",
-            "parse_mode": "Markdown",
-            "reply_markup": buttons,
-        }
-
-        if thread_id is not None:
-            send_params["message_thread_id"] = thread_id
-
-        await application.bot.send_photo(**send_params)
-
-    image_buffer.close()
+    await send_alert(image_buffer, caption, buttons, application)
 
 
-async def pair_alert(event, chain):
+async def format_pair_alert(log, chain):
     chain_info, _ = chains.get_info(chain)
     paired_token = addresses.weth(chain)
 
-    token_0_info = dextools.get_token_name(event["args"]["token0"], chain)
+    title = "New Pair Created"
+
+    token_0_info = dextools.get_token_name(log["args"]["token0"], chain)
     token_0_name = token_0_info["name"]
     token_0_symbol = token_0_info["symbol"]
 
-    token_1_info = dextools.get_token_name(event["args"]["token1"], chain)
+    token_1_info = dextools.get_token_name(log["args"]["token1"], chain)
     token_1_name = token_1_info["name"]
     token_1_symbol = token_1_info["symbol"]
 
-    if event["args"]["token0"] == paired_token:
-        token_address = event["args"]["token1"]
+    if log["args"]["token0"] == paired_token:
+        token_address = log["args"]["token1"]
         token_name = token_1_name
     else:
-        token_address = event["args"]["token0"]
+        token_address = log["args"]["token0"]
         token_name = token_0_name
 
     token_data = dextools.get_audit(token_address, chain)
@@ -323,32 +377,17 @@ async def pair_alert(event, chain):
 
     status = f"{open_source}\n{tax}\n{renounced}"
 
-    im1 = Image.open(random.choice(blackhole.RANDOM)).convert("RGBA")
-    try:
-        image_url = defined.get_token_image(token_address, chain)
-        im2 = Image.open(requests.get(image_url, stream=True).raw).convert(
-            "RGBA"
-        )
-    except Exception:
-        im2 = Image.open(chain_info.logo).convert("RGBA")
-
-    im1.paste(im2, (700, 20), im2)
-
     message = f"{token_name} ({token_0_symbol}/{token_1_symbol})\n\n{status}"
 
-    i1 = ImageDraw.Draw(im1)
-    i1.text(
-        (26, 30),
-        f"New Pair Created ({chain_info.name.upper()})\n\n{message}",
-        font=ImageFont.truetype(FONT, 26),
-        fill=(255, 255, 255),
+    image_buffer = await create_image(
+        defined.get_token_image(token_address, chain),
+        title,
+        message,
+        chain_info,
     )
-    image_buffer = io.BytesIO()
-    im1.save(image_buffer, format="PNG")
-    image_buffer.seek(0)
 
     caption = (
-        f"*New Pair Created ({chain_info.name.upper()})*\n\n"
+        f"*{title} ({chain_info.name.upper()})*\n\n"
         f"{message}\n\n"
         f"Token Address:\n`{token_address}`\n\n"
     )
@@ -365,34 +404,21 @@ async def pair_alert(event, chain):
                 InlineKeyboardButton(
                     "Chart",
                     url=urls.dex_tools_link(
-                        chain_info.dext, event["args"]["pair"]
+                        chain_info.dext, log["args"]["pair"]
                     ),
                 )
             ],
         ]
     )
 
-    for channel, thread_id, link in urls.TG_ALERTS_CHANNELS:
-        send_params = {
-            "chat_id": channel,
-            "photo": image_buffer,
-            "caption": f"{caption}{tools.escape_markdown(link)}",
-            "parse_mode": "Markdown",
-            "reply_markup": buttons,
-        }
-
-        if thread_id is not None:
-            send_params["message_thread_id"] = thread_id
-
-        await application.bot.send_photo(**send_params)
-
-    image_buffer.close()
+    await send_alert(image_buffer, caption, buttons, application)
 
 
-async def token_alert(event, chain):
+async def format_token_alert(log, chain):
     chain_info, _ = chains.get_info(chain)
+    title = "New Token Deployed"
 
-    args = event["args"]
+    args = log["args"]
     token_address = args["tokenAddress"]
     token_name = args["name"]
     token_symbol = args["symbol"]
@@ -405,47 +431,17 @@ async def token_alert(event, chain):
     buy_tax = args.get("buyTax", 0)
     sell_tax = args.get("sellTax", 0)
 
-    im1 = Image.open(random.choice(blackhole.RANDOM)).convert("RGBA")
-    try:
-        im2 = Image.open(requests.get(token_uri, stream=True).raw).convert(
-            "RGBA"
-        )
-    except Exception:
-        im2 = Image.open(chain_info.logo).convert("RGBA")
-
-    im1.paste(im2, (700, 20), im2)
-
     message = f"{token_name} ({token_symbol})\n\nSupply: {supply:,.0f}\nTax: {buy_tax}/{sell_tax}"
 
-    i1 = ImageDraw.Draw(im1)
-    i1.text(
-        (26, 30),
-        f"New Token Deployed ({chain_info.name.upper()})\n\n{message}",
-        font=ImageFont.truetype(FONT, 26),
-        fill=(255, 255, 255),
+    image_buffer = await create_image(
+        token_uri,
+        title,
+        message,
+        chain_info,
     )
 
-    wrapped_text = textwrap.fill(description, width=50)
-    y_offset = 300
-    for line in wrapped_text.split("\n"):
-        line_bbox = i1.textbbox(
-            (0, 0), line, font=ImageFont.truetype(FONT, 26)
-        )
-        line_height = line_bbox[3] - line_bbox[1]
-        i1.text(
-            (26, y_offset),
-            line,
-            font=ImageFont.truetype(FONT, 26),
-            fill=(255, 255, 255),
-        )
-        y_offset += line_height + 5
-
-    image_buffer = io.BytesIO()
-    im1.save(image_buffer, format="PNG")
-    image_buffer.seek(0)
-
     caption = (
-        f"*New Token Deployed ({chain_info.name.upper()})*\n\n"
+        f"*{title} ({chain_info.name.upper()})*\n\n"
         f"{message}\n\n{description}\n\n"
         f"Token Address:\n`{token_address}`\n\n"
     )
@@ -491,26 +487,38 @@ async def token_alert(event, chain):
         )
 
     buttons = InlineKeyboardMarkup(button_list)
-    for channel, thread_id, link in urls.TG_ALERTS_CHANNELS:
-        send_params = {
-            "chat_id": channel,
-            "photo": image_buffer,
-            "caption": f"{caption}{tools.escape_markdown(link)}",
-            "parse_mode": "Markdown",
-            "reply_markup": buttons,
-        }
 
-        if thread_id is not None:
-            send_params["message_thread_id"] = thread_id
+    await send_alert(image_buffer, caption, buttons, application)
 
-        await application.bot.send_photo(**send_params)
 
-    image_buffer.close()
+async def send_alert(image_buffer, caption, buttons, application):
+    try:
+        for channel, config in urls.TG_ALERTS_CHANNELS.items():
+            for thread_id, link in config:
+                image_buffer.seek(0)
+                send_params = {
+                    "chat_id": channel,
+                    "photo": image_buffer,
+                    "caption": f"{caption}{tools.escape_markdown(link)}",
+                    "parse_mode": "Markdown",
+                    "reply_markup": buttons,
+                }
+
+                if thread_id is not None:
+                    send_params["message_thread_id"] = thread_id
+
+                try:
+                    await application.bot.send_photo(**send_params)
+                except Exception as e:
+                    await error(f"Error sending to channel ({channel}): {e}")
+
+    finally:
+        image_buffer.close()
 
 
 async def main():
     tasks = [
-        asyncio.create_task(build_alerts(chain, application))
+        asyncio.create_task(initialize_alerts(chain))
         for chain, chain_info in chains.MAINNETS.items()
         if chain_info.live
     ]
@@ -523,5 +531,5 @@ if __name__ == "__main__":
         .token(os.getenv("TELEGRAM_SCANNER_BOT_TOKEN"))
         .build()
     )
-    application.add_error_handler(lambda update, context: error(context.error))
+    application.add_error_handler(lambda _, context: error(context))
     asyncio.run(main())

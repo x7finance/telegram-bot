@@ -152,6 +152,33 @@ async def get_last_action(address, chain):
     return f"Last {word}:\n{value:.3f} {chain_native.upper()} (${dollar:,.0f})\n{timestamp}"
 
 
+async def get_loan_token_id(loan_id, chain):
+    chain_info, _ = chains.get_info(chain)
+
+    pool_contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(
+            addresses.lending_pool(chain)
+        ),
+        abi=abis.read("lendingpool"),
+    )
+
+    term = await pool_contract.functions.loanTermLookup(int(loan_id)).call()
+    term_contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(term),
+        abi=abis.read("ill005"),
+    )
+
+    index = 0
+    while True:
+        try:
+            token_id = await term_contract.functions.tokenByIndex(index).call()
+            if token_id == int(loan_id):
+                return index
+            index += 1
+        except Exception:
+            return 0
+
+
 def get_random_pioneer():
     number = f"{random.randint(1, 4473)}".zfill(4)
     return f"{urls.PIONEERS}{number}.png"

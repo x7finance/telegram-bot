@@ -1,4 +1,4 @@
-from web3 import AsyncWeb3
+from web3 import AsyncWeb3, WebSocketProvider
 from web3.middleware import ExtraDataToPOAMiddleware
 
 from constants.bot import urls
@@ -50,8 +50,10 @@ class ChainInfo:
         self.dext = dext
         self.opensea = opensea
         self.tg = tg
+        self.rpc_url = rpc_url
+        self.ws_rpc_url = ws_rpc_url
         self.w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(rpc_url))
-        self.w3_ws = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(ws_rpc_url))
+        self.w3_ws = AsyncWeb3(WebSocketProvider(ws_rpc_url))
         self.com_multi = com_multi
         self.dao_multi = dao_multi
 
