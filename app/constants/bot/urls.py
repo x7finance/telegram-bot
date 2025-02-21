@@ -18,16 +18,19 @@ def opensea_link(nft):
     return map.get(nft)
 
 
-def rpc_link(chain):
+def rpc_link(chain, use_ws=False):
+    protocol = "wss" if use_ws else "https"
+    path = "ogws" if use_ws else "ogrpc"
+
     map = {
-        "eth": f"https://lb.drpc.org/ogrpc?network=ethereum&dkey={os.getenv('DRPC_API_KEY')}",
-        "bsc": f"https://lb.drpc.org/ogrpc?network=bsc&dkey={os.getenv('DRPC_API_KEY')}",
-        "poly": f"https://lb.drpc.org/ogrpc?network=polygon&dkey={os.getenv('DRPC_API_KEY')}",
-        "arb": f"https://lb.drpc.org/ogrpc?network=arbitrum&dkey={os.getenv('DRPC_API_KEY')}",
-        "op": f"https://lb.drpc.org/ogrpc?network=optimism&dkey={os.getenv('DRPC_API_KEY')}",
-        "base": f"https://lb.drpc.org/ogrpc?network=base&dkey={os.getenv('DRPC_API_KEY')}",
-        "eth-sepolia": f"https://lb.drpc.org/ogrpc?network=sepolia&dkey={os.getenv('DRPC_API_KEY')}",
-        "base-sepolia": f"https://lb.drpc.org/ogrpc?network=base-sepolia&dkey={os.getenv('DRPC_API_KEY')}",
+        "eth": f"{protocol}://lb.drpc.org/{path}?network=ethereum&dkey={os.getenv('DRPC_API_KEY')}",
+        "bsc": f"{protocol}://lb.drpc.org/{path}?network=bsc&dkey={os.getenv('DRPC_API_KEY')}",
+        "poly": f"{protocol}://lb.drpc.org/{path}?network=polygon&dkey={os.getenv('DRPC_API_KEY')}",
+        "arb": f"{protocol}://lb.drpc.org/{path}?network=arbitrum&dkey={os.getenv('DRPC_API_KEY')}",
+        "op": f"{protocol}://lb.drpc.org/{path}?network=optimism&dkey={os.getenv('DRPC_API_KEY')}",
+        "base": f"{protocol}://lb.drpc.org/{path}?network=base&dkey={os.getenv('DRPC_API_KEY')}",
+        "eth-sepolia": f"{protocol}://lb.drpc.org/{path}?network=sepolia&dkey={os.getenv('DRPC_API_KEY')}",
+        "base-sepolia": f"{protocol}://lb.drpc.org/{path}?network=base-sepolia&dkey={os.getenv('DRPC_API_KEY')}",
     }
     return map.get(chain)
 

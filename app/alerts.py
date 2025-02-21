@@ -3,13 +3,13 @@ from telegram.ext import ApplicationBuilder, ContextTypes
 
 import asyncio
 import io
-
+import json
 import os
 import random
 import requests
 import sentry_sdk
 import textwrap
-import traceback
+import websockets
 from PIL import Image, ImageDraw, ImageFont
 
 from constants.bot import urls
@@ -25,148 +25,128 @@ etherscan = get_etherscan()
 sentry_sdk.init(dsn=os.getenv("SENTRY_SCANNER_DSN"), traces_sample_rate=1.0)
 
 FONT = fonts.BARTOMES
-POLL_INTERVAL = 60
+LIVE_LOAN = "005"
 
 
-async def error(context):
-    sentry_sdk.capture_exception(
-        Exception(
-            f"Scanner Error: {context} | Traceback: {traceback.format_exc()}"
-        )
-    )
+async def error(context: ContextTypes.DEFAULT_TYPE):
+    print(context.error)
+    sentry_sdk.capture_exception(context.error)
 
 
-async def log_loop(
-    chain, context: ContextTypes.DEFAULT_TYPE, poll_interval=POLL_INTERVAL
-):
+async def build_alerts(chain):
     print(f"🔄 Initializing {chain.upper()} alerts...")
+    ws_url = urls.rpc_link(chain, use_ws=True)
+
     while True:
         try:
-            w3 = chains.MAINNETS[chain].w3
-
-            factory = w3.eth.contract(
-                address=addresses.factory(chain), abi=abis.read("factory")
-            )
-
-            xchange_create = w3.eth.contract(
-                address=addresses.xchange_create(chain),
-                abi=abis.read("xchangecreate"),
-            )
-
-            ill_contracts = {
-                ill_key: w3.eth.contract(
-                    address=ill_address, abi=abis.read("ill005")
+            async with websockets.connect(ws_url) as ws:
+                factory = chains.MAINNETS[chain].w3_ws.eth.contract(
+                    address=addresses.factory(chain), abi=abis.read("factory")
                 )
-                for ill_key, ill_address in addresses.ill_addresses(
-                    chain
-                ).items()
-            }
 
-            latest_block = context.bot_data.get(
-                f"last_block_{chain}", await w3.eth.block_number
-            )
+                xchange_create = chains.MAINNETS[chain].w3_ws.eth.contract(
+                    address=addresses.xchange_create(chain),
+                    abi=abis.read("xchangecreate"),
+                )
 
-            print(f"✅ {chain.upper()} alerts initialized")
+                ill_contract = chains.MAINNETS[chain].w3_ws.eth.contract(
+                    address=addresses.ill_addresses(chain)[LIVE_LOAN],
+                    abi=abis.read("ill005"),
+                )
 
-            pair_created_topic = tools.get_event_topic(
-                "factory", "PairCreated", chain
-            )
-            token_deployed_topic = tools.get_event_topic(
-                "xchangecreate", "TokenDeployed", chain
-            )
-            loan_originated_topic = tools.get_event_topic(
-                "ill005", "LoanOriginated", chain
-            )
-
-            while True:
-                try:
-                    current_block = await w3.eth.block_number
-                    from_block = latest_block + 1
-                    if from_block > current_block:
-                        from_block = current_block
-
-                    pair_logs = await w3.eth.get_logs(
-                        {
-                            "fromBlock": from_block,
-                            "toBlock": current_block,
-                            "address": factory.address,
-                            "topics": [pair_created_topic],
-                        }
-                    )
-
-                    token_logs = await w3.eth.get_logs(
-                        {
-                            "fromBlock": from_block,
-                            "toBlock": current_block,
-                            "address": xchange_create.address,
-                            "topics": [token_deployed_topic],
-                        }
-                    )
-
-                    loan_logs = []
-                    for ill_contract in ill_contracts.values():
-                        logs = await w3.eth.get_logs(
+                subscribe_payload = json.dumps(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 1,
+                        "method": "eth_subscribe",
+                        "params": [
+                            "logs",
                             {
-                                "fromBlock": from_block,
-                                "toBlock": current_block,
-                                "address": ill_contract.address,
-                                "topics": [loan_originated_topic],
-                            }
-                        )
-                        loan_logs.extend(logs)
+                                "address": [
+                                    factory.address,
+                                    xchange_create.address,
+                                    ill_contract.address,
+                                ]
+                            },
+                        ],
+                    }
+                )
+                await ws.send(subscribe_payload)
 
-                    for log in pair_logs:
-                        try:
+                response = json.loads(await ws.recv())
+                if "result" in response:
+                    subscription_id = response["result"]
+                    print(
+                        f"✅ {chain.upper()} Alerts initialized - ID: {subscription_id}"
+                    )
+                else:
+                    print(
+                        f"❌ {chain.upper()} Alerts failed to initialize - {response}"
+                    )
+                    await asyncio.sleep(10)
+                    continue
+
+                async for message in ws:
+                    try:
+                        log = json.loads(message)
+
+                        if "error" in log:
+                            error_code = log["error"].get("code", "Unknown")
+                            error_message = log["error"].get(
+                                "message", "No message"
+                            )
+                            error(
+                                f"⚠️ WebSocket error response on {chain.upper()}: Code {error_code} - {error_message}"
+                            )
+                            await asyncio.sleep(10)
+                            break
+
+                        if (
+                            "params" not in log
+                            or "result" not in log["params"]
+                        ):
+                            error(
+                                f"⚠️ Invalid WebSocket recieved on {chain.upper()}: {log}"
+                            )
+                            continue
+
+                        event_data = log["params"]["result"]
+                        address = event_data["address"]
+
+                        if address == factory.address:
                             decoded_event = (
-                                factory.events.PairCreated().process_log(log)
+                                factory.events.PairCreated().process_log(
+                                    event_data
+                                )
                             )
                             await pair_alert(decoded_event, chain)
-                        except Exception as e:
-                            await error(
-                                f"Error decoding PairCreated: {str(e)}"
-                            )
 
-                    for log in token_logs:
-                        try:
+                        elif address == xchange_create.address:
                             decoded_event = xchange_create.events.TokenDeployed().process_log(
-                                log
+                                event_data
                             )
                             await token_alert(decoded_event, chain)
-                        except Exception as e:
-                            await error(
-                                f"Error decoding TokenDeployed: {str(e)}"
+
+                        elif address == ill_contract.address:
+                            decoded_event = ill_contract.events.LoanOriginated().process_log(
+                                event_data
                             )
+                            await loan_alert(decoded_event, chain)
 
-                    for log in loan_logs:
-                        try:
-                            contract_address = log["address"]
-                            ill_contract = ill_contracts.get(contract_address)
-                            if ill_contract:
-                                decoded_event = ill_contract.events.LoanOriginated().process_log(
-                                    log
-                                )
-                                await loan_alert(decoded_event, chain)
-                        except Exception as e:
-                            await error(
-                                f"Error decoding LoanOriginated: {str(e)}"
-                            )
+                    except Exception as e:
+                        error(f"❌ Error processing log: {str(e)}")
 
-                    context.bot_data[f"last_block_{chain}"] = current_block
-                    latest_block = current_block
-
-                    await asyncio.sleep(poll_interval)
-
-                except Exception as e:
-                    await error(
-                        f"Polling error on {chain}: {str(e)}. Retrying in {poll_interval} seconds..."
-                    )
-                    await asyncio.sleep(poll_interval)
+        except websockets.ConnectionClosedError as e:
+            error(
+                f"⚠️ WebSocket closed unexpectedly on {chain.upper()}: {e}. Reconnecting in 5 seconds..."
+            )
+            await asyncio.sleep(5)
 
         except Exception as e:
-            await error(
-                f"Web3 connection error on {chain}: {str(e)}. Retrying in {poll_interval} seconds..."
+            error(
+                f"❌ WebSocket error on {chain.upper()}: {str(e)}. Reconnecting in 5 seconds..."
             )
-            await asyncio.sleep(poll_interval)
+            await asyncio.sleep(5)
 
 
 async def loan_alert(event, chain):
@@ -216,7 +196,7 @@ async def loan_alert(event, chain):
     token_name = token_info["name"]
     token_symbol = token_info["symbol"]
 
-    ill_number = tools.get_ill_number(ill_address)
+    ill_number = tools.get_ill_number(ill_address, chain)
 
     im1 = Image.open(random.choice(blackhole.RANDOM)).convert("RGBA")
     try:
@@ -529,9 +509,8 @@ async def token_alert(event, chain):
 
 
 async def main():
-    print("🔄 Initializing alerts...")
     tasks = [
-        asyncio.create_task(log_loop(chain, application))
+        asyncio.create_task(build_alerts(chain, application))
         for chain, chain_info in chains.MAINNETS.items()
         if chain_info.live
     ]

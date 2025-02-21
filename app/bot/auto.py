@@ -161,9 +161,7 @@ async def welcome_member(chat_member_update: ChatMemberUpdated):
     return was_member, is_member
 
 
-async def welcome_message(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+async def welcome_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     channel_id = update.effective_chat.id
     result = await welcome_member(update.chat_member)
     if result is None:

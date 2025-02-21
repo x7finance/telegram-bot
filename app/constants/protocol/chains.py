@@ -1,4 +1,5 @@
 from web3 import AsyncWeb3
+from web3.middleware import ExtraDataToPOAMiddleware
 
 from constants.bot import urls
 from constants.protocol import addresses
@@ -7,6 +8,10 @@ from utils import tools
 from services import get_dbmanager
 
 db = get_dbmanager()
+
+
+ETH_CHAINS = {"eth", "base", "arb", "op", "eth-sepolia", "base-sepolia"}
+POA_CHAINS = {"bsc", "poly"}
 
 
 class ChainInfo:
@@ -27,6 +32,7 @@ class ChainInfo:
         opensea: str,
         tg: str,
         rpc_url: str,
+        ws_rpc_url: str,
         com_multi: str,
         dao_multi: str,
     ):
@@ -45,8 +51,16 @@ class ChainInfo:
         self.opensea = opensea
         self.tg = tg
         self.w3 = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(rpc_url))
+        self.w3_ws = AsyncWeb3(AsyncWeb3.AsyncHTTPProvider(ws_rpc_url))
         self.com_multi = com_multi
         self.dao_multi = dao_multi
+
+        if name.lower() in POA_CHAINS:
+            self.w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
+            if self.w3_ws:
+                self.w3_ws.middleware_onion.inject(
+                    ExtraDataToPOAMiddleware, layer=0
+                )
 
 
 def get_active_chains():
@@ -106,6 +120,7 @@ MAINNETS = {
         opensea="",
         tg=5,
         rpc_url=urls.rpc_link("eth"),
+        ws_rpc_url=urls.rpc_link("eth", use_ws=True),
         com_multi=addresses.community_multi_sig("eth"),
         dao_multi=addresses.dao_multisig("eth"),
     ),
@@ -125,6 +140,7 @@ MAINNETS = {
         opensea="-base",
         tg=2,
         rpc_url=urls.rpc_link("base"),
+        ws_rpc_url=urls.rpc_link("base", use_ws=True),
         com_multi=addresses.community_multi_sig("base"),
         dao_multi=addresses.dao_multisig("base"),
     ),
@@ -144,6 +160,7 @@ MAINNETS = {
         opensea="-binance",
         tg=797,
         rpc_url=urls.rpc_link("bsc"),
+        ws_rpc_url=urls.rpc_link("bsc", use_ws=True),
         com_multi=addresses.community_multi_sig("bsc"),
         dao_multi=addresses.dao_multisig("bsc"),
     ),
@@ -163,6 +180,7 @@ MAINNETS = {
         opensea="-arbitrum",
         tg=793,
         rpc_url=urls.rpc_link("arb"),
+        ws_rpc_url=urls.rpc_link("arb", use_ws=True),
         com_multi=addresses.community_multi_sig("arb"),
         dao_multi=addresses.dao_multisig("arb"),
     ),
@@ -182,6 +200,7 @@ MAINNETS = {
         opensea="-optimism",
         tg=795,
         rpc_url=urls.rpc_link("op"),
+        ws_rpc_url=urls.rpc_link("op", use_ws=True),
         com_multi=addresses.community_multi_sig("op"),
         dao_multi=addresses.dao_multisig("op"),
     ),
@@ -201,6 +220,7 @@ MAINNETS = {
         opensea="-polygon",
         tg=799,
         rpc_url=urls.rpc_link("poly"),
+        ws_rpc_url=urls.rpc_link("poly", use_ws=True),
         com_multi=addresses.community_multi_sig("poly"),
         dao_multi=addresses.dao_multisig("poly"),
     ),
@@ -224,6 +244,7 @@ TESTNETS = {
         opensea="",
         tg=5,
         rpc_url=urls.rpc_link("eth-sepolia"),
+        ws_rpc_url=urls.rpc_link("eth-sepolia", use_ws=True),
         com_multi=addresses.community_multi_sig("eth-sepolia"),
         dao_multi=addresses.dao_multisig("eth-sepolia"),
     ),
@@ -243,10 +264,8 @@ TESTNETS = {
         opensea="-base-testnet",
         tg=2,
         rpc_url=urls.rpc_link("base-sepolia"),
+        ws_rpc_url=urls.rpc_link("base-sepolia", use_ws=True),
         com_multi=addresses.community_multi_sig("base-sepolia"),
         dao_multi=addresses.dao_multisig("base-sepolia"),
     ),
 }
-
-
-ETH_CHAINS = {"eth", "base", "arb", "op", "eth-sepolia", "base-sepolia"}

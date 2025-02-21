@@ -1719,7 +1719,7 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 except Exception:
                     break
 
-            ill_number = tools.get_ill_number(term)
+            ill_number = tools.get_ill_number(term, chain)
 
         loan_text = (
             f"Total: {amount}\nLive: {live_loans:.0f}\n{latest_loan_text}\n"
@@ -1910,7 +1910,7 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except Exception:
                 break
 
-        ill_number = tools.get_ill_number(term)
+        ill_number = tools.get_ill_number(term, chain)
 
         liquidation_status = ""
         liquidation_button = []

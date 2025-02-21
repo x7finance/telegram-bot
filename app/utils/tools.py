@@ -100,14 +100,10 @@ def get_event_topic(contract, event_name, chain):
     return None
 
 
-def get_ill_number(term: str) -> str | None:
-    for chain in chains.get_active_chains():
-        for ill_number, contract_address in addresses.ill_addresses(
-            chain
-        ).items():
-            if term.lower() == contract_address.lower():
-                return ill_number
-
+def get_ill_number(term, chain):
+    for ill_number, contract_address in addresses.ill_addresses(chain).items():
+        if term.lower() == contract_address.lower():
+            return ill_number
     return None
 
 
