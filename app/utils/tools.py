@@ -31,6 +31,54 @@ def format_millions(value):
     return f"${value:,.0f}"
 
 
+def format_schedule(schedule1, schedule2, native_token, isComplete):
+    current_datetime = datetime.now()
+    next_payment_datetime = None
+    next_payment_value = None
+
+    all_dates = sorted(set(schedule1[0] + schedule2[0]))
+    schedule = []
+
+    for date in all_dates:
+        value1 = next(
+            (v for d, v in zip(schedule1[0], schedule1[1]) if d == date), 0
+        )
+        value2 = next(
+            (v for d, v in zip(schedule2[0], schedule2[1]) if d == date), 0
+        )
+
+        total_value = value1 + value2
+
+        formatted_date = datetime.fromtimestamp(date).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+        formatted_value = total_value / 10**18
+        sch = f"{formatted_date} - {formatted_value:.3f} {native_token}"
+        schedule.append(sch)
+
+        if datetime.fromtimestamp(date) > current_datetime:
+            if (
+                next_payment_datetime is None
+                or datetime.fromtimestamp(date) < next_payment_datetime
+            ):
+                next_payment_datetime = datetime.fromtimestamp(date)
+                next_payment_value = formatted_value
+
+    if isComplete:
+        schedule.append("\nLoan Complete")
+    elif next_payment_datetime:
+        time_until_next_payment_timestamp = next_payment_datetime.timestamp()
+        time_remaining_str = get_time_difference(
+            time_until_next_payment_timestamp
+        )
+
+        schedule.append(
+            f"\nNext Payment Due:\n{next_payment_value} {native_token}\n{time_remaining_str}"
+        )
+
+    return "\n".join(schedule)
+
+
 def format_seconds(seconds):
     minutes = int(seconds // 60)
     remaining_seconds = seconds % 60
