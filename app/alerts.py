@@ -9,10 +9,11 @@ import random
 import requests
 import sentry_sdk
 import websockets
+from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 
 from constants.bot import urls
-from constants.protocol import addresses, abis, chains
+from constants.protocol import addresses, abis, chains, tokens
 from media import fonts, blackhole
 from utils import tools
 from services import get_defined, get_dextools
@@ -68,7 +69,7 @@ async def create_image(token_image, title, message, chain_info):
 
 async def handle_log(log_data, chain, contracts):
     try:
-        factory, ill_term, xchange_create = contracts
+        factory, ill_term, time_lock, xchange_create = contracts
         chain_info, _ = chains.get_info(chain)
 
         topics = log_data.get("topics", [])
@@ -107,6 +108,23 @@ async def handle_log(log_data, chain, contracts):
                 log = factory.events.PairCreated().process_log(log_data)
                 await format_pair_alert(log, chain)
 
+        elif (
+            event_signature
+            == time_lock.events.GlobalUnlockTimestampSet().topic
+        ):
+            log = time_lock.events.GlobalUnlockTimestampSet().process_log(
+                log_data
+            )
+            await format_time_lock_alert(log, chain, is_global=True)
+
+        elif (
+            event_signature == time_lock.events.TokenUnlockTimestampSet().topic
+        ):
+            log = time_lock.events.TokenUnlockTimestampSet().process_log(
+                log_data
+            )
+            await format_time_lock_alert(log, chain)
+
     except Exception as e:
         await error(f"Error processing log: {e}")
 
@@ -122,9 +140,12 @@ async def initialize_alerts(chain):
         ws = None
         try:
             w3 = chains.MAINNETS[chain].w3_ws
-            factory, ill_term, xchange_create = await initialize_contracts(
-                w3, chain
-            )
+            (
+                factory,
+                ill_term,
+                time_lock,
+                xchange_create,
+            ) = await initialize_contracts(w3, chain)
 
             ws_url = chains.MAINNETS[chain].ws_rpc_url
             async with websockets.connect(ws_url) as ws:
@@ -137,6 +158,7 @@ async def initialize_alerts(chain):
                             "address": [
                                 factory.address,
                                 ill_term.address,
+                                time_lock.address,
                                 xchange_create.address,
                             ]
                         },
@@ -166,7 +188,12 @@ async def initialize_alerts(chain):
                                 await handle_log(
                                     data["params"]["result"],
                                     chain,
-                                    (factory, ill_term, xchange_create),
+                                    (
+                                        factory,
+                                        ill_term,
+                                        time_lock,
+                                        xchange_create,
+                                    ),
                                 )
 
                     except websockets.ConnectionClosed:
@@ -228,7 +255,11 @@ async def initialize_contracts(w3, chain):
         address=addresses.xchange_create(chain), abi=abis.read("xchangecreate")
     )
 
-    return factory, ill_term, xchange_create
+    time_lock = w3.eth.contract(
+        address=addresses.token_time_lock(chain), abi=abis.read("timelock")
+    )
+
+    return factory, ill_term, time_lock, xchange_create
 
 
 async def format_loan_alert(
@@ -487,6 +518,71 @@ async def format_token_alert(log, chain):
         )
 
     buttons = InlineKeyboardMarkup(button_list)
+
+    await send_alert(image_buffer, caption, buttons, application)
+
+
+async def format_time_lock_alert(log, chain, is_global=False):
+    chain_info, _ = chains.get_info(chain)
+
+    if is_global:
+        title = "Global Unlock Time Set"
+        unlock_timestamp = log["args"]["unlockTimestamp"]
+        unlock_date = datetime.fromtimestamp(unlock_timestamp).strftime(
+            "%Y-%m-%d %H:%M"
+        )
+        when = tools.get_time_difference(unlock_timestamp)
+
+        message = f"Global Unlock Time Set\n\n{unlock_date}\n{when}"
+
+        image_buffer = await create_image(
+            chain_info.logo,
+            title,
+            message,
+            chain_info,
+        )
+
+        caption = f"*{title} ({chain_info.name.upper()})*\n\n{message}"
+
+    else:
+        title = "Token Unlock Time Set"
+        token_address = chain_info.w3.to_checksum_address(
+            log["args"]["tokenAddress"]
+        )
+        unlock_timestamp = log["args"]["unlockTimestamp"]
+        unlock_date = datetime.fromtimestamp(unlock_timestamp).strftime(
+            "%Y-%m-%d %H:%M"
+        )
+        when = tools.get_time_difference(unlock_timestamp)
+
+        for token_key, token_data in tokens.get_tokens().items():
+            if token_data[chain].ca.lower() == token_address.lower():
+                token_name = token_data[chain].name
+                token_image = token_data[chain].logo
+                break
+
+        message = f"{token_name}\n\n{unlock_date}\n{when}"
+
+        image_buffer = await create_image(
+            token_image,
+            title,
+            message,
+            chain_info,
+        )
+
+        caption = f"*{title} ({chain_info.name.upper()})*\n\n{message}\n\n"
+
+    buttons = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    text="Time Lock Contract",
+                    url=chain_info.scan_address
+                    + addresses.token_time_lock(chain),
+                )
+            ],
+        ]
+    )
 
     await send_alert(image_buffer, caption, buttons, application)
 
