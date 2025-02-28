@@ -92,8 +92,8 @@ async def handle_log(log_data, chain, contracts):
             tx = await chain_info.w3.eth.get_transaction(
                 log_data["transactionHash"]
             )
-            input_sig = tx["input"][:10]
-            was_liquidated = input_sig == "0x415f1240"
+            input_data = tx["input"]
+            was_liquidated = input_data.startswith("0x415f1240")
 
             log = ill_term.events.LoanComplete().process_log(log_data)
             await format_loan_alert(
@@ -542,7 +542,7 @@ async def format_time_lock_alert(log, chain, is_global=False):
             chain_info,
         )
 
-        caption = f"*{title} ({chain_info.name.upper()})*\n\n{message}"
+        caption = f"*{title} ({chain_info.name.upper()})*\n\n{message}\n\n"
 
     else:
         title = "Token Unlock Time Set"
