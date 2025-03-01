@@ -6,13 +6,13 @@ from datetime import datetime
 
 class GitHub:
     def __init__(self):
-        self.url = "https://api.github.com/repos/x7finance/monorepo/"
+        self.url = "https://api.github.com/repos/x7finance/"
         self.headers = {"Authorization": f"token {os.getenv('GITHUB_PAT')}"}
 
     def ping(self):
         try:
             response = requests.get(
-                self.url.rstrip("/"), headers=self.headers, timeout=5
+                self.url + "monorepo", headers=self.headers, timeout=5
             )
             if response.status_code == 200:
                 return True
@@ -20,14 +20,27 @@ class GitHub:
         except requests.RequestException as e:
             return f"🔴 GitHub: Connection failed: {e}"
 
-    def get_issues(self):
-        endpoint = "issues"
+    def get_contributors(self, repo):
+        response = requests.get(
+            self.url + repo + "/contributors",
+            headers=self.headers,
+            params={"per_page": 100},
+        )
+
+        if response.status_code != 200:
+            return f"Error fetching contributors: {response.status_code}"
+
+        contributors = response.json()
+        return len(contributors)
+
+    def get_issues(self, repo):
+        endpoint = "/issues"
         issues = []
         page = 1
 
         while True:
             response = requests.get(
-                self.url + endpoint,
+                self.url + repo + endpoint,
                 headers=self.headers,
                 params={"state": "open", "page": page, "per_page": 100},
             )
@@ -73,10 +86,12 @@ class GitHub:
             formatted_issues
         )
 
-    def get_latest_commit(self):
-        endpoint = "commits"
+    def get_latest_commit(self, repo):
+        endpoint = "/commits"
 
-        response = requests.get(self.url + endpoint, headers=self.headers)
+        response = requests.get(
+            self.url + repo + endpoint, headers=self.headers
+        )
         if response.status_code != 200:
             return f"Error fetching commits: {response.status_code}, {response.text}"
 
@@ -105,14 +120,14 @@ class GitHub:
 
         return f"Latest Commit:\n{message}\nCreated By: {created_by}\nCreated At: {created_at}\nURL: {url}"
 
-    def get_pull_requests(self):
+    def get_pull_requests(self, repo):
         endpoint = "/pulls"
         pull_requests = []
         page = 1
 
         while True:
             response = requests.get(
-                self.url + endpoint,
+                self.url + repo + endpoint,
                 headers=self.headers,
                 params={"state": "open", "page": page, "per_page": 100},
             )

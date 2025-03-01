@@ -392,6 +392,8 @@ async def welcome_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         except Exception:
             pass
+    else:
+        await query.answer("This button is not for you!", show_alert=True)
 
 
 HANDLERS = [
@@ -407,5 +409,5 @@ HANDLERS = [
     (settings_toggle, r"^settings_toggle_"),
     (stuck, r"^stuck:.*$"),
     (wallet_remove, r"^wallet_remove$"),
-    (welcome_button, r"unmute:.+"),
+    (welcome_button, r"^unmute:\d+$"),
 ]

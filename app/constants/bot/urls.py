@@ -82,6 +82,7 @@ TG_ALERTS_CHANNELS = {
 
 DUNE = "https://dune.com/mike_x7f/x7finance"
 GITHUB = "https://github.com/x7finance/"
+GITHUB_BOT = "https://github.com/x7finance/telegram-bot"
 MEDIUM = "https://medium.com/@X7Finance"
 PIONEERS = "https://assets.x7finance.org/pioneers/"
 REDDIT = "https://www.reddit.com/r/x7finance"

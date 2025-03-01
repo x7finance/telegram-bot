@@ -63,6 +63,7 @@ for func, description in [
     (general.smart, "X7 smart contracts"),
     (general.spaces, "Check available spaces"),
     (general.splitters_command, "View splitters"),
+    (general.stats, "View bot stats"),
     (general.tax_command, "Check tax"),
     (general.timestamp_command, "Convert timestamps"),
     (general.time_command, "View system time"),
@@ -99,6 +100,7 @@ ADMIN_HANDLERS = [
         (admin.clickme, "Send Click Me!"),
         (admin.remove, "Remove an wallet"),
         (admin.status, "View bot status"),
+        (admin.test, "Test"),
         (admin.wen, "Next Click Me!"),
     ]
 ]

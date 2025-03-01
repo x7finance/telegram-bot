@@ -31,6 +31,11 @@ snapshot = get_snapshot()
 twitter = get_twitter()
 
 
+async def test(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if tools.is_admin(update.effective_user.id):
+        return
+
+
 async def clickme(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
         if db.settings_get("click_me"):
@@ -72,9 +77,8 @@ async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        count = db.wallet_count()
         await update.message.reply_text(
-            f"Wallet users: {count}", reply_markup=reply_markup
+            "Bot Settings", reply_markup=reply_markup
         )
 
 

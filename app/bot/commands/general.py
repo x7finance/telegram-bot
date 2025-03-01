@@ -1233,7 +1233,7 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     arg = " ".join(context.args).lower()
     if arg == "issues":
-        issues = github.get_issues()
+        issues = github.get_issues("monorepo")
         issue_chunks = []
         current_chunk = ""
 
@@ -1257,7 +1257,7 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
     elif arg == "pr":
-        pr = github.get_pull_requests()
+        pr = github.get_pull_requests("monorepo")
 
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
@@ -1266,12 +1266,12 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     else:
-        latest = github.get_latest_commit()
-
+        latest = github.get_latest_commit("monorepo")
+        contributors = github.get_contributors("monorepo")
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=f"*X7 Finance GitHub*\n"
-            f"use `/github issues` or `pr` for more details \n\n{latest}",
+            f"use `/github issues` or `pr` for more details \n\nContributors: {contributors}\n\n{latest}",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -1434,7 +1434,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Getting {chain_info.name} liquidity data, Please wait..."
     )
 
-    x7r_pair = tokens.get_tokens()["Xx7r"].get(chain).pairs[0]
+    x7r_pair = tokens.get_tokens()["x7r"].get(chain).pairs[0]
     x7dao_pair = tokens.get_tokens()["x7dao"].get(chain).pairs[0]
 
     total_x7r_liquidity = 0
@@ -3070,6 +3070,36 @@ async def splitters_command(
         caption=caption,
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
+    )
+
+
+async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    from bot.commands import GENERAL_HANDLERS
+
+    commands = len(GENERAL_HANDLERS)
+    contributors = github.get_contributors("telegram-bot")
+    wallets = db.wallet_count()
+    latest_commit = github.get_latest_commit("telegram-bot")
+
+    await update.message.reply_photo(
+        photo=tools.get_random_pioneer(),
+        caption=(
+            f"*X7 Finance Bot Stats*\n\n"
+            f"Commands: {commands}\n"
+            f"Contributors: {contributors}\n"
+            f"Registered wallets: {wallets}\n\n"
+            f"{latest_commit}"
+        ),
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        text="X7 Finance Bot GitHub", url=urls.GITHUB_BOT
+                    )
+                ]
+            ]
+        ),
     )
 
 
