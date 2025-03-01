@@ -93,7 +93,11 @@ async def handle_log(log_data, chain, contracts):
                 log_data["transactionHash"]
             )
             input_data = tx["input"]
-            was_liquidated = input_data.startswith("0x415f1240")
+
+            liquidate_selector = bytes.fromhex("415f1240")
+            input_bytes = bytes.fromhex(input_data[2:])
+
+            was_liquidated = input_bytes.startswith(liquidate_selector)
 
             log = ill_term.events.LoanComplete().process_log(log_data)
             await format_loan_alert(
