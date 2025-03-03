@@ -69,7 +69,14 @@ async def create_image(token_image, title, message, chain_info):
 
 async def handle_log(log_data, chain, contracts):
     try:
-        factory, ill_term, time_lock, xchange_create = contracts
+        (
+            eco_splitter,
+            factory,
+            ill_term,
+            time_lock,
+            treasury_splitter,
+            xchange_create,
+        ) = contracts
         chain_info, _ = chains.get_info(chain)
 
         topics = log_data.get("topics", [])
@@ -78,6 +85,14 @@ async def handle_log(log_data, chain, contracts):
 
         event_signature = topics[0]
         token_deployed = False
+
+        if event_signature == eco_splitter.events.PushAll().topic:
+            log = eco_splitter.events.PushAll().process_log(log_data)
+            await format_splitter_alert(log, chain)
+
+        if event_signature == treasury_splitter.events.PushAll().topic:
+            log = treasury_splitter.events.PushAll().process_log(log_data)
+            await format_splitter_alert(log, chain, treasury=True)
 
         if event_signature == xchange_create.events.TokenDeployed().topic:
             log = xchange_create.events.TokenDeployed().process_log(log_data)
@@ -145,9 +160,11 @@ async def initialize_alerts(chain):
         try:
             w3 = chains.MAINNETS[chain].w3_ws
             (
+                eco_splitter,
                 factory,
                 ill_term,
                 time_lock,
+                treasury_splitter,
                 xchange_create,
             ) = await initialize_contracts(w3, chain)
 
@@ -160,9 +177,11 @@ async def initialize_alerts(chain):
                         "logs",
                         {
                             "address": [
+                                eco_splitter.address,
                                 factory.address,
                                 ill_term.address,
                                 time_lock.address,
+                                treasury_splitter.address,
                                 xchange_create.address,
                             ]
                         },
@@ -193,9 +212,11 @@ async def initialize_alerts(chain):
                                     data["params"]["result"],
                                     chain,
                                     (
+                                        eco_splitter,
                                         factory,
                                         ill_term,
                                         time_lock,
+                                        treasury_splitter,
                                         xchange_create,
                                     ),
                                 )
@@ -245,6 +266,11 @@ async def initialize_alerts(chain):
 
 
 async def initialize_contracts(w3, chain):
+    eco_splitter = w3.eth.contract(
+        address=addresses.eco_splitter(chain),
+        abi=abis.read("ecosystemsplitter"),
+    )
+
     factory = w3.eth.contract(
         address=addresses.factory(chain),
         abi=abis.read("factory"),
@@ -263,7 +289,19 @@ async def initialize_contracts(w3, chain):
         address=addresses.token_time_lock(chain), abi=abis.read("timelock")
     )
 
-    return factory, ill_term, time_lock, xchange_create
+    treasury_splitter = w3.eth.contract(
+        address=addresses.treasury_splitter(chain),
+        abi=abis.read("ecosystemsplitter"),
+    )
+
+    return (
+        eco_splitter,
+        factory,
+        ill_term,
+        time_lock,
+        treasury_splitter,
+        xchange_create,
+    )
 
 
 async def format_loan_alert(
@@ -441,6 +479,47 @@ async def format_pair_alert(log, chain):
                     url=urls.dex_tools_link(
                         chain_info.dext, log["args"]["pair"]
                     ),
+                )
+            ],
+        ]
+    )
+
+    await send_alert(image_buffer, caption, buttons, application)
+
+
+async def format_splitter_alert(log, chain, treasury=False):
+    chain_info, _ = chains.get_info(chain)
+    title = "Splitter Pushed"
+
+    transfers = log["args"].get("amounts", [])
+    total_value = sum(amount / 10**18 for amount in transfers)
+
+    if treasury:
+        address = addresses.treasury_splitter(chain)
+        name = "Treasury"
+    else:
+        address = addresses.eco_splitter(chain)
+        name = "Ecosystem"
+
+    message = (
+        f"{name} Splitter Pushed\n\n"
+        f"Total Value: {total_value:.6f} {chain_info.native}"
+    )
+
+    image_buffer = await create_image(
+        chain_info.logo,
+        title,
+        message,
+        chain_info,
+    )
+    caption = f"*{title} ({chain_info.name.upper()})*\n\n{message}\n\n"
+
+    buttons = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    text="View Splitter",
+                    url=chain_info.scan_address + address,
                 )
             ],
         ]
