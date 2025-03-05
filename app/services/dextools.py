@@ -198,17 +198,3 @@ class Dextools:
                     if data and "data" in data:
                         return data["data"].get("price", 0)
                 return 0
-
-    async def get_candles(self, address, chain, timeframe="5m"):
-        """Get candlestick data for charting"""
-        chain_info, _ = await chains.get_info(chain)
-        endpoint = f"pool/{chain_info.dext}/{address}/candles"
-        params = {"timeframe": timeframe, "limit": 100}
-
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                self.url + endpoint, headers=self.headers, params=params
-            ) as response:
-                if response.status == 200:
-                    return await response.json()
-                return None

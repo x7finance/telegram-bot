@@ -1,5 +1,7 @@
 import os
 import aiohttp
+import ssl
+import certifi
 
 from constants.protocol import chains
 
@@ -11,6 +13,7 @@ class Defined:
             "content_type": "application/json",
             "Authorization": os.getenv("DEFINED_API_KEY"),
         }
+        self.ssl_context = ssl.create_default_context(cafile=certifi.where())
 
     async def ping(self):
         try:
@@ -21,6 +24,7 @@ class Defined:
                     headers=self.headers,
                     json={"query": query},
                     timeout=5,
+                    ssl=self.ssl_context,
                 ) as response:
                     if response.status == 200:
                         return True
@@ -43,7 +47,10 @@ class Defined:
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                self.url, headers=self.headers, json={"query": pair_query}
+                self.url,
+                headers=self.headers,
+                json={"query": pair_query},
+                ssl=self.ssl_context,
             ) as response:
                 if response.status == 200:
                     data = await response.json()
@@ -70,7 +77,10 @@ class Defined:
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                self.url, headers=self.headers, json={"query": image}
+                self.url,
+                headers=self.headers,
+                json={"query": image},
+                ssl=self.ssl_context,
             ) as response:
                 data = await response.json()
                 if "data" in data and "getTokenInfo" in data["data"]:
@@ -101,7 +111,10 @@ class Defined:
 
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    self.url, headers=self.headers, json={"query": volume}
+                    self.url,
+                    headers=self.headers,
+                    json={"query": volume},
+                    ssl=self.ssl_context,
                 ) as response:
                     data = await response.json()
 
@@ -137,7 +150,10 @@ class Defined:
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                self.url, headers=self.headers, json={"query": search_query}
+                self.url,
+                headers=self.headers,
+                json={"query": search_query},
+                ssl=self.ssl_context,
             ) as response:
                 if response.status == 200:
                     data = await response.json()

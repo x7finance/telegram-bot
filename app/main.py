@@ -122,7 +122,7 @@ async def start_settings():
                 name="Click Me",
             )
 
-        print(tools.update_bot_commands())
+        print(await tools.update_bot_commands())
 
         init_alerts_bot()
 

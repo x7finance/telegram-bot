@@ -1882,7 +1882,8 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         token = await contract.functions.loanToken(int(loan_id)).call()
-        name = await dextools.get_token_name(token, chain)["name"]
+        name_data = await dextools.get_token_name(token, chain)
+        name = name_data["name"]
         pair = await contract.functions.loanPair(int(loan_id)).call()
 
         token_by_id = await tools.get_loan_token_id(loan_id, chain)
@@ -3276,14 +3277,14 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7r_balance = await etherscan.get_token_balance(
         chain_info.dao_multi, addresses.x7r(chain), 18, chain
     )
-    x7r_price = await dextools.get_price(addresses.x7r(chain), chain)[0] or 0
+    x7r_price_data = await dextools.get_price(addresses.x7r(chain), chain)
+    x7r_price = x7r_price_data[0] or 0
     x7r_dollar = float(x7r_balance) * float(x7r_price)
     x7dao_balance = await etherscan.get_token_balance(
         chain_info.dao_multi, addresses.x7dao(chain), 18, chain
     )
-    x7dao_price = (
-        await dextools.get_price(addresses.x7dao(chain), chain)[0] or 0
-    )
+    x7dao_price_data = await dextools.get_price(addresses.x7dao(chain), chain)
+    x7dao_price = x7dao_price_data[0] or 0
     x7dao_dollar = float(x7dao_balance) * float(x7dao_price)
     x7d_balance = await etherscan.get_token_balance(
         chain_info.dao_multi, addresses.x7d(chain), 18, chain

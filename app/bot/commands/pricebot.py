@@ -182,7 +182,8 @@ async def send_dextools_response(search, chain, token_data):
     price = f"${price}" if price else "N/A"
 
     volume = await defined.get_volume(pair, chain) or "N/A"
-    liquidity = await dextools.get_liquidity(pair, chain).get("total", "N/A")
+    liquidity_data = await dextools.get_liquidity(pair, chain)
+    liquidity = liquidity_data.get("total", "N/A")
 
     message = (
         f"*{token_name} ({token_symbol})* - {chain_name}\n"

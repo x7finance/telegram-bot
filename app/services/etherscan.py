@@ -51,7 +51,6 @@ class Etherscan:
         block_yesterday = await self.get_block(chain, yesterday)
         block_now = await self.get_block(chain, int(time.time()))
 
-        # Get normal transactions
         tx_url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlist&address={contract}&startblock={block_yesterday}&endblock={block_now}&page=1&offset=1000&sort=asc&apikey={self.key}"
         async with aiohttp.ClientSession() as session:
             async with session.get(tx_url) as response:
@@ -62,7 +61,6 @@ class Etherscan:
                     else 0
                 )
 
-        # Get internal transactions
         internal_tx_url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlistinternal&address={contract}&startblock={block_yesterday}&endblock={block_now}&page=1&offset=1000&sort=asc&apikey={self.key}"
         async with aiohttp.ClientSession() as session:
             async with session.get(internal_tx_url) as response:

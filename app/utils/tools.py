@@ -244,7 +244,6 @@ async def update_bot_commands():
     results = []
 
     async with aiohttp.ClientSession() as session:
-        # Update general commands
         async with session.post(
             url,
             json={"commands": general_commands, "scope": {"type": "default"}},
@@ -255,7 +254,6 @@ async def update_bot_commands():
                 else f"⚠️ Failed to update commands: {await response.text()}"
             )
 
-        # Update admin commands
         async with session.post(
             url,
             json={
