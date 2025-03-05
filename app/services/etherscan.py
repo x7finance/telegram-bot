@@ -1,5 +1,5 @@
-import os
 import aiohttp
+import os
 import time
 
 from constants.protocol import addresses, chains
@@ -28,14 +28,6 @@ class Etherscan:
                     )
         except Exception as e:
             return f"🔴 Etherscan: Connection failed: {str(e)}"
-
-    async def get_abi(self, contract, chain):
-        chain_info, _ = await chains.get_info(chain)
-        url = f"{self.url}?chainid={chain_info.id}&module=contract&action=getsourcecode&address={contract}&apikey={self.key}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                data = await response.json()
-                return data["result"][0]["ABI"]
 
     async def get_block(self, chain, time):
         chain_info, _ = await chains.get_info(chain)
@@ -111,14 +103,6 @@ class Etherscan:
             async with session.get(url) as response:
                 data = await response.json()
                 return float(data["result"][field]) / 1**18
-
-    async def get_supply(self, token, chain):
-        chain_info, _ = await chains.get_info(chain)
-        url = f"{self.url}?chainid={chain_info.id}&module=stats&action=tokensupply&contractaddress={token}&apikey={self.key}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                data = await response.json()
-                return data["result"]
 
     async def get_token_balance(self, wallet, token, decimals, chain):
         try:

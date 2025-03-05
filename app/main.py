@@ -1,6 +1,6 @@
 from telegram import Message, Update
 from telegram.ext import (
-    ApplicationBuilder,
+    Application,
     CallbackQueryHandler,
     CommandHandler,
     ConversationHandler,
@@ -14,7 +14,6 @@ import subprocess
 from pathlib import Path
 from telegram.warnings import PTBUserWarning
 from warnings import filterwarnings
-import asyncio
 
 from bot import auto, callbacks, commands, conversations
 from constants.bot import settings, urls
@@ -28,7 +27,7 @@ filterwarnings(
 )
 
 application = (
-    ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
+    Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 )
 
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
@@ -102,15 +101,7 @@ def init_main_bot():
     print("✅ Main bot initialized")
 
 
-def start():
-    init_main_bot()
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(start_settings())
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
-
-
-async def start_settings():
+async def post_init(application: Application):
     if not tools.is_local():
         print("✅ Bot Running on server")
 
@@ -131,4 +122,6 @@ async def start_settings():
 
 
 if __name__ == "__main__":
-    start()
+    init_main_bot()
+    application.post_init = post_init
+    application.run_polling(allowed_updates=Update.ALL_TYPES)

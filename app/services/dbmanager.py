@@ -1,5 +1,5 @@
-import os
 import aiomysql
+import os
 
 
 class DBManager:

@@ -1,7 +1,7 @@
-import os
 import aiohttp
-import ssl
 import certifi
+import os
+import ssl
 
 from constants.protocol import chains
 

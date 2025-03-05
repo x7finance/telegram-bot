@@ -1,6 +1,6 @@
+import aiohttp
 import asyncio
 import os
-import aiohttp
 from datetime import datetime
 from constants.protocol import chains
 
