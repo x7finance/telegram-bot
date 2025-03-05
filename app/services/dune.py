@@ -1,9 +1,7 @@
 import asyncio
 import os
-import requests
-
+import aiohttp
 from datetime import datetime
-
 from constants.protocol import chains
 
 
@@ -30,67 +28,73 @@ class Dune:
         self.top_last_date = {}
         self.error = "Unable to get Dune data. Please use the link below"
 
-    def ping(self):
+    async def ping(self):
         try:
-            response = requests.post(
-                f"{self.base_url}query/{self.volume_id}/execute",
-                headers=self.header,
-                params={"performance": "small"},
-                timeout=5,
-            )
-            if response.status_code == 200:
-                return True
-            return f"🔴 Dune: Connection failed: {response.status_code}"
-        except requests.RequestException as e:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.base_url}query/{self.volume_id}/execute",
+                    headers=self.header,
+                    params={"performance": "small"},
+                    timeout=5,
+                ) as response:
+                    if response.status == 200:
+                        return True
+                    return f"🔴 Dune: Connection failed: {response.status}"
+        except Exception as e:
             return f"🔴 Dune: Connection failed: {str(e)}"
 
     def make_api_url(self, module, action, identifier):
         return f"{self.base_url}{module}/{identifier}/{action}"
 
-    def execute_query(self, query_id, engine="small"):
-        response = requests.post(
-            self.make_api_url("query", "execute", query_id),
-            headers=self.header,
-            params={"performance": engine},
-        )
-        if response.status_code == 200:
-            return response.json().get("execution_id")
-        else:
-            response.raise_for_status()
+    async def execute_query(self, query_id, engine="small"):
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                self.make_api_url("query", "execute", query_id),
+                headers=self.header,
+                params={"performance": engine},
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data.get("execution_id")
+                else:
+                    response.raise_for_status()
 
-    def get_query_status(self, execution_id):
-        response = requests.get(
-            self.make_api_url("execution", "status", execution_id),
-            headers=self.header,
-        )
-        if response.status_code == 200:
-            return response.json()
-        else:
-            response.raise_for_status()
+    async def get_query_status(self, execution_id):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                self.make_api_url("execution", "status", execution_id),
+                headers=self.header,
+            ) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    response.raise_for_status()
 
-    def get_query_results(self, execution_id):
-        response = requests.get(
-            self.make_api_url("execution", "results", execution_id),
-            headers=self.header,
-        )
-        if response.status_code == 200:
-            return response.json()
-        else:
-            response.raise_for_status()
+    async def get_query_results(self, execution_id):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                self.make_api_url("execution", "results", execution_id),
+                headers=self.header,
+            ) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    response.raise_for_status()
 
-    def cancel_query_execution(self, execution_id):
-        response = requests.get(
-            self.make_api_url("execution", "cancel", execution_id),
-            headers=self.header,
-        )
-        if response.status_code == 200:
-            return response.json()
-        else:
-            response.raise_for_status()
+    async def cancel_query_execution(self, execution_id):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                self.make_api_url("execution", "cancel", execution_id),
+                headers=self.header,
+            ) as response:
+                if response.status == 200:
+                    return await response.json()
+                else:
+                    response.raise_for_status()
 
     async def get_top_tokens(self, chain):
         chain_info, error_message = (
-            chains.get_info(chain) if chain else (None, None)
+            await chains.get_info(chain) if chain else (None, None)
         )
         if error_message:
             return error_message
@@ -134,11 +138,11 @@ class Dune:
                 f"{time_remaining_text}"
             )
 
-        execution_id = self.execute_query(self.top_pairs_id, "medium")
+        execution_id = await self.execute_query(self.top_pairs_id, "medium")
         response_data = None
         for attempt in range(4):
             try:
-                response_data = self.get_query_results(execution_id)
+                response_data = await self.get_query_results(execution_id)
             except ValueError:
                 return (
                     f"*Xchange Top Pairs {chain_name_title}*\n\n{self.error}"
@@ -224,10 +228,10 @@ class Dune:
                 f"{next_update_text}"
             )
 
-        execution_id = self.execute_query(self.volume_id, "medium")
+        execution_id = await self.execute_query(self.volume_id, "medium")
         response_data = None
         for _ in range(10):
-            response = self.get_query_results(execution_id)
+            response = await self.get_query_results(execution_id)
             if not isinstance(response, dict):
                 return f"*Xchange Volume*\n\n{self.error}"
 

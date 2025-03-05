@@ -1,6 +1,6 @@
+import aiohttp
 import os
 import random
-import requests
 import socket
 from datetime import datetime
 
@@ -10,6 +10,12 @@ from constants.protocol import abis, addresses, chains, splitters, tokens
 from services import get_etherscan
 
 etherscan = get_etherscan()
+
+
+def adjust_loan_count(amount, chain):
+    latest_loan = amount
+    adjusted_amount = max(0, amount - 20) if chain != "eth" else amount
+    return adjusted_amount, latest_loan
 
 
 def escape_markdown(text):
@@ -89,17 +95,6 @@ def format_seconds(seconds):
     )
 
 
-def get_event_topic(contract, event_name, chain):
-    chain_info, _ = chains.get_info(chain)
-    abi = abis.read(contract)
-    for item in abi:
-        if item.get("type") == "event" and item["name"] == event_name:
-            event_inputs = ",".join([inp["type"] for inp in item["inputs"]])
-            event_signature = f"{event_name}({event_inputs})"
-            return "0x" + chain_info.w3.keccak(text=event_signature).hex()
-    return None
-
-
 def get_ill_number(term, chain):
     for ill_number, contract_address in addresses.ill_addresses(chain).items():
         if term.lower() == contract_address.lower():
@@ -108,13 +103,13 @@ def get_ill_number(term, chain):
 
 
 async def get_last_action(address, chain):
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
     chain_native = chain_info.native
-    tx = etherscan.get_internal_tx(address, chain)
+    tx = await etherscan.get_internal_tx(address, chain)
 
     word = "txn"
     filter = []
-    tokens_data = tokens.get_tokens()
+    tokens_data = await tokens.get_tokens()
 
     if any(
         address == token_info.hub
@@ -153,7 +148,7 @@ async def get_last_action(address, chain):
 
 
 async def get_loan_token_id(loan_id, chain):
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     pool_contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(
@@ -228,7 +223,7 @@ def is_local():
     )
 
 
-def update_bot_commands():
+async def update_bot_commands():
     url = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_BOT_TOKEN')}/setMyCommands"
 
     general_commands = [
@@ -248,31 +243,33 @@ def update_bot_commands():
 
     results = []
 
-    response = requests.post(
-        url, json={"commands": general_commands, "scope": {"type": "default"}}
-    )
+    async with aiohttp.ClientSession() as session:
+        # Update general commands
+        async with session.post(
+            url,
+            json={"commands": general_commands, "scope": {"type": "default"}},
+        ) as response:
+            results.append(
+                "✅ General commands updated"
+                if response.status == 200
+                else f"⚠️ Failed to update commands: {await response.text()}"
+            )
 
-    results.append(
-        "✅ General commands updated"
-        if response.status_code == 200
-        else f"⚠️ Failed to update commands: {response.text}"
-    )
-
-    response = requests.post(
-        url,
-        json={
-            "commands": all_commands,
-            "scope": {
-                "type": "chat",
-                "chat_id": int(os.getenv("TELEGRAM_ADMIN_ID")),
+        # Update admin commands
+        async with session.post(
+            url,
+            json={
+                "commands": all_commands,
+                "scope": {
+                    "type": "chat",
+                    "chat_id": int(os.getenv("TELEGRAM_ADMIN_ID")),
+                },
             },
-        },
-    )
-
-    results.append(
-        "✅ Admin commands updated"
-        if response.status_code == 200
-        else f"⚠️ Failed to update Admin commands: {response.text}"
-    )
+        ) as response:
+            results.append(
+                "✅ Admin commands updated"
+                if response.status == 200
+                else f"⚠️ Failed to update Admin commands: {await response.text()}"
+            )
 
     return "\n".join(results)

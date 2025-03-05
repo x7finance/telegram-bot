@@ -7,7 +7,7 @@ from constants.bot import urls
 from constants.protocol import chains, tokens
 from services import get_coingecko, get_defined, get_dextools, get_etherscan
 
-coingecko = get_coingecko()
+cg = get_coingecko()
 defined = get_defined()
 dextools = get_dextools()
 etherscan = get_etherscan()
@@ -33,7 +33,9 @@ async def command(
         await send_coingecko_response(update, search, token_data)
         return
 
-    message, buttons = send_dextools_response(search, found_chain, token_data)
+    message, buttons = await send_dextools_response(
+        search, found_chain, token_data
+    )
     await update.message.reply_text(
         message,
         disable_web_page_preview=True,
@@ -45,7 +47,7 @@ async def command(
 async def resolve_search(search, chain):
     if not is_address(search):
         if search.lower() in tokens.BLUE_CHIPS:
-            token = coingecko.search(search)
+            token = await cg.search(search)
 
             if token and "coins" in token and token["coins"]:
                 for coin in token["coins"]:
@@ -54,7 +56,7 @@ async def resolve_search(search, chain):
 
                 return token["coins"][0]["id"]
 
-        token = defined.search(search, chain)
+        token = await defined.search(search, chain)
 
         if is_address(token):
             return token
@@ -64,15 +66,15 @@ async def resolve_search(search, chain):
 
 async def fetch_token_data(search, chain):
     if not is_address(search):
-        return coingecko.get_price(search), None
+        return await cg.get_price(search), None
     if chain:
-        token_data = dextools.get_audit(search, chain)
+        token_data = await dextools.get_audit(search, chain)
         if token_data and token_data.get("data"):
             return token_data, chain
 
     for alt_chain, chain_info in chains.MAINNETS.items():
         if chain_info.live:
-            token_data = dextools.get_audit(search, alt_chain)
+            token_data = await dextools.get_audit(search, alt_chain)
             if token_data and token_data.get("data"):
                 return token_data, alt_chain
 
@@ -113,13 +115,13 @@ async def send_coingecko_response(update: Update, search, token_info):
     )
 
 
-def send_dextools_response(search, chain, token_data):
+async def send_dextools_response(search, chain, token_data):
     if not token_data or "data" not in token_data:
         return "No result found.", []
 
     data = token_data.get("data", {})
 
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
     if not chain_info:
         chain_name, chain_dext, chain_id = "Unknown", "", ""
     else:
@@ -165,22 +167,22 @@ def send_dextools_response(search, chain, token_data):
 
     status = f"{open_source}\n{renounced}\n{tax}\n{mint}\n{honey_pot}\n{blacklist}\n{scam}"
 
-    name_info = dextools.get_token_name(search, chain)
+    name_info = await dextools.get_token_name(search, chain)
     token_name = name_info.get("name", "Unknown")
     token_symbol = name_info.get("symbol", "N/A")
 
-    info = dextools.get_token_info(search, chain)
+    info = await dextools.get_token_info(search, chain)
     holders = info.get("holders", "N/A")
     mcap = info.get("mcap", "N/A")
 
-    pair = defined.get_pair(search, chain)
-    dex = dextools.get_dex(pair, chain)
+    pair = await defined.get_pair(search, chain)
+    dex = await dextools.get_dex(pair, chain)
 
-    price, price_change = dextools.get_price(search, chain)
+    price, price_change = await dextools.get_price(search, chain)
     price = f"${price}" if price else "N/A"
 
-    volume = defined.get_volume(pair, chain) or "N/A"
-    liquidity = dextools.get_liquidity(pair, chain).get("total", "N/A")
+    volume = await defined.get_volume(pair, chain) or "N/A"
+    liquidity = await dextools.get_liquidity(pair, chain).get("total", "N/A")
 
     message = (
         f"*{token_name} ({token_symbol})* - {chain_name}\n"

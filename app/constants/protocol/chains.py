@@ -12,6 +12,7 @@ db = get_dbmanager()
 
 ETH_CHAINS = {"eth", "base", "arb", "op", "eth-sepolia", "base-sepolia"}
 POA_CHAINS = {"bsc", "poly"}
+DEFAULT_CHAIN = "eth"
 
 
 class ChainInfo:
@@ -65,43 +66,50 @@ class ChainInfo:
                 )
 
 
-def get_active_chains():
+async def get_active_chains():
     if tools.is_local():
         return {**MAINNETS, **TESTNETS}
     return (
-        {**MAINNETS, **TESTNETS} if db.settings_get("testnets") else MAINNETS
+        {**MAINNETS, **TESTNETS}
+        if await db.settings_get("testnets")
+        else MAINNETS
     )
 
 
-def get_chain(chat_id):
-    for chain_name, chain_info in get_active_chains().items():
+async def get_chain(chat_id):
+    active_chains = await get_active_chains()
+    for chain_name, chain_info in active_chains.items():
         if chat_id == chain_info.tg:
             return chain_name
-    return "eth"
+    return DEFAULT_CHAIN
 
 
-def get_full_names():
-    chain_names = [chain.name for chain in get_active_chains().values()]
+async def get_full_names():
+    active_chains = await get_active_chains()
+    chain_names = [chain.name for chain in active_chains.values()]
     return "\n".join(chain_names)
 
 
-def get_info(chain, token=None):
-    if chain in get_active_chains():
-        chain_info = get_active_chains()[chain]
+async def get_info(chain, token=None):
+    active_chains = await get_active_chains()
+    if chain in active_chains:
+        chain_info = active_chains[chain]
 
         if token and not chain_info.trading:
             return None, f"{chain_info.name} tokens not launched yet!"
 
         return chain_info, None
     else:
+        short_names = await get_short_names()
         return (
             None,
-            f"Chain not recognised, Please use one of the following abbreviations:\n\n{get_short_names()}",
+            f"Chain not recognised, Please use one of the following abbreviations:\n\n{short_names}",
         )
 
 
-def get_short_names():
-    chain_list = [key.upper() for key in get_active_chains().keys()]
+async def get_short_names():
+    active_chains = await get_active_chains()
+    chain_list = [key.upper() for key in active_chains.keys()]
     return "\n".join(chain_list)
 
 

@@ -14,6 +14,7 @@ import subprocess
 from pathlib import Path
 from telegram.warnings import PTBUserWarning
 from warnings import filterwarnings
+import asyncio
 
 from bot import auto, callbacks, commands, conversations
 from constants.bot import settings, urls
@@ -103,11 +104,17 @@ def init_main_bot():
 
 def start():
     init_main_bot()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(start_settings())
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
+
+async def start_settings():
     if not tools.is_local():
         print("✅ Bot Running on server")
 
-        if db.settings_get("click_me"):
+        if await db.settings_get("click_me"):
             application.job_queue.run_once(
                 auto.button_send,
                 settings.FIRST_BUTTON_TIME,
@@ -121,8 +128,6 @@ def start():
 
     else:
         print("✅ Bot Running locally")
-
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":

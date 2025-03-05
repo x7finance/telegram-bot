@@ -1,8 +1,9 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
+import aiohttp
 import os
-import requests
+
 from datetime import datetime, timedelta
 
 from bot import auto
@@ -38,7 +39,7 @@ async def test(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def clickme(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
-        if db.settings_get("click_me"):
+        if await db.settings_get("click_me"):
             await auto.button_send(context)
         else:
             await update.message.reply_text("Click Me is disabled")
@@ -47,13 +48,14 @@ async def clickme(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
         user_to_remove = " ".join(context.args)
-        result = db.wallet_remove(user_to_remove)
+        result = await db.wallet_remove(user_to_remove)
         await update.message.reply_text(result)
 
 
 async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
-        settings = db.settings_get_all()
+        settings = await db.settings_get_all()
+        print(settings)
         if not settings:
             await update.message.reply_text("Error fetching settings.")
             return
@@ -91,25 +93,25 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         status = []
 
-        cg_result = cg.ping()
+        cg_result = await cg.ping()
         if cg_result is True:
             status.append("🟢 CoinGecko: Connected Successfully")
         else:
             status.append(cg_result)
 
-        db_result = db.ping()
+        db_result = await db.ping()
         if db_result is True:
             status.append("🟢 MySql: Connected Successfully")
         else:
             status.append(db_result)
 
-        defined_result = dextools.ping()
+        defined_result = await dextools.ping()
         if defined_result is True:
             status.append("🟢 Defined: Connected Successfully")
         else:
             status.append(defined_result)
 
-        dextools_result = dextools.ping()
+        dextools_result = await dextools.ping()
         if dextools_result is True:
             status.append("🟢 Dextools: Connected Successfully")
         else:
@@ -123,47 +125,50 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "id": 1,
         }
         try:
-            drpc_response = requests.post(drpc_url, json=drpc_payload)
-            if drpc_response.status_code == 200:
-                status.append("🟢 DRPC: Connected Successfully")
-            else:
-                status.append(
-                    f"🔴 DRPC: Connection failed: {drpc_response.status_code}"
-                )
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    drpc_url, json=drpc_payload
+                ) as drpc_response:
+                    if drpc_response.status == 200:
+                        status.append("🟢 DRPC: Connected Successfully")
+                    else:
+                        status.append(
+                            f"🔴 DRPC: Connection failed: {drpc_response.status}"
+                        )
         except Exception as e:
             status.append(f"🔴 DRPC: Connection failed: {str(e)}")
 
-        dune_result = dune.ping()
+        dune_result = await dune.ping()
         if dune_result is True:
             status.append("🟢 Dune: Connected Successfully")
         else:
             status.append(dune_result)
 
-        etherscan_result = etherscan.ping()
+        etherscan_result = await etherscan.ping()
         if etherscan_result is True:
             status.append("🟢 Etherscan: Connected Successfully")
         else:
             status.append(etherscan_result)
 
-        github_result = github.ping()
+        github_result = await github.ping()
         if github_result is True:
             status.append("🟢 GitHub: Connected Successfully")
         else:
             status.append(github_result)
 
-        simplehash_result = simplehash.ping()
+        simplehash_result = await simplehash.ping()
         if simplehash_result is True:
             status.append("🟢 Simplehash: Connected Successfully")
         else:
             status.append(simplehash_result)
 
-        snapshot_result = snapshot.ping()
+        snapshot_result = await snapshot.ping()
         if snapshot_result is True:
             status.append("🟢 Snapshot: Connected Successfully")
         elif isinstance(snapshot_result, str):
             status.append(snapshot_result)
 
-        twitter_result = twitter.ping()
+        twitter_result = await twitter.ping()
         if twitter_result is True:
             status.append("🟢 Twitter: Connected Successfully")
         else:
@@ -179,7 +184,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
         if update.effective_chat.type == "private":
-            if db.settings_get("click_me"):
+            if await db.settings_get("click_me"):
                 if settings.BUTTON_TIME is not None:
                     time = settings.BUTTON_TIME
                 else:

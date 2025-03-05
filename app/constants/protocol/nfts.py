@@ -4,7 +4,7 @@ from services import get_simplehash
 simplehash = get_simplehash()
 
 
-def get_data(chain):
+async def get_data(chain):
     map = {
         "eco": addresses.eco_maxi(chain),
         "liq": addresses.liq_maxi(chain),
@@ -16,7 +16,7 @@ def get_data(chain):
     results = {}
 
     for key, contract_address in map.items():
-        results[key] = simplehash.get_nft_data(contract_address, chain)
+        results[key] = await simplehash.get_nft_data(contract_address, chain)
 
     return results
 
@@ -117,10 +117,10 @@ def get_mint_prices(chain):
     return map.get(chain, {})
 
 
-def get_info(chain):
+async def get_info(chain):
     data = {
         "chain": chain,
-        "data": get_data(chain),
+        "data": await get_data(chain),
         "discounts": get_discounts(chain),
         "mint_prices": get_mint_prices(chain),
     }
@@ -132,7 +132,7 @@ def get_info(chain):
         "borrow": "Borrow Maxi",
         "magister": "Magister",
     }
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     output = []
 

@@ -1,12 +1,12 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder
 
+import aiohttp
 import asyncio
 import io
 import json
 import os
 import random
-import requests
 import sentry_sdk
 import websockets
 from datetime import datetime
@@ -37,9 +37,11 @@ async def create_image(token_image, title, message, chain_info):
     im1 = Image.open(random.choice(blackhole.RANDOM)).convert("RGBA")
 
     try:
-        im2 = Image.open(requests.get(token_image, stream=True).raw).convert(
-            "RGBA"
-        )
+        async with aiohttp.ClientSession() as session:
+            async with session.get(token_image) as response:
+                if response.status == 200:
+                    image_data = await response.read()
+                    im2 = Image.open(io.BytesIO(image_data)).convert("RGBA")
     except Exception:
         im2 = Image.open(chain_info.logo).convert("RGBA")
 
@@ -70,14 +72,12 @@ async def create_image(token_image, title, message, chain_info):
 async def handle_log(log_data, chain, contracts):
     try:
         (
-            eco_splitter,
             factory,
             ill_term,
             time_lock,
-            treasury_splitter,
             xchange_create,
         ) = contracts
-        chain_info, _ = chains.get_info(chain)
+        chain_info, _ = await chains.get_info(chain)
 
         topics = log_data.get("topics", [])
         if not topics:
@@ -85,14 +85,6 @@ async def handle_log(log_data, chain, contracts):
 
         event_signature = topics[0]
         token_deployed = False
-
-        if event_signature == eco_splitter.events.PushAll().topic:
-            log = eco_splitter.events.PushAll().process_log(log_data)
-            await format_splitter_alert(log, chain)
-
-        if event_signature == treasury_splitter.events.PushAll().topic:
-            log = treasury_splitter.events.PushAll().process_log(log_data)
-            await format_splitter_alert(log, chain, treasury=True)
 
         if event_signature == xchange_create.events.TokenDeployed().topic:
             log = xchange_create.events.TokenDeployed().process_log(log_data)
@@ -160,12 +152,10 @@ async def initialize_alerts(chain):
         try:
             w3 = chains.MAINNETS[chain].w3_ws
             (
-                eco_splitter,
                 factory,
                 ill_term,
                 time_lock,
                 treasury_splitter,
-                xchange_create,
             ) = await initialize_contracts(w3, chain)
 
             ws_url = chains.MAINNETS[chain].ws_rpc_url
@@ -177,12 +167,10 @@ async def initialize_alerts(chain):
                         "logs",
                         {
                             "address": [
-                                eco_splitter.address,
                                 factory.address,
                                 ill_term.address,
                                 time_lock.address,
                                 treasury_splitter.address,
-                                xchange_create.address,
                             ]
                         },
                     ],
@@ -212,12 +200,10 @@ async def initialize_alerts(chain):
                                     data["params"]["result"],
                                     chain,
                                     (
-                                        eco_splitter,
                                         factory,
                                         ill_term,
                                         time_lock,
                                         treasury_splitter,
-                                        xchange_create,
                                     ),
                                 )
 
@@ -266,11 +252,6 @@ async def initialize_alerts(chain):
 
 
 async def initialize_contracts(w3, chain):
-    eco_splitter = w3.eth.contract(
-        address=addresses.eco_splitter(chain),
-        abi=abis.read("ecosystemsplitter"),
-    )
-
     factory = w3.eth.contract(
         address=addresses.factory(chain),
         abi=abis.read("factory"),
@@ -289,17 +270,10 @@ async def initialize_contracts(w3, chain):
         address=addresses.token_time_lock(chain), abi=abis.read("timelock")
     )
 
-    treasury_splitter = w3.eth.contract(
-        address=addresses.treasury_splitter(chain),
-        abi=abis.read("ecosystemsplitter"),
-    )
-
     return (
-        eco_splitter,
         factory,
         ill_term,
         time_lock,
-        treasury_splitter,
         xchange_create,
     )
 
@@ -307,7 +281,7 @@ async def initialize_contracts(w3, chain):
 async def format_loan_alert(
     log, chain, is_completed=False, was_liquidated=False
 ):
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     loan_id = log["args"]["loanID"]
     ill_address = addresses.ill_addresses(chain)[LIVE_LOAN]
@@ -332,7 +306,7 @@ async def format_loan_alert(
     ).call()
     pair_address = await pool_contract.functions.loanPair(int(loan_id)).call()
 
-    token_info = dextools.get_token_name(token_address, chain)
+    token_info = await dextools.get_token_name(token_address, chain)
 
     if is_completed:
         title = "Loan Liquidated" if was_liquidated else "Loan Completed"
@@ -358,7 +332,7 @@ async def format_loan_alert(
     )
 
     image_buffer = await create_image(
-        defined.get_token_image(token_address, chain),
+        await defined.get_token_image(token_address, chain),
         title,
         message,
         chain_info,
@@ -396,16 +370,16 @@ async def format_loan_alert(
 
 
 async def format_pair_alert(log, chain):
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
     paired_token = addresses.weth(chain)
 
     title = "New Pair Created"
 
-    token_0_info = dextools.get_token_name(log["args"]["token0"], chain)
+    token_0_info = await dextools.get_token_name(log["args"]["token0"], chain)
     token_0_name = token_0_info["name"]
     token_0_symbol = token_0_info["symbol"]
 
-    token_1_info = dextools.get_token_name(log["args"]["token1"], chain)
+    token_1_info = await dextools.get_token_name(log["args"]["token1"], chain)
     token_1_name = token_1_info["name"]
     token_1_symbol = token_1_info["symbol"]
 
@@ -416,7 +390,7 @@ async def format_pair_alert(log, chain):
         token_address = log["args"]["token0"]
         token_name = token_0_name
 
-    token_data = dextools.get_audit(token_address, chain)
+    token_data = await dextools.get_audit(token_address, chain)
     if token_data.get("statusCode") == 200 and token_data.get("data"):
         data = token_data["data"]
 
@@ -453,7 +427,7 @@ async def format_pair_alert(log, chain):
     message = f"{token_name} ({token_0_symbol}/{token_1_symbol})\n\n{status}"
 
     image_buffer = await create_image(
-        defined.get_token_image(token_address, chain),
+        await defined.get_token_image(token_address, chain),
         title,
         message,
         chain_info,
@@ -487,49 +461,8 @@ async def format_pair_alert(log, chain):
     await send_alert(image_buffer, caption, buttons, application)
 
 
-async def format_splitter_alert(log, chain, treasury=False):
-    chain_info, _ = chains.get_info(chain)
-    title = "Splitter Pushed"
-
-    transfers = log["args"].get("amounts", [])
-    total_value = sum(amount / 10**18 for amount in transfers)
-
-    if treasury:
-        address = addresses.treasury_splitter(chain)
-        name = "Treasury"
-    else:
-        address = addresses.eco_splitter(chain)
-        name = "Ecosystem"
-
-    message = (
-        f"{name} Splitter Pushed\n\n"
-        f"Total Value: {total_value:.6f} {chain_info.native}"
-    )
-
-    image_buffer = await create_image(
-        chain_info.logo,
-        title,
-        message,
-        chain_info,
-    )
-    caption = f"*{title} ({chain_info.name.upper()})*\n\n{message}\n\n"
-
-    buttons = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton(
-                    text="View Splitter",
-                    url=chain_info.scan_address + address,
-                )
-            ],
-        ]
-    )
-
-    await send_alert(image_buffer, caption, buttons, application)
-
-
 async def format_token_alert(log, chain):
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
     title = "New Token Deployed"
 
     args = log["args"]
@@ -606,7 +539,7 @@ async def format_token_alert(log, chain):
 
 
 async def format_time_lock_alert(log, chain, is_global=False):
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     if is_global:
         title = "Global Unlock Time Set"
@@ -638,7 +571,8 @@ async def format_time_lock_alert(log, chain, is_global=False):
         )
         when = tools.get_time_difference(unlock_timestamp)
 
-        for token_key, token_data in tokens.get_tokens().items():
+        get_tokens = await tokens.get_tokens()
+        for token_key, token_data in get_tokens.items():
             if token_data[chain].ca.lower() == token_address.lower():
                 token_name = token_data[chain].name
                 token_image = token_data[chain].logo

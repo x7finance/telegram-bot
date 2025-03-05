@@ -1,25 +1,29 @@
-import requests
+import aiohttp
 
 
 class Snapshot:
     def __init__(self):
         self.url = "https://hub.snapshot.org/graphql"
 
-    def ping(self):
+    async def ping(self):
         try:
             query = {"query": "query { proposals(first: 1) { id } }"}
-            response = requests.post(self.url, json=query, timeout=5)
-            if response.status_code == 200:
-                return True
-            return f"🔴 Snapshot: Connection failed: {response.status_code} {response.text}"
-        except requests.RequestException as e:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    self.url, json=query, timeout=5
+                ) as response:
+                    if response.status == 200:
+                        return True
+                    return f"🔴 Snapshot: Connection failed: {response.status} {await response.text()}"
+        except Exception as e:
             return f"🔴 Snapshot: Connection failed: {e}"
 
-    def get_latest(self):
+    async def get_latest(self):
         query = {
             "query": 'query { proposals ( first: 1, skip: 0, where: { space_in: ["x7finance.eth"]}, '
             'orderBy: "created", orderDirection: desc ) { id title start end snapshot state choices '
             "scores scores_total author }}"
         }
-        response = requests.get(self.url, query)
-        return response.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.url, params=query) as response:
+                return await response.json()

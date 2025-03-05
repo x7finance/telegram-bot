@@ -1,5 +1,7 @@
 import os
 import tweepy
+import asyncio
+from functools import partial
 
 
 class Twitter:
@@ -8,18 +10,26 @@ class Twitter:
             bearer_token=os.getenv("TWITTER_BEARER_TOKEN")
         )
 
-    def ping(self):
+    async def _run_sync(self, func, *args, **kwargs):
+        return await asyncio.get_event_loop().run_in_executor(
+            None, partial(func, *args, **kwargs)
+        )
+
+    async def ping(self):
         try:
-            response = self.client.get_user(username="x7_finance")
+            response = await self._run_sync(
+                self.client.get_user, username="x7_finance"
+            )
             if response and response.data:
                 return True
             return "🔴 Twitter: Connection failed (No data returned)"
         except tweepy.TweepyException as e:
             return f"🔴 Twitter: Connection failed: {e}"
 
-    def get_user_data(self, username):
+    async def get_user_data(self, username):
         try:
-            user = self.client.get_user(
+            user = await self._run_sync(
+                self.client.get_user,
                 username=username,
                 user_fields=["public_metrics", "profile_image_url"],
             )
@@ -32,11 +42,14 @@ class Twitter:
         except Exception:
             return {"followers": "N/A", "profile_image": None}
 
-    def get_latest_tweet(self, username):
+    async def get_latest_tweet(self, username):
         try:
-            user = self.client.get_user(username=username)
+            user = await self._run_sync(
+                self.client.get_user, username=username
+            )
             user_id = user.data.id
-            tweets = self.client.get_users_tweets(
+            tweets = await self._run_sync(
+                self.client.get_users_tweets,
                 user_id,
                 max_results=5,
                 tweet_fields=[
@@ -77,13 +90,14 @@ class Twitter:
         except Exception:
             return None
 
-    def get_next_space(self, username):
+    async def get_next_space(self, username):
         try:
-            user_id = self.get_user_id(username)
+            user_id = await self._run_sync(self.get_user_id, username)
             if not user_id:
                 return None
 
-            spaces = self.client.get_spaces(
+            spaces = await self._run_sync(
+                self.client.get_spaces,
                 user_ids=[user_id],
                 space_fields=["title", "state", "scheduled_start"],
             )
@@ -92,11 +106,9 @@ class Twitter:
                     if space.state in ["live", "scheduled"]:
                         return {
                             "title": space.title,
-                            "state": (
-                                "Live Now"
-                                if space.state == "live"
-                                else "Scheduled"
-                            ),
+                            "state": "Live Now"
+                            if space.state == "live"
+                            else "Scheduled",
                             "scheduled_start": getattr(
                                 space, "scheduled_start", None
                             ),

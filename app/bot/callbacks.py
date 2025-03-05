@@ -62,14 +62,14 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     time_taken = button_click_timestamp - button_generation_timestamp
     formatted_time_taken = tools.format_seconds(time_taken)
 
-    db.clicks_update(user_info, time_taken)
+    await db.clicks_update(user_info, time_taken)
 
     context.bot_data["first_user_clicked"] = True
 
-    user_data = db.clicks_get_by_name(user_info)
+    user_data = await db.clicks_get_by_name(user_info)
     clicks, _, streak = user_data
-    total_click_count = db.clicks_get_total()
-    burn_active = db.settings_get("burn")
+    total_click_count = await db.clicks_get_total()
+    burn_active = await db.settings_get("burn")
 
     if clicks == 1:
         user_count_message = "🎉🎉 This is their first button click! 🎉🎉"
@@ -78,7 +78,7 @@ async def click_me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         user_count_message = f"They have been the fastest Pioneer {clicks} times and on a *{streak}* click streak!"
 
-    if db.clicks_check_is_fastest(time_taken):
+    if await db.clicks_check_is_fastest(time_taken):
         user_count_message += (
             f"\n\n🎉🎉 {formatted_time_taken} is the new fastest time! 🎉🎉"
         )
@@ -146,7 +146,7 @@ async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     if tools.is_admin(update.effective_user.id):
         try:
-            result_text = db.clicks_reset()
+            result_text = await db.clicks_reset()
             await query.edit_message_text(text=result_text)
         except Exception as e:
             await query.answer(
@@ -195,7 +195,7 @@ async def confirm(
 async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.from_user.id
-    existing_wallet = db.wallet_get(user_id)
+    existing_wallet = await db.wallet_get(user_id)
 
     if not existing_wallet:
         await query.answer(
@@ -206,7 +206,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         _, loan_id, chain = query.data.split(":")
-        chain_info, _ = chains.get_info(chain)
+        chain_info, _ = await chains.get_info(chain)
 
         message = await context.bot.send_message(
             chat_id=query.message.chat_id,
@@ -232,7 +232,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.from_user.id
-    existing_wallet = db.wallet_get(user_id)
+    existing_wallet = await db.wallet_get(user_id)
 
     if not existing_wallet:
         await query.answer(
@@ -242,7 +242,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     _, token, chain = query.data.split(":")
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     config = await splitters.get_push_settings(chain, token)
     address = config["address"]
@@ -304,16 +304,16 @@ async def settings_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
         setting = callback_data.replace("settings_toggle_", "")
 
         try:
-            current_status = db.settings_get(setting)
+            current_status = await db.settings_get(setting)
             new_status = not current_status
-            db.settings_set(setting, new_status)
+            await db.settings_set(setting, new_status)
 
             formatted_setting = setting.replace("_", " ").title()
             await query.answer(
                 text=f"{formatted_setting} turned {'ON' if new_status else 'OFF'}."
             )
 
-            settings = db.settings_get_all()
+            settings = await db.settings_get_all()
             keyboard = [
                 [
                     InlineKeyboardButton(
@@ -360,7 +360,7 @@ async def wallet_remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = query.from_user.id
 
     try:
-        result_text = db.wallet_remove(user_id)
+        result_text = await db.wallet_remove(user_id)
 
         await query.edit_message_text(text=result_text)
     except Exception as e:

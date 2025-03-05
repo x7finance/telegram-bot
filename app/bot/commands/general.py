@@ -1,12 +1,12 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ContextTypes
 
+import aiohttp
 import math
 import os
 import pytz
 import random
 import re
-import requests
 import time
 from datetime import datetime
 from eth_account import Account
@@ -39,7 +39,7 @@ from services import (
     get_twitter,
 )
 
-coingecko = get_coingecko()
+cg = get_coingecko()
 db = get_dbmanager()
 defined = get_defined()
 dextools = get_dextools()
@@ -53,7 +53,7 @@ twitter = get_twitter()
 
 async def about(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        text.about(),
+        await text.about(),
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton(text="X7Finance.org", url=urls.XCHANGE)]]
@@ -121,16 +121,18 @@ async def arbitrage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = (
         context.args[1].lower()
         if len(context.args) == 2
-        else chains.get_chain(update.effective_message.message_thread_id)
+        else await chains.get_chain(update.effective_message.message_thread_id)
     )
 
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
 
-    if token.lower() in tokens.get_tokens():
-        pairs = tokens.get_tokens()[token.lower()][chain].pairs
+    get_tokens = await tokens.get_tokens()
+
+    if token.lower() in get_tokens:
+        pairs = get_tokens[token.lower()][chain].pairs
 
         message = await update.message.reply_text(
             f"Getting {token.upper()} ({chain_info.name}) arbitrage opportunities, Please wait..."
@@ -139,8 +141,8 @@ async def arbitrage(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if token in ["x7dao", "x7r"]:
             pair_x, pair_y = pairs[0], pairs[1]
-            price_x = dextools.get_pool_price(pair_x, chain)
-            price_y = dextools.get_pool_price(pair_y, chain)
+            price_x = await dextools.get_pool_price(pair_x, chain)
+            price_y = await dextools.get_pool_price(pair_y, chain)
 
             if price_x and price_y:
                 price_diff = abs(price_x - price_y)
@@ -187,16 +189,14 @@ async def arbitrage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
 
         elif token in addresses.X7100:
-            price_x = dextools.get_pool_price(pairs, chain)
-
-            all_tokens = tokens.get_tokens()
+            price_x = await dextools.get_pool_price(pairs, chain)
 
             prices = {
-                t: dextools.get_pool_price(
-                    all_tokens[t.lower()][chain].pairs, chain
+                t: await dextools.get_pool_price(
+                    get_tokens[t.lower()][chain].pairs, chain
                 )
                 for t in addresses.X7100
-                if t in all_tokens and chain in all_tokens[t.lower()]
+                if t in get_tokens and chain in get_tokens[t.lower()]
             }
 
             if price_x is not None:
@@ -243,8 +243,8 @@ async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     when = round(time.time())
     try:
         blocks = {
-            chain: etherscan.get_block(chain, when)
-            for chain in chains.get_active_chains()
+            chain: await etherscan.get_block(chain, when)
+            for chain in await chains.get_active_chains()
         }
     except Exception:
         blocks = 0
@@ -285,7 +285,9 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if amount.replace(".", "", 1).isdigit():
             amount_in_wei = int(float(amount) * 10**18)
             chain = (
-                chains.get_chain(update.effective_message.message_thread_id)
+                await chains.get_chain(
+                    update.effective_message.message_thread_id
+                )
                 if len(context.args) < 2
                 else context.args[1]
             )
@@ -303,7 +305,7 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = await chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -314,7 +316,7 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     loan_info = ""
-    native_price = etherscan.get_native_price(chain)
+    native_price = await etherscan.get_native_price(chain)
     borrow_usd = native_price * float(amount)
 
     lending_pool = chain_info.w3.eth.contract(
@@ -436,10 +438,10 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -449,12 +451,13 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    burn = etherscan.get_token_balance(
+    burn = await etherscan.get_token_balance(
         addresses.DEAD, addresses.x7r(chain), 18, chain
     )
     percent = round(burn / addresses.SUPPLY * 100, 2)
-    x7r_price = dextools.get_price(addresses.x7r(chain), chain)[0] or 0
-    burn_dollar = float(x7r_price) * float(burn)
+
+    price, _ = await dextools.get_price(addresses.x7r(chain), chain) or 0
+    burn_dollar = float(price) * float(burn)
 
     await message.delete()
     await update.message.reply_photo(
@@ -477,10 +480,10 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -513,10 +516,10 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def ca(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -552,10 +555,10 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -610,9 +613,9 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = (
         context.args[2].lower()
         if len(context.args) > 2
-        else chains.get_chain(update.effective_message.message_thread_id)
+        else await chains.get_chain(update.effective_message.message_thread_id)
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -627,8 +630,10 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    get_tokens = await tokens.get_tokens()
+
     x7token = context.args[0].lower()
-    if x7token.lower() not in tokens.get_tokens():
+    if x7token.lower() not in get_tokens:
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=f"*X7 Finance Market Cap Comparison* ({chain_info.name})\n\n"
@@ -645,7 +650,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     token2 = context.args[1].lower()
-    search = coingecko.search(token2)
+    search = await cg.search(token2)
     if "coins" not in search or not search["coins"]:
         await update.message.reply_text(
             f"Comparison with `{token2}` is not available."
@@ -659,16 +664,16 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     token_id = search["coins"][0]["api_symbol"]
 
-    token_market_cap = coingecko.get_mcap(token_id)
+    token_market_cap = await cg.get_mcap(token_id)
     if x7token == "x7r":
-        x7_supply = addresses.SUPPLY - etherscan.get_burnt_supply(
+        x7_supply = addresses.SUPPLY - await etherscan.get_burnt_supply(
             addresses.x7r(chain), chain
         )
     else:
         x7_supply = addresses.SUPPLY
 
-    token_ca = tokens.get_tokens()[x7token.lower()][chain].ca
-    x7_price, _ = dextools.get_price(token_ca, chain)
+    token_ca = get_tokens[x7token.lower()][chain].ca
+    x7_price, _ = await dextools.get_price(token_ca, chain)
     x7_market_cap = float(x7_price) * float(x7_supply)
 
     percent = ((token_market_cap - x7_market_cap) / x7_market_cap) * 100
@@ -700,10 +705,10 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -739,7 +744,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
         amount = amount_raw.replace(",", "")
         token = context.args[1]
         chain = (
-            chains.get_chain(update.effective_message.message_thread_id)
+            await chains.get_chain(update.effective_message.message_thread_id)
             if len(context.args) < 3
             else context.args[2]
         )
@@ -758,16 +763,18 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
-    if token.lower() in tokens.get_tokens():
-        ca = tokens.get_tokens()[token.lower()][chain].ca
-        price, _ = dextools.get_price(ca, chain)
+
+    get_tokens = await tokens.get_tokens()
+    if token.lower() in get_tokens:
+        ca = get_tokens[token.lower()][chain].ca
+        price, _ = await dextools.get_price(ca, chain)
 
     elif token.lowe() == "x7d":
-        price = etherscan.get_native_price(chain)
+        price = await etherscan.get_native_price(chain)
     else:
         await update.message.reply_text(
             "Token not found. Please use X7 tokens only"
@@ -804,7 +811,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     )
     if not input_contract:
-        latest = snapshot.get_latest()
+        latest = await snapshot.get_latest()
         proposal = latest["data"]["proposals"][0]
         end = datetime.fromtimestamp(proposal["end"])
         when = tools.get_time_difference(int(end.timestamp()))
@@ -972,8 +979,8 @@ async def ecosystem(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def factory(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
-    for chain in chains.get_active_chains():
-        chain_info, _ = chains.get_info(chain)
+    for chain in await chains.get_active_chains():
+        chain_info, _ = await chains.get_info(chain)
         name = chain_info.name
         address = chain_info.scan_address
         buttons.append(
@@ -1050,10 +1057,10 @@ async def faq(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = await chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -1064,7 +1071,7 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     try:
-        gas_data = etherscan.get_gas(chain)
+        gas_data = await etherscan.get_gas(chain)
         gas_text = (
             f"Gas:\n"
             f"Low: {float(gas_data['result']['SafeGasPrice']):.0f} Gwei\n"
@@ -1105,10 +1112,10 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = await chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -1118,13 +1125,13 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    native_price = etherscan.get_native_price(chain)
-    eth = etherscan.get_native_balance(
+    native_price = await etherscan.get_native_price(chain)
+    eth = await etherscan.get_native_balance(
         addresses.liquidity_treasury(chain), chain
     )
     eth_dollar = float(eth) * float(native_price)
 
-    tx = etherscan.get_tx(addresses.liquidity_treasury(chain), chain)
+    tx = await etherscan.get_tx(addresses.liquidity_treasury(chain), chain)
     tx_filter = [
         d
         for d in tx["result"]
@@ -1167,8 +1174,12 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def fg(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    fear_response = requests.get("https://api.alternative.me/fng/?limit=0")
-    fear_data = fear_response.json()
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://api.alternative.me/fng/?limit=0"
+        ) as response:
+            fear_data = await response.json()
+
     fear_values = []
     for i in range(7):
         timestamp = float(fear_data["data"][i]["timestamp"])
@@ -1201,21 +1212,21 @@ async def fg(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
 
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    x7dao_info = dextools.get_token_info(addresses.x7dao(chain), chain)
+    x7dao_info = await dextools.get_token_info(addresses.x7dao(chain), chain)
     x7dao_holders = x7dao_info["holders"] or "N/A"
-    x7r_info = dextools.get_token_info(addresses.x7r(chain), chain)
+    x7r_info = await dextools.get_token_info(addresses.x7r(chain), chain)
     x7r_holders = x7r_info["holders"] or "N/A"
-    x7d_info = dextools.get_token_info(addresses.x7d(chain), chain)
+    x7d_info = await dextools.get_token_info(addresses.x7d(chain), chain)
     x7d_holders = x7d_info["holders"] or "N/A"
 
     await update.message.reply_photo(
@@ -1233,7 +1244,7 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     arg = " ".join(context.args).lower()
     if arg == "issues":
-        issues = github.get_issues("monorepo")
+        issues = await github.get_issues("monorepo")
         issue_chunks = []
         current_chunk = ""
 
@@ -1257,7 +1268,7 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
     elif arg == "pr":
-        pr = github.get_pull_requests("monorepo")
+        pr = await github.get_pull_requests("monorepo")
 
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
@@ -1266,8 +1277,8 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     else:
-        latest = github.get_latest_commit("monorepo")
-        contributors = github.get_contributors("monorepo")
+        latest = await github.get_latest_commit("monorepo")
+        contributors = await github.get_contributors("monorepo")
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
             caption=f"*X7 Finance GitHub*\n"
@@ -1296,21 +1307,22 @@ async def hubs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = (
         context.args[1].lower()
         if len(context.args) == 2
-        else chains.get_chain(update.effective_message.message_thread_id)
+        else await chains.get_chain(update.effective_message.message_thread_id)
     )
 
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
 
-    if token.lower() in tokens.get_tokens():
+    get_tokens = await tokens.get_tokens()
+    if token.lower() in get_tokens:
         message = await update.message.reply_text(
             f"Getting {token.upper()} ({chain_info.name}) liquidity hub data, Please wait..."
         )
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-        address = tokens.get_tokens()[token.lower()][chain].hub
+        address = get_tokens[token.lower()][chain].hub
 
         split_text = await splitters.get_hub_split(chain, address, token)
     else:
@@ -1320,8 +1332,8 @@ async def hubs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     buy_back_text = await tools.get_last_action(address, chain)
-    eth_price = etherscan.get_native_price(chain)
-    eth_balance = etherscan.get_native_balance(address, chain)
+    eth_price = await etherscan.get_native_price(chain)
+    eth_balance = await etherscan.get_native_balance(address, chain)
     eth_dollar = eth_balance * eth_price
 
     config = await splitters.get_push_settings(chain, token)
@@ -1363,15 +1375,15 @@ async def hubs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    board = db.clicks_get_leaderboard()
-    click_counts_total = db.clicks_get_total()
-    fastest_user, fastest_time = db.clicks_fastest_time()
-    streak_user, streak_value = db.clicks_check_highest_streak()
+    board = await db.clicks_get_leaderboard()
+    click_counts_total = await db.clicks_get_total()
+    fastest_user, fastest_time = await db.clicks_fastest_time()
+    streak_user, streak_value = await db.clicks_check_highest_streak()
     formatted_fastest_time = tools.format_seconds(fastest_time)
 
     year = datetime.now().year
 
-    burn_active = db.settings_get("burn")
+    burn_active = await db.settings_get("burn")
     clicks_needed = (
         settings.CLICK_ME_BURN - (click_counts_total % settings.CLICK_ME_BURN)
         if burn_active
@@ -1422,10 +1434,10 @@ async def links(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -1434,15 +1446,16 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Getting {chain_info.name} liquidity data, Please wait..."
     )
 
-    x7r_pair = tokens.get_tokens()["x7r"].get(chain).pairs[0]
-    x7dao_pair = tokens.get_tokens()["x7dao"].get(chain).pairs[0]
+    get_tokens = await tokens.get_tokens()
+    x7r_pair = get_tokens["x7r"].get(chain).pairs[0]
+    x7dao_pair = get_tokens["x7dao"].get(chain).pairs[0]
 
     total_x7r_liquidity = 0
     total_x7dao_liquidity = 0
     total_x7r_eth = 0
     total_x7dao_eth = 0
 
-    x7r_liquidity_data = dextools.get_liquidity(x7r_pair, chain)
+    x7r_liquidity_data = await dextools.get_liquidity(x7r_pair, chain)
 
     x7r_text = "*X7R*\n"
     x7r_token_liquidity = x7r_liquidity_data.get("token")
@@ -1468,7 +1481,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
             x7r_total_liquidity.replace("$", "").replace(",", "")
         )
 
-    x7dao_liquidity_data = dextools.get_liquidity(x7dao_pair, chain)
+    x7dao_liquidity_data = await dextools.get_liquidity(x7dao_pair, chain)
     x7dao_text = "*X7DAO*\n"
     x7dao_token_liquidity = x7dao_liquidity_data.get("token")
     x7dao_eth_liquidity = x7dao_liquidity_data.get(
@@ -1530,7 +1543,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) == 1:
         try:
             loan_id = int(context.args[0])
-            chain = chains.get_chain(
+            chain = await chains.get_chain(
                 update.effective_message.message_thread_id
             )
         except ValueError:
@@ -1545,8 +1558,10 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
     else:
-        chain = chains.get_chain(update.effective_message.message_thread_id)
-    chain_info, error_message = chains.get_info(chain)
+        chain = await chains.get_chain(
+            update.effective_message.message_thread_id
+        )
+    chain_info, error_message = await chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -1662,8 +1677,9 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) == 1 and not context.args[0].isdigit():
         chain = context.args[0].lower()
 
-        chain_info, error_message = chains.get_info(chain)
+        chain_info, error_message = await chains.get_info(chain)
         if error_message:
+            print(error_message)
             await update.message.reply_text(error_message)
             return
 
@@ -1689,12 +1705,7 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ill_number = 0
         token_by_id = 0
 
-        if chain != "eth":
-            adjusted_amount = max(0, amount - 20)
-            latest_loan = amount
-            amount = adjusted_amount
-        else:
-            latest_loan = amount
+        amount, latest_loan = tools.adjust_loan_count(amount, chain)
 
         if amount > 0:
             latest_loan_text = f"Latest ID: {latest_loan}"
@@ -1744,8 +1755,8 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
         total = 0
         total_live = 0
 
-        for chain in chains.get_active_chains():
-            chain_info, error_message = chains.get_info(chain)
+        for chain in await chains.get_active_chains():
+            chain_info, error_message = await chains.get_info(chain)
 
             contract = chain_info.w3.eth.contract(
                 address=chain_info.w3.to_checksum_address(
@@ -1762,12 +1773,7 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             latest_loan_text = ""
 
-            if chain != "eth":
-                adjusted_amount = max(0, amount - 20)
-                latest_loan = amount
-                amount = adjusted_amount
-            else:
-                latest_loan = amount
+            amount, latest_loan = tools.adjust_loan_count(amount, chain)
 
             if amount != 0:
                 latest_loan_text = f"- Latest ID: {latest_loan}"
@@ -1803,7 +1809,9 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if len(context.args) == 1 and context.args[0].isdigit():
         loan_id = int(context.args[0])
-        chain = chains.get_chain(update.effective_message.message_thread_id)
+        chain = await chains.get_chain(
+            update.effective_message.message_thread_id
+        )
     elif len(context.args) > 1:
         if context.args[0].isdigit():
             loan_id = int(context.args[0])
@@ -1812,9 +1820,11 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Loan ID should be a number")
             return
     else:
-        chain = chains.get_chain(update.effective_message.message_thread_id)
+        chain = await chains.get_chain(
+            update.effective_message.message_thread_id
+        )
 
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = await chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -1872,7 +1882,7 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         token = await contract.functions.loanToken(int(loan_id)).call()
-        name = dextools.get_token_name(token, chain)["name"]
+        name = await dextools.get_token_name(token, chain)["name"]
         pair = await contract.functions.loanPair(int(loan_id)).call()
 
         token_by_id = await tools.get_loan_token_id(loan_id, chain)
@@ -1943,10 +1953,10 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -2007,10 +2017,10 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -2020,11 +2030,12 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
     caps_info = {}
     caps = {}
 
-    for token, chains_info in tokens.get_tokens().items():
+    get_tokens = await tokens.get_tokens()
+    for token, chains_info in get_tokens.items():
         token_info = chains_info.get(chain)
         if token_info:
             address = token_info.ca
-            caps_info[address] = dextools.get_token_info(address, chain)
+            caps_info[address] = await dextools.get_token_info(address, chain)
             caps[address] = caps_info[address]["mcap"]
 
     total_mcap = 0
@@ -2059,21 +2070,22 @@ async def me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
     message = f"*X7 Finance Member Details*\n\nTelegram User ID:\n`{user.id}`"
 
-    wallet = db.wallet_get(user.id)
-
+    wallet = await db.wallet_get(user.id)
     if not wallet:
         message += "\n\nUse /register to register an EVM wallet"
     else:
-        chain = " ".join(context.args).lower() or chains.get_chain(
+        chain = " ".join(context.args).lower() or await chains.get_chain(
             update.effective_message.message_thread_id
         )
-        chain_info, error_message = chains.get_info(chain)
+        chain_info, error_message = await chains.get_info(chain)
         if error_message:
             await update.message.reply_text(error_message)
             return
 
-        native_balance = etherscan.get_native_balance(wallet["wallet"], chain)
-        x7d_balance = etherscan.get_token_balance(
+        native_balance = await etherscan.get_native_balance(
+            wallet["wallet"], chain
+        )
+        x7d_balance = await etherscan.get_token_balance(
             wallet["wallet"], addresses.x7d(chain), 18, chain
         )
         if native_balance > 0:
@@ -2146,7 +2158,8 @@ async def me(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    token_names = [token.lower() for token in tokens.get_tokens().keys()]
+    get_tokens = await tokens.get_tokens()
+    token_names = [token.lower() for token in get_tokens.keys()]
     token_dirs = [urls.token_img_link(token) for token in token_names]
     token_dirs_str = "\n".join(token_dirs)
     caption = f"*X7 Finance Media*\n\n{token_dirs_str}"
@@ -2191,10 +2204,10 @@ async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = await chains.get_info(chain)
 
     if error_message:
         await update.message.reply_text(error_message)
@@ -2205,7 +2218,7 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    nft_data = nfts.get_info(chain)
+    nft_data = await nfts.get_info(chain)
 
     buttons = [
         [
@@ -2254,7 +2267,7 @@ async def pairs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) == 1:
         chain = context.args[0].lower()
 
-        chain_info, error_message = chains.get_info(chain)
+        chain_info, error_message = await chains.get_info(chain)
         if error_message:
             await update.message.reply_text(error_message)
             return
@@ -2267,9 +2280,6 @@ async def pairs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         amount = await contract.functions.allPairsLength().call()
-
-        if chain == "eth":
-            amount += 141
 
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
@@ -2293,8 +2303,8 @@ async def pairs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     pair_text = ""
     total = 0
 
-    for chain in chains.get_active_chains():
-        chain_info, error_message = chains.get_info(chain)
+    for chain in await chains.get_active_chains():
+        chain_info, error_message = await chains.get_info(chain)
 
         contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(
@@ -2304,9 +2314,6 @@ async def pairs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         amount = await contract.functions.allPairsLength().call()
-
-        if chain == "eth":
-            amount += 141
 
         pair_text += f"{chain_info.name}: {amount:,.0f}\n"
         total += amount
@@ -2336,17 +2343,17 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
 
     pioneer_id = " ".join(context.args)
     chain = "eth"
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = await chains.get_info(chain)
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(addresses.PIONEER),
         abi=abis.read("pioneer"),
     )
 
-    native_price = etherscan.get_native_price(chain)
+    native_price = await etherscan.get_native_price(chain)
 
     if pioneer_id == "":
-        data = simplehash.get_nft_data(addresses.PIONEER, chain)
+        data = await simplehash.get_nft_data(addresses.PIONEER, chain)
 
         floor_prices = data.get("collections", [{}])[0].get("floor_prices", [])
 
@@ -2359,10 +2366,12 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
         else:
             floor_price_eth, floor_price_usd = 0, 0
 
-        pioneer_pool = etherscan.get_native_balance(addresses.PIONEER, chain)
+        pioneer_pool = await etherscan.get_native_balance(
+            addresses.PIONEER, chain
+        )
         total_dollar = float(pioneer_pool) * float(native_price)
 
-        tx = etherscan.get_tx(addresses.PIONEER, chain)
+        tx = await etherscan.get_tx(addresses.PIONEER, chain)
 
         tx_filter = [
             d
@@ -2422,7 +2431,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
             ),
         )
     else:
-        data = simplehash.get_nft_by_id_data(
+        data = await simplehash.get_nft_by_id_data(
             addresses.PIONEER, pioneer_id, chain
         )
         if data:
@@ -2486,23 +2495,23 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         total_dollar = 0
         eth_price = None
 
-        for chain in chains.get_active_chains():
-            chain_info, _ = chains.get_info(chain)
+        for chain in await chains.get_active_chains():
+            chain_info, _ = await chains.get_info(chain)
             native = chain_info.native.upper()
             chain_name = chain_info.name
             try:
                 if chain in chains.ETH_CHAINS and eth_price is None:
-                    eth_price = etherscan.get_native_price(chain)
+                    eth_price = await etherscan.get_native_price(chain)
                 native_price = (
                     eth_price
                     if chain in chains.ETH_CHAINS
-                    else etherscan.get_native_price(chain)
+                    else await etherscan.get_native_price(chain)
                 )
 
-                lpool_reserve = etherscan.get_native_balance(
+                lpool_reserve = await etherscan.get_native_balance(
                     addresses.lending_pool_reserve(chain), chain
                 )
-                lpool = etherscan.get_native_balance(
+                lpool = await etherscan.get_native_balance(
                     addresses.lending_pool(chain), chain
                 )
             except Exception:
@@ -2541,7 +2550,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
         )
     else:
-        chain_info, error_message = chains.get_info(chain)
+        chain_info, error_message = await chains.get_info(chain)
         if error_message:
             await update.message.reply_text(error_message)
             return
@@ -2551,12 +2560,12 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-        native_price = etherscan.get_native_price(chain)
-        lpool_reserve = etherscan.get_native_balance(
+        native_price = await etherscan.get_native_price(chain)
+        lpool_reserve = await etherscan.get_native_balance(
             addresses.lending_pool_reserve(chain), chain
         )
         lpool_reserve_dollar = lpool_reserve * native_price
-        lpool = etherscan.get_native_balance(
+        lpool = await etherscan.get_native_balance(
             addresses.lending_pool(chain), chain
         )
         lpool_dollar = lpool * native_price
@@ -2626,16 +2635,18 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
 
-    x7r_price, x7r_change = dextools.get_price(addresses.x7r(chain), chain)
-    x7dao_price, x7dao_change = dextools.get_price(
+    x7r_price, x7r_change = await dextools.get_price(
+        addresses.x7r(chain), chain
+    )
+    x7dao_price, x7dao_change = await dextools.get_price(
         addresses.x7dao(chain), chain
     )
 
@@ -2674,7 +2685,7 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    existing_wallet = db.wallet_get(user_id)
+    existing_wallet = await db.wallet_get(user_id)
 
     if not existing_wallet:
         await update.message.reply_text(
@@ -2682,10 +2693,10 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = await chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -2718,7 +2729,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await message.delete()
         await update.message.reply_text(result)
 
-    if chain.lower() == "eth":
+    if chain == "eth":
         config = await splitters.get_push_settings(chain, "treasury")
         treasury_address = config["address"]
         treasury_abi = config["abi"]
@@ -2745,7 +2756,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    existing_wallet = db.wallet_get(user_id)
+    existing_wallet = await db.wallet_get(user_id)
     if existing_wallet:
         try:
             await context.bot.send_message(
@@ -2759,7 +2770,7 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     account = Account.create()
-    db.wallet_add(user_id, account.address, account.key.hex())
+    await db.wallet_add(user_id, account.address, account.key.hex())
 
     message = (
         "*New EVM wallet created*\n\n"
@@ -2780,8 +2791,8 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
-    for chain in chains.get_active_chains():
-        chain_info, _ = chains.get_info(chain)
+    for chain in await chains.get_active_chains():
+        chain_info, _ = await chains.get_info(chain)
         name = chain_info.name
         address = chain_info.scan_address
         buttons.append(
@@ -2802,7 +2813,7 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def spaces(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    space = twitter.get_next_space("x7_finance")
+    space = await twitter.get_next_space("x7_finance")
     caption = "*X7 Finance Twitter Spaces*\n\n"
 
     if space is None:
@@ -2832,11 +2843,11 @@ async def spaces(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
 
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = await chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -2959,10 +2970,10 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
 async def splitters_command(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = await chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -2972,10 +2983,10 @@ async def splitters_command(
     )
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    native_price = etherscan.get_native_price(chain)
+    native_price = await etherscan.get_native_price(chain)
 
     eco_address = addresses.eco_splitter(chain)
-    eco_eth = etherscan.get_native_balance(eco_address, chain)
+    eco_eth = await etherscan.get_native_balance(eco_address, chain)
     eco_dollar = eco_eth * native_price
 
     eco_splitter_text = "Distribution:\n"
@@ -3020,7 +3031,9 @@ async def splitters_command(
     treasury_splitter_text = ""
     if chain == "eth":
         treasury_address = addresses.treasury_splitter(chain)
-        treasury_eth = etherscan.get_native_balance(treasury_address, chain)
+        treasury_eth = await etherscan.get_native_balance(
+            treasury_address, chain
+        )
         treasury_dollar = treasury_eth * native_price
 
         treasury_splitter_text = "Distribution:\n"
@@ -3077,9 +3090,9 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     from bot.commands import GENERAL_HANDLERS
 
     commands = len(GENERAL_HANDLERS)
-    contributors = github.get_contributors("telegram-bot")
-    wallets = db.wallet_count()
-    latest_commit = github.get_latest_commit("telegram-bot")
+    contributors = await github.get_contributors("telegram-bot")
+    wallets = await db.wallet_count()
+    latest_commit = await github.get_latest_commit("telegram-bot")
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
@@ -3104,15 +3117,15 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def tax_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
 
-    tax_info = tax.get_info(chain)
+    tax_info = await tax.get_info(chain)
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
@@ -3242,10 +3255,10 @@ async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = await chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -3255,20 +3268,24 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    native_price = etherscan.get_native_price(chain)
-    eth_balance = etherscan.get_native_balance(chain_info.dao_multi, chain)
+    native_price = await etherscan.get_native_price(chain)
+    eth_balance = await etherscan.get_native_balance(
+        chain_info.dao_multi, chain
+    )
     eth_dollar = eth_balance * native_price
-    x7r_balance = etherscan.get_token_balance(
+    x7r_balance = await etherscan.get_token_balance(
         chain_info.dao_multi, addresses.x7r(chain), 18, chain
     )
-    x7r_price = dextools.get_price(addresses.x7r(chain), chain)[0] or 0
+    x7r_price = await dextools.get_price(addresses.x7r(chain), chain)[0] or 0
     x7r_dollar = float(x7r_balance) * float(x7r_price)
-    x7dao_balance = etherscan.get_token_balance(
+    x7dao_balance = await etherscan.get_token_balance(
         chain_info.dao_multi, addresses.x7dao(chain), 18, chain
     )
-    x7dao_price = dextools.get_price(addresses.x7dao(chain), chain)[0] or 0
+    x7dao_price = (
+        await dextools.get_price(addresses.x7dao(chain), chain)[0] or 0
+    )
     x7dao_dollar = float(x7dao_balance) * float(x7dao_price)
-    x7d_balance = etherscan.get_token_balance(
+    x7d_balance = await etherscan.get_token_balance(
         chain_info.dao_multi, addresses.x7d(chain), 18, chain
     )
     x7d_dollar = x7d_balance * native_price
@@ -3317,10 +3334,10 @@ async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         display_name = "X7 Finance Twitter/X"
         image = tools.get_random_pioneer()
 
-    tweet_data = twitter.get_latest_tweet(username)
+    tweet_data = await twitter.get_latest_tweet(username)
 
     if tweet_data:
-        followers = twitter.get_user_data(username)["followers"]
+        followers = await twitter.get_user_data(username)["followers"]
         created_at = tweet_data.get("created_at", "")
         when = (
             tools.get_time_difference(created_at.timestamp())
@@ -3395,9 +3412,9 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = (
         args[1].lower()
         if len(args) == 2
-        else chains.get_chain(update.effective_message.message_thread_id)
+        else await chains.get_chain(update.effective_message.message_thread_id)
     )
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = await chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
@@ -3407,24 +3424,26 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    native_price = etherscan.get_native_price(chain)
-    eth_balance = etherscan.get_native_balance(wallet, chain)
+    native_price = await etherscan.get_native_price(chain)
+    eth_balance = await etherscan.get_native_balance(wallet, chain)
     dollar = eth_balance * native_price
 
-    x7r_price = dextools.get_price(addresses.x7r(chain), chain)[0] or 0
-    x7dao_price = dextools.get_price(addresses.x7dao(chain), chain)[0] or 0
+    x7r_price = await dextools.get_price(addresses.x7r(chain), chain)[0] or 0
+    x7dao_price = (
+        await dextools.get_price(addresses.x7dao(chain), chain)[0] or 0
+    )
 
-    x7r_balance = etherscan.get_token_balance(
+    x7r_balance = await etherscan.get_token_balance(
         wallet, addresses.x7r(chain), 18, chain
     )
     x7r_dollar = float(x7r_balance) * float(x7r_price)
 
-    x7dao_balance = etherscan.get_token_balance(
+    x7dao_balance = await etherscan.get_token_balance(
         wallet, addresses.x7dao(chain), 18, chain
     )
     x7dao_dollar = float(x7dao_balance) * float(x7dao_price)
 
-    x7d_balance = etherscan.get_token_balance(
+    x7d_balance = await etherscan.get_token_balance(
         wallet, addresses.x7d(chain), 18, chain
     )
     x7d_dollar = x7d_balance * native_price
@@ -3442,12 +3461,12 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
             x7r_balance
             / (
                 addresses.SUPPLY
-                - etherscan.get_burnt_supply(addresses.x7r(chain), chain)
+                - await etherscan.get_burnt_supply(addresses.x7r(chain), chain)
             )
             * 100,
             2,
         )
-    txs = etherscan.get_daily_tx_count(wallet, chain)
+    txs = await etherscan.get_daily_tx_count(wallet, chain)
 
     if wallet == os.getenv("BURN_WALLET"):
         header = f"*X7 Finance Bot Wallet Info ({chain_info.name})*"
@@ -3518,26 +3537,28 @@ async def wp(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain)
+    chain_info, error_message = await chains.get_info(chain)
     if error_message:
         await update.message.reply_text(error_message)
         return
 
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    native_price = etherscan.get_native_price(chain)
-    lpool_reserve = etherscan.get_native_balance(
+    native_price = await etherscan.get_native_price(chain)
+    lpool_reserve = await etherscan.get_native_balance(
         addresses.lending_pool_reserve(chain), chain
     )
     lpool_reserve_dollar = lpool_reserve * native_price
-    lpool = etherscan.get_native_balance(addresses.lending_pool(chain), chain)
+    lpool = await etherscan.get_native_balance(
+        addresses.lending_pool(chain), chain
+    )
     lpool_dollar = lpool * native_price
     dollar = lpool_reserve_dollar + lpool_dollar
     supply = lpool_reserve + lpool
-    info = dextools.get_token_info(addresses.x7d(chain), chain)
+    info = await dextools.get_token_info(addresses.x7d(chain), chain)
     holders = info["holders"] or "N/A"
 
     await update.message.reply_photo(
@@ -3563,41 +3584,41 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def x7_token(
     update: Update, context: ContextTypes.DEFAULT_TYPE, token_name, token_ca
 ):
-    chain = " ".join(context.args).lower() or chains.get_chain(
+    chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
-    chain_info, error_message = chains.get_info(chain, token=True)
+    chain_info, error_message = await chains.get_info(chain, token=True)
     if error_message:
         await update.message.reply_text(error_message)
         return
 
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    pairs = tokens.get_tokens()[token_name.lower()][chain].pairs
+    get_tokens = await tokens.get_tokens()
+
+    pairs = get_tokens[token_name.lower()][chain].pairs
     if isinstance(pairs, str):
         pair = pairs
     elif isinstance(pairs, list) and pairs:
         pair = pairs[0]
 
-    info = dextools.get_token_info(token_ca(chain), chain)
+    info = await dextools.get_token_info(token_ca(chain), chain)
     holders = info.get("holders", "N/A")
     market_cap = info.get("mcap", "N/A")
-    price, price_change = dextools.get_price(token_ca(chain), chain)
+    price, price_change = await dextools.get_price(token_ca(chain), chain)
     price = f"${price}" if price else "N/A"
-    volume = defined.get_volume(pair, chain) or "N/A"
-    liquidity_data = dextools.get_liquidity(pair, chain)
+    volume = await defined.get_volume(pair, chain) or "N/A"
+    liquidity_data = await dextools.get_liquidity(pair, chain)
     liquidity = liquidity_data.get("total", "N/A")
 
-    if chain == "eth":
-        ath_data = coingecko.get_ath(token_name)
+    if chain_info.trading:
+        ath_data = await cg.get_ath(token_name)
         if ath_data:
             ath_change = f"{ath_data[1]}"
             ath_value = ath_data[0]
             ath = f"${ath_value} (${ath_value * addresses.SUPPLY:,.0f}) {ath_change[:3]}%"
         else:
             ath = "Unavailable"
-    else:
-        ath = "Unavailable"
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
@@ -3666,8 +3687,8 @@ async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
             search = " ".join(context.args[:-1])
             chain_name = context.args[-1].lower()
 
-            if chain_name in chains.get_active_chains():
-                chain = chains.get_chain(chain_name.lower())
+            if chain_name in await chains.get_active_chains():
+                chain = await chains.get_chain(chain_name.lower())
 
             else:
                 search = " ".join(context.args)

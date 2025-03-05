@@ -13,10 +13,10 @@ async def estimate_gas(chain, function, loan_id=None):
         dollar_cost = (eth_cost / 10**9) * eth_price
         return f"{eth_cost / 10**9:.6f} {chain_info.native.upper()} (${dollar_cost:.2f})"
 
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     gas_price = await chain_info.w3.eth.gas_price / 10**9
-    eth_price = etherscan.get_native_price(chain)
+    eth_price = await etherscan.get_native_price(chain)
 
     try:
         if function == "swap":
@@ -107,9 +107,9 @@ async def estimate_gas(chain, function, loan_id=None):
 
 async def liquidate_loan(loan_id, chain, user_id):
     try:
-        chain_info, _ = chains.get_info(chain)
+        chain_info, _ = await chains.get_info(chain)
 
-        wallet = db.wallet_get(user_id)
+        wallet = await db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -162,9 +162,9 @@ async def splitter_push(
     contract_type, address, abi, chain, user_id, token_address=None
 ):
     try:
-        chain_info, _ = chains.get_info(chain)
+        chain_info, _ = await chains.get_info(chain)
 
-        wallet = db.wallet_get(user_id)
+        wallet = await db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -215,9 +215,9 @@ async def splitter_push(
 
 async def stuck_tx(chain, user_id, gas_multiplier=1.5):
     try:
-        chain_info, _ = chains.get_info(chain)
+        chain_info, _ = await chains.get_info(chain)
 
-        wallet = db.wallet_get(user_id)
+        wallet = await db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -265,9 +265,9 @@ async def stuck_tx(chain, user_id, gas_multiplier=1.5):
 
 async def withdraw_native(amount, chain, user_id, recipient_address):
     try:
-        chain_info, _ = chains.get_info(chain)
+        chain_info, _ = await chains.get_info(chain)
 
-        wallet = db.wallet_get(user_id)
+        wallet = await db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -316,9 +316,9 @@ async def withdraw_tokens(
     user_id, amount, token_address, decimals, recipient, chain
 ):
     try:
-        chain_info, _ = chains.get_info(chain)
+        chain_info, _ = await chains.get_info(chain)
 
-        wallet = db.wallet_get(user_id)
+        wallet = await db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
         amount = Decimal(str(amount))
@@ -326,10 +326,11 @@ async def withdraw_tokens(
 
         token_name = "Tokens"
 
+        get_tokens = await tokens.get_tokens()
         for (
             token_name_candidate,
             token_info_dict,
-        ) in tokens.get_tokens().items():
+        ) in get_tokens.items():
             for chain_name, token_info in token_info_dict.items():
                 if token_address.lower() == token_info.ca.lower():
                     token_name = token_name_candidate.upper()
@@ -390,9 +391,9 @@ async def withdraw_tokens(
 
 async def x7d_mint(amount, chain, user_id):
     try:
-        chain_info, _ = chains.get_info(chain)
+        chain_info, _ = await chains.get_info(chain)
 
-        wallet = db.wallet_get(user_id)
+        wallet = await db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -444,9 +445,9 @@ async def x7d_mint(amount, chain, user_id):
 
 async def x7d_redeem(amount, chain, user_id):
     try:
-        chain_info, _ = chains.get_info(chain)
+        chain_info, _ = await chains.get_info(chain)
 
-        wallet = db.wallet_get(user_id)
+        wallet = await db.wallet_get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 

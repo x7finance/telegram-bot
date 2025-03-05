@@ -1,5 +1,5 @@
 import os
-import requests
+import aiohttp
 
 from constants.protocol import chains
 
@@ -12,23 +12,24 @@ class Defined:
             "Authorization": os.getenv("DEFINED_API_KEY"),
         }
 
-    def ping(self):
+    async def ping(self):
         try:
             query = """query { getTokenPrices(inputs: []) { priceUsd } }"""
-            response = requests.post(
-                self.url,
-                headers=self.headers,
-                json={"query": query},
-                timeout=5,
-            )
-            if response.status_code == 200:
-                return True
-            return f"🔴 Defined: Connection failed: {response.status_code}"
-        except requests.RequestException as e:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    self.url,
+                    headers=self.headers,
+                    json={"query": query},
+                    timeout=5,
+                ) as response:
+                    if response.status == 200:
+                        return True
+                    return f"🔴 Defined: Connection failed: {response.status}"
+        except Exception as e:
             return f"🔴 Defined: Connection failed: {str(e)}"
 
-    def get_pair(self, address, chain):
-        chain_info, _ = chains.get_info(chain)
+    async def get_pair(self, address, chain):
+        chain_info, _ = await chains.get_info(chain)
 
         pair_query = f"""query {{
             listPairsWithMetadataForToken (tokenAddress: "{address}" networkId: {chain_info.id}) {{
@@ -40,25 +41,24 @@ class Defined:
             }}
             }}"""
 
-        response = requests.post(
-            self.url, headers=self.headers, json={"query": pair_query}
-        )
-        data = response.json()
-        if response.status_code == 200:
-            data = response.json()
-            pair = (
-                data.get("data", {})
-                .get("listPairsWithMetadataForToken", {})
-                .get("results", [])[0]
-                .get("pair", {})
-                .get("address")
-            )
-            return pair
-        else:
-            return None
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                self.url, headers=self.headers, json={"query": pair_query}
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    pair = (
+                        data.get("data", {})
+                        .get("listPairsWithMetadataForToken", {})
+                        .get("results", [])[0]
+                        .get("pair", {})
+                        .get("address")
+                    )
+                    return pair
+                return None
 
-    def get_token_image(self, token, chain):
-        chain_info, _ = chains.get_info(chain)
+    async def get_token_image(self, token, chain):
+        chain_info, _ = await chains.get_info(chain)
 
         image = f"""
             query {{
@@ -68,24 +68,22 @@ class Defined:
             }}
         """
 
-        response = requests.post(
-            self.url, headers=self.headers, json={"query": image}
-        )
-        data = response.json()
-        if "data" in data and "getTokenInfo" in data["data"]:
-            token_info = data["data"]["getTokenInfo"]
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                self.url, headers=self.headers, json={"query": image}
+            ) as response:
+                data = await response.json()
+                if "data" in data and "getTokenInfo" in data["data"]:
+                    token_info = data["data"]["getTokenInfo"]
 
-            if token_info and "imageLargeUrl" in token_info:
-                image_url = token_info["imageLargeUrl"]
-                return image_url
-            else:
+                    if token_info and "imageLargeUrl" in token_info:
+                        image_url = token_info["imageLargeUrl"]
+                        return image_url
                 return None
-        else:
-            return None
 
-    def get_volume(self, pair, chain):
+    async def get_volume(self, pair, chain):
         try:
-            chain_info, _ = chains.get_info(chain)
+            chain_info, _ = await chains.get_info(chain)
 
             volume = f"""
                 query {{
@@ -101,21 +99,22 @@ class Defined:
                 }}
                 """
 
-            response = requests.post(
-                self.url, headers=self.headers, json={"query": volume}
-            )
-            data = response.json()
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    self.url, headers=self.headers, json={"query": volume}
+                ) as response:
+                    data = await response.json()
 
-            current_value = data["data"]["getDetailedPairStats"]["stats_day1"][
-                "statsUsd"
-            ]["volume"]["currentValue"]
-            return "${:,.0f}".format(float(current_value))
+                    current_value = data["data"]["getDetailedPairStats"][
+                        "stats_day1"
+                    ]["statsUsd"]["volume"]["currentValue"]
+                    return "${:,.0f}".format(float(current_value))
         except Exception:
             return None
 
-    def search(self, address, chain=None):
+    async def search(self, address, chain=None):
         if chain is not None:
-            chain_info, _ = chains.get_info(chain)
+            chain_info, _ = await chains.get_info(chain)
             search_query = f"""query {{
                 filterTokens(phrase:"{address}", rankings: {{attribute:liquidity}} limit:1, filters: {{network:[{chain_info.id}]}}) {{
                     results{{
@@ -136,18 +135,20 @@ class Defined:
                 }}
             }}"""
 
-        response = requests.post(
-            self.url, headers=self.headers, json={"query": search_query}
-        )
-        data = response.json()
-        if response.status_code == 200:
-            data = response.json()
-            results = (
-                data.get("data", {}).get("filterTokens", {}).get("results", [])
-            )
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                self.url, headers=self.headers, json={"query": search_query}
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    results = (
+                        data.get("data", {})
+                        .get("filterTokens", {})
+                        .get("results", [])
+                    )
 
-            if results:
-                token_info = results[0].get("token", {})
-                return token_info.get("address")
+                    if results:
+                        token_info = results[0].get("token", {})
+                        return token_info.get("address")
 
-            return None
+                return None

@@ -6,7 +6,7 @@ etherscan = get_etherscan()
 
 
 async def get_eco_split(chain):
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     address = addresses.eco_splitter(chain)
     contract = chain_info.w3.eth.contract(
@@ -57,7 +57,7 @@ async def get_eco_split(chain):
 
 
 async def get_hub_split(chain, address, token):
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     settings = await get_push_settings(chain, token)
     abi = settings["abi"]
@@ -115,9 +115,10 @@ async def get_hub_split(chain, address, token):
         "N/A",
     )
 
-    if token.lower() in tokens.get_tokens():
-        token_info = tokens.get_tokens()[token.lower()].get(chain)
-        price, _ = dextools.get_price(token_info.ca, chain)
+    get_tokens = await tokens.get_tokens()
+    if token.lower() in get_tokens:
+        token_info = get_tokens[token.lower()].get(chain)
+        price, _ = await dextools.get_price(token_info.ca, chain)
 
     if token == "x7r":
         try:
@@ -172,7 +173,7 @@ async def get_hub_split(chain, address, token):
         except Exception:
             pass
 
-    balance = etherscan.get_token_balance(
+    balance = await etherscan.get_token_balance(
         address, token_info.ca, 18, chain
     ) - float(token_liquidity_balance)
     balance_dollar = float(price) * float(balance)
@@ -190,7 +191,7 @@ async def get_hub_split(chain, address, token):
 
 
 async def get_treasury_split(chain):
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     address = addresses.treasury_splitter(chain)
     contract = chain_info.w3.eth.contract(
@@ -243,13 +244,13 @@ async def get_push_settings(chain, token):
         return await contract.functions.outletBalance(4).call() / 10**18
 
     async def calculate_treasury_tokens(_):
-        return etherscan.get_native_balance(
+        return await etherscan.get_native_balance(
             addresses.treasury_splitter(chain), chain
         )
 
     async def calculate_x7r_tokens(contract):
         balance = float(
-            etherscan.get_token_balance(
+            await etherscan.get_token_balance(
                 addresses.x7r_liquidity_hub(chain),
                 addresses.x7r(chain),
                 18,
@@ -263,7 +264,7 @@ async def get_push_settings(chain, token):
 
     async def calculate_x7dao_tokens(contract):
         balance = float(
-            etherscan.get_token_balance(
+            await etherscan.get_token_balance(
                 addresses.x7dao_liquidity_hub(chain),
                 addresses.x7dao(chain),
                 18,
@@ -277,7 +278,7 @@ async def get_push_settings(chain, token):
 
     async def calculate_x7100_tokens(contract, token_address):
         balance = float(
-            etherscan.get_token_balance(
+            await etherscan.get_token_balance(
                 addresses.x7100_liquidity_hub(chain),
                 token_address,
                 18,

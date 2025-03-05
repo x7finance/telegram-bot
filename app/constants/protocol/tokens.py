@@ -13,7 +13,7 @@ class TokensInfo:
         self.logo = logo
 
 
-def get_tokens():
+async def get_tokens():
     return {
         "x7dao": {
             chain: TokensInfo(
@@ -23,7 +23,7 @@ def get_tokens():
                 hub=addresses.x7dao_liquidity_hub(chain),
                 logo=token_logos.X7DAO_LOGO,
             )
-            for chain in chains.get_active_chains()
+            for chain in await chains.get_active_chains()
         },
         "x7r": {
             chain: TokensInfo(
@@ -33,7 +33,7 @@ def get_tokens():
                 hub=addresses.x7r_liquidity_hub(chain),
                 logo=token_logos.X7R_LOGO,
             )
-            for chain in chains.get_active_chains()
+            for chain in await chains.get_active_chains()
         },
         "x7101": {
             chain: TokensInfo(
@@ -43,7 +43,7 @@ def get_tokens():
                 hub=addresses.x7100_liquidity_hub(chain),
                 logo=token_logos.X7101_LOGO,
             )
-            for chain in chains.get_active_chains()
+            for chain in await chains.get_active_chains()
         },
         "x7102": {
             chain: TokensInfo(
@@ -53,7 +53,7 @@ def get_tokens():
                 hub=addresses.x7100_liquidity_hub(chain),
                 logo=token_logos.X7102_LOGO,
             )
-            for chain in chains.get_active_chains()
+            for chain in await chains.get_active_chains()
         },
         "x7103": {
             chain: TokensInfo(
@@ -63,7 +63,7 @@ def get_tokens():
                 hub=addresses.x7100_liquidity_hub(chain),
                 logo=token_logos.X7103_LOGO,
             )
-            for chain in chains.get_active_chains()
+            for chain in await chains.get_active_chains()
         },
         "x7104": {
             chain: TokensInfo(
@@ -73,7 +73,7 @@ def get_tokens():
                 hub=addresses.x7100_liquidity_hub(chain),
                 logo=token_logos.X7104_LOGO,
             )
-            for chain in chains.get_active_chains()
+            for chain in await chains.get_active_chains()
         },
         "x7105": {
             chain: TokensInfo(
@@ -83,7 +83,7 @@ def get_tokens():
                 hub=addresses.x7100_liquidity_hub(chain),
                 logo=token_logos.X7105_LOGO,
             )
-            for chain in chains.get_active_chains()
+            for chain in await chains.get_active_chains()
         },
         "x7D": {
             chain: TokensInfo(
@@ -93,7 +93,7 @@ def get_tokens():
                 hub=None,
                 logo=token_logos.X7D_LOGO,
             )
-            for chain in chains.get_active_chains()
+            for chain in await chains.get_active_chains()
         },
     }
 

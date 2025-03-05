@@ -36,7 +36,7 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
         amount = callback_data[3]
         address = context.user_data["withdraw_address"]
 
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     if token == "native":
         token_str = chain_info.native.upper()
@@ -77,7 +77,7 @@ async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     _, chain = query.data.split(":")
 
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     await query.message.reply_text(
         text="Which token do you want to withdraw?",
@@ -109,7 +109,7 @@ async def withdraw_token(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["withdraw_chain"] = chain
     context.user_data["withdraw_token"] = token
 
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     if token == "native":
         token_str = chain_info.native.upper()
@@ -137,14 +137,14 @@ async def withdraw_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return WITHDRAW_AMOUNT
 
-    chain_info, _ = chains.get_info(chain)
-    wallet = db.wallet_get(user_id)
+    chain_info, _ = await chains.get_info(chain)
+    wallet = await db.wallet_get(user_id)
 
     if token == "native":
-        balance = etherscan.get_native_balance(wallet["wallet"], chain)
+        balance = await etherscan.get_native_balance(wallet["wallet"], chain)
         token_str = chain_info.native.upper()
     else:
-        balance = etherscan.get_token_balance(
+        balance = await etherscan.get_token_balance(
             wallet["wallet"], addresses.x7d(chain), 18, chain
         )
         token_str = token.upper()
@@ -171,7 +171,7 @@ async def withdraw_address(update: Update, context: ContextTypes.DEFAULT_TYPE):
     amount = context.user_data["withdraw_amount"]
     address = update.message.text
 
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
     if not is_address(address):
         await update.message.reply_text(
@@ -234,14 +234,14 @@ async def x7d_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return X7D_AMOUNT
 
-    chain_info, _ = chains.get_info(chain)
+    chain_info, _ = await chains.get_info(chain)
 
-    wallet = db.wallet_get(user_id)
+    wallet = await db.wallet_get(user_id)
 
     if action == "mint":
-        balance = etherscan.get_native_balance(wallet["wallet"], chain)
+        balance = await etherscan.get_native_balance(wallet["wallet"], chain)
     elif action == "redeem":
-        balance = etherscan.get_token_balance(
+        balance = await etherscan.get_token_balance(
             wallet["wallet"], addresses.x7d(chain), 18, chain
         )
 

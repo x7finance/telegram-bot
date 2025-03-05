@@ -31,7 +31,7 @@ welcome_rescrictions = {
 
 
 async def button_send(context: ContextTypes.DEFAULT_TYPE):
-    if not db.settings_get("click_me"):
+    if not await db.settings_get("click_me"):
         return
     context.bot_data["first_user_clicked"] = False
 
@@ -183,6 +183,8 @@ async def welcome_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = None
 
         if not was_member and is_member:
+            welcome_caption = await text.welcome(new_member_username)
+
             previous_welcome_message_id = context.bot_data.get(
                 "welcome_message_id"
             )
@@ -195,7 +197,7 @@ async def welcome_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 except Exception:
                     pass
 
-            if db.settings_get("welcome_restrictions"):
+            if await db.settings_get("welcome_restrictions"):
                 await context.bot.restrict_chat_member(
                     chat_id=update.effective_chat.id,
                     user_id=new_member_id,
@@ -214,7 +216,7 @@ async def welcome_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             welcome_message = await update.effective_chat.send_video(
                 video=open(videos.WELCOMEVIDEO, "rb"),
-                caption=f"{text.welcome(new_member_username)}",
+                caption=welcome_caption,
                 parse_mode="Markdown",
                 reply_markup=reply_markup,
             )

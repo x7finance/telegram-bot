@@ -1,6 +1,5 @@
 import os
-import requests
-
+import aiohttp
 from datetime import datetime
 
 
@@ -9,52 +8,58 @@ class GitHub:
         self.url = "https://api.github.com/repos/x7finance/"
         self.headers = {"Authorization": f"token {os.getenv('GITHUB_PAT')}"}
 
-    def ping(self):
+    async def ping(self):
         try:
-            response = requests.get(
-                self.url + "monorepo", headers=self.headers, timeout=5
-            )
-            if response.status_code == 200:
-                return True
-            return f"🔴 GitHub: Connection failed: {response.status_code} {response.text}"
-        except requests.RequestException as e:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    self.url + "monorepo", headers=self.headers, timeout=5
+                ) as response:
+                    if response.status == 200:
+                        return True
+                    return f"🔴 GitHub: Connection failed: {response.status} {await response.text()}"
+        except Exception as e:
             return f"🔴 GitHub: Connection failed: {e}"
 
-    def get_contributors(self, repo):
-        response = requests.get(
-            self.url + repo + "/contributors",
-            headers=self.headers,
-            params={"per_page": 100},
-        )
+    async def get_contributors(self, repo):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                self.url + repo + "/contributors",
+                headers=self.headers,
+                params={"per_page": 100},
+            ) as response:
+                if response.status != 200:
+                    return f"Error fetching contributors: {response.status}"
 
-        if response.status_code != 200:
-            return f"Error fetching contributors: {response.status_code}"
+                contributors = await response.json()
+                return len(contributors)
 
-        contributors = response.json()
-        return len(contributors)
-
-    def get_issues(self, repo):
+    async def get_issues(self, repo):
         endpoint = "/issues"
         issues = []
         page = 1
 
-        while True:
-            response = requests.get(
-                self.url + repo + endpoint,
-                headers=self.headers,
-                params={"state": "open", "page": page, "per_page": 100},
-            )
-            if response.status_code != 200:
-                break
+        async with aiohttp.ClientSession() as session:
+            while True:
+                async with session.get(
+                    self.url + repo + endpoint,
+                    headers=self.headers,
+                    params={"state": "open", "page": page, "per_page": 100},
+                ) as response:
+                    if response.status != 200:
+                        break
 
-            data = response.json()
-            if not data:
-                break
+                    data = await response.json()
+                    if not data:
+                        break
 
-            issues.extend(
-                [issue for issue in data if "pull_request" not in issue]
-            )
-            page += 1
+                    issues.extend(
+                        [
+                            issue
+                            for issue in data
+                            if "pull_request" not in issue
+                        ]
+                    )
+                    page += 1
 
         if not issues:
             return "No open issues found."
@@ -86,60 +91,64 @@ class GitHub:
             formatted_issues
         )
 
-    def get_latest_commit(self, repo):
+    async def get_latest_commit(self, repo):
         endpoint = "/commits"
 
-        response = requests.get(
-            self.url + repo + endpoint, headers=self.headers
-        )
-        if response.status_code != 200:
-            return f"Error fetching commits: {response.status_code}, {response.text}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                self.url + repo + endpoint, headers=self.headers
+            ) as response:
+                if response.status != 200:
+                    return f"Error fetching commits: {response.status}, {await response.text()}"
 
-        commits = response.json()
-        if not commits:
-            return "No commits found."
+                commits = await response.json()
+                if not commits:
+                    return "No commits found."
 
-        latest_commit = commits[0]
-        message = latest_commit.get("commit", {}).get("message", "No message")
-        created_by = (
-            latest_commit.get("commit", {})
-            .get("author", {})
-            .get("name", "Unknown author")
-        )
-        created_at = (
-            latest_commit.get("commit", {})
-            .get("author", {})
-            .get("date", "Unknown date")
-        )
-        url = latest_commit.get("html_url", "No URL")
+                latest_commit = commits[0]
+                message = latest_commit.get("commit", {}).get(
+                    "message", "No message"
+                )
+                created_by = (
+                    latest_commit.get("commit", {})
+                    .get("author", {})
+                    .get("name", "Unknown author")
+                )
+                created_at = (
+                    latest_commit.get("commit", {})
+                    .get("author", {})
+                    .get("date", "Unknown date")
+                )
+                url = latest_commit.get("html_url", "No URL")
 
-        if created_at != "Unknown":
-            created_at = datetime.fromisoformat(
-                created_at.replace("Z", "")
-            ).strftime("%Y-%m-%d %H:%M:%S")
+                if created_at != "Unknown":
+                    created_at = datetime.fromisoformat(
+                        created_at.replace("Z", "")
+                    ).strftime("%Y-%m-%d %H:%M:%S")
 
-        return f"Latest Commit:\n{message}\nCreated By: {created_by}\nCreated At: {created_at}\nURL: {url}"
+                return f"Latest Commit:\n{message}\nCreated By: {created_by}\nCreated At: {created_at}\nURL: {url}"
 
-    def get_pull_requests(self, repo):
+    async def get_pull_requests(self, repo):
         endpoint = "/pulls"
         pull_requests = []
         page = 1
 
-        while True:
-            response = requests.get(
-                self.url + repo + endpoint,
-                headers=self.headers,
-                params={"state": "open", "page": page, "per_page": 100},
-            )
-            if response.status_code != 200:
-                break
+        async with aiohttp.ClientSession() as session:
+            while True:
+                async with session.get(
+                    self.url + repo + endpoint,
+                    headers=self.headers,
+                    params={"state": "open", "page": page, "per_page": 100},
+                ) as response:
+                    if response.status != 200:
+                        break
 
-            data = response.json()
-            if not data:
-                break
+                    data = await response.json()
+                    if not data:
+                        break
 
-            pull_requests.extend(data)
-            page += 1
+                    pull_requests.extend(data)
+                    page += 1
 
         if not pull_requests:
             return "No open pull requests found."
