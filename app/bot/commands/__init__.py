@@ -42,6 +42,7 @@ for func, description in [
     (general.github_command, "View GitHub repository"),
     (general.holders, "Check token holders"),
     (general.hubs, "View hubs and buybacks"),
+    (general.launch, "Launch a token"),
     (general.leaderboard, "View leaderboard"),
     (general.links, "View important links"),
     (general.liquidate, "Liquidate loans"),

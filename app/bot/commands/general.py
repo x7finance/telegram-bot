@@ -2,7 +2,6 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ContextTypes
 
 import aiohttp
-import math
 import os
 import pytz
 import random
@@ -282,7 +281,6 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) >= 1:
         amount = context.args[0]
         if amount.replace(".", "", 1).isdigit():
-            amount_in_wei = int(float(amount) * 10**18)
             chain = (
                 await chains.get_chain(
                     update.effective_message.message_thread_id
@@ -314,10 +312,6 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    loan_info = ""
-    native_price = await etherscan.get_native_price(chain)
-    borrow_usd = native_price * float(amount)
-
     lending_pool = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(
             addresses.lending_pool(chain)
@@ -325,30 +319,8 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
         abi=abis.read("lendingpool"),
     )
 
-    loan_contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(
-            addresses.ill_addresses(chain)["005"]
-        ),
-        abi=abis.read("ill005"),
-    )
-
-    liquidation_fee = (
+    liquidation_deposit = (
         await lending_pool.functions.liquidationReward().call() / 10**18
-    )
-    liquidation_dollar = liquidation_fee * native_price
-
-    loan_name = await loan_contract.functions.name().call()
-    loan_data = await loan_contract.functions.getQuote(
-        int(amount_in_wei)
-    ).call()
-
-    min_loan = await loan_contract.functions.minimumLoanAmount().call()
-    max_loan = await loan_contract.functions.maximumLoanAmount().call()
-    min_loan_duration = (
-        await loan_contract.functions.minimumLoanLengthSeconds().call()
-    )
-    max_loan_duration = (
-        await loan_contract.functions.maximumLoanLengthSeconds().call()
     )
 
     x7100_share = (
@@ -368,70 +340,34 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
         + await lending_pool.functions.lendingPoolOriginationShare().call()
     )
 
+    fees, _ = await tools.generate_loan_terms(chain, amount)
+
     total_share = x7100_share + x7dao_share + ecosystem_share + lpool_share
+    x7100_amount = (x7100_share / total_share) * fees
+    x7dao_amount = (x7dao_share / total_share) * fees
+    ecosystem_amount = (ecosystem_share / total_share) * fees
+    lpool_amount = (lpool_share / total_share) * fees
 
-    origination_fee, premium_fee = [value / 10**18 for value in loan_data[1:]]
-    origination_dollar, premium_fee_dollar = [
-        value * native_price for value in [origination_fee, premium_fee]
-    ]
-
-    total_fees_eth = origination_fee + premium_fee
-    total_fees_dollars = origination_dollar + premium_fee_dollar
-
-    x7100_share_eth = (x7100_share / total_share) * total_fees_eth
-    x7dao_share_eth = (x7dao_share / total_share) * total_fees_eth
-    ecosystem_share_eth = (ecosystem_share / total_share) * total_fees_eth
-    lpool_share_eth = (lpool_share / total_share) * total_fees_eth
-
-    x7100_share_dollars = (x7100_share / total_share) * total_fees_dollars
-    x7dao_share_dollars = (x7dao_share / total_share) * total_fees_dollars
-    ecosystem_share_dollars = (
-        ecosystem_share / total_share
-    ) * total_fees_dollars
-    lpool_share_dollars = (lpool_share / total_share) * total_fees_dollars
+    x7100_eth = x7100_amount / 10**18
+    x7dao_eth = x7dao_amount / 10**18
+    ecosystem_eth = ecosystem_amount / 10**18
+    lpool_eth = lpool_amount / 10**18
 
     distribution = (
         f"Fee Distribution:\n"
-        f"X7100: {x7100_share_eth:.4f} {chain_info.native.upper()} (${x7100_share_dollars:,.2f})\n"
-        f"X7DAO: {x7dao_share_eth:.4f} {chain_info.native.upper()} (${x7dao_share_dollars:,.2f})\n"
-        f"Ecosystem Splitter: {ecosystem_share_eth:.4f} {chain_info.native.upper()} (${ecosystem_share_dollars:,.2f})\n"
-        f"Lending Pool: {lpool_share_eth:.4f} {chain_info.native.upper()} (${lpool_share_dollars:,.2f})\n\n"
+        f"X7100: {x7100_eth:.4f} {chain_info.native.upper()}\n"
+        f"X7DAO: {x7dao_eth:.4f} {chain_info.native.upper()}\n"
+        f"Ecosystem Splitter: {ecosystem_eth:.4f} {chain_info.native.upper()}\n"
+        f"Lending Pool: {lpool_eth:.4f} {chain_info.native.upper()}\n\n"
     )
-
-    loan_info += (
-        f"*{loan_name}*\n"
-        f"Origination Fee: {origination_fee} {chain_info.native.upper()} (${origination_dollar:,.2f})\n"
-    )
-
-    premium_periods = (
-        await loan_contract.functions.numberOfPremiumPeriods().call()
-    )
-    if premium_periods > 0:
-        per_period_premium = premium_fee / premium_periods
-        per_period_premium_dollar = premium_fee_dollar / premium_periods
-
-        loan_info += f"Premium Fees: {premium_fee} {chain_info.native.upper()} (${premium_fee:,.0f}) over {premium_periods} payments:\n"
-        for period in range(1, premium_periods + 1):
-            loan_info += f"  - Payment {period}: {per_period_premium:.4f} {chain_info.native.upper()} (${per_period_premium_dollar:,.2f})\n"
-    else:
-        loan_info += f"Premium Fees: {premium_fee} {chain_info.native.upper()} (${premium_fee:,.0f})\n"
-
-    loan_info += (
-        f"Total Loan Cost: {total_fees_eth} {chain_info.native.upper()} (${total_fees_dollars:,.2f})\n"
-        f"Min Loan: {min_loan / 10**18} {chain_info.native.upper()}\n"
-        f"Max Loan: {max_loan / 10**18} {chain_info.native.upper()}\n"
-        f"Min Loan Duration: {math.floor(min_loan_duration / 84600)} days\n"
-        f"Max Loan Duration: {math.floor(max_loan_duration / 84600)} days\n\n"
-    )
-
-    loan_info += distribution
 
     await message.delete()
     await update.message.reply_text(
         f"*X7 Finance Loan Rates ({chain_info.name})*\n\n"
-        f"Borrowing {amount} {chain_info.native.upper()} (${borrow_usd:,.0f}) will cost:\n\n"
-        f"{loan_info}"
-        f"Liquidation Deposit: {liquidation_fee} {chain_info.native.upper()} (${liquidation_dollar:,.0f})\n\n",
+        f"Borrowing {amount} {chain_info.native.upper()} will cost:\n\n"
+        f"{fees / 10**18} {chain_info.native.upper()}\n"
+        f"Liquidation Deposit: {liquidation_deposit} {chain_info.native.upper()}\n\n"
+        f"{distribution}",
         parse_mode="Markdown",
     )
 
@@ -1373,6 +1309,41 @@ async def hubs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
+async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chain = " ".join(context.args).lower() or await chains.get_chain(
+        update.effective_message.message_thread_id
+    )
+    chain_info, _ = await chains.get_info(chain)
+    count = await db.count_launches()
+    _, loan_fees = await tools.generate_loan_terms(chain, 1)
+
+    lending_pool = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(
+            addresses.lending_pool(chain)
+        ),
+        abi=abis.read("lendingpool"),
+    )
+    liquidation_deposit = (
+        await lending_pool.functions.liquidationReward().call() / 10**18
+    )
+
+    await update.message.reply_photo(
+        photo=tools.get_random_pioneer(),
+        caption=f"*Launch you project on {chain_info.name}*\n\nSeamlessly create and deploy your token and trade instantly.\n\n"
+        f"- Borrow Liquidity on Xchange: {loan_fees}\nor\n"
+        f"- Launch Instantly on Uniswap for 1% of token supply\n\n"
+        "*Loan Terms:*\n"
+        "- Choose your preferred loan duration. If unpaid by the expiry date, "
+        "repayment will occur through pair liquidity.\n"
+        f"- Refundable Deposit: The {liquidation_deposit} {chain_info.native.upper()} liquidation deposit is fully "
+        "returned once your loan is settled.\n\n"
+        f"Join the innovators—{count} tokens launched and counting!\n\n"
+        "*Ready to launch your project?\n*"
+        f"head over to {tools.escape_markdown('@xchange_launcher_bot')} to launch your project now!",
+        parse_mode="Markdown",
+    )
+
+
 async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     board = await db.clicks_get_leaderboard()
     click_counts_total = await db.clicks_get_total()
@@ -1849,7 +1820,7 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
         term = await contract.functions.loanTermLookup(int(loan_id)).call()
         term_contract = chain_info.w3.eth.contract(
             address=chain_info.w3.to_checksum_address(term),
-            abi=abis.read("ill005"),
+            abi=abis.read(f"ill{addresses.LIVE_LOAN}"),
         )
 
         schedule1 = await contract.functions.getPremiumPaymentSchedule(

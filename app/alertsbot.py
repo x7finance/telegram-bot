@@ -23,7 +23,6 @@ dextools = get_dextools()
 
 TITLE_FONT = fonts.BARTOMES
 FONT = fonts.FREE_MONO_BOLD
-LIVE_LOAN = "005"
 
 
 async def create_image(token_image, title, message, chain_info):
@@ -249,8 +248,8 @@ async def initialize_contracts(w3, chain):
     )
 
     ill_term = w3.eth.contract(
-        address=addresses.ill_addresses(chain)[LIVE_LOAN],
-        abi=abis.read(f"ill{LIVE_LOAN}"),
+        address=addresses.ill_addresses(chain)[addresses.LIVE_LOAN],
+        abi=abis.read(f"ill{addresses.LIVE_LOAN}"),
     )
 
     xchange_create = w3.eth.contract(
@@ -275,10 +274,10 @@ async def format_loan_alert(
     chain_info, _ = await chains.get_info(chain)
 
     loan_id = log["args"]["loanID"]
-    ill_address = addresses.ill_addresses(chain)[LIVE_LOAN]
+    ill_address = addresses.ill_addresses(chain)[addresses.LIVE_LOAN]
 
     ill_contract = chain_info.w3.eth.contract(
-        address=ill_address, abi=abis.read(f"ill{LIVE_LOAN}")
+        address=ill_address, abi=abis.read(f"ill{addresses.LIVE_LOAN}")
     )
 
     loan_amount = (

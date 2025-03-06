@@ -1,6 +1,7 @@
 from telegram import Message, Update
 
 import aiohttp
+import math
 import os
 import random
 import sentry_sdk
@@ -126,6 +127,56 @@ def format_seconds(seconds):
     )
 
 
+async def generate_loan_terms(chain, loan_amount):
+    chain_info, _ = await chains.get_info(chain)
+
+    loan_in_wei = chain_info.w3.to_wei(loan_amount, "ether")
+
+    loan_contract_address = addresses.ill_addresses(chain).get(
+        addresses.LIVE_LOAN
+    )
+
+    contract = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(loan_contract_address),
+        abi=abis.read(f"ill{addresses.LIVE_LOAN}"),
+    )
+
+    quote = await contract.functions.getQuote(loan_in_wei).call()
+    origination_fee = quote[1]
+
+    lending_pool = chain_info.w3.eth.contract(
+        address=chain_info.w3.to_checksum_address(
+            addresses.lending_pool(chain)
+        ),
+        abi=abis.read("lendingpool"),
+    )
+
+    liquidation_fee = (
+        await lending_pool.functions.liquidationReward().call() / 10**18
+    )
+
+    min_loan = await contract.functions.minimumLoanAmount().call() / 10**18
+    max_loan = await contract.functions.maximumLoanAmount().call() / 10**18
+    min_loan_duration = math.floor(
+        await contract.functions.minimumLoanLengthSeconds().call() / 84600
+    )
+    max_loan_duration = math.floor(
+        await contract.functions.maximumLoanLengthSeconds().call() / 84600
+    )
+
+    liquidation_deposit = (
+        await lending_pool.functions.liquidationReward().call() / 10**18
+    )
+
+    total_fee = origination_fee + liquidation_deposit
+
+    text = (
+        f"Borrow between {min_loan} and {max_loan} {chain_info.native.upper()} between {min_loan_duration} and {max_loan_duration} days"
+        f" at a cost of {chain_info.w3.from_wei(origination_fee, 'ether')} {chain_info.native.upper()} + {liquidation_fee} {chain_info.native.upper()} deposit"
+    )
+    return total_fee, text
+
+
 def get_ill_number(term, chain):
     for ill_number, contract_address in addresses.ill_addresses(chain).items():
         if term.lower() == contract_address.lower():
@@ -191,7 +242,7 @@ async def get_loan_token_id(loan_id, chain):
     term = await pool_contract.functions.loanTermLookup(int(loan_id)).call()
     term_contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(term),
-        abi=abis.read("ill005"),
+        abi=abis.read(f"ill{addresses.LIVE_LOAN}"),
     )
 
     index = 0
