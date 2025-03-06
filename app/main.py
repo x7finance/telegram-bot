@@ -32,7 +32,7 @@ application = (
 def init_alerts_bot():
     print("🔄 Initializing alerts bot...")
     python_executable = sys.executable
-    script_path = Path(__file__).parent / "alerts.py"
+    script_path = Path(__file__).parent / "alertsbot.py"
 
     command = [python_executable, str(script_path)]
     process = subprocess.Popen(command)
@@ -73,6 +73,16 @@ def init_main_bot():
     print("✅ Main bot initialized")
 
 
+def init_price_bot():
+    print("🔄 Initializing price bot...")
+    python_executable = sys.executable
+    script_path = Path(__file__).parent / "pricebot.py"
+
+    command = [python_executable, str(script_path)]
+    process = subprocess.Popen(command)
+    return process
+
+
 async def post_init(application: Application):
     if not tools.is_local():
         print("✅ Bot Running on server")
@@ -88,9 +98,9 @@ async def post_init(application: Application):
         print(await tools.update_bot_commands())
 
         init_alerts_bot()
-
+        init_price_bot()
     else:
-        print("✅ Bot Running locally")
+        print("✅ Main bot Running locally")
 
 
 if __name__ == "__main__":

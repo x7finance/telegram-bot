@@ -1,16 +1,42 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
+import os
 from eth_utils import is_address
 
 from constants.bot import urls
+from utils import tools
 from constants.protocol import chains, tokens
+
 from services import get_coingecko, get_defined, get_dextools, get_etherscan
 
 cg = get_coingecko()
 defined = get_defined()
 dextools = get_dextools()
 etherscan = get_etherscan()
+
+
+async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if context.args:
+        if len(context.args) > 1:
+            search = " ".join(context.args[:-1])
+            chain_name = context.args[-1].lower()
+
+            if chain_name in await chains.get_active_chains():
+                chain = await chains.get_chain(chain_name.lower())
+
+            else:
+                search = " ".join(context.args)
+                chain = None
+        else:
+            search = " ".join(context.args)
+            chain = None
+    else:
+        await update.message.reply_text(
+            "Please provide Contract Address/Project Name and optional chain name",
+        )
+        return
+    await command(update, context, search, chain)
 
 
 async def command(
@@ -215,3 +241,17 @@ async def send_dextools_response(search, chain, token_data):
     ]
 
     return message, buttons
+
+
+if __name__ == "__main__":
+    application = (
+        ApplicationBuilder()
+        .token(os.getenv("TELEGRAM_PRICE_BOT_TOKEN"))
+        .build()
+    )
+    application.add_error_handler(
+        lambda _, context: tools.error_handler(context)
+    )
+    application.add_handler(CommandHandler("x", x))
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    print("✅ Price bot initialized")

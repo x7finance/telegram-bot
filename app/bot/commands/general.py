@@ -12,7 +12,6 @@ from datetime import datetime
 from eth_account import Account
 from eth_utils import is_address
 
-from bot.commands import pricebot
 from utils import onchain, tools
 from constants.bot import settings, text, urls
 from constants.protocol import (
@@ -3680,26 +3679,3 @@ async def x7104(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def x7105(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await x7_token(update, context, "X7105", addresses.x7105)
-
-
-async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if context.args:
-        if len(context.args) > 1:
-            search = " ".join(context.args[:-1])
-            chain_name = context.args[-1].lower()
-
-            if chain_name in await chains.get_active_chains():
-                chain = await chains.get_chain(chain_name.lower())
-
-            else:
-                search = " ".join(context.args)
-                chain = None
-        else:
-            search = " ".join(context.args)
-            chain = None
-    else:
-        await update.message.reply_text(
-            "Please provide Contract Address/Project Name and optional chain name",
-        )
-        return
-    await pricebot.command(update, context, search, chain)

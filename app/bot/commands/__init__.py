@@ -83,7 +83,6 @@ for func, description in [
     (general.x7103, "View X7103 details"),
     (general.x7104, "View X7104 details"),
     (general.x7105, "View X7105 details"),
-    (general.x, "Xchange Price Bot"),
 ]:
     base_command = func.__name__.split("_")[0]
     commands = [base_command] + GENERAL_ALIAS.get(base_command, [])
