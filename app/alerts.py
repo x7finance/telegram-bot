@@ -99,12 +99,14 @@ async def handle_log(log_data, chain, contracts):
             tx = await chain_info.w3.eth.get_transaction(
                 log_data["transactionHash"]
             )
-            input_data = tx["input"]
 
-            liquidate_selector = bytes.fromhex("415f1240")
-            input_bytes = bytes.fromhex(input_data[2:])
-
-            was_liquidated = input_bytes.startswith(liquidate_selector)
+            try:
+                was_liquidated = tx["input"].startswith(b"\x41\x5f\x12\x40")
+            except Exception as e:
+                await error(
+                    f"Error processing loan complete event: {e}\n\n{tx}"
+                )
+                was_liquidated = False
 
             log = ill_term.events.LoanComplete().process_log(log_data)
             await format_loan_alert(

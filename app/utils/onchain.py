@@ -134,7 +134,7 @@ async def liquidate_loan(loan_id, chain, user_id):
                 "gas": gas_estimate,
                 "gasPrice": gas_price,
                 "nonce": nonce,
-                "chainId": int(chain_info.id),
+                "chainId": chain_info.id,
             }
         )
 
@@ -190,7 +190,7 @@ async def splitter_push(
                 "gas": gas_estimate,
                 "gasPrice": gas_price,
                 "nonce": nonce,
-                "chainId": int(chain_info.id),
+                "chainId": chain_info.id,
             }
         )
 
@@ -241,7 +241,7 @@ async def stuck_tx(chain, user_id, gas_multiplier=1.5):
             "gas": 21000,
             "gasPrice": adjusted_gas_price,
             "nonce": pending_nonce,
-            "chainId": int(chain_info.id),
+            "chainId": chain_info.id,
         }
 
         signed_tx = chain_info.w3.eth.account.sign_transaction(
@@ -290,7 +290,7 @@ async def withdraw_native(amount, chain, user_id, recipient_address):
             "gas": gas_estimate,
             "gasPrice": gas_price,
             "nonce": nonce,
-            "chainId": int(chain_info.id),
+            "chainId": chain_info.id,
         }
 
         signed_tx = chain_info.w3.eth.account.sign_transaction(
@@ -367,7 +367,7 @@ async def withdraw_tokens(
             "gasPrice": gas_price,
             "gas": gas_estimate,
             "nonce": nonce,
-            "chainId": int(chain_info.id),
+            "chainId": chain_info.id,
         }
 
         signed_tx = chain_info.w3.eth.account.sign_transaction(
@@ -420,7 +420,7 @@ async def x7d_mint(amount, chain, user_id):
                 "gas": gas_estimate,
                 "gasPrice": gas_price,
                 "nonce": nonce,
-                "chainId": int(chain_info.id),
+                "chainId": chain_info.id,
             }
         )
 
@@ -472,7 +472,7 @@ async def x7d_redeem(amount, chain, user_id):
                 "gas": gas_estimate,
                 "gasPrice": gas_price,
                 "nonce": nonce,
-                "chainId": int(chain_info.id),
+                "chainId": chain_info.id,
             }
         )
 
