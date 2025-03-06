@@ -1,15 +1,13 @@
-from telegram import Message, Update
+from telegram import Update
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
     CommandHandler,
     ConversationHandler,
-    ContextTypes,
 )
 
 import os
 import sys
-import sentry_sdk
 import subprocess
 from pathlib import Path
 from telegram.warnings import PTBUserWarning
@@ -30,32 +28,6 @@ application = (
     Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 )
 
-sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
-
-
-async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update is None:
-        return
-    if update.edited_message is not None:
-        return
-    else:
-        message: Message = update.message
-        if message is not None and message.text is not None:
-            await update.message.reply_text(
-                "Uh oh! You trusted code and it failed you! Please try again"
-            )
-            print(f"{message.text} caused error: {context.error}")
-            sentry_sdk.capture_exception(
-                Exception(f"{message.text} caused error: {context.error}")
-            )
-        else:
-            print(f"Error occurred without a valid message: {context.error}")
-            sentry_sdk.capture_exception(
-                Exception(
-                    f"Error occurred without a valid message: {context.error}"
-                )
-            )
-
 
 def init_alerts_bot():
     print("🔄 Initializing alerts bot...")
@@ -69,7 +41,7 @@ def init_alerts_bot():
 
 def init_main_bot():
     print("🔄 Initializing main bot...")
-    application.add_error_handler(error)
+    application.add_error_handler(tools.error_handler)
 
     for handler in conversations.HANDLERS:
         application.add_handler(

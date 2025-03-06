@@ -1,6 +1,9 @@
+from telegram import Message, Update
+
 import aiohttp
 import os
 import random
+import sentry_sdk
 import socket
 from datetime import datetime
 
@@ -11,11 +14,39 @@ from services import get_etherscan
 
 etherscan = get_etherscan()
 
+sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
+
 
 def adjust_loan_count(amount, chain):
     latest_loan = amount
     adjusted_amount = max(0, amount - 20) if chain != "eth" else amount
     return adjusted_amount, latest_loan
+
+
+async def error_handler(error_msg: str | Update, context=None, alerts=False):
+    if alerts:
+        print(f"Alerts Error: {error_msg}")
+        sentry_sdk.capture_exception(Exception(f"Alerts Error: {error_msg}"))
+        return
+
+    update = error_msg
+    if update is None:
+        return
+    if update.edited_message is not None:
+        return
+
+    message: Message = update.message
+    if message is not None and message.text is not None:
+        await update.message.reply_text(
+            "Uh oh! You trusted code and it failed you! Please try again"
+        )
+        print(f"{message.text} caused error: {context.error}")
+        sentry_sdk.capture_exception(
+            Exception(f"{message.text} caused error: {context.error}")
+        )
+    else:
+        print(context.error)
+        sentry_sdk.capture_exception(Exception(context.error))
 
 
 def escape_markdown(text):

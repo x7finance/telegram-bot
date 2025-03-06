@@ -7,7 +7,6 @@ import io
 import json
 import os
 import random
-import sentry_sdk
 import websockets
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
@@ -21,16 +20,10 @@ from services import get_defined, get_dextools
 defined = get_defined()
 dextools = get_dextools()
 
-sentry_sdk.init(dsn=os.getenv("SENTRY_SCANNER_DSN"), traces_sample_rate=1.0)
 
 TITLE_FONT = fonts.BARTOMES
 FONT = fonts.FREE_MONO_BOLD
 LIVE_LOAN = "005"
-
-
-async def error(context):
-    print(context)
-    sentry_sdk.capture_exception(Exception(context))
 
 
 async def create_image(token_image, title, message, chain_info):
@@ -100,13 +93,7 @@ async def handle_log(log_data, chain, contracts):
                 log_data["transactionHash"]
             )
 
-            try:
-                was_liquidated = tx["input"].startswith(b"\x41\x5f\x12\x40")
-            except Exception as e:
-                await error(
-                    f"Error processing loan complete event: {e}\n\n{tx}"
-                )
-                was_liquidated = False
+            was_liquidated = tx["input"].startswith(b"\x41\x5f\x12\x40")
 
             log = ill_term.events.LoanComplete().process_log(log_data)
             await format_loan_alert(
@@ -139,7 +126,7 @@ async def handle_log(log_data, chain, contracts):
             await format_time_lock_alert(log, chain)
 
     except Exception as e:
-        await error(f"Error processing log: {e}")
+        await tools.error_handler(f"Error processing log: {e}", alerts=True)
 
 
 async def initialize_alerts(chain):
@@ -152,7 +139,7 @@ async def initialize_alerts(chain):
     while True:
         ws = None
         try:
-            w3 = chains.MAINNETS[chain].w3_ws
+            w3 = chains.MAINNETS[chain].w3_wsf
             (
                 factory,
                 ill_term,
@@ -228,13 +215,15 @@ async def initialize_alerts(chain):
         except Exception as e:
             retry_count += 1
             if retry_count >= MAX_RETRIES:
-                await error(
-                    f"{chain.upper()} max retries ({MAX_RETRIES}) reached, stopping alerts"
+                await tools.error_handler(
+                    f"{chain.upper()} max retries ({MAX_RETRIES}) reached, stopping alerts",
+                    alerts=True,
                 )
                 break
 
-            await error(
-                f"{chain.upper()} connection error: {e} (attempt {retry_count}/{MAX_RETRIES})"
+            await tools.error_handler(
+                f"{chain.upper()} connection error: {e} (attempt {retry_count}/{MAX_RETRIES})",
+                alerts=True,
             )
             if ws and not ws.closed:
                 if sub_id:
@@ -625,7 +614,10 @@ async def send_alert(image_buffer, caption, buttons, application):
                 try:
                     await application.bot.send_photo(**send_params)
                 except Exception as e:
-                    await error(f"Error sending to channel ({channel}): {e}")
+                    await tools.error_handler(
+                        f"Error sending to channel ({channel}): {e}",
+                        alerts=True,
+                    )
 
     finally:
         image_buffer.close()
@@ -646,5 +638,7 @@ if __name__ == "__main__":
         .token(os.getenv("TELEGRAM_SCANNER_BOT_TOKEN"))
         .build()
     )
-    application.add_error_handler(lambda _, context: error(context))
+    application.add_error_handler(
+        lambda _, context: tools.error_handler(context, alerts=True)
+    )
     asyncio.run(main())
