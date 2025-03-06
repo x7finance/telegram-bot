@@ -165,6 +165,11 @@ class DBManager:
 
         return f"User {name}'s click record updated successfully."
 
+    async def count_launches(self):
+        query = "SELECT amount FROM log WHERE name = 'deployed'"
+        result = await self._execute_query(query, fetch_one=True)
+        return result[0] if result else 0
+
     async def settings_set(self, setting_name, value):
         query = "UPDATE settings SET value = %s WHERE setting_name = %s"
         await self._execute_query(

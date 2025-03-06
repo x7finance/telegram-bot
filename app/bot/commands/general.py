@@ -3093,15 +3093,17 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     contributors = await github.get_contributors("telegram-bot")
     wallets = await db.wallet_count()
     latest_commit = await github.get_latest_commit("telegram-bot")
+    launches = await db.count_launches()
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption=(
             f"*X7 Finance Bot Stats*\n\n"
-            f"Commands: {commands}\n"
+            f"{tools.escape_markdown('@xchange_launcher_bot Launches:')} {launches}\n\n"
             f"Contributors: {contributors}\n"
-            f"Registered wallets: {wallets}\n\n"
-            f"{latest_commit}"
+            f"Commands: {commands}\n"
+            f"Registered users: {wallets}\n\n"
+            f"{latest_commit}\n\n"
         ),
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
