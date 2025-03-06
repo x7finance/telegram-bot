@@ -139,7 +139,7 @@ async def initialize_alerts(chain):
     while True:
         ws = None
         try:
-            w3 = chains.MAINNETS[chain].w3_wsf
+            w3 = chains.MAINNETS[chain].w3_ws
             (
                 factory,
                 ill_term,
