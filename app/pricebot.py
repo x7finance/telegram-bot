@@ -1,5 +1,11 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
 
 import os
 from eth_utils import is_address
@@ -16,43 +22,57 @@ dextools = get_dextools()
 etherscan = get_etherscan()
 
 
-async def x(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if context.args:
-        if len(context.args) > 1:
-            search = " ".join(context.args[:-1])
-            chain_name = context.args[-1].lower()
+async def fetch_token_data(search, chain):
+    if not is_address(search):
+        return await cg.get_price(search), None
+    if chain:
+        token_data = await dextools.get_audit(search, chain)
+        if token_data and token_data.get("data"):
+            return token_data, chain
 
-            if chain_name in await chains.get_active_chains():
-                chain = await chains.get_chain(chain_name.lower())
+    for alt_chain, chain_info in chains.MAINNETS.items():
+        if chain_info.live:
+            token_data = await dextools.get_audit(search, alt_chain)
+            if token_data and token_data.get("data"):
+                return token_data, alt_chain
 
-            else:
-                search = " ".join(context.args)
-                chain = None
-        else:
-            search = " ".join(context.args)
-            chain = None
+    return None, None
+
+
+async def handle_price_lookup(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+):
+    if context.args is not None:
+        text = " ".join(context.args)
     else:
+        if update.effective_chat.type != "private":
+            return
+        text = update.message.text
+
+    if not text or text.isspace():
         await update.message.reply_text(
-            "Please provide Contract Address/Project Name and optional chain name",
+            "Please provide a Contract Address/Project Name and optional chain name"
         )
         return
-    await command(update, context, search, chain)
+
+    search, chain = await parse_search_and_chain(text)
+    await lookup_price(update, context, search, chain)
 
 
-async def command(
+async def lookup_price(
     update: Update, context: ContextTypes.DEFAULT_TYPE, search, chain=None
 ):
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
     search = await resolve_search(search, chain)
     if not search:
-        await update.message.reply_text("No result found.")
+        await update.message.reply_text(f"No result found for {search}")
         return
 
     token_data, found_chain = await fetch_token_data(search, chain)
 
     if not token_data:
-        await update.message.reply_text("No result found.")
+        await update.message.reply_text(f"No result found for {search}")
         return
 
     if token_data and "price" in token_data:
@@ -68,6 +88,21 @@ async def command(
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
+
+
+async def parse_search_and_chain(text):
+    words = text.split()
+
+    if (
+        len(words) > 1
+        and words[-1].lower() in await chains.get_active_chains()
+    ):
+        search = " ".join(words[:-1])
+        chain = words[-1].lower()
+        return search, chain
+
+    search = " ".join(words)
+    return search, None
 
 
 async def resolve_search(search, chain):
@@ -88,23 +123,6 @@ async def resolve_search(search, chain):
             return token
 
     return search if is_address(search) else None
-
-
-async def fetch_token_data(search, chain):
-    if not is_address(search):
-        return await cg.get_price(search), None
-    if chain:
-        token_data = await dextools.get_audit(search, chain)
-        if token_data and token_data.get("data"):
-            return token_data, chain
-
-    for alt_chain, chain_info in chains.MAINNETS.items():
-        if chain_info.live:
-            token_data = await dextools.get_audit(search, alt_chain)
-            if token_data and token_data.get("data"):
-                return token_data, alt_chain
-
-    return None, None
 
 
 async def send_coingecko_response(update: Update, search, token_info):
@@ -252,6 +270,13 @@ if __name__ == "__main__":
     application.add_error_handler(
         lambda _, context: tools.error_handler(context)
     )
-    application.add_handler(CommandHandler("x", x))
+    application.add_handler(CommandHandler("x", handle_price_lookup))
+    application.add_handler(
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND & filters.ChatType.PRIVATE,
+            handle_price_lookup,
+        )
+    )
+
     application.run_polling(allowed_updates=Update.ALL_TYPES)
     print("✅ Price bot initialized")

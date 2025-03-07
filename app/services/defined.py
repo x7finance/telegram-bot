@@ -54,14 +54,14 @@ class Defined:
             ) as response:
                 if response.status == 200:
                     data = await response.json()
-                    pair = (
+                    results = (
                         data.get("data", {})
                         .get("listPairsWithMetadataForToken", {})
-                        .get("results", [])[0]
-                        .get("pair", {})
-                        .get("address")
+                        .get("results", [])
                     )
-                    return pair
+
+                    if results:
+                        return results[0].get("pair", {}).get("address")
                 return None
 
     async def get_token_image(self, token, chain):

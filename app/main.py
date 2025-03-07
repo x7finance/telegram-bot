@@ -99,6 +99,7 @@ async def post_init(application: Application):
 
         init_alerts_bot()
         init_price_bot()
+
     else:
         print("✅ Main bot Running locally")
 

@@ -1,4 +1,4 @@
-from telegram import Message, Update
+from telegram import Update
 
 import aiohttp
 import math
@@ -24,30 +24,36 @@ def adjust_loan_count(amount, chain):
     return adjusted_amount, latest_loan
 
 
-async def error_handler(error_msg: str | Update, context=None, alerts=False):
+async def error_handler(
+    update_or_msg: Update | str, context=None, alerts=False
+):
     if alerts:
-        print(f"Alerts Error: {error_msg}")
-        sentry_sdk.capture_exception(Exception(f"Alerts Error: {error_msg}"))
-        return
-
-    update = error_msg
-    if update is None:
-        return
-    if update.edited_message is not None:
-        return
-
-    message: Message = update.message
-    if message is not None and message.text is not None:
-        await update.message.reply_text(
-            "Uh oh! You trusted code and it failed you! Please try again"
-        )
-        print(f"{message.text} caused error: {context.error}")
+        print(f"Alerts Error: {update_or_msg}")
         sentry_sdk.capture_exception(
-            Exception(f"{message.text} caused error: {context.error}")
+            Exception(f"Alerts Error: {update_or_msg}")
         )
+        return
+
+    error = context.error if hasattr(context, "error") else str(context)
+
+    if isinstance(update_or_msg, Update):
+        if update_or_msg is None:
+            return
+        if update_or_msg.edited_message is not None:
+            return
+
+        message = update_or_msg.message
+        if message is not None and message.text is not None:
+            await message.reply_text(
+                "Uh oh! You trusted code and it failed you! Please try again"
+            )
+            print(f"{message.text} caused error: {error}")
+        else:
+            print(f"Error: {error}")
     else:
-        print(context.error)
-        sentry_sdk.capture_exception(Exception(context.error))
+        print(f"Error: {error}")
+
+    sentry_sdk.capture_exception(Exception(f"Error: {error}"))
 
 
 def escape_markdown(text):
