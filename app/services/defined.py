@@ -133,6 +133,8 @@ class Defined:
                     results{{
                     token {{
                         address
+                        name
+                        symbol
                     }}
                 }}
                 }}
@@ -143,6 +145,8 @@ class Defined:
                     results{{
                     token {{
                         address
+                        name
+                        symbol
                     }}
                 }}
                 }}
@@ -157,6 +161,7 @@ class Defined:
             ) as response:
                 if response.status == 200:
                     data = await response.json()
+
                     results = (
                         data.get("data", {})
                         .get("filterTokens", {})

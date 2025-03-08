@@ -66,13 +66,13 @@ async def lookup_price(
 
     search = await resolve_search(search, chain)
     if not search:
-        await update.message.reply_text(f"No result found for {search}")
+        await update.message.reply_text("No result found.")
         return
 
     token_data, found_chain = await fetch_token_data(search, chain)
 
     if not token_data:
-        await update.message.reply_text(f"No result found for {search}")
+        await update.message.reply_text("No result found.")
         return
 
     if token_data and "price" in token_data:
