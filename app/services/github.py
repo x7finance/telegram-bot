@@ -2,6 +2,8 @@ import aiohttp
 import os
 from datetime import datetime
 
+from utils import tools
+
 
 class GitHub:
     def __init__(self):
@@ -106,10 +108,12 @@ class GitHub:
                     return "No commits found."
 
                 latest_commit = commits[0]
-                message = latest_commit.get("commit", {}).get(
-                    "message", "No message"
+                message = tools.escape_markdown(
+                    latest_commit.get("commit", {}).get(
+                        "message", "No message"
+                    )
                 )
-                created_by = (
+                created_by = tools.escape_markdown(
                     latest_commit.get("commit", {})
                     .get("author", {})
                     .get("name", "Unknown author")
