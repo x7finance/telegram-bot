@@ -28,10 +28,11 @@ async def error_handler(
     update_or_msg: Update | str, context=None, alerts=False
 ):
     if alerts:
-        print(f"Alerts Error: {update_or_msg}")
-        sentry_sdk.capture_exception(
-            Exception(f"Alerts Error: {update_or_msg}")
-        )
+        error_text = f"Alerts Error: {update_or_msg}"
+        if not is_local():
+            sentry_sdk.capture_exception(Exception(error_text))
+        else:
+            print(error_text)
         return
 
     error = context.error if hasattr(context, "error") else str(context)
@@ -47,13 +48,14 @@ async def error_handler(
             await message.reply_text(
                 "Uh oh! You trusted code and it failed you! Please try again"
             )
-            print(f"{message.text} caused error: {error}")
-        else:
-            print(f"Error: {error}")
+            error_text = f"{message.text} caused error: {error}"
     else:
-        print(f"Error: {error}")
+        error_text = f"Error: {error}"
 
-    sentry_sdk.capture_exception(Exception(f"Error: {error}"))
+    if not is_local():
+        sentry_sdk.capture_exception(Exception(error_text))
+    else:
+        print(error_text)
 
 
 def escape_markdown(text):
@@ -229,7 +231,8 @@ async def get_last_action(address, chain):
 
     last_txn = filter[0]
     value = int(last_txn["value"]) / 10**18
-    dollar = float(value) * float(etherscan.get_native_price(chain_native))
+    native_price = await etherscan.get_native_price(chain_native)
+    dollar = float(value) * float(native_price)
     timestamp = get_time_difference(int(last_txn["timeStamp"]))
 
     return f"Last {word}:\n{value:.3f} {chain_native.upper()} (${dollar:,.0f})\n{timestamp}"

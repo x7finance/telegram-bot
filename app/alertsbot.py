@@ -366,19 +366,19 @@ async def format_pair_alert(log, chain):
     title = "New Pair Created"
 
     token_0_info = await dextools.get_token_name(log["args"]["token0"], chain)
-    token_0_name = token_0_info["name"]
     token_0_symbol = token_0_info["symbol"]
 
     token_1_info = await dextools.get_token_name(log["args"]["token1"], chain)
-    token_1_name = token_1_info["name"]
     token_1_symbol = token_1_info["symbol"]
 
     if log["args"]["token0"] == paired_token:
         token_address = log["args"]["token1"]
-        token_name = token_1_name
+        token_symbol = token_1_symbol
+        paired_symbol = token_0_symbol
     else:
         token_address = log["args"]["token0"]
-        token_name = token_0_name
+        token_symbol = token_0_symbol
+        paired_symbol = token_1_symbol
 
     token_data = await dextools.get_audit(token_address, chain)
     if token_data.get("statusCode") == 200 and token_data.get("data"):
@@ -414,7 +414,7 @@ async def format_pair_alert(log, chain):
 
     status = f"{open_source}\n{tax}\n{renounced}"
 
-    message = f"{token_name} ({token_0_symbol}/{token_1_symbol})\n\n{status}"
+    message = f"{token_symbol} / {paired_symbol})\n\n{status}"
 
     image_buffer = await create_image(
         await defined.get_token_image(token_address, chain),

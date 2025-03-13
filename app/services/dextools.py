@@ -153,9 +153,9 @@ class Dextools:
                     data = await response.json()
                     if data and "data" in data and data["data"]:
                         name = data["data"].get("name", "Unknown Token")
-                        symbol = data["data"].get("symbol", "")
+                        symbol = data["data"].get("symbol", "Unknown Token")
                         return {"name": name, "symbol": symbol}
-                return {"name": "Unknown Token", "symbol": ""}
+                return {"name": "Unknown Token", "symbol": "Unknown Token"}
 
     async def get_liquidity(self, address, chain):
         chain_info, _ = await chains.get_info(chain)
