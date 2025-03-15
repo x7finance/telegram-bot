@@ -267,9 +267,7 @@ if __name__ == "__main__":
         .token(os.getenv("TELEGRAM_PRICE_BOT_TOKEN"))
         .build()
     )
-    application.add_error_handler(
-        lambda _, context: tools.error_handler(context)
-    )
+    application.add_error_handler(tools.error_handler)
     application.add_handler(CommandHandler("x", handle_price_lookup))
     application.add_handler(
         MessageHandler(

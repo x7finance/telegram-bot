@@ -27,30 +27,31 @@ def adjust_loan_count(amount, chain):
 async def error_handler(
     update_or_msg: Update | str, context=None, alerts=False
 ):
-    if alerts:
-        error_text = f"Alerts Error: {update_or_msg}"
-        if not is_local():
-            sentry_sdk.capture_exception(Exception(error_text))
-        else:
-            print(error_text)
+    if isinstance(update_or_msg, str) and "httpx.ReadError" in update_or_msg:
         return
 
-    error = context.error if hasattr(context, "error") else str(context)
+    if update_or_msg is None:
+        return
 
     if isinstance(update_or_msg, Update):
-        if update_or_msg is None:
-            return
         if update_or_msg.edited_message is not None:
             return
 
-        message = update_or_msg.message
-        if message is not None and message.text is not None:
-            await message.reply_text(
-                "Uh oh! You trusted code and it failed you! Please try again"
-            )
-            error_text = f"{message.text} caused error: {error}"
+    if alerts:
+        error_text = f"Alerts Error: {update_or_msg}"
     else:
-        error_text = f"Error: {error}"
+        error = context.error if hasattr(context, "error") else str(context)
+        if isinstance(update_or_msg, Update):
+            message = update_or_msg.message
+            if message is not None and message.text is not None:
+                error_text = f"{message.text} caused error: {error}"
+                await message.reply_text(
+                    "Uh oh! You trusted code and it failed you! The error has been logged."
+                )
+            else:
+                error_text = f"Error: {error}"
+        else:
+            error_text = f"Error: {error}"
 
     if not is_local():
         sentry_sdk.capture_exception(Exception(error_text))
