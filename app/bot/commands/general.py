@@ -2543,42 +2543,6 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pool = lpool_reserve + lpool
         dollar = lpool_reserve_dollar + lpool_dollar
 
-        try:
-            contract = chain_info.w3.eth.contract(
-                address=chain_info.w3.to_checksum_address(
-                    addresses.lending_pool(chain)
-                ),
-                abi=abis.read("lendingpool"),
-            )
-
-            count = await contract.functions.nextLoanID().call()
-            total_borrowed = 0
-
-            ignored_loans = range(21, 25)
-
-            for loan_id in range(21, count):
-                if chain == "eth-sepolia" and loan_id in ignored_loans:
-                    continue
-
-                borrowed = (
-                    await contract.functions.getRemainingLiability(
-                        loan_id
-                    ).call()
-                    / 10**18
-                )
-                total_borrowed += borrowed
-
-            total_borrowed_dollar = float(total_borrowed) * float(native_price)
-
-        except Exception:
-            total_borrowed = 0
-            total_borrowed_dollar = 0
-
-        if total_borrowed != 0:
-            borrowed_percentage = (total_borrowed / pool) * 100
-        else:
-            borrowed_percentage = 0
-
         await message.delete()
         await update.message.reply_photo(
             photo=tools.get_random_pioneer(),
@@ -2588,9 +2552,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Lending Pool Reserve:\n"
             f"{lpool_reserve:,.3f} {chain_info.native.upper()} (${lpool_reserve_dollar:,.0f})\n\n"
             f"Total\n"
-            f"{pool:,.3f} {chain_info.native.upper()} (${dollar:,.0f})\n\n"
-            f"Total Currently Borrowed\n"
-            f"{total_borrowed:,.3f} {chain_info.native.upper()} (${total_borrowed_dollar:,.0f}) - {borrowed_percentage:.0f}%",
+            f"{pool:,.3f} {chain_info.native.upper()} (${dollar:,.0f})",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
