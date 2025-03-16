@@ -255,15 +255,19 @@ async def get_loan_token_id(loan_id, chain):
         abi=abis.read(f"ill{addresses.LIVE_LOAN}"),
     )
 
-    index = 0
-    while True:
+    total = await term_contract.functions.totalSupply().call()
+
+    index = total
+    while index > 0:
+        index -= 1
         try:
             token_id = await term_contract.functions.tokenByIndex(index).call()
             if token_id == int(loan_id):
                 return index
-            index += 1
         except Exception:
             return 0
+
+    return 0
 
 
 def get_random_pioneer():
