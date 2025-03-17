@@ -15,9 +15,9 @@ from constants.bot import urls
 from constants.protocol import addresses, abis, chains, tokens
 from media import fonts, blackhole
 from utils import tools
-from services import get_defined, get_dextools
+from services import get_codex, get_dextools
 
-defined = get_defined()
+codex = get_codex()
 dextools = get_dextools()
 
 
@@ -322,7 +322,7 @@ async def format_loan_alert(
     )
 
     image_buffer = await create_image(
-        await defined.get_token_image(token_address, chain),
+        await codex.get_token_image(token_address, chain),
         title,
         message,
         chain_info,
@@ -417,7 +417,7 @@ async def format_pair_alert(log, chain):
     message = f"{token_symbol} / {paired_symbol})\n\n{status}"
 
     image_buffer = await create_image(
-        await defined.get_token_image(token_address, chain),
+        await codex.get_token_image(token_address, chain),
         title,
         message,
         chain_info,

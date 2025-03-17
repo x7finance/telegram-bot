@@ -10,6 +10,7 @@ from bot import auto
 from constants.bot import settings
 from utils import tools
 from services import (
+    get_codex,
     get_coingecko,
     get_dbmanager,
     get_dextools,
@@ -21,6 +22,7 @@ from services import (
     get_twitter,
 )
 
+codex = get_codex()
 cg = get_coingecko()
 db = get_dbmanager()
 dextools = get_dextools()
@@ -93,6 +95,12 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         status = []
 
+        codex_result = await codex.ping()
+        if codex_result is True:
+            status.append("🟢 Codex: Connected Successfully")
+        else:
+            status.append(codex_result)
+
         cg_result = await cg.ping()
         if cg_result is True:
             status.append("🟢 CoinGecko: Connected Successfully")
@@ -104,12 +112,6 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             status.append("🟢 MySql: Connected Successfully")
         else:
             status.append(db_result)
-
-        defined_result = await dextools.ping()
-        if defined_result is True:
-            status.append("🟢 Defined: Connected Successfully")
-        else:
-            status.append(defined_result)
 
         dextools_result = await dextools.ping()
         if dextools_result is True:
@@ -158,7 +160,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         simplehash_result = await simplehash.ping()
         if simplehash_result is True:
-            status.append("🟢 Simplehash: Connected Successfully")
+            status.append("🟢 SimpleHash: Connected Successfully")
         else:
             status.append(simplehash_result)
 

@@ -14,10 +14,10 @@ from constants.bot import urls
 from utils import tools
 from constants.protocol import chains, tokens
 
-from services import get_coingecko, get_defined, get_dextools, get_etherscan
+from services import get_codex, get_coingecko, get_dextools, get_etherscan
 
 cg = get_coingecko()
-defined = get_defined()
+codex = get_codex()
 dextools = get_dextools()
 etherscan = get_etherscan()
 
@@ -117,7 +117,7 @@ async def resolve_search(search, chain):
 
                 return token["coins"][0]["id"]
 
-        token = await defined.search(search, chain)
+        token = await codex.search(search, chain)
 
         if is_address(token):
             return token
@@ -219,13 +219,13 @@ async def send_dextools_response(search, chain, token_data):
     holders = info.get("holders", "N/A")
     mcap = info.get("mcap", "N/A")
 
-    pair = await defined.get_pair(search, chain)
+    pair = await codex.get_pair(search, chain)
     dex = await dextools.get_dex(pair, chain)
 
     price, price_change = await dextools.get_price(search, chain)
     price = f"${price}" if price else "N/A"
 
-    volume = await defined.get_volume(pair, chain) or "N/A"
+    volume = await codex.get_volume(pair, chain) or "N/A"
     liquidity_data = await dextools.get_liquidity(pair, chain)
     liquidity = liquidity_data.get("total", "N/A")
 

@@ -21,9 +21,9 @@ class Simplehash:
                 ) as response:
                     if response.status == 200:
                         return True
-                    return f"🔴 Simplehash: Connection failed: {response.status} {await response.text()}"
+                    return f"🔴 SimpleHash: Connection failed: {response.status} {await response.text()}"
         except Exception as e:
-            return f"🔴 Simplehash: Connection Failed: {e}"
+            return f"🔴 SimpleHash: Connection Failed: {e}"
 
     async def get_nft_data(self, nft, chain):
         if chain == "eth":

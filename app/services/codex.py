@@ -6,12 +6,12 @@ import ssl
 from constants.protocol import chains
 
 
-class Defined:
+class Codex:
     def __init__(self):
-        self.url = "https://graph.defined.fi/graphql"
+        self.url = "https://graph.codex.io/graphql"
         self.headers = {
             "content_type": "application/json",
-            "Authorization": os.getenv("DEFINED_API_KEY"),
+            "Authorization": os.getenv("CODEX_API_KEY"),
         }
         self.ssl_context = ssl.create_default_context(cafile=certifi.where())
 
@@ -28,9 +28,9 @@ class Defined:
                 ) as response:
                     if response.status == 200:
                         return True
-                    return f"🔴 Defined: Connection failed: {response.status}"
+                    return f"🔴 Codex: Connection failed: {response.status}"
         except Exception as e:
-            return f"🔴 Defined: Connection failed: {str(e)}"
+            return f"🔴 Codex: Connection failed: {str(e)}"
 
     async def get_pair(self, address, chain):
         chain_info, _ = await chains.get_info(chain)

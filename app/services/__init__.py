@@ -1,8 +1,8 @@
 import inspect
 import sys
 
+from .codex import Codex
 from .coingecko import Coingecko
-from .defined import Defined
 from .dextools import Dextools
 from .dbmanager import DBManager
 from .dune import Dune
@@ -22,12 +22,12 @@ def get_service(service_class):
     return _cached_services[service_class]
 
 
+def get_codex() -> Codex:
+    return get_service(Codex)
+
+
 def get_coingecko() -> Coingecko:
     return get_service(Coingecko)
-
-
-def get_defined() -> Defined:
-    return get_service(Defined)
 
 
 def get_dextools() -> Dextools:
