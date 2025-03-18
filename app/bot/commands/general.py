@@ -79,35 +79,6 @@ async def admins(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def alerts(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
-        caption="\n",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton(text="XChange Alerts", url=urls.TG_ALERTS)]]
-        ),
-    )
-
-
-async def announcements(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
-        caption="\n",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="X7 Announcement Channel",
-                        url=urls.TG_ANNOUNCEMENTS,
-                    )
-                ]
-            ]
-        ),
-    )
-
-
 async def arbitrage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) == 0:
         await update.message.reply_text(
@@ -473,14 +444,17 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = [
         [InlineKeyboardButton(text="X7 Portal", url=urls.TG_PORTAL)],
         [InlineKeyboardButton(text="Xchange Alerts", url=urls.TG_ALERTS)],
-        [InlineKeyboardButton(text="DAO Chat", url=urls.TG_DAO)],
         [
             InlineKeyboardButton(
                 text="Xchange Create Bot", url=urls.TG_XCHANGE_CREATE
             )
         ],
+        [
+            InlineKeyboardButton(
+                text="Xchange Price Bot", url=urls.TG_XCHANGE_PRICE_BOT
+            )
+        ],
     ]
-
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
         caption="\n",

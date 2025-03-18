@@ -15,8 +15,6 @@ GENERAL_ALIAS = {
 for func, description in [
     (general.about, "About X7 Finance"),
     (general.admins, "List of admins"),
-    (general.alerts, "Xchange Alerts Channel"),
-    (general.announcements, "Latest announcements"),
     (general.arbitrage, "Arbitrage opportunities"),
     (general.blocks, "Block info"),
     (general.blog, "Read the latest blog posts"),
@@ -67,7 +65,7 @@ for func, description in [
     (general.stats, "View bot stats"),
     (general.tax_command, "Check tax"),
     (general.timestamp_command, "Convert timestamps"),
-    (general.time_command, "View system time"),
+    (general.time_command, "View world time"),
     (general.treasury, "View treasury details"),
     (general.top, "View trending tokens"),
     (general.twitter_command, "Twitter link"),
