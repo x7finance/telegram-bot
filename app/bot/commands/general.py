@@ -11,7 +11,7 @@ from datetime import datetime
 from eth_account import Account
 from eth_utils import is_address
 
-from utils import onchain, tools
+from bot import commands
 from constants.bot import settings, text, urls
 from constants.protocol import (
     abis,
@@ -24,6 +24,7 @@ from constants.protocol import (
     tokens,
 )
 from media import x7_images
+from utils import onchain, tools
 from services import (
     get_codex,
     get_coingecko,
@@ -463,7 +464,7 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
+async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
@@ -2280,7 +2281,7 @@ async def pairs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
+async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = await update.message.reply_text(
         "Getting Pioneer Info, Please wait..."
     )
@@ -2749,7 +2750,7 @@ async def spaces(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE = None):
+async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chain = " ".join(context.args).lower() or await chains.get_chain(
         update.effective_message.message_thread_id
     )
@@ -2994,9 +2995,7 @@ async def splitters_command(
 
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from bot.commands import GENERAL_HANDLERS
-
-    commands = len(GENERAL_HANDLERS)
+    commands_count = len(commands.GENERAL_HANDLERS)
     contributors = await github.get_contributors("telegram-bot")
     wallets = await db.wallet_count()
     latest_commit = await github.get_latest_commit("telegram-bot")
@@ -3008,7 +3007,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"*X7 Finance Bot Stats*\n\n"
             f"{tools.escape_markdown('@xchange_launcher_bot Launches:')} {launches}\n\n"
             f"Contributors: {contributors}\n"
-            f"Commands: {commands}\n"
+            f"Commands: {commands_count}\n"
             f"Registered users: {wallets}\n\n"
             f"{latest_commit}\n\n"
         ),
