@@ -1624,7 +1624,6 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         chain_info, error_message = await chains.get_info(chain)
         if error_message:
-            print(error_message)
             await update.message.reply_text(error_message)
             return
 

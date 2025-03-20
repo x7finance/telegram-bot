@@ -9,6 +9,7 @@ from bot import auto, callbacks
 from constants.bot import settings, urls
 from constants.protocol import addresses, chains, splitters
 from main import application
+from media import stickers
 from utils import onchain, tools
 from services import get_dbmanager
 
@@ -147,7 +148,14 @@ async def clicks_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
         try:
             result_text = await db.clicks_reset()
-            await query.edit_message_text(text=result_text)
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text=result_text,
+                message_effect_id=stickers.CONFETTI
+                if query.message.chat.type == "private"
+                else None,
+            )
+            await query.answer()
         except Exception as e:
             await query.answer(
                 text=f"An error occurred: {str(e)}", show_alert=True
@@ -220,7 +228,14 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         await message.delete()
-        await query.edit_message_caption(caption=result, reply_markup=None)
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=result,
+            message_effect_id=stickers.CONFETTI
+            if query.message.chat.type == "private"
+            else None,
+        )
+        await query.answer()
 
     except Exception as e:
         await message.delete()
@@ -286,8 +301,14 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await message.delete()
         await context.bot.send_message(
-            chat_id=query.message.chat_id, text=result
+            chat_id=query.message.chat_id,
+            text=result,
+            message_effect_id=stickers.CONFETTI
+            if query.message.chat.type == "private"
+            else None,
         )
+        await query.answer()
+
     except Exception as e:
         await message.delete()
         await query.answer(
@@ -348,7 +369,14 @@ async def stuck(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         result_text = await onchain.stuck_tx(chain, user_id)
 
-        await query.edit_message_text(text=result_text)
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=result_text,
+            message_effect_id=stickers.CONFETTI
+            if query.message.chat.type == "private"
+            else None,
+        )
+        await query.answer()
     except Exception as e:
         await query.answer(
             text=f"An error occurred: {str(e)}", show_alert=True
@@ -362,7 +390,14 @@ async def wallet_remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         result_text = await db.wallet_remove(user_id)
 
-        await query.edit_message_text(text=result_text)
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=result_text,
+            message_effect_id=stickers.CONFETTI
+            if query.message.chat.type == "private"
+            else None,
+        )
+        await query.answer()
     except Exception as e:
         await query.answer(
             text=f"An error occurred: {str(e)}", show_alert=True

@@ -57,7 +57,6 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
         settings = await db.settings_get_all()
-        print(settings)
         if not settings:
             await update.message.reply_text("Error fetching settings.")
             return

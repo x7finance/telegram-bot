@@ -41,24 +41,19 @@ class DBManager:
         fetch_all=False,
         commit=False,
     ):
-        try:
-            pool = await self._get_pool()
-            async with pool.acquire() as conn:
-                async with conn.cursor() as cur:
-                    await cur.execute(query, params or ())
+        pool = await self._get_pool()
+        async with pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(query, params or ())
 
-                    if commit:
-                        await conn.commit()
+                if commit:
+                    await conn.commit()
 
-                    if fetch_one:
-                        return await cur.fetchone()
-                    if fetch_all:
-                        return await cur.fetchall()
-                    return None
-
-        except Exception as e:
-            print(f"Database error: {str(e)}")
-            return None
+                if fetch_one:
+                    return await cur.fetchone()
+                if fetch_all:
+                    return await cur.fetchall()
+                return None
 
     async def clicks_check_is_fastest(self, time_to_check):
         query = "SELECT MIN(time_taken) FROM leaderboard WHERE time_taken IS NOT NULL"
