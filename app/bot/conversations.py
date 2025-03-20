@@ -10,6 +10,7 @@ from telegram.ext import (
 from eth_utils import is_address
 
 from constants.protocol import addresses, chains
+from media import stickers
 from utils import onchain
 from services import get_dbmanager, get_etherscan
 
@@ -62,9 +63,12 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 result = await onchain.withdraw_tokens(
                     user_id, amount, addresses.x7d(chain), 18, address, chain
                 )
-
         await message.delete()
-        await query.edit_message_text(text=result)
+        await context.bot.send_message(
+            chat_id=query.message.chat_id,
+            text=result,
+            message_effect_id=stickers.CONFETTI,
+        )
     except Exception as e:
         await message.delete()
         await query.edit_message_text(text=f"An error occurred: {str(e)}")

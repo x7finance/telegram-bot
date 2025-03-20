@@ -23,7 +23,7 @@ from constants.protocol import (
     tax,
     tokens,
 )
-from media import x7_images
+from media import stickers, x7_images
 from utils import onchain, tools
 from services import (
     get_codex,
@@ -2689,7 +2689,10 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         await context.bot.send_message(
-            chat_id=user_id, text=message, parse_mode="Markdown"
+            chat_id=user_id,
+            text=message,
+            message_effect_id=stickers.CONFETTI,
+            parse_mode="Markdown",
         )
         if update.effective_chat.type != "private":
             await update.message.reply_text("Check DMs!")
