@@ -72,46 +72,46 @@ def get_discounts(chain):
 def get_mint_prices(chain):
     map = {
         "eth": {
-            "eco": "Supply - 500\nMint Price - 0.3 ETH",
-            "liq": "Supply - 250\nMint Price - 0.75 ETH",
-            "dex": "Supply - 150\nMint Price - 1.5 ETH",
-            "borrow": "Supply - 100\nMint Price - 2 ETH",
-            "magister": "Supply - 49\nMint Price - 50 ETH",
+            "eco": "Total Supply - 500\nMint Price - 0.3 ETH",
+            "liq": "Total Supply - 250\nMint Price - 0.75 ETH",
+            "dex": "Total Supply - 150\nMint Price - 1.5 ETH",
+            "borrow": "Total Supply - 100\nMint Price - 2 ETH",
+            "magister": "Total Supply - 49\nMint Price - 50 ETH",
         },
         "arb": {
-            "eco": "Supply - 500\nMint Price - 0.3 ETH",
-            "liq": "Supply - 250\nMint Price - 0.75 ETH",
-            "dex": "Supply - 150\nMint Price - 1.5 ETH",
-            "borrow": "Supply - 100\nMint Price - 2 ETH",
-            "magister": "Supply - 49\nMint Price - 50 ETH",
+            "eco": "Total Supply - 500\nMint Price - 0.3 ETH",
+            "liq": "Total Supply - 250\nMint Price - 0.75 ETH",
+            "dex": "Total Supply - 150\nMint Price - 1.5 ETH",
+            "borrow": "Total Supply - 100\nMint Price - 2 ETH",
+            "magister": "Total Supply - 49\nMint Price - 50 ETH",
         },
         "op": {
             "eco": "Supply - 500\nMint Price - 0.3 ETH",
             "liq": "Supply - 250\nMint Price - 0.75 ETH",
-            "dex": "Supply - 150\nMint Price - 1.5 ETH",
-            "borrow": "Supply - 100\nMint Price - 2 ETH",
-            "magister": "Supply - 49\nMint Price - 50 ETH",
+            "dex": "Total Supply - 150\nMint Price - 1.5 ETH",
+            "borrow": "Total Supply - 100\nMint Price - 2 ETH",
+            "magister": "Total Supply - 49\nMint Price - 50 ETH",
         },
         "bsc": {
-            "eco": "Supply - 500\nMint Price - 0.3 ETH",
-            "liq": "Supply - 250\nMint Price - 0.75 ETH",
-            "dex": "Supply - 150\nMint Price - 1.5 ETH",
-            "borrow": "Supply - 100\nMint Price - 2 ETH",
-            "magister": "Supply - 49\nMint Price - 50 ETH",
+            "eco": "Total Supply - 500\nMint Price - 0.3 ETH",
+            "liq": "Total Supply - 250\nMint Price - 0.75 ETH",
+            "dex": "Total Supply - 150\nMint Price - 1.5 ETH",
+            "borrow": "Total Supply - 100\nMint Price - 2 ETH",
+            "magister": "Total Supply - 49\nMint Price - 50 ETH",
         },
         "poly": {
-            "eco": "Supply - 500\nMint Price - 0.3 ETH",
-            "liq": "Supply - 250\nMint Price - 0.75 ETH",
-            "dex": "Supply - 150\nMint Price - 1.5 ETH",
-            "borrow": "Supply - 100\nMint Price - 2 ETH",
-            "magister": "Supply - 49\nMint Price - 50 ETH",
+            "eco": "Total Supply - 500\nMint Price - 0.3 ETH",
+            "liq": "Total Supply - 250\nMint Price - 0.75 ETH",
+            "dex": "Total Supply - 150\nMint Price - 1.5 ETH",
+            "borrow": "Total Supply - 100\nMint Price - 2 ETH",
+            "magister": "Total Supply - 49\nMint Price - 50 ETH",
         },
         "base": {
-            "eco": "Supply - 500\nMint Price - 0.3 ETH",
-            "liq": "Supply - 250\nMint Price - 0.75 ETH",
-            "dex": "Supply - 150\nMint Price - 1.5 ETH",
-            "borrow": "Supply - 100\nMint Price - 2 ETH",
-            "magister": "Supply - 49\nMint Price - 50 ETH",
+            "eco": "Total Supply - 500\nMint Price - 0.3 ETH",
+            "liq": "Total Supply - 250\nMint Price - 0.75 ETH",
+            "dex": "Total Supply - 150\nMint Price - 1.5 ETH",
+            "borrow": "Total Supply - 100\nMint Price - 2 ETH",
+            "magister": "Total Supply - 49\nMint Price - 50 ETH",
         },
     }
     return map.get(chain, {})
@@ -144,7 +144,7 @@ async def get_info(chain):
 
         total_supply = (
             int(mint_price_text.split("\n")[0].split("-")[1].strip())
-            if "Supply" in mint_price_text
+            if "Total Supply" in mint_price_text
             else 0
         )
 
@@ -175,15 +175,15 @@ async def get_info(chain):
         if isinstance(discount_info, dict):
             discount_text = "\n".join(
                 [
-                    f"> {value}% discount on {token}"
+                    f"- {value}% discount on {token}"
                     for token, value in discount_info.items()
                 ]
             )
         else:
-            discount_text = f"> {discount_info}" if discount_info else ""
+            discount_text = f"- {discount_info}" if discount_info else ""
 
         output.append(
-            f"*{display_name}*\nAvailable - {available}\n{mint_price_text}\nFloor Price - {floor_price} {chain_info.native.upper()} \n{discount_text}\n"
+            f"*{display_name}*\n{discount_text}\nAvailable - {available}\n{mint_price_text}\nFloor Price - {floor_price} {chain_info.native.upper()}\n"
         )
 
     return "\n".join(output).strip()
