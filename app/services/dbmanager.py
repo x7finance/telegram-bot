@@ -1,6 +1,6 @@
 import aiomysql
+import json
 import os
-from datetime import datetime
 
 
 class DBManager:
@@ -167,85 +167,88 @@ class DBManager:
         return result[0] if result else 0
 
     async def reminder_add(self, user_id, when, message):
-        check_query = "SELECT user_id FROM wallets WHERE user_id = %s"
-        exists = await self._execute_query(
-            check_query, (user_id,), fetch_one=True
+        current = await self.reminder_get(user_id)
+
+        new_reminder = {
+            "time": when.strftime("%Y-%m-%d %H:%M:%S"),
+            "message": message,
+        }
+
+        if current:
+            reminders = current["reminders"]
+            reminders.append(new_reminder)
+        else:
+            reminders = [new_reminder]
+
+        query = """
+            UPDATE wallets 
+            SET reminders = %s
+            WHERE user_id = %s
+        """
+        await self._execute_query(
+            query, (json.dumps(reminders), user_id), commit=True
         )
 
-        if exists:
-            query = """
-                UPDATE wallets 
-                SET reminder_time = %s,
-                    reminder_message = %s
-                WHERE user_id = %s
-            """
-            await self._execute_query(
-                query, (when, message, user_id), commit=True
-            )
-        else:
-            query = """
-                INSERT INTO wallets (user_id, reminder_time, reminder_message) 
-                VALUES (%s, %s, %s)
-            """
-            await self._execute_query(
-                query, (user_id, when, message), commit=True
-            )
-
     async def reminder_get(self, user_id):
-        query = """
-            SELECT 
-                user_id,
-                reminder_time,
-                reminder_message 
-            FROM wallets 
-            WHERE user_id = %s 
-            AND reminder_time IS NOT NULL
-        """
+        query = "SELECT reminders FROM wallets WHERE user_id = %s"
         result = await self._execute_query(query, (user_id,), fetch_one=True)
 
-        if not result:
+        if not result or not result[0]:
             return False
 
-        return {
-            "user_id": result[0],
-            "reminder_time": datetime.strptime(result[1], "%Y-%m-%d %H:%M:%S")
-            if isinstance(result[1], str)
-            else result[1],
-            "reminder_message": result[2],
-        }
+        return {"user_id": user_id, "reminders": json.loads(result[0])}
+
+    async def reminder_remove(self, user_id, when=None):
+        if when:
+            current = await self.reminder_get(user_id)
+            if current:
+                reminders = current["reminders"]
+                reminders = [
+                    r
+                    for r in reminders
+                    if r["time"] != when.strftime("%Y-%m-%d %H:%M:%S")
+                ]
+
+                query = """
+                    UPDATE wallets 
+                    SET reminders = %s
+                    WHERE user_id = %s
+                """
+                await self._execute_query(
+                    query, (json.dumps(reminders), user_id), commit=True
+                )
+        else:
+            query = """
+                UPDATE wallets 
+                SET reminders = NULL
+                WHERE user_id = %s
+            """
+            await self._execute_query(query, (user_id,), commit=True)
 
     async def reminders_get(self):
         query = """
-            SELECT 
-                user_id,
-                reminder_time,
-                reminder_message 
+            SELECT user_id, reminders 
             FROM wallets 
-            WHERE reminder_time IS NOT NULL
+            WHERE reminders IS NOT NULL
         """
         results = await self._execute_query(query, fetch_all=True)
 
-        return (
-            [
-                {
-                    "user_id": row[0],
-                    "reminder_time": row[1],
-                    "reminder_message": row[2],
-                }
-                for row in results
-            ]
-            if results
-            else []
-        )
+        if not results:
+            return []
 
-    async def reminder_remove(self, user_id):
-        query = """
-            UPDATE wallets 
-            SET reminder_time = NULL,
-                reminder_message = NULL 
-            WHERE user_id = %s
-        """
-        await self._execute_query(query, (user_id,), commit=True)
+        all_reminders = []
+        for user_id, reminders_json in results:
+            reminders = json.loads(reminders_json)
+            for reminder in reminders:
+                all_reminders.append(
+                    {
+                        "user_id": user_id,
+                        "reminder_time": reminder["time"],
+                        "reminder_message": reminder["message"],
+                    }
+                )
+
+        return all_reminders
 
     async def settings_set(self, setting_name, value):
         query = "UPDATE settings SET value = %s WHERE setting_name = %s"
@@ -278,9 +281,11 @@ class DBManager:
         if user_exists:
             return "Error: You already have a wallet registered, use /me in private to view it"
 
-        query = "INSERT INTO wallets (user_id, wallet, private_key) VALUES (%s, %s, %s)"
+        empty_reminders = json.dumps([])
+
+        query = "INSERT INTO wallets (user_id, wallet, private_key, reminders) VALUES (%s, %s, %s, %s)"
         await self._execute_query(
-            query, (user_id, wallet, private_key), commit=True
+            query, (user_id, wallet, private_key, empty_reminders), commit=True
         )
 
         return "Wallet added successfully"

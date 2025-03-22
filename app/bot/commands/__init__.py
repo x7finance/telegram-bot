@@ -8,6 +8,7 @@ GENERAL_ALIAS = {
     "loans": ["loan"],
     "mcap": ["marketcap"],
     "pairs": ["pair"],
+    "reminder": ["reminders"],
     "splitters": ["split", "splitter"],
     "top": ["trending"],
 }

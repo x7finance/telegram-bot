@@ -281,7 +281,9 @@ async def set_reminders(app):
     total = len(reminders)
 
     for reminder in reminders:
-        job_name = f"reminder_{reminder['user_id']}"
+        job_name = (
+            f"reminder_{reminder['user_id']}_{reminder['reminder_time']}"
+        )
         reminder_time = datetime.strptime(
             reminder["reminder_time"], "%Y-%m-%d %H:%M:%S"
         )

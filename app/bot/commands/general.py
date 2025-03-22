@@ -2710,88 +2710,141 @@ async def reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Use /register to use this service")
         return
 
-    reminder = await db.reminder_get(user.id)
-    if reminder:
-        if context.args[0] == "remove":
-            await db.reminder_remove(user.id)
-
-            job_name = f"reminder_{user.id}"
-            current_jobs = context.job_queue.get_jobs_by_name(job_name)
-            for job in current_jobs:
-                job.schedule_removal()
-            await update.message.reply_text("Reminder removed.")
-            return
-        else:
-            await update.message.reply_text(
-                f"Your already have a reminder set:\n\n{reminder['reminder_message']}\n\nset for {reminder['reminder_time']}!"
-            )
-            return
+    reminders = await db.reminder_get(user.id)
 
     if not context.args:
-        await update.message.reply_text(
-            "No reminder set.\n\n"
-            "Usage:\n"
-            "/reminder MM/DD/YYYY HH:MM Your message\n"
-            "/reminder remove"
+        if reminders and reminders["reminders"]:
+            reminder_list = "\n\n".join(
+                f"#{i + 1}\n📅 {r['time']}\n💭 {r['message']}"
+                for i, r in enumerate(reminders["reminders"])
+            )
+            await update.message.reply_text(
+                f"Your current reminders ({len(reminders['reminders'])}/3):\n\n{reminder_list}\n\n"
+                "To add: /reminder MM/DD/YYYY HH:MM Your reminder message\n"
+                "To remove all: /reminder remove\n"
+                "To remove one: /reminder remove <number>\n\n"
+                "All times are UTC"
+            )
+        else:
+            await update.message.reply_text(
+                "No reminders set (0/3).\n\n"
+                "Usage:\n"
+                "/reminder MM/DD/YYYY HH:MM Your reminder message\n\n"
+                "All times are UTC"
+            )
+        return
+
+    if context.args[0] == "remove":
+        if len(context.args) == 1:
+            await db.reminder_remove(user.id)
+            for job in context.job_queue.get_jobs_by_name(
+                f"reminder_{user.id}"
+            ):
+                job.schedule_removal()
+            await update.message.reply_text("All reminders removed.")
+            return
+        else:
+            try:
+                reminder_num = int(context.args[1])
+                if (
+                    not reminders
+                    or reminder_num < 1
+                    or reminder_num > len(reminders["reminders"])
+                ):
+                    await update.message.reply_text("Invalid reminder number.")
+                    return
+
+                reminder_to_remove = reminders["reminders"][reminder_num - 1]
+                when = datetime.strptime(
+                    reminder_to_remove["time"], "%Y-%m-%d %H:%M:%S"
+                )
+
+                await db.reminder_remove(user.id, when)
+
+                job_name = (
+                    f"reminder_{user.id}_{when.strftime('%Y-%m-%d %H:%M:%S')}"
+                )
+                for job in context.job_queue.get_jobs_by_name(job_name):
+                    job.schedule_removal()
+                await update.message.reply_text(
+                    f"Reminder #{reminder_num} removed."
+                )
+                return
+            except (ValueError, IndexError):
+                await update.message.reply_text(
+                    "Invalid reminder number.\n"
+                    "Use /reminder to see your reminders and their numbers."
+                )
+                return
+
+    try:
+        if reminders and len(reminders["reminders"]) >= 3:
+            await update.message.reply_text(
+                "You've reached the maximum limit of 3 reminders.\n"
+                "Please remove an existing reminder first."
+            )
+            return
+
+        date_str = context.args[0]
+        time_str = context.args[1]
+        datetime_str = f"{date_str} {time_str}"
+        when = datetime.strptime(datetime_str, "%m/%d/%Y %H:%M")
+
+        utc = pytz.UTC
+        when = (
+            utc.localize(when) if when.tzinfo is None else when.astimezone(utc)
         )
 
-    else:
-        try:
-            date_str = context.args[0]
-            time_str = context.args[1]
-
-            datetime_str = f"{date_str} {time_str}"
-            when = datetime.strptime(datetime_str, "%m/%d/%Y %H:%M")
-
-            utc = pytz.UTC
-            when = (
-                utc.localize(when)
-                if when.tzinfo is None
-                else when.astimezone(utc)
-            )
-
-            if when <= datetime.now(utc):
-                await update.message.reply_text(
-                    "Please set a future date and time."
-                )
-                return
-
-            message = " ".join(context.args[2:])
-            if not message:
-                await update.message.reply_text(
-                    "Please include a message for the reminder."
-                )
-                return
-
-            await db.reminder_add(user.id, when, message)
-
-            job_name = f"reminder_{user.id}"
-
-            context.job_queue.run_once(
-                callback=callbacks.send_reminder,
-                when=when,
-                data={
-                    "chat_id": update.effective_chat.id,
-                    "user_id": user.id,
-                    "message": message,
-                },
-                name=job_name,
-            )
-
+        if when <= datetime.now(utc):
             await update.message.reply_text(
-                f"✅ Reminder set!\n\n"
-                f"Date: {when.strftime('%m/%d/%Y')}\n"
-                f"Time: {when.strftime('%H:%M')} UTC\n"
-                f"Message: {message}"
+                "Please set a future date and time."
             )
+            return
 
-        except (ValueError, IndexError):
+        message = " ".join(context.args[2:])
+        if not message:
             await update.message.reply_text(
-                "Invalid date/time format.\n\n"
-                "Usage:\n"
-                "/reminder MM/DD/YYYY HH:MM Your message\n"
-                "Example: /reminder 12/25/2024 14:30 Check X7 price!"
+                "Please include a message for the reminder."
             )
+            return
+
+        if len(message) > 200:
+            await update.message.reply_text(
+                f"Message too long ({len(message)} characters).\n"
+                "Please limit your message to 200 characters."
+            )
+            return
+
+        await db.reminder_add(user.id, when, message)
+
+        job_name = f"reminder_{user.id}_{when.strftime('%Y-%m-%d %H:%M:%S')}"
+        context.job_queue.run_once(
+            callback=callbacks.send_reminder,
+            when=when,
+            data={
+                "chat_id": update.effective_chat.id,
+                "user_id": user.id,
+                "message": message,
+                "reminder_time": when.strftime("%Y-%m-%d %H:%M:%S"),
+            },
+            name=job_name,
+        )
+
+        current_count = len(reminders["reminders"]) + 1 if reminders else 1
+        await update.message.reply_text(
+            f"✅ Reminder set! ({current_count}/3)\n\n"
+            f"Date: {when.strftime('%m/%d/%Y')}\n"
+            f"Time: {when.strftime('%H:%M')} UTC\n"
+            f"Message: {message}"
+        )
+
+    except (ValueError, IndexError):
+        await update.message.reply_text(
+            "Invalid date/time format.\n\n"
+            "Usage:\n"
+            "/reminder MM/DD/YYYY HH:MM Your message\n"
+            "Example: /reminder 12/25/2024 14:30 Check X7 price!"
+        )
 
 
 async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
