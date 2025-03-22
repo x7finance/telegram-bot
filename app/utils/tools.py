@@ -8,11 +8,12 @@ import sentry_sdk
 import socket
 from datetime import datetime
 
-from bot import commands
+from bot import callbacks, commands
 from constants.bot import urls
 from constants.protocol import abis, addresses, chains, splitters, tokens
-from services import get_etherscan
+from services import get_dbmanager, get_etherscan
 
+db = get_dbmanager()
 etherscan = get_etherscan()
 
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
@@ -273,6 +274,29 @@ async def get_loan_token_id(loan_id, chain):
 def get_random_pioneer():
     number = f"{random.randint(1, 4473)}".zfill(4)
     return f"{urls.PIONEERS}{number}.png"
+
+
+async def set_reminders(app):
+    reminders = await db.reminders_get()
+    total = len(reminders)
+
+    for reminder in reminders:
+        job_name = f"reminder_{reminder['user_id']}"
+        reminder_time = datetime.strptime(
+            reminder["reminder_time"], "%Y-%m-%d %H:%M:%S"
+        )
+
+        if reminder_time < datetime.now():
+            continue
+
+        app.job_queue.run_once(
+            callbacks.send_reminder,
+            when=reminder_time,
+            data=reminder,
+            name=job_name,
+        )
+
+    return f"✅ Scheduled {total} reminder(s)"
 
 
 def get_time_difference(timestamp):

@@ -11,7 +11,7 @@ from datetime import datetime
 from eth_account import Account
 from eth_utils import is_address
 
-from bot import commands
+from bot import callbacks, commands
 from constants.bot import settings, text, urls
 from constants.protocol import (
     abis,
@@ -2697,6 +2697,101 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Check DMs!")
     except Exception:
         await update.message.reply_text("Use this command in private!")
+
+
+async def reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_chat.type != "private":
+        await update.message.reply_text("Use this command in private!")
+        return
+    user = update.effective_user
+
+    wallet = await db.wallet_get(user.id)
+    if not wallet:
+        await update.message.reply_text("Use /register to use this service")
+        return
+
+    reminder = await db.reminder_get(user.id)
+    if reminder:
+        if context.args[0] == "remove":
+            await db.reminder_remove(user.id)
+
+            job_name = f"reminder_{user.id}"
+            current_jobs = context.job_queue.get_jobs_by_name(job_name)
+            for job in current_jobs:
+                job.schedule_removal()
+            await update.message.reply_text("Reminder removed.")
+            return
+        else:
+            await update.message.reply_text(
+                f"Your already have a reminder set:\n\n{reminder['reminder_message']}\n\nset for {reminder['reminder_time']}!"
+            )
+            return
+
+    if not context.args:
+        await update.message.reply_text(
+            "No reminder set.\n\n"
+            "Usage:\n"
+            "/reminder MM/DD/YYYY HH:MM Your message\n"
+            "/reminder remove"
+        )
+
+    else:
+        try:
+            date_str = context.args[0]
+            time_str = context.args[1]
+
+            datetime_str = f"{date_str} {time_str}"
+            when = datetime.strptime(datetime_str, "%m/%d/%Y %H:%M")
+
+            utc = pytz.UTC
+            when = (
+                utc.localize(when)
+                if when.tzinfo is None
+                else when.astimezone(utc)
+            )
+
+            if when <= datetime.now(utc):
+                await update.message.reply_text(
+                    "Please set a future date and time."
+                )
+                return
+
+            message = " ".join(context.args[2:])
+            if not message:
+                await update.message.reply_text(
+                    "Please include a message for the reminder."
+                )
+                return
+
+            await db.reminder_add(user.id, when, message)
+
+            job_name = f"reminder_{user.id}"
+
+            context.job_queue.run_once(
+                callback=callbacks.send_reminder,
+                when=when,
+                data={
+                    "chat_id": update.effective_chat.id,
+                    "user_id": user.id,
+                    "message": message,
+                },
+                name=job_name,
+            )
+
+            await update.message.reply_text(
+                f"✅ Reminder set!\n\n"
+                f"Date: {when.strftime('%m/%d/%Y')}\n"
+                f"Time: {when.strftime('%H:%M')} UTC\n"
+                f"Message: {message}"
+            )
+
+        except (ValueError, IndexError):
+            await update.message.reply_text(
+                "Invalid date/time format.\n\n"
+                "Usage:\n"
+                "/reminder MM/DD/YYYY HH:MM Your message\n"
+                "Example: /reminder 12/25/2024 14:30 Check X7 price!"
+            )
 
 
 async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):

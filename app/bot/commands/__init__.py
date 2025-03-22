@@ -58,6 +58,7 @@ for func, description in [
     (general.price, "Check token prices"),
     (general.pushall, "Push X7 splitters"),
     (general.register, "Register a wallet"),
+    (general.reminder, "Set a Reminder"),
     (general.router, "View router contracts"),
     (general.smart, "X7 smart contracts"),
     (general.spaces, "Check available spaces"),

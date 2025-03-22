@@ -96,6 +96,7 @@ async def post_init(application: Application):
             )
 
         print(await tools.update_bot_commands())
+        print(await tools.set_reminders(application))
 
         init_alerts_bot()
         init_price_bot()

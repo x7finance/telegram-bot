@@ -316,6 +316,19 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+async def send_reminder(context: ContextTypes.DEFAULT_TYPE):
+    reminder = context.job.data
+
+    message = f"🚨 REMINDER\n\n{reminder['message']}"
+
+    await context.bot.send_message(
+        chat_id=reminder["user_id"],
+        text=message,
+    )
+
+    await db.reminder_remove(reminder["user_id"])
+
+
 async def settings_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
 

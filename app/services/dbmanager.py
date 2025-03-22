@@ -1,5 +1,6 @@
 import aiomysql
 import os
+from datetime import datetime
 
 
 class DBManager:
@@ -164,6 +165,87 @@ class DBManager:
         query = "SELECT amount FROM log WHERE name = 'deployed'"
         result = await self._execute_query(query, fetch_one=True)
         return result[0] if result else 0
+
+    async def reminder_add(self, user_id, when, message):
+        check_query = "SELECT user_id FROM wallets WHERE user_id = %s"
+        exists = await self._execute_query(
+            check_query, (user_id,), fetch_one=True
+        )
+
+        if exists:
+            query = """
+                UPDATE wallets 
+                SET reminder_time = %s,
+                    reminder_message = %s
+                WHERE user_id = %s
+            """
+            await self._execute_query(
+                query, (when, message, user_id), commit=True
+            )
+        else:
+            query = """
+                INSERT INTO wallets (user_id, reminder_time, reminder_message) 
+                VALUES (%s, %s, %s)
+            """
+            await self._execute_query(
+                query, (user_id, when, message), commit=True
+            )
+
+    async def reminder_get(self, user_id):
+        query = """
+            SELECT 
+                user_id,
+                reminder_time,
+                reminder_message 
+            FROM wallets 
+            WHERE user_id = %s 
+            AND reminder_time IS NOT NULL
+        """
+        result = await self._execute_query(query, (user_id,), fetch_one=True)
+
+        if not result:
+            return False
+
+        return {
+            "user_id": result[0],
+            "reminder_time": datetime.strptime(result[1], "%Y-%m-%d %H:%M:%S")
+            if isinstance(result[1], str)
+            else result[1],
+            "reminder_message": result[2],
+        }
+
+    async def reminders_get(self):
+        query = """
+            SELECT 
+                user_id,
+                reminder_time,
+                reminder_message 
+            FROM wallets 
+            WHERE reminder_time IS NOT NULL
+        """
+        results = await self._execute_query(query, fetch_all=True)
+
+        return (
+            [
+                {
+                    "user_id": row[0],
+                    "reminder_time": row[1],
+                    "reminder_message": row[2],
+                }
+                for row in results
+            ]
+            if results
+            else []
+        )
+
+    async def reminder_remove(self, user_id):
+        query = """
+            UPDATE wallets 
+            SET reminder_time = NULL,
+                reminder_message = NULL 
+            WHERE user_id = %s
+        """
+        await self._execute_query(query, (user_id,), commit=True)
 
     async def settings_set(self, setting_name, value):
         query = "UPDATE settings SET value = %s WHERE setting_name = %s"
