@@ -1,6 +1,6 @@
 from telegram.ext import CallbackQueryHandler, filters, MessageHandler
 
-from bot.conversations import general, withdraw, x7d
+from bot.conversations import general, reminders, withdraw, x7d
 
 
 HANDLERS = [
@@ -38,6 +38,20 @@ HANDLERS = [
             x7d.CONFIRM: [
                 CallbackQueryHandler(
                     general.confirm, pattern="^(mint|redeem):.*$"
+                )
+            ],
+        },
+    },
+    {
+        "entry_points": [
+            CallbackQueryHandler(reminders.start, pattern="^reminder:.*$")
+        ],
+        "states": {
+            reminders.DATE: [CallbackQueryHandler(reminders.date)],
+            reminders.TIME: [CallbackQueryHandler(reminders.time)],
+            reminders.MESSAGE: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND, reminders.message
                 )
             ],
         },

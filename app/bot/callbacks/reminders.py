@@ -3,6 +3,7 @@ from telegram.ext import ContextTypes
 
 from datetime import datetime
 
+from media import stickers
 from utils import tools
 from services import get_dbmanager
 
@@ -65,12 +66,7 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=markup,
             )
         else:
-            await query.message.edit_text(
-                "No reminders set (0/3).\n\n"
-                "Usage:\n"
-                "/reminder MM/DD/YYYY HH:MM Your reminder message\n\n"
-                "All times are UTC"
-            )
+            await query.message.edit_text("No reminders set (0/3).")
 
         await query.answer(f"Reminder #{reminder_num} removed!")
 
@@ -87,6 +83,7 @@ async def send(context: ContextTypes.DEFAULT_TYPE):
         text=(
             f"🚨 *REMINDER - {when}* 🚨\n\n{tools.escape_markdown(reminder['message'])}"
         ),
+        message_effect_id=stickers.CONFETTI,
         parse_mode="Markdown",
     )
 
@@ -94,16 +91,30 @@ async def send(context: ContextTypes.DEFAULT_TYPE):
 
 
 async def set(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    user = query.from_user
+    is_callback = hasattr(update, "callback_query") and update.callback_query
+
+    if is_callback:
+        user = update.callback_query.from_user
+        data = update.callback_query.data
+        chat_id = update.callback_query.message.chat.id
+    else:
+        user = update.effective_user
+        data = context.user_data.get("reminder_data")
+        chat_id = update.effective_chat.id
+
     wallet = await db.wallet.get(user.id)
     if not wallet:
-        await query.answer(
-            "Use /register to use this service", show_alert=True
-        )
+        if is_callback:
+            await update.callback_query.answer(
+                "Use /register to use this service", show_alert=True
+            )
+        else:
+            await update.message.reply_text(
+                "Use /register to use this service"
+            )
         return
 
-    data_parts = query.data.split(":")
+    data_parts = data.split(":")
 
     if data_parts[1] == "loan":
         date = f"{data_parts[2]}:{data_parts[3]}:{data_parts[4]}"
@@ -121,10 +132,13 @@ async def set(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             message = f"{data_parts[5]} lock expired on {chain.upper()}"
 
+    elif data_parts[1] == "manual":
+        date = f"{data_parts[2]}:{data_parts[3]}:{data_parts[4]}"
+        message = data_parts[5]
+
     when = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
 
     reminders = await db.reminders.get(user.id)
-
     if reminders and reminders["reminders"]:
         for reminder in reminders["reminders"]:
             if (
@@ -132,18 +146,29 @@ async def set(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 == when.strftime("%Y-%m-%d %H:%M:%S")
                 in reminder["message"]
             ):
-                await query.answer(
-                    "You already have a reminder set for this event!",
-                    show_alert=True,
-                )
+                if is_callback:
+                    await update.callback_query.answer(
+                        "You already have a reminder set for this event!",
+                        show_alert=True,
+                    )
+                else:
+                    await update.message.reply_text(
+                        "You already have a reminder set for this event!"
+                    )
                 return
 
     if reminders and len(reminders["reminders"]) >= 3:
-        await query.answer(
-            "You've reached the maximum limit of 3 reminders.\n"
-            "Please remove an existing reminder first.",
-            show_alert=True,
-        )
+        if is_callback:
+            await update.callback_query.answer(
+                "You've reached the maximum limit of 3 reminders.\n"
+                "Please remove an existing reminder first.",
+                show_alert=True,
+            )
+        else:
+            await update.message.reply_text(
+                "You've reached the maximum limit of 3 reminders.\n"
+                "Please remove an existing reminder first."
+            )
         return
 
     await db.reminders.add(user.id, when, message)
@@ -153,7 +178,7 @@ async def set(update: Update, context: ContextTypes.DEFAULT_TYPE):
         callback=send,
         when=when,
         data={
-            "chat_id": query.message.chat.id,
+            "chat_id": chat_id,
             "user_id": user.id,
             "message": message,
             "reminder_time": when.strftime("%Y-%m-%d %H:%M:%S"),
@@ -162,6 +187,12 @@ async def set(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     current_count = len(reminders["reminders"]) + 1 if reminders else 1
-    await query.answer(
-        f"✅ Reminder set! ({current_count}/3)", show_alert=True
-    )
+    if is_callback:
+        await update.callback_query.answer(
+            f"✅ Reminder set! ({current_count}/3)", show_alert=True
+        )
+    else:
+        await update.message.reply_text(
+            text=f"✅ Reminder set! ({current_count}/3)",
+            message_effect_id=stickers.CONFETTI,
+        )

@@ -1,4 +1,4 @@
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 
 import aiohttp
 import math
@@ -7,6 +7,7 @@ import random
 import sentry_sdk
 import socket
 from datetime import datetime
+from calendar import monthcalendar
 
 from bot import callbacks, commands
 from constants.general import urls
@@ -23,6 +24,60 @@ def adjust_loan_count(amount, chain):
     latest_loan = amount
     adjusted_amount = max(0, amount - 20) if chain != "eth" else amount
     return adjusted_amount, latest_loan
+
+
+def create_calendar_keyboard(year, month):
+    keyboard = []
+
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                "<<", callback_data=f"cal_prev:{year}:{month}"
+            ),
+            InlineKeyboardButton(f"{month}/{year}", callback_data="ignore"),
+            InlineKeyboardButton(
+                ">>", callback_data=f"cal_next:{year}:{month}"
+            ),
+        ]
+    )
+
+    keyboard.append(
+        [
+            InlineKeyboardButton(day, callback_data="ignore")
+            for day in ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+        ]
+    )
+
+    for week in monthcalendar(year, month):
+        row = []
+        for day in week:
+            if day == 0:
+                row.append(InlineKeyboardButton(" ", callback_data="ignore"))
+            else:
+                row.append(
+                    InlineKeyboardButton(
+                        str(day), callback_data=f"date:{year}:{month}:{day}"
+                    )
+                )
+        keyboard.append(row)
+
+    return InlineKeyboardMarkup(keyboard)
+
+
+def create_time_keyboard():
+    keyboard = []
+    for hour in range(0, 24, 2):
+        row = []
+        for minute in [0, 30]:
+            time_str = f"{hour:02d}:{minute:02d}"
+            row.append(
+                InlineKeyboardButton(
+                    time_str, callback_data=f"time:{hour}:{minute}"
+                )
+            )
+        keyboard.append(row)
+
+    return InlineKeyboardMarkup(keyboard)
 
 
 async def error_handler(

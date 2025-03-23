@@ -11,7 +11,7 @@ from datetime import datetime
 from eth_account import Account
 from eth_utils import is_address
 
-from bot import callbacks, commands
+from bot import commands
 from constants.general import settings, text, urls
 from constants.protocol import (
     abis,
@@ -2711,157 +2711,54 @@ async def reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     reminders = await db.reminders.get(user.id)
+    reminder_count = (
+        len(reminders["reminders"])
+        if reminders and reminders["reminders"]
+        else 0
+    )
 
-    if not context.args:
-        if reminders and reminders["reminders"]:
-            reminder_list = "\n\n".join(
-                f"#{i + 1}\n📅 {r['time']}\n💭 {r['message']}"
-                for i, r in enumerate(reminders["reminders"])
-            )
-
-            buttons = []
-            reminder_buttons = []
-            for i in range(len(reminders["reminders"])):
-                reminder_buttons.append(
-                    InlineKeyboardButton(
-                        text=f"Remove #{i + 1}",
-                        callback_data=f"reminder_remove:{i + 1}",
-                    )
-                )
-
-            for i in range(0, len(reminder_buttons), 3):
-                buttons.append(reminder_buttons[i : i + 3])
-
-            markup = InlineKeyboardMarkup(buttons)
-
-            await update.message.reply_text(
-                f"Your current reminders ({len(reminders['reminders'])}/3):\n\n{reminder_list}\n\n"
-                "All times are UTC\n\n"
-                "Usage:\n"
-                "/reminder MM/DD/YYYY HH:MM Your reminder message\n\n"
-                "All times are UTC",
-                reply_markup=markup,
-            )
-        else:
-            await update.message.reply_text(
-                "No reminders set (0/3).\n\n"
-                "Usage:\n"
-                "/reminder MM/DD/YYYY HH:MM Your reminder message\n\n"
-                "All times are UTC"
-            )
-        return
-
-    if context.args[0] == "remove":
-        if len(context.args) == 1:
-            await db.reminders.remove(user.id)
-            for job in context.job_queue.get_jobs_by_name(
-                f"reminder_{user.id}"
-            ):
-                job.schedule_removal()
-            await update.message.reply_text("All reminders removed.")
-            return
-        else:
-            try:
-                reminder_num = int(context.args[1])
-                if (
-                    not reminders
-                    or reminder_num < 1
-                    or reminder_num > len(reminders["reminders"])
-                ):
-                    await update.message.reply_text("Invalid reminder number.")
-                    return
-
-                reminder_to_remove = reminders["reminders"][reminder_num - 1]
-                when = datetime.strptime(
-                    reminder_to_remove["time"], "%Y-%m-%d %H:%M:%S"
-                )
-
-                await db.reminders.remove(user.id, when)
-
-                job_name = (
-                    f"reminder_{user.id}_{when.strftime('%Y-%m-%d %H:%M:%S')}"
-                )
-                for job in context.job_queue.get_jobs_by_name(job_name):
-                    job.schedule_removal()
-                await update.message.reply_text(
-                    f"Reminder #{reminder_num} removed."
-                )
-                return
-            except (ValueError, IndexError):
-                await update.message.reply_text(
-                    "Invalid reminder number.\n"
-                    "Use /reminder to see your reminders and their numbers."
-                )
-                return
-
-    try:
-        if reminders and len(reminders["reminders"]) >= 3:
-            await update.message.reply_text(
-                "You've reached the maximum limit of 3 reminders.\n"
-                "Please remove an existing reminder first."
-            )
-            return
-
-        date_str = context.args[0]
-        time_str = context.args[1]
-        datetime_str = f"{date_str} {time_str}"
-        when = datetime.strptime(datetime_str, "%m/%d/%Y %H:%M")
-
-        utc = pytz.UTC
-        when = (
-            utc.localize(when) if when.tzinfo is None else when.astimezone(utc)
+    buttons = []
+    if reminder_count > 0:
+        reminder_list = "\n\n".join(
+            f"#{i + 1}\n📅 {r['time']}\n💭 {r['message']}"
+            for i, r in enumerate(reminders["reminders"])
         )
 
-        if when <= datetime.now(utc):
-            await update.message.reply_text(
-                "Please set a future date and time."
+        reminder_buttons = []
+        for i in range(reminder_count):
+            reminder_buttons.append(
+                InlineKeyboardButton(
+                    text=f"Remove #{i + 1}",
+                    callback_data=f"reminder_remove:{i + 1}",
+                )
             )
-            return
 
-        message = " ".join(context.args[2:])
-        if not message:
-            await update.message.reply_text(
-                "Please include a message for the reminder."
-            )
-            return
+        for i in range(0, len(reminder_buttons), 3):
+            buttons.append(reminder_buttons[i : i + 3])
 
-        if len(message) > 200:
-            await update.message.reply_text(
-                f"Message too long ({len(message)} characters).\n"
-                "Please limit your message to 200 characters."
-            )
-            return
+        message_text = (
+            f"Your current reminders ({reminder_count}/3):\n\n"
+            f"{reminder_list}\n\n"
+            "All times are UTC"
+        )
+    else:
+        message_text = "No reminders set (0/3)."
 
-        await db.reminders.add(user.id, when, message)
-
-        job_name = f"reminder_{user.id}_{when.strftime('%Y-%m-%d %H:%M:%S')}"
-        context.job_queue.run_once(
-            callback=callbacks.reminders.send,
-            when=when,
-            data={
-                "chat_id": update.effective_chat.id,
-                "user_id": user.id,
-                "message": message,
-                "reminder_time": when.strftime("%Y-%m-%d %H:%M:%S"),
-            },
-            name=job_name,
+    if reminder_count < 3:
+        buttons.append(
+            [
+                InlineKeyboardButton(
+                    text="Add Reminder", callback_data="reminder:manual"
+                )
+            ]
         )
 
-        current_count = len(reminders["reminders"]) + 1 if reminders else 1
-        await update.message.reply_text(
-            f"✅ Reminder set! ({current_count}/3)\n\n"
-            f"Date: {when.strftime('%m/%d/%Y')}\n"
-            f"Time: {when.strftime('%H:%M')} UTC\n"
-            f"Message: {message}"
-        )
+    markup = InlineKeyboardMarkup(buttons)
 
-    except (ValueError, IndexError):
-        await update.message.reply_text(
-            "Invalid date/time format.\n\n"
-            "Usage:\n"
-            "/reminder MM/DD/YYYY HH:MM Your message\n"
-            "Example: /reminder 12/25/2024 14:30 Check X7 price!"
-        )
+    await update.message.reply_text(
+        message_text,
+        reply_markup=markup,
+    )
 
 
 async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
