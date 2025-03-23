@@ -109,7 +109,7 @@ async def liquidate_loan(loan_id, chain, user_id):
     try:
         chain_info, _ = await chains.get_info(chain)
 
-        wallet = await db.wallet_get(user_id)
+        wallet = await db.wallet.get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -164,7 +164,7 @@ async def splitter_push(
     try:
         chain_info, _ = await chains.get_info(chain)
 
-        wallet = await db.wallet_get(user_id)
+        wallet = await db.wallet.get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -217,7 +217,7 @@ async def stuck_tx(chain, user_id, gas_multiplier=1.5):
     try:
         chain_info, _ = await chains.get_info(chain)
 
-        wallet = await db.wallet_get(user_id)
+        wallet = await db.wallet.get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -267,7 +267,7 @@ async def withdraw_native(amount, chain, user_id, recipient_address):
     try:
         chain_info, _ = await chains.get_info(chain)
 
-        wallet = await db.wallet_get(user_id)
+        wallet = await db.wallet.get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -318,7 +318,7 @@ async def withdraw_tokens(
     try:
         chain_info, _ = await chains.get_info(chain)
 
-        wallet = await db.wallet_get(user_id)
+        wallet = await db.wallet.get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
         amount = Decimal(str(amount))
@@ -393,7 +393,7 @@ async def x7d_mint(amount, chain, user_id):
     try:
         chain_info, _ = await chains.get_info(chain)
 
-        wallet = await db.wallet_get(user_id)
+        wallet = await db.wallet.get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 
@@ -447,7 +447,7 @@ async def x7d_redeem(amount, chain, user_id):
     try:
         chain_info, _ = await chains.get_info(chain)
 
-        wallet = await db.wallet_get(user_id)
+        wallet = await db.wallet.get(user_id)
         sender_address = wallet["wallet"]
         sender_private_key = wallet["private_key"]
 

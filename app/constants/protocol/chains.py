@@ -1,7 +1,7 @@
 from web3 import AsyncWeb3, WebSocketProvider
 from web3.middleware import ExtraDataToPOAMiddleware
 
-from constants.bot import urls
+from constants.general import urls
 from constants.protocol import addresses
 from media import chain_logos
 from utils import tools
@@ -71,7 +71,7 @@ async def get_active_chains():
         return {**MAINNETS, **TESTNETS}
     return (
         {**MAINNETS, **TESTNETS}
-        if await db.settings_get("testnets")
+        if await db.settings.get("testnets")
         else MAINNETS
     )
 

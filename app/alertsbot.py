@@ -11,7 +11,7 @@ import websockets
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 
-from constants.bot import urls
+from constants.general import urls
 from constants.protocol import addresses, abis, chains, tokens
 from media import fonts, blackhole
 from utils import tools
@@ -333,6 +333,9 @@ async def format_loan_alert(
     token_by_id = await tools.get_loan_token_id(loan_id, chain)
     ill_number = tools.get_ill_number(ill_address, chain)
 
+    reminder_date = schedule.split("\n")[0].split(" - ")[0].strip()
+    reminder_amount = schedule.split("\n")[0].split(" - ")[1].strip()
+
     buttons = InlineKeyboardMarkup(
         [
             [
@@ -351,6 +354,12 @@ async def format_loan_alert(
                 InlineKeyboardButton(
                     text="Chart",
                     url=urls.dex_tools_link(chain_info.dext, pair_address),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="Set a Reminder",
+                    callback_data=f"reminder:loan:{reminder_date}:{reminder_amount}:{loan_id}:{chain}",
                 )
             ],
         ]
@@ -586,6 +595,12 @@ async def format_time_lock_alert(log, chain, is_global=False):
                     text="Time Lock Contract",
                     url=chain_info.scan_address
                     + addresses.token_time_lock(chain),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="Set a Reminder",
+                    callback_data=f"reminder:lock:{unlock_date}:00:{token_name}:{chain}",
                 )
             ],
         ]

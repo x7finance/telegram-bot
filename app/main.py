@@ -13,8 +13,8 @@ from pathlib import Path
 from telegram.warnings import PTBUserWarning
 from warnings import filterwarnings
 
-from bot import auto, callbacks, commands, conversations
-from constants.bot import settings, urls
+from bot import callbacks, commands, conversations
+from constants.general import settings, urls
 from utils import tools
 from services import get_dbmanager
 
@@ -49,7 +49,8 @@ def init_main_bot():
                 entry_points=handler["entry_points"],
                 states=handler["states"],
                 fallbacks=handler.get(
-                    "fallbacks", [CommandHandler("cancel", callbacks.cancel)]
+                    "fallbacks",
+                    [CommandHandler("cancel", callbacks.general.cancel)],
                 ),
             )
         )
@@ -67,7 +68,7 @@ def init_main_bot():
     for handler, pattern in callbacks.HANDLERS:
         application.add_handler(CallbackQueryHandler(handler, pattern=pattern))
 
-    for handler in auto.HANDLERS:
+    for handler in callbacks.AUTO_HANDLERS:
         application.add_handler(handler)
 
     print("✅ Main bot initialized")
@@ -87,9 +88,9 @@ async def post_init(application: Application):
     if not tools.is_local():
         print("✅ Bot Running on server")
 
-        if await db.settings_get("click_me"):
+        if await db.settings.get("click_me"):
             application.job_queue.run_once(
-                auto.button_send,
+                callbacks.clickme.send,
                 settings.FIRST_BUTTON_TIME,
                 chat_id=urls.TG_MAIN_CHANNEL_ID,
                 name="Click Me",

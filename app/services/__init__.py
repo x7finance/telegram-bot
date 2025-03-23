@@ -4,7 +4,7 @@ import sys
 from .codex import Codex
 from .coingecko import Coingecko
 from .dextools import Dextools
-from .dbmanager import DBManager
+from .db import db
 from .dune import Dune
 from .etherscan import Etherscan
 from .github import GitHub
@@ -34,8 +34,8 @@ def get_dextools() -> Dextools:
     return get_service(Dextools)
 
 
-def get_dbmanager() -> DBManager:
-    return get_service(DBManager)
+def get_dbmanager():
+    return db
 
 
 def get_dune() -> Dune:

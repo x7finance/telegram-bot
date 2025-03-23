@@ -9,7 +9,7 @@ import socket
 from datetime import datetime
 
 from bot import callbacks, commands
-from constants.bot import urls
+from constants.general import urls
 from constants.protocol import abis, addresses, chains, splitters, tokens
 from services import get_dbmanager, get_etherscan
 
@@ -277,7 +277,7 @@ def get_random_pioneer():
 
 
 async def set_reminders(app):
-    reminders = await db.reminders_get()
+    reminders = await db.reminders.get_all()
     total = len(reminders)
 
     for reminder in reminders:
@@ -292,7 +292,7 @@ async def set_reminders(app):
             continue
 
         app.job_queue.run_once(
-            callbacks.send_reminder,
+            callbacks.reminders.send,
             when=reminder_time,
             data=reminder,
             name=job_name,

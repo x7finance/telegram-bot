@@ -10,7 +10,7 @@ from telegram.ext import (
 import os
 from eth_utils import is_address
 
-from constants.bot import urls
+from constants.general import urls
 from constants.protocol import chains, tokens
 from utils import tools
 

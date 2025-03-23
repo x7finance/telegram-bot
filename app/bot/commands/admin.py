@@ -6,8 +6,8 @@ import os
 
 from datetime import datetime, timedelta
 
-from bot import auto
-from constants.bot import settings
+from bot.callbacks import clickme
+from constants.general import settings
 from utils import tools
 from services import (
     get_codex,
@@ -39,10 +39,10 @@ async def test(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 
-async def clickme(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def clickme_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
-        if await db.settings_get("click_me"):
-            await auto.button_send(context)
+        if await db.settings.get("click_me"):
+            await clickme.send(context)
         else:
             await update.message.reply_text("Click Me is disabled")
 
@@ -50,13 +50,13 @@ async def clickme(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
         user_to_remove = " ".join(context.args)
-        result = await db.wallet_remove(user_to_remove)
+        result = await db.wallet.remove(user_to_remove)
         await update.message.reply_text(result)
 
 
 async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
-        settings = await db.settings_get_all()
+        settings = await db.settings.get_all()
         if not settings:
             await update.message.reply_text("Error fetching settings.")
             return
@@ -185,7 +185,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
         if update.effective_chat.type == "private":
-            if await db.settings_get("click_me"):
+            if await db.settings.get("click_me"):
                 if settings.BUTTON_TIME is not None:
                     time = settings.BUTTON_TIME
                 else:

@@ -12,7 +12,7 @@ from eth_account import Account
 from eth_utils import is_address
 
 from bot import callbacks, commands
-from constants.bot import settings, text, urls
+from constants.general import settings, text, urls
 from constants.protocol import (
     abis,
     addresses,
@@ -1289,7 +1289,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
         update.effective_message.message_thread_id
     )
     chain_info, _ = await chains.get_info(chain)
-    count = await db.count_launches()
+    count = await db.launcher.count()
     _, loan_fees = await tools.generate_loan_terms(chain, 1)
 
     lending_pool = chain_info.w3.eth.contract(
@@ -1320,15 +1320,15 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    board = await db.clicks_get_leaderboard()
-    click_counts_total = await db.clicks_get_total()
-    fastest_user, fastest_time = await db.clicks_fastest_time()
-    streak_user, streak_value = await db.clicks_check_highest_streak()
+    board = await db.clicks.get_leaderboard()
+    click_counts_total = await db.clicks.get_total()
+    fastest_user, fastest_time = await db.clicks.get_fastest_time()
+    streak_user, streak_value = await db.clicks.get_highest_streak()
     formatted_fastest_time = tools.format_seconds(fastest_time)
 
     year = datetime.now().year
 
-    burn_active = await db.settings_get("burn")
+    burn_active = await db.settings.get("burn")
     clicks_needed = (
         settings.CLICK_ME_BURN - (click_counts_total % settings.CLICK_ME_BURN)
         if burn_active
@@ -2015,7 +2015,7 @@ async def me(update: Update, context: ContextTypes.DEFAULT_TYPE):
     buttons = []
     message = f"*X7 Finance Member Details*\n\nTelegram User ID:\n`{user.id}`"
 
-    wallet = await db.wallet_get(user.id)
+    wallet = await db.wallet.get(user.id)
     if not wallet:
         message += "\n\nUse /register to register an EVM wallet"
     else:
@@ -2592,7 +2592,7 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    existing_wallet = await db.wallet_get(user_id)
+    existing_wallet = await db.wallet.get(user_id)
 
     if not existing_wallet:
         await update.message.reply_text(
@@ -2663,7 +2663,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    existing_wallet = await db.wallet_get(user_id)
+    existing_wallet = await db.wallet.get(user_id)
     if existing_wallet:
         try:
             await context.bot.send_message(
@@ -2677,7 +2677,7 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     account = Account.create()
-    await db.wallet_add(user_id, account.address, account.key.hex())
+    await db.wallet.add(user_id, account.address, account.key.hex())
 
     message = (
         "*New EVM wallet created*\n\n"
@@ -2705,12 +2705,12 @@ async def reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     user = update.effective_user
 
-    wallet = await db.wallet_get(user.id)
+    wallet = await db.wallet.get(user.id)
     if not wallet:
         await update.message.reply_text("Use /register to use this service")
         return
 
-    reminders = await db.reminder_get(user.id)
+    reminders = await db.reminders.get(user.id)
 
     if not context.args:
         if reminders and reminders["reminders"]:
@@ -2718,12 +2718,29 @@ async def reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"#{i + 1}\n📅 {r['time']}\n💭 {r['message']}"
                 for i, r in enumerate(reminders["reminders"])
             )
+
+            buttons = []
+            reminder_buttons = []
+            for i in range(len(reminders["reminders"])):
+                reminder_buttons.append(
+                    InlineKeyboardButton(
+                        text=f"Remove #{i + 1}",
+                        callback_data=f"reminder_remove:{i + 1}",
+                    )
+                )
+
+            for i in range(0, len(reminder_buttons), 3):
+                buttons.append(reminder_buttons[i : i + 3])
+
+            markup = InlineKeyboardMarkup(buttons)
+
             await update.message.reply_text(
                 f"Your current reminders ({len(reminders['reminders'])}/3):\n\n{reminder_list}\n\n"
-                "To add: /reminder MM/DD/YYYY HH:MM Your reminder message\n"
-                "To remove all: /reminder remove\n"
-                "To remove one: /reminder remove <number>\n\n"
-                "All times are UTC"
+                "All times are UTC\n\n"
+                "Usage:\n"
+                "/reminder MM/DD/YYYY HH:MM Your reminder message\n\n"
+                "All times are UTC",
+                reply_markup=markup,
             )
         else:
             await update.message.reply_text(
@@ -2736,7 +2753,7 @@ async def reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if context.args[0] == "remove":
         if len(context.args) == 1:
-            await db.reminder_remove(user.id)
+            await db.reminders.remove(user.id)
             for job in context.job_queue.get_jobs_by_name(
                 f"reminder_{user.id}"
             ):
@@ -2759,7 +2776,7 @@ async def reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     reminder_to_remove["time"], "%Y-%m-%d %H:%M:%S"
                 )
 
-                await db.reminder_remove(user.id, when)
+                await db.reminders.remove(user.id, when)
 
                 job_name = (
                     f"reminder_{user.id}_{when.strftime('%Y-%m-%d %H:%M:%S')}"
@@ -2815,11 +2832,11 @@ async def reminder(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
-        await db.reminder_add(user.id, when, message)
+        await db.reminders.add(user.id, when, message)
 
         job_name = f"reminder_{user.id}_{when.strftime('%Y-%m-%d %H:%M:%S')}"
         context.job_queue.run_once(
-            callback=callbacks.send_reminder,
+            callback=callbacks.reminders.send,
             when=when,
             data={
                 "chat_id": update.effective_chat.id,
@@ -3147,9 +3164,9 @@ async def splitters_command(
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     commands_count = len(commands.GENERAL_HANDLERS)
     contributors = await github.get_contributors("telegram-bot")
-    wallets = await db.wallet_count()
+    wallets = await db.wallet.count()
     latest_commit = await github.get_latest_commit("telegram-bot")
-    launches = await db.count_launches()
+    launches = await db.launcher.count()
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),

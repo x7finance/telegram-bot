@@ -97,8 +97,8 @@ ADMIN_HANDLERS = [
     (func.__name__.split("_")[0], func, description)
     for func, description in [
         (admin.settings_command, "Bot settings"),
-        (admin.clickme, "Send Click Me!"),
-        (admin.remove, "Remove an wallet"),
+        (admin.clickme_command, "Send Click Me!"),
+        (admin.remove, "Remove a wallet"),
         (admin.status, "View bot status"),
         (admin.test, "Test"),
         (admin.wen, "Next Click Me!"),
