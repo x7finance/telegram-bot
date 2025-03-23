@@ -51,7 +51,7 @@ async def click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.bot_data["first_user_clicked"] = True
 
-    user_data = await db.clicks.get_by_name(user_info)
+    user_data = await db.clicks.get(user_info)
     clicks, _, streak = user_data
     total_click_count = await db.clicks.get_total()
     burn_active = await db.settings.get("burn")

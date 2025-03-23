@@ -20,7 +20,7 @@ class ClicksManager(DBManager):
             0,
         )
 
-    async def get_by_name(self, name):
+    async def get(self, name):
         query = """
             SELECT clicks, time_taken, streak FROM leaderboard WHERE name = %s
         """
@@ -67,7 +67,7 @@ class ClicksManager(DBManager):
         return "Clicks leaderboard reset successfully"
 
     async def update(self, name, time_taken):
-        user_data = await self.clicks_get_by_name(name)
+        user_data = await self.get(name)
 
         if user_data == (0, 0, 0):
             query = "INSERT INTO leaderboard (name, clicks, time_taken, streak) VALUES (%s, 1, %s, 1)"

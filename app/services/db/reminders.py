@@ -4,7 +4,7 @@ from . import DBManager
 
 class RemindersManager(DBManager):
     async def add(self, user_id, when, message):
-        current = await self.reminder_get(user_id)
+        current = await self.get(user_id)
 
         new_reminder = {
             "time": when.strftime("%Y-%m-%d %H:%M:%S"),
@@ -37,7 +37,7 @@ class RemindersManager(DBManager):
 
     async def remove(self, user_id, when=None):
         if when:
-            current = await self.reminder_get(user_id)
+            current = await self.get(user_id)
             if current:
                 reminders = current["reminders"]
                 reminders = [
