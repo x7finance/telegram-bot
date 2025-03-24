@@ -44,7 +44,9 @@ HANDLERS = [
     },
     {
         "entry_points": [
-            CallbackQueryHandler(reminders.start, pattern="^reminder:.*$")
+            CallbackQueryHandler(
+                reminders.start, pattern="^reminder:manual.*$"
+            )
         ],
         "states": {
             reminders.DATE: [CallbackQueryHandler(reminders.date)],
