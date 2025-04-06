@@ -140,35 +140,31 @@ async def set(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     reminders = await db.reminders.get(user.id)
     if reminders and reminders["reminders"]:
+        reminder_time = when.strftime("%Y-%m-%d %H:%M:%S")
         for reminder in reminders["reminders"]:
             if (
-                reminder["time"]
-                == when.strftime("%Y-%m-%d %H:%M:%S")
-                in reminder["message"]
+                reminder["time"] == reminder_time
+                and reminder["message"] == message
             ):
+                reply_text = "You already have a reminder set for this event!\n\nUse /reminders to view your reminders"
                 if is_callback:
                     await update.callback_query.answer(
-                        "You already have a reminder set for this event!",
+                        reply_text,
                         show_alert=True,
                     )
                 else:
-                    await update.message.reply_text(
-                        "You already have a reminder set for this event!"
-                    )
+                    await update.message.reply_text(reply_text)
                 return
 
     if reminders and len(reminders["reminders"]) >= 3:
+        reply_text = "You've reached the maximum limit of 3 reminders.\n\nUse /reminders to view your reminders and remove one if you need to."
         if is_callback:
             await update.callback_query.answer(
-                "You've reached the maximum limit of 3 reminders.\n"
-                "Please remove an existing reminder first.",
+                reply_text,
                 show_alert=True,
             )
         else:
-            await update.message.reply_text(
-                "You've reached the maximum limit of 3 reminders.\n"
-                "Please remove an existing reminder first."
-            )
+            await update.message.reply_text(reply_text)
         return
 
     await db.reminders.add(user.id, when, message)
@@ -188,11 +184,9 @@ async def set(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     current_count = len(reminders["reminders"]) + 1 if reminders else 1
     if is_callback:
-        await update.callback_query.answer(
-            f"✅ Reminder set! ({current_count}/3)", show_alert=True
-        )
+        reply_text = f"✅ Reminder set! ({current_count}/3)\n\nUse /reminders to view your reminders"
+        await update.callback_query.answer(reply_text, show_alert=True)
     else:
         await update.message.reply_text(
-            text=f"✅ Reminder set! ({current_count}/3)",
-            message_effect_id=stickers.CONFETTI,
+            reply_text, message_effect_id=stickers.CONFETTI
         )
