@@ -300,8 +300,10 @@ async def format_loan_alert(
 
     if is_completed:
         title = "Loan Liquidated" if was_liquidated else "Loan Completed"
+        show_reminder = False
     else:
         title = "Loan Originated"
+        show_reminder = True
 
     schedule1 = await ill_contract.functions.getPremiumPaymentSchedule(
         int(loan_id)
@@ -333,37 +335,40 @@ async def format_loan_alert(
     token_by_id = await tools.get_loan_token_id(loan_id, chain)
     ill_number = tools.get_ill_number(ill_address, chain)
 
-    reminder_date = schedule.split("\n")[0].split(" - ")[0].strip()
-    reminder_amount = schedule.split("\n")[0].split(" - ")[1].strip()
-
-    buttons = InlineKeyboardMarkup(
+    button_list = [
         [
-            [
-                InlineKeyboardButton(
-                    text="View Loan",
-                    url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}",
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="Buy",
-                    url=urls.xchange_buy_link(chain_info.id, token_address),
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="Chart",
-                    url=urls.dex_tools_link(chain_info.dext, pair_address),
-                )
-            ],
+            InlineKeyboardButton(
+                text="View Loan",
+                url=f"{urls.XCHANGE}lending/{chain_info.name.lower()}/{ill_number}/{token_by_id}",
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Buy",
+                url=urls.xchange_buy_link(chain_info.id, token_address),
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Chart",
+                url=urls.dex_tools_link(chain_info.dext, pair_address),
+            )
+        ],
+    ]
+
+    if show_reminder:
+        reminder_date = schedule.split("\n")[0].split(" - ")[0].strip()
+        reminder_amount = schedule.split("\n")[0].split(" - ")[1].strip()
+        button_list.append(
             [
                 InlineKeyboardButton(
                     text="Set a Reminder",
                     callback_data=f"reminder:loan:{reminder_date}:{reminder_amount}:{loan_id}:{chain}",
                 )
-            ],
-        ]
-    )
+            ]
+        )
+
+    buttons = InlineKeyboardMarkup(button_list)
 
     await send_alert(image_buffer, caption, buttons, application)
 
