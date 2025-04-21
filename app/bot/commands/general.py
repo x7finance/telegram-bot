@@ -3294,13 +3294,17 @@ async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         username = "0xtraderai"
         display_name = "0xTraderAi Twitter/X"
         image = x7_images.XTRADER_LOGO
-    elif tools.is_admin(update.effective_user.id) and context.args:
+    elif context.args:
         username = " ".join(context.args).lower()
         display_name = f"{username.capitalize()} Twitter/X"
-        image = (
-            twitter.get_user_data(username)["profile_image"]
-            or tools.get_random_pioneer()
-        )
+        user_data = await twitter.get_user_data(username)
+        try:
+            if user_data and user_data.get("profile_image"):
+                image = user_data["profile_image"]
+            else:
+                image = tools.get_random_pioneer()
+        except Exception:
+            image = tools.get_random_pioneer()
     else:
         username = "x7_finance"
         display_name = "X7 Finance Twitter/X"
@@ -3309,7 +3313,8 @@ async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tweet_data = await twitter.get_latest_tweet(username)
 
     if tweet_data:
-        followers = await twitter.get_user_data(username)["followers"]
+        user_data = await twitter.get_user_data(username)
+        followers = user_data["followers"] if user_data else "N/A"
         created_at = tweet_data.get("created_at", "")
         when = (
             tools.get_time_difference(created_at.timestamp())
@@ -3322,7 +3327,7 @@ async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Followers: {followers}\n\n"
             f"Latest {tweet_data['type']} - {when}\n\n"
             f"{tools.escape_markdown(tweet_data['text'])}\n\n"
-            f"Likes: {tweet_data['likes']})\n"
+            f"Likes: {tweet_data['likes']}\n"
             f"Retweets: {tweet_data['retweets']}\n"
             f"Replies: {tweet_data['replies']}\n\n"
             f"{random.choice(text.X_REPLIES)}"
