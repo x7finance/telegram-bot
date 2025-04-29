@@ -156,7 +156,8 @@ async def initialize_alerts(chain):
                 factory,
                 ill_term,
                 time_lock,
-                treasury_splitter,
+                xchange_create,
+                xchange_create_legacy,
             ) = await initialize_contracts(w3, chain)
 
             ws_url = chains.MAINNETS[chain].ws_rpc_url
@@ -171,7 +172,10 @@ async def initialize_alerts(chain):
                                 factory.address,
                                 ill_term.address,
                                 time_lock.address,
-                                treasury_splitter.address,
+                                xchange_create.address,
+                                xchange_create_legacy.address
+                                if xchange_create_legacy
+                                else None,
                             ]
                         },
                     ],
@@ -204,7 +208,8 @@ async def initialize_alerts(chain):
                                         factory,
                                         ill_term,
                                         time_lock,
-                                        treasury_splitter,
+                                        xchange_create,
+                                        xchange_create_legacy,
                                     ),
                                 )
 
