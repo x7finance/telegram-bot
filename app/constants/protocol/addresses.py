@@ -306,6 +306,13 @@ def xchange_create(chain):
     return map.get(chain)
 
 
+def xchange_create_legacy(chain):
+    map = {
+        "base": "0xd9511408f0042b75D2Be3Bfe9d9e9df7624AFcc1",
+    }
+    return map.get(chain)
+
+
 def splitters(chain):
     return {"eco": eco_splitter(chain), "treasury": treasury_splitter(chain)}
 

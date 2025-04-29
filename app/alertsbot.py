@@ -68,6 +68,7 @@ async def handle_log(log_data, chain, contracts):
             ill_term,
             time_lock,
             xchange_create,
+            xchange_create_legacy,
         ) = contracts
         chain_info, _ = await chains.get_info(chain)
 
@@ -78,8 +79,20 @@ async def handle_log(log_data, chain, contracts):
         event_signature = topics[0]
         token_deployed = False
 
-        if event_signature == xchange_create.events.TokenDeployed().topic:
-            log = xchange_create.events.TokenDeployed().process_log(log_data)
+        if event_signature == xchange_create.events.TokenDeployed().topic or (
+            xchange_create_legacy
+            and event_signature
+            == xchange_create_legacy.events.TokenDeployed().topic
+        ):
+            contract = (
+                xchange_create_legacy
+                if xchange_create_legacy
+                and event_signature
+                == xchange_create_legacy.events.TokenDeployed().topic
+                else xchange_create
+            )
+
+            log = contract.events.TokenDeployed().process_log(log_data)
             await format_token_alert(log, chain)
             token_deployed = True
 
@@ -252,19 +265,27 @@ async def initialize_contracts(w3, chain):
         abi=abis.read(f"ill{addresses.LIVE_LOAN}"),
     )
 
+    time_lock = w3.eth.contract(
+        address=addresses.token_time_lock(chain), abi=abis.read("timelock")
+    )
+
     xchange_create = w3.eth.contract(
         address=addresses.xchange_create(chain), abi=abis.read("xchangecreate")
     )
 
-    time_lock = w3.eth.contract(
-        address=addresses.token_time_lock(chain), abi=abis.read("timelock")
-    )
+    xchange_create_legacy = None
+    if chain == "base":
+        xchange_create_legacy = w3.eth.contract(
+            address=addresses.xchange_create_legacy(chain),
+            abi=abis.read("xchangecreatelegacy"),
+        )
 
     return (
         factory,
         ill_term,
         time_lock,
         xchange_create,
+        xchange_create_legacy,
     )
 
 
@@ -428,7 +449,7 @@ async def format_pair_alert(log, chain):
 
     status = f"{open_source}\n{tax}\n{renounced}"
 
-    message = f"{token_symbol} / {paired_symbol})\n\n{status}"
+    message = f"{token_symbol} / {paired_symbol}\n\n{status}"
 
     image_buffer = await create_image(
         await codex.get_token_image(token_address, chain),
