@@ -652,14 +652,13 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) >= 2:
         amount_raw = context.args[0]
         amount = amount_raw.replace(",", "")
-        token = context.args[1]
-        chain = (
-            await chains.get_chain(update.effective_message.message_thread_id)
-            if len(context.args) < 3
-            else context.args[2]
-        )
+        token = context.args[1].lower()
 
-        if not amount.isdigit():
+        try:
+            amount = float(amount)
+            if amount <= 0:
+                raise ValueError
+        except ValueError:
             await context.bot.send_message(
                 update.effective_chat.id, "Please provide a valid amount"
             )
@@ -673,33 +672,56 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
-    chain_info, error_message = await chains.get_info(chain, token=True)
-    if error_message:
-        await update.message.reply_text(error_message)
-        return
+    active_chains = await chains.get_active_chains()
+
+    chain = context.args[2] if len(context.args) >= 3 else None
+    if not chain:
+        if token in ["x7d"]:
+            chain = await chains.get_chain(
+                update.effective_message.message_thread_id
+            )
+        else:
+            for chain_key, chain_info in active_chains.items():
+                if token == chain_info.native:
+                    chain = chain_key
+                    break
+            if not chain:
+                chain = await chains.get_chain(
+                    update.effective_message.message_thread_id
+                )
+
+    native_tokens = {
+        chain_info.native for chain_info in active_chains.values()
+    }
 
     get_tokens = await tokens.get_tokens()
-    if token.lower() in get_tokens:
-        ca = get_tokens[token.lower()][chain].ca
+    if token in get_tokens:
+        chain_info, error_message = await chains.get_info(chain, token=True)
+        if error_message:
+            await update.message.reply_text(error_message)
+            return
+        ca = get_tokens[token][chain].ca
         price, _ = await dextools.get_price(ca, chain)
-
-    elif token.lowe() == "x7d":
+    elif token in ["x7d"] or token in native_tokens:
         price = await etherscan.get_native_price(chain)
+        chain_info, _ = await chains.get_info(chain)
     else:
         await update.message.reply_text(
-            "Token not found. Please use X7 tokens only"
+            f"{token.upper()} not found. Please use X7 tokens or native tokens only"
         )
         return
 
-    value = float(price) * float(amount)
+    value = float(price) * amount
+
+    amount_display = f"{amount:,.0f}" if amount.is_integer() else f"{amount}"
 
     caption = (
         f"*X7 Finance Price Conversion - {token.upper()} ({chain_info.name})*\n\n"
-        f"{amount} {token.upper()} is currently worth:\n\n${value:,.0f}\n\n"
+        f"{amount_display} {token.upper()} is currently worth:\n\n${value:,.2f}\n\n"
     )
 
-    if amount == "500000" and token.upper() == "X7DAO":
-        caption += "Holding 500,000 X7DAO tokens earns you the right to make X7DAO proposals\n\n"
+    if amount == 500000 and token.upper() == "X7DAO":
+        caption += "Holding 500k X7DAO tokens earns you the right to make X7DAO proposals\n\n"
 
     await update.message.reply_photo(
         photo=tools.get_random_pioneer(),
