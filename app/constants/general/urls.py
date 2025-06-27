@@ -70,6 +70,7 @@ def xchange_buy_link(chain_id, token1):
 
 TG_MAIN_CHANNEL_ID = "-1002417477914"
 TG_ALERTS_CHANNEL_ID = "-1001942497316"
+TG_ALERTS_THREAD = 892
 
 TG_ALERTS = "t.me/xchange_alerts"
 TG_PORTAL = "t.me/x7portal"
@@ -77,7 +78,7 @@ TG_XCHANGE_CREATE = "t.me/xchange_launcher_bot"
 TG_XCHANGE_PRICE_BOT = "t.me/xchange_price_bot"
 
 TG_ALERTS_CHANNELS = {
-    TG_MAIN_CHANNEL_ID: [(None, TG_ALERTS), (892, TG_ALERTS)],
+    TG_MAIN_CHANNEL_ID: [(TG_ALERTS_THREAD, TG_ALERTS)],
     TG_ALERTS_CHANNEL_ID: [(None, TG_PORTAL)],
 }
 
