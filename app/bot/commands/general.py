@@ -737,10 +737,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     contract_names = list(dao.map(chain))
     formatted_contract_names = "\n".join(contract_names)
     keyboard = InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton(text="Vote Here", url=urls.SNAPSHOT)],
-            [InlineKeyboardButton(text="DAO Chat", url=urls.TG_DAO)],
-        ]
+        [[InlineKeyboardButton(text="Vote Here", url=urls.SNAPSHOT)]]
     )
     if not input_contract:
         latest = await snapshot.get_latest()
