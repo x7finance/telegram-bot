@@ -8,7 +8,6 @@ from .db import db
 from .dune import Dune
 from .etherscan import Etherscan
 from .github import GitHub
-from .simplehash import Simplehash
 from .snapshot import Snapshot
 from .twitter import Twitter
 
@@ -48,10 +47,6 @@ def get_etherscan() -> Etherscan:
 
 def get_github() -> GitHub:
     return get_service(GitHub)
-
-
-def get_simplehash() -> Simplehash:
-    return get_service(Simplehash)
 
 
 def get_snapshot() -> Snapshot:

@@ -17,7 +17,6 @@ from services import (
     get_dune,
     get_etherscan,
     get_github,
-    get_simplehash,
     get_snapshot,
     get_twitter,
 )
@@ -29,7 +28,6 @@ dextools = get_dextools()
 dune = get_dune()
 etherscan = get_etherscan()
 github = get_github()
-simplehash = get_simplehash()
 snapshot = get_snapshot()
 twitter = get_twitter()
 
@@ -156,12 +154,6 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
             status.append("🟢 GitHub: Connected Successfully")
         else:
             status.append(github_result)
-
-        simplehash_result = await simplehash.ping()
-        if simplehash_result is True:
-            status.append("🟢 SimpleHash: Connected Successfully")
-        else:
-            status.append(simplehash_result)
 
         snapshot_result = await snapshot.ping()
         if snapshot_result is True:

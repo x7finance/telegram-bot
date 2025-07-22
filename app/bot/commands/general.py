@@ -33,7 +33,6 @@ from services import (
     get_dune,
     get_etherscan,
     get_github,
-    get_simplehash,
     get_snapshot,
     get_twitter,
 )
@@ -45,7 +44,6 @@ dextools = get_dextools()
 dune = get_dune()
 etherscan = get_etherscan()
 github = get_github()
-simplehash = get_simplehash()
 snapshot = get_snapshot()
 twitter = get_twitter()
 
@@ -74,7 +72,7 @@ async def admins(update: Update, context: ContextTypes.DEFAULT_TYPE):
     team.sort(key=lambda username: username.lower())
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption="*X7 Finance Telegram Admins*\n\n" + "\n".join(team),
         parse_mode="Markdown",
     )
@@ -128,7 +126,7 @@ async def arbitrage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
 
                 await update.message.reply_photo(
-                    photo=tools.get_random_pioneer(),
+                    photo=await tools.get_random_pioneer(),
                     caption=comparison_text,
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(
@@ -191,7 +189,7 @@ async def arbitrage(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     )
 
                 await update.message.reply_photo(
-                    photo=tools.get_random_pioneer(),
+                    photo=await tools.get_random_pioneer(),
                     caption=comparison_text,
                     parse_mode="Markdown",
                 )
@@ -226,7 +224,7 @@ async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*Latest Blocks*\n\n{blocks_text}",
         parse_mode="Markdown",
     )
@@ -234,7 +232,7 @@ async def blocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def blog(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption="\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -267,7 +265,7 @@ async def borrow(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
     else:
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption="*X7 Finance Loan Rates*\n\n"
             "Follow the /borrow command with an amount to borrow",
             parse_mode="Markdown",
@@ -368,7 +366,7 @@ async def burn(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.delete()
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7R Tokens Burned ({chain_info.name})*\n\n"
         f"{burn:,.0f} X7R (${burn_dollar:,.0f})\n"
         f"{percent}% of Supply",
@@ -396,7 +394,7 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Buy Links ({chain_info.name})*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -432,7 +430,7 @@ async def ca(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Contract Addresses ({chain_info.name})*\n\n"
         f"*X7R - Rewards Token *\n`{addresses.x7r(chain)}`\n\n"
         f"*X7DAO - Governance Token*\n`{addresses.x7dao(chain)}`\n\n"
@@ -457,7 +455,7 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ],
     ]
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption="\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
@@ -474,7 +472,7 @@ async def chart(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Chart Links ({chain_info.name})*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -509,7 +507,7 @@ async def check(update: Update, context: ContextTypes.DEFAULT_TYPE):
     result = is_address(address)
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=(
             f"*X7 Finance Address Checker*\n\n"
             f"`{address}`\n\n"
@@ -532,7 +530,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if len(context.args) < 1:
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Finance Market Cap Comparison ({chain_info.name})*\n\n"
             f"Please enter X7 token first followed by token to compare\n\n"
             f"ie. `/compare x7r uni`",
@@ -545,7 +543,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7token = context.args[0].lower()
     if x7token.lower() not in get_tokens:
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Finance Market Cap Comparison* ({chain_info.name})\n\n"
             f"Please enter X7 token first followed by token to compare\n\n"
             f"ie. `/compare x7r uni`",
@@ -592,7 +590,7 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.delete()
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Market Cap Comparison* ({chain_info.name})\n\n"
         f"{token2.upper()} Market Cap:\n"
         f"${token_market_cap:,.0f}\n\n"
@@ -624,7 +622,7 @@ async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Constellation Addresses ({chain_info.name})*\n\n"
         f"X7101\n"
         f"`{addresses.x7101(chain)}`\n\n"
@@ -642,7 +640,7 @@ async def constellations(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def contribute(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=text.CONTRIBUTE,
         parse_mode="Markdown",
     )
@@ -724,7 +722,7 @@ async def convert(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption += "Holding 500k X7DAO tokens earns you the right to make X7DAO proposals\n\n"
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=caption,
         parse_mode="Markdown",
     )
@@ -778,7 +776,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Finance DAO*\n"
             f"use `/dao functions` for a list of call callable contracts\n\n"
             f"*{header}*\n\n"
@@ -794,7 +792,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         if input_contract == "functions":
             await update.message.reply_photo(
-                photo=tools.get_random_pioneer(),
+                photo=await tools.get_random_pioneer(),
                 caption=f"*X7 Finance DAO*\n\nUse `/dao [contract-name]` for a list of DAO callable functions\n\n"
                 f"*Contract Names:*\n\n{formatted_contract_names}\n\n",
                 parse_mode="Markdown",
@@ -810,7 +808,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 contract_text, contract_ca = dao.map(chain)[matching_contract]
 
                 await update.message.reply_photo(
-                    photo=tools.get_random_pioneer(),
+                    photo=await tools.get_random_pioneer(),
                     caption=f"*X7 Finance DAO Functions* - {matching_contract}\n\n"
                     f"The following functions can be called on the {matching_contract} contract:\n\n"
                     f"{contract_text}",
@@ -819,7 +817,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             else:
                 await update.message.reply_photo(
-                    photo=tools.get_random_pioneer(),
+                    photo=await tools.get_random_pioneer(),
                     caption=f"*X7 Finance DAO Functions*\n\n"
                     f"'{input_contract}' not found - Use `/dao` followed by one of the contract names below:\n\n"
                     f"{formatted_contract_names}",
@@ -829,7 +827,7 @@ async def dao_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def onchains(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption="*X7 Finance Onchain Messages*\n\n"
         "The stealth launch story of X7 Finance was heralded as an "
         '"incredible way to launch a project in this day and age."\n\n'
@@ -889,7 +887,7 @@ async def docs(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption="\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
@@ -922,7 +920,7 @@ async def factory(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption="\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
@@ -978,7 +976,7 @@ async def faq(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption="\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
@@ -1018,7 +1016,7 @@ async def gas(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.delete()
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*Live Xchange Gas Fees ({chain_info.name})*\n\n"
         f"Create Pair: {pair_gas}\n"
         f"Mint X7D: {mint_gas}\n"
@@ -1083,7 +1081,7 @@ async def feeto(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.delete()
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*Xchange Liquidity Treasury ({chain_info.name})*\n\n"
         f"{eth} (${eth_dollar})\n\n"
         f"{recent_tx_text}",
@@ -1159,7 +1157,7 @@ async def holders(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7d_holders = x7d_info["holders"] or "N/A"
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Token Holders ({chain_info.name})*\n\n"
         f"X7R:        {x7r_holders}\n"
         f"X7DAO:  {x7dao_holders}\n"
@@ -1187,7 +1185,7 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             issue_chunks.append(current_chunk.strip())
 
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Finance GitHub Monorepo Issues*\n\n{issue_chunks[0]}",
             parse_mode="Markdown",
         )
@@ -1200,7 +1198,7 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         pr = await github.get_pull_requests("monorepo")
 
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Finance GitHub Monorepo Pull Requests*\n\n{pr}",
             parse_mode="Markdown",
         )
@@ -1209,7 +1207,7 @@ async def github_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         latest = await github.get_latest_commit("monorepo")
         contributors = await github.get_contributors("monorepo")
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Finance GitHub*\n"
             f"use `/github issues` or `pr` for more details \n\nContributors: {contributors}\n\n{latest}",
             parse_mode="Markdown",
@@ -1293,7 +1291,7 @@ async def hubs(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.delete()
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*{token.upper()} Liquidity Hub ({chain_info.name})*\n\n"
         f"{eth_balance:,.4f} {chain_info.native.upper()} (${eth_dollar:,.0f})\n"
         f"{split_text}\n\n"
@@ -1322,7 +1320,7 @@ async def launch(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*Launch you project on {chain_info.name}*\n\nSeamlessly create and deploy your token and trade instantly.\n\n"
         f"- Borrow Liquidity on Xchange: {loan_fees}\nor\n"
         f"- Launch Instantly on Uniswap for 1% of token supply\n\n"
@@ -1477,7 +1475,7 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.delete()
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Liquidity ({chain_info.name})*\n\n{final_text}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -1594,7 +1592,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await message.delete()
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Finance Loan Liquidations ({chain_info.name})*\n\n{output}",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(
@@ -1699,7 +1697,7 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await message.delete()
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=(
                 f"*X7 Finance Loan Count ({chain_info.name})*\n\n{loan_text}\n"
             ),
@@ -1748,7 +1746,7 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await message.delete()
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Finance Loan Count*\n\n"
             f"{loan_text}\n"
             f"Total: {total}\n"
@@ -1899,7 +1897,7 @@ async def loans(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await message.delete()
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Finance Initial Liquidity Loan - {loan_id} ({chain_info.name})*\n\n"
             f"{name}\n\n"
             f"{loan_amount} {chain_info.native.upper()}\n\n"
@@ -1955,7 +1953,7 @@ async def locks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7d_date, x7d_remaining_time = await get_lock_info(addresses.x7d(chain))
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Liquidity Locks ({chain_info.name})*\n\n"
         f"*X7R*\n"
         f"{x7r_date}\n{x7r_remaining_time}\n\n"
@@ -2019,7 +2017,7 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
         total_cons += cons_mcap_value
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Market Cap Info ({chain_info.name})*\n\n"
         f"X7R: {caps[addresses.x7r(chain)]}\n"
         f"X7DAO: {caps[addresses.x7dao(chain)]}\n"
@@ -2160,7 +2158,7 @@ async def media_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=caption,
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
@@ -2217,9 +2215,9 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await message.delete()
-    await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
-        caption=f"*NFT Info ({chain_info.name})*\n\n{nft_data}",
+    await update.message.reply_text(
+        photo=await tools.get_random_pioneer(),
+        caption=f"*NFT Info ({chain_info.name})*\n{nft_data}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -2246,7 +2244,7 @@ async def pairs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         amount = await contract.functions.allPairsLength().call()
 
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=(
                 f"*X7 Finance Pair Count*\n\n{chain_info.name} Pairs: {amount:,.0f}\n"
             ),
@@ -2283,7 +2281,7 @@ async def pairs(update: Update, context: ContextTypes.DEFAULT_TYPE):
         total += amount
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Pair Count*\n\n{pair_text}\nTotal: {total:,.0f}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -2317,19 +2315,6 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     native_price = await etherscan.get_native_price(chain)
 
     if pioneer_id == "":
-        data = await simplehash.get_nft_data(addresses.PIONEER, chain)
-
-        floor_prices = data.get("collections", [{}])[0].get("floor_prices", [])
-
-        if floor_prices:
-            lowest_floor = min(
-                floor_prices, key=lambda x: x.get("value", float("inf"))
-            )
-            floor_price_eth = lowest_floor["value"] / 10**18
-            floor_price_usd = lowest_floor.get("value_usd_cents", 0) / 100
-        else:
-            floor_price_eth, floor_price_usd = 0, 0
-
         pioneer_pool = await etherscan.get_native_balance(
             addresses.PIONEER, chain
         )
@@ -2370,9 +2355,8 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await message.delete()
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Pioneer NFT Info*\n\n"
-            f"Floor Price: {floor_price_eth:,.3f} ETH (${floor_price_usd:,.0f})\n"
             f"Total Unclaimed Rewards: {pioneer_pool:.3f} ETH (${total_dollar:,.0f})\n"
             f"Total Claimed Rewards: {total_claimed:.3f} ETH (${total_claimed_dollar:,.0f})\n"
             f"Unlock Fee: {unlock_fee:.2f} ETH (${unlock_fee_dollar:,.0f})\n\n"
@@ -2395,12 +2379,7 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
         )
     else:
-        data = await simplehash.get_nft_by_id_data(
-            addresses.PIONEER, pioneer_id, chain
-        )
-        if data:
-            status = data["extra_metadata"]["attributes"][0]["value"]
-            image_url = data["image_url"]
+        try:
             unclaimed = (
                 await contract.functions.unclaimedRewards(
                     int(pioneer_id)
@@ -2413,17 +2392,16 @@ async def pioneer(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 / 10**18
             )
             claimed_dollar = float(claimed) * float(native_price)
-        else:
+        except Exception:
             await update.message.reply_text(f"Pioneer {pioneer_id} not found")
             return
 
         await message.delete()
         await update.message.reply_photo(
-            photo=image_url,
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Pioneer {pioneer_id} NFT Info*\n\n"
-            f"Transfer Lock Status: {status}\n"
             f"Unclaimed Rewards: {unclaimed:.3f} ETH (${unclaimed_dollar:,.0f})\n"
-            f"Claimed Rewards: {claimed:.3f} ETH (${claimed_dollar:,.0f})",
+            f"Claimed Rewards: {claimed:.3f} ETH (${claimed_dollar:,.0f})\n",
             parse_mode="markdown",
             reply_markup=InlineKeyboardMarkup(
                 [
@@ -2495,7 +2473,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await message.delete()
 
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Finance Lending Pool Info*\n\n"
             f"{pool_text}\n"
             f"Lending Pool: ${total_lpool_dollar:,.0f}\n"
@@ -2538,7 +2516,7 @@ async def pool(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await message.delete()
         await update.message.reply_photo(
-            photo=tools.get_random_pioneer(),
+            photo=await tools.get_random_pioneer(),
             caption=f"*X7 Finance Lending Pool Info ({chain_info.name})*\n\n"
             f"Lending Pool:\n"
             f"{lpool:,.3f} {chain_info.native.upper()} (${lpool_dollar:,.0f})\n\n"
@@ -2577,7 +2555,7 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Token Price Info ({chain_info.name})*\n\n"
         f"X7R\n"
         f"💰 Price: {x7r_price}\n"
@@ -2796,7 +2774,7 @@ async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption="\n",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
@@ -2826,7 +2804,7 @@ async def spaces(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=caption,
         parse_mode="Markdown",
         reply_markup=keyboard,
@@ -2951,7 +2929,7 @@ async def smart(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Smart Contracts ({chain_info.name})*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
@@ -3070,7 +3048,7 @@ async def splitters_command(
 
     await message.delete()
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=caption,
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(buttons),
@@ -3085,7 +3063,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     launches = await db.launcher.count()
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=(
             f"*X7 Finance Bot Stats*\n\n"
             f"{tools.escape_markdown('@xchange_launcher_bot Launches:')} {launches}\n\n"
@@ -3119,7 +3097,7 @@ async def tax_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tax_info = await tax.get_info(chain)
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Tax Info ({chain_info.name})*\n\n{tax_info}\n",
         parse_mode="Markdown",
     )
@@ -3140,7 +3118,7 @@ async def timestamp_command(
             when = tools.get_time_difference(stamp)
 
             await update.message.reply_photo(
-                photo=tools.get_random_pioneer(),
+                photo=await tools.get_random_pioneer(),
                 caption=f"*X7 Finance Timestamp Conversion*\n\n"
                 f"{stamp}\n{time} UTC\n\n"
                 f"{when}",
@@ -3236,7 +3214,7 @@ async def top(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.delete()
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=top_text,
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -3286,7 +3264,7 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.delete()
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Treasury ({chain_info.name})*\n\n"
         f"{eth_balance:,.3f} {chain_info.native.upper()} (${eth_dollar:,.0f})\n\n"
         f"{x7r_balance:,.0f} X7R (${x7r_dollar:,.0f}) - {x7r_percent}% \n"
@@ -3321,13 +3299,13 @@ async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if user_data and user_data.get("profile_image"):
                 image = user_data["profile_image"]
             else:
-                image = tools.get_random_pioneer()
+                image = await tools.get_random_pioneer()
         except Exception:
-            image = tools.get_random_pioneer()
+            image = await tools.get_random_pioneer()
     else:
         username = "x7_finance"
         display_name = "X7 Finance Twitter/X"
-        image = tools.get_random_pioneer()
+        image = await tools.get_random_pioneer()
 
     tweet_data = await twitter.get_latest_tweet(username)
 
@@ -3378,7 +3356,7 @@ async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.delete()
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=volume_text,
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -3471,7 +3449,7 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await message.delete()
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"{header}\n\n"
         f"`{wallet}`\n\n"
         f"{eth_balance:.3f} {chain_info.native.upper()} (${dollar:,.0f})\n\n"
@@ -3558,7 +3536,7 @@ async def x7d(update: Update, context: ContextTypes.DEFAULT_TYPE):
     holders = info["holders"] or "N/A"
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*X7D ({chain_info.name}) Info*\n\n"
         f"Holders: {holders}\n\n"
         f"Lending Pool:\n{lpool:,.3f} X7D (${lpool_dollar:,.0f})\n\n"
@@ -3617,7 +3595,7 @@ async def x7_token(
             ath = "Unavailable"
 
     await update.message.reply_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         caption=f"*{token_name} Info ({chain_info.name})*\n\n"
         f"💰 Price: {price}\n"
         f"💎 Market Cap:  {market_cap}\n"

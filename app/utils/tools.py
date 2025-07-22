@@ -12,6 +12,7 @@ from calendar import monthcalendar
 from bot import callbacks, commands
 from constants.general import urls
 from constants.protocol import abis, addresses, chains, splitters, tokens
+from media import x7_images
 from services import get_dbmanager, get_etherscan
 
 db = get_dbmanager()
@@ -326,9 +327,14 @@ async def get_loan_token_id(loan_id, chain):
     return 0
 
 
-def get_random_pioneer():
+async def get_random_pioneer():
     number = f"{random.randint(1, 4473)}".zfill(4)
-    return f"{urls.PIONEERS}{number}.png"
+    url = f"{urls.PIONEERS}{number}.png"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status == 200:
+                return url
+    return x7_images.PIONEER_LOGO
 
 
 async def set_reminders(app):

@@ -1,24 +1,4 @@
-from constants.protocol import addresses, chains
-from services import get_simplehash
-
-simplehash = get_simplehash()
-
-
-async def get_data(chain):
-    map = {
-        "eco": addresses.eco_maxi(chain),
-        "liq": addresses.liq_maxi(chain),
-        "dex": addresses.dex_maxi(chain),
-        "borrow": addresses.borrow_maxi(chain),
-        "magister": addresses.magister(chain),
-    }
-
-    results = {}
-
-    for key, contract_address in map.items():
-        results[key] = await simplehash.get_nft_data(contract_address, chain)
-
-    return results
+from constants.protocol import chains
 
 
 def get_discounts(chain):
@@ -120,7 +100,6 @@ def get_mint_prices(chain):
 async def get_info(chain):
     data = {
         "chain": chain,
-        "data": await get_data(chain),
         "discounts": get_discounts(chain),
         "mint_prices": get_mint_prices(chain),
     }
@@ -148,28 +127,6 @@ async def get_info(chain):
             else 0
         )
 
-        minted = int(
-            data["data"]
-            .get(key, {})
-            .get("collections", [{}])[0]
-            .get("total_quantity", 0)
-        )
-
-        floor_prices = (
-            data["data"]
-            .get(key, {})
-            .get("collections", [{}])[0]
-            .get("floor_prices", [])
-        )
-
-        floor_price = (
-            min(floor_prices, key=lambda x: x["value"])["value"] / 10**18
-            if floor_prices
-            else 0
-        )
-
-        available = total_supply - minted
-
         discount_info = data["discounts"].get(key, {})
 
         if isinstance(discount_info, dict):
@@ -183,7 +140,7 @@ async def get_info(chain):
             discount_text = f"- {discount_info}" if discount_info else ""
 
         output.append(
-            f"*{display_name}*\n{discount_text}\nAvailable - {available}\n{mint_price_text}\nFloor Price - {floor_price} {chain_info.native.upper()}\n"
+            f"*\n{display_name}*\nTotal Supply - {total_supply}\n{discount_text}"
         )
 
     return "\n".join(output).strip()

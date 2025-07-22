@@ -163,7 +163,7 @@ async def send(context: ContextTypes.DEFAULT_TYPE):
         ]
     )
     click_me = await context.bot.send_photo(
-        photo=tools.get_random_pioneer(),
+        photo=await tools.get_random_pioneer(),
         chat_id=urls.TG_MAIN_CHANNEL_ID,
         reply_markup=keyboard,
     )
