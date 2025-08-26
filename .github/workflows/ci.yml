@@ -24,8 +24,9 @@ jobs:
 
       - name: Test imports
         run: |
+          cd app
           python -c "
-          modules = ['app.main', 'app.pricebot']
+          modules = ['main', 'pricebot']
           for mod in modules:
               try:
                   __import__(mod)
