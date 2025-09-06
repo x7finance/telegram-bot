@@ -2215,7 +2215,7 @@ async def nft(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     await message.delete()
-    await update.message.reply_text(
+    await update.message.reply_photo(
         photo=await tools.get_random_pioneer(),
         caption=f"*NFT Info ({chain_info.name})*\n{nft_data}",
         parse_mode="Markdown",
