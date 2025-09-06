@@ -49,7 +49,7 @@ def get_discounts(chain):
     return map.get(chain, {})
 
 
-def get_mint_prices(chain):
+def get_details(chain):
     map = {
         "eth": {
             "eco": "Total Supply - 500\nMint Price - 0.3 ETH",
@@ -101,7 +101,7 @@ async def get_info(chain):
     data = {
         "chain": chain,
         "discounts": get_discounts(chain),
-        "mint_prices": get_mint_prices(chain),
+        "details": get_details(chain),
     }
 
     names = {
@@ -117,15 +117,7 @@ async def get_info(chain):
 
     for key in names:
         display_name = names[key]
-        mint_price_text = data["mint_prices"].get(
-            key, "Mint Price Not Available"
-        )
-
-        total_supply = (
-            int(mint_price_text.split("\n")[0].split("-")[1].strip())
-            if "Total Supply" in mint_price_text
-            else 0
-        )
+        details_text = data["details"].get(key)
 
         discount_info = data["discounts"].get(key, {})
 
@@ -137,10 +129,8 @@ async def get_info(chain):
                 ]
             )
         else:
-            discount_text = f"- {discount_info}" if discount_info else ""
+            discount_text = f"- {discount_info}"
 
-        output.append(
-            f"*\n{display_name}*\nTotal Supply - {total_supply}\n{discount_text}"
-        )
+        output.append(f"*\n{display_name}*\n{details_text}\n{discount_text}")
 
     return "\n".join(output).strip()
