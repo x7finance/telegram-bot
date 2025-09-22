@@ -213,7 +213,7 @@ async def initialize_alerts(chain):
                                     ),
                                 )
 
-                    except websockets.ConnectionClosed:
+                    except websockets.exceptions.ConnectionClosed:
                         break
 
         except asyncio.CancelledError:
