@@ -183,8 +183,8 @@ async def set(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     current_count = len(reminders["reminders"]) + 1 if reminders else 1
+    reply_text = f"✅ Reminder set! ({current_count}/3)\n\nUse /reminders to view your reminders"
     if is_callback:
-        reply_text = f"✅ Reminder set! ({current_count}/3)\n\nUse /reminders to view your reminders"
         await update.callback_query.answer(reply_text, show_alert=True)
     else:
         await update.message.reply_text(
