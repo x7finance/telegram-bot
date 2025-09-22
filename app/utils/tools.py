@@ -67,7 +67,7 @@ def create_calendar_keyboard(year, month):
 
 def create_time_keyboard():
     keyboard = []
-    for hour in range(0, 24, 2):
+    for hour in range(0, 24, 1):
         row = []
         for minute in [0, 30]:
             time_str = f"{hour:02d}:{minute:02d}"
