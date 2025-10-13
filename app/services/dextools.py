@@ -102,13 +102,13 @@ class Dextools:
 
                         change = f"{one_hour}\n{six_hour}\n{one_day}"
                     else:
-                        price = None
+                        price = 0
                         change = "📉 1HR Change: N/A\n📉 6HR Change: N/A\n📉 24HR Change: N/A"
 
                     return price, change
                 else:
                     change = "📉 1HR Change: N/A\n📉 6HR Change: N/A\n📉 24HR Change: N/A"
-                    return None, change
+                    return 0, change
 
     async def get_token_info(self, address, chain):
         chain_info, _ = await chains.get_info(chain)
