@@ -230,7 +230,9 @@ class Dune:
 
         execution_id = await self.execute_query(self.volume_id, "medium")
         response_data = None
-        for _ in range(10):
+        max_retries = 30
+
+        for attempt in range(max_retries):
             response = await self.get_query_results(execution_id)
             if not isinstance(response, dict):
                 return f"*Xchange Volume*\n\n{self.error}"
@@ -241,7 +243,7 @@ class Dune:
                 break
             await asyncio.sleep(2)
 
-        if "result" not in response_data:
+        if not response_data or "result" not in response_data:
             return f"*Xchange Volume*\n\n{self.error}"
 
         try:

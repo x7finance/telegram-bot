@@ -3347,12 +3347,12 @@ async def twitter_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    volume_text = await dune.get_volume()
-
     message = await update.message.reply_text(
         "Getting Volume Info, Please wait..."
     )
     await context.bot.send_chat_action(update.effective_chat.id, "typing")
+
+    volume_text = await dune.get_volume()
 
     await message.delete()
     await update.message.reply_photo(
