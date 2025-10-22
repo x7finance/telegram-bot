@@ -3207,33 +3207,44 @@ async def treasury(update: Update, context: ContextTypes.DEFAULT_TYPE):
         chain_info.dao_multi, chain
     )
     eth_dollar = eth_balance * native_price
+
     x7r_balance = await etherscan.get_token_balance(
         chain_info.dao_multi, addresses.x7r(chain), 18, chain
     )
     x7r_price_data = await dextools.get_price(addresses.x7r(chain), chain)
-    x7r_price = x7r_price_data[0] or 0
-    x7r_dollar = float(x7r_balance) * float(x7r_price)
+    x7r_price = x7r_price_data[0]
+    if x7r_price:
+        x7r_dollar = float(x7r_balance) * float(x7r_price)
+    else:
+        x7r_dollar = 0
+    x7r_display = f"${x7r_dollar:,.0f}" if x7r_dollar else "N/A"
+    x7r_percent = round(x7r_balance / addresses.SUPPLY * 100, 2)
+
     x7dao_balance = await etherscan.get_token_balance(
         chain_info.dao_multi, addresses.x7dao(chain), 18, chain
     )
     x7dao_price_data = await dextools.get_price(addresses.x7dao(chain), chain)
-    x7dao_price = x7dao_price_data[0] or 0
-    x7dao_dollar = float(x7dao_balance) * float(x7dao_price)
+    x7dao_price = x7dao_price_data[0]
+    if x7dao_price:
+        x7dao_dollar = float(x7dao_balance) * float(x7dao_price)
+    else:
+        x7dao_dollar = 0
+    x7dao_display = f"${x7dao_dollar:,.0f}" if x7dao_dollar else "N/A"
+    x7dao_percent = round(x7dao_balance / addresses.SUPPLY * 100, 2)
+
     x7d_balance = await etherscan.get_token_balance(
         chain_info.dao_multi, addresses.x7d(chain), 18, chain
     )
     x7d_dollar = x7d_balance * native_price
     total = x7r_dollar + eth_dollar + x7d_dollar + x7dao_dollar
-    x7r_percent = round(x7r_balance / addresses.SUPPLY * 100, 2)
-    x7dao_percent = round(x7dao_balance / addresses.SUPPLY * 100, 2)
 
     await message.delete()
     await update.message.reply_photo(
         photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Treasury ({chain_info.name})*\n\n"
         f"{eth_balance:,.3f} {chain_info.native.upper()} (${eth_dollar:,.0f})\n\n"
-        f"{x7r_balance:,.0f} X7R (${x7r_dollar:,.0f}) - {x7r_percent}% \n"
-        f"{x7dao_balance:,.0f} X7DAO (${x7dao_dollar:,.0f}) - {x7dao_percent}%\n"
+        f"{x7r_balance:,.0f} X7R ({x7r_display}) - {x7r_percent}% \n"
+        f"{x7dao_balance:,.0f} X7DAO ({x7dao_display}) - {x7dao_percent}%\n"
         f"{x7d_balance} X7D (${x7d_dollar:,.0f})\n\n"
         f"Total: ${total:,.0f}",
         parse_mode="Markdown",
