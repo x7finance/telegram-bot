@@ -132,14 +132,14 @@ class Dextools:
                             if fdv is not None:
                                 formatted_mcap = f"${fdv:,.0f}"
                             else:
-                                formatted_mcap = None
+                                formatted_mcap = "N/A"
 
                         return {
                             "supply": total_supply,
                             "mcap": formatted_mcap,
                             "holders": holders,
                         }
-                return {"supply": None, "mcap": None, "holders": None}
+                return {"supply": "N/A", "mcap": "N/A", "holders": "N/A"}
 
     async def get_token_name(self, address, chain):
         chain_info, _ = await chains.get_info(chain)
@@ -165,7 +165,7 @@ class Dextools:
             async with session.get(
                 self.url + endpoint, headers=self.headers
             ) as response:
-                liquidity_data = {"total": "0", "token": "0", "eth": "0.00"}
+                liquidity_data = {"total": 0, "token": 0, "eth": 0.00}
 
                 if response.status == 200:
                     data = await response.json()

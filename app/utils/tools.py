@@ -13,9 +13,10 @@ from bot import callbacks, commands
 from constants.general import urls
 from constants.protocol import abis, addresses, chains, splitters, tokens
 from media import x7_images
-from services import get_dbmanager, get_etherscan
+from services import get_dbmanager, get_dextools, get_etherscan
 
 db = get_dbmanager()
+dextools = get_dextools()
 etherscan = get_etherscan()
 
 sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), traces_sample_rate=1.0)
@@ -392,6 +393,34 @@ def get_time_difference(timestamp):
         return f"{minutes} minute{'s' if minutes > 1 else ''} {suffix}"
     else:
         return "Just now" if not is_future else "In a moment"
+
+
+async def get_token_liquidity_text(
+    token_name, pair_address, chain, chain_info
+):
+    liquidity_data = await dextools.get_liquidity(pair_address, chain)
+
+    text = f"*{token_name}*\n"
+    token_liquidity = liquidity_data.get("token") if liquidity_data else None
+
+    if token_liquidity:
+        eth_liquidity = liquidity_data.get("eth")
+        total_liquidity = liquidity_data.get("total")
+
+        percentage = (
+            (float(token_liquidity.replace(",", "")) / addresses.SUPPLY) * 100
+            if token_liquidity and addresses.SUPPLY
+            else 0
+        )
+
+        text += (
+            f"{token_liquidity} {token_name} ({percentage:.2f}%)\n"
+            f"{eth_liquidity} {chain_info.native.upper()}\n{total_liquidity}"
+        )
+    else:
+        text += "N/A"
+
+    return text
 
 
 def is_admin(user_id):

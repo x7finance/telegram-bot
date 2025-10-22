@@ -582,7 +582,22 @@ async def compare(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     token_ca = get_tokens[x7token.lower()][chain].ca
     x7_price, _ = await dextools.get_price(token_ca, chain)
+
+    if not x7_price:
+        await message.delete()
+        await update.message.reply_text(
+            f"Unable to get {x7token.upper()} price data. Please try again later."
+        )
+        return
+
     x7_market_cap = float(x7_price) * float(x7_supply)
+
+    if x7_market_cap == 0:
+        await message.delete()
+        await update.message.reply_text(
+            f"Unable to calculate {x7token.upper()} market cap. Please try again later."
+        )
+        return
 
     percent = ((token_market_cap - x7_market_cap) / x7_market_cap) * 100
     x = (token_market_cap - x7_market_cap) / x7_market_cap
@@ -1412,64 +1427,12 @@ async def liquidity(update: Update, context: ContextTypes.DEFAULT_TYPE):
     x7r_pair = get_tokens["x7r"].get(chain).pairs[0]
     x7dao_pair = get_tokens["x7dao"].get(chain).pairs[0]
 
-    total_x7r_liquidity = 0
-    total_x7dao_liquidity = 0
-    total_x7r_eth = 0
-    total_x7dao_eth = 0
-
-    x7r_liquidity_data = await dextools.get_liquidity(x7r_pair, chain)
-
-    x7r_text = "*X7R*\n"
-    x7r_token_liquidity = x7r_liquidity_data.get("token")
-    x7r_eth_liquidity = x7r_liquidity_data.get("eth")
-    x7r_total_liquidity = x7r_liquidity_data.get("total")
-
-    x7r_percentage = (
-        (float(x7r_token_liquidity.replace(",", "")) / addresses.SUPPLY) * 100
-        if x7r_token_liquidity and addresses.SUPPLY
-        else 0
+    x7r_text = await tools.get_token_liquidity_text(
+        "X7R", x7r_pair, chain, chain_info
     )
-
-    if x7r_eth_liquidity:
-        total_x7r_eth += float(x7r_eth_liquidity.replace(",", ""))
-
-    x7r_text += (
-        f"{x7r_token_liquidity} X7R ({x7r_percentage:.2f}%)\n"
-        f"{x7r_eth_liquidity} {chain_info.native.upper()}\n{x7r_total_liquidity}"
+    x7dao_text = await tools.get_token_liquidity_text(
+        "X7DAO", x7dao_pair, chain, chain_info
     )
-
-    if x7r_total_liquidity:
-        total_x7r_liquidity += float(
-            x7r_total_liquidity.replace("$", "").replace(",", "")
-        )
-
-    x7dao_liquidity_data = await dextools.get_liquidity(x7dao_pair, chain)
-    x7dao_text = "*X7DAO*\n"
-    x7dao_token_liquidity = x7dao_liquidity_data.get("token")
-    x7dao_eth_liquidity = x7dao_liquidity_data.get(
-        "eth",
-    )
-    x7dao_total_liquidity = x7dao_liquidity_data.get("total")
-
-    x7dao_percentage = (
-        (float(x7dao_token_liquidity.replace(",", "")) / addresses.SUPPLY)
-        * 100
-        if x7dao_token_liquidity and addresses.SUPPLY
-        else 0
-    )
-
-    if x7dao_eth_liquidity:
-        total_x7dao_eth += float(x7dao_eth_liquidity.replace(",", ""))
-
-    x7dao_text += (
-        f"{x7dao_token_liquidity} X7DAO ({x7dao_percentage:.2f}%)\n"
-        f"{x7dao_eth_liquidity} {chain_info.native.upper()}\n{x7dao_total_liquidity}"
-    )
-
-    if x7dao_total_liquidity:
-        total_x7dao_liquidity += float(
-            x7dao_total_liquidity.replace("$", "").replace(",", "")
-        )
 
     final_text = f"{x7r_text}\n\n{x7dao_text}"
 
@@ -1998,31 +1961,30 @@ async def mcap(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if token_info:
             address = token_info.ca
             caps_info[address] = await dextools.get_token_info(address, chain)
-            caps[address] = caps_info[address]["mcap"]
+            caps[address] = (
+                caps_info[address].get("mcap") if caps_info[address] else None
+            )
 
     total_mcap = 0
+    valid_caps = 0
     for token, mcap in caps.items():
-        if not mcap:
+        if not mcap or mcap == "N/A":
             continue
-        mcap_value = float("".join(filter(str.isdigit, mcap)))
-        total_mcap += mcap_value
+        try:
+            mcap_value = float("".join(filter(str.isdigit, mcap)))
+            total_mcap += mcap_value
+            valid_caps += 1
+        except ValueError:
+            continue
 
-    total_cons = 0
-    for token, mcap in caps.items():
-        if token in (addresses.x7dao(chain), addresses.x7r(chain)):
-            continue
-        if not mcap:
-            continue
-        cons_mcap_value = float("".join(filter(str.isdigit, mcap)))
-        total_cons += cons_mcap_value
+    total_display = f"${total_mcap:,.0f}" if valid_caps > 0 else "N/A"
 
     await update.message.reply_photo(
         photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Market Cap Info ({chain_info.name})*\n\n"
-        f"X7R: {caps[addresses.x7r(chain)]}\n"
-        f"X7DAO: {caps[addresses.x7dao(chain)]}\n"
-        f"X7100: ${total_cons:,.0f}\n\n"
-        f"Total Market Cap: ${total_mcap:,.0f}",
+        f"X7R: {caps.get(addresses.x7r(chain), 'N/A')}\n"
+        f"X7DAO: {caps.get(addresses.x7dao(chain), 'N/A')}\n"
+        f"Total Market Cap: {total_display}",
         parse_mode="Markdown",
     )
 
@@ -2554,14 +2516,17 @@ async def price(update: Update, context: ContextTypes.DEFAULT_TYPE):
         addresses.x7dao(chain), chain
     )
 
+    formatted_x7r_price = f"${x7r_price}" if x7r_price else "N/A"
+    formatted_x7dao_price = f"${x7dao_price}" if x7dao_price else "N/A"
+
     await update.message.reply_photo(
         photo=await tools.get_random_pioneer(),
         caption=f"*X7 Finance Token Price Info ({chain_info.name})*\n\n"
         f"X7R\n"
-        f"💰 Price: {x7r_price}\n"
+        f"💰 Price: {formatted_x7r_price}\n"
         f"{x7r_change}\n\n"
         f"X7DAO\n"
-        f"💰 Price: {x7dao_price}\n"
+        f"💰 Price: {formatted_x7dao_price}\n"
         f"{x7dao_change}",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
@@ -3577,13 +3542,13 @@ async def x7_token(
         pair = pairs[0]
 
     info = await dextools.get_token_info(token_ca(chain), chain)
-    holders = info.get("holders", "N/A")
-    market_cap = info.get("mcap", "N/A")
+    holders = info.get("holders")
+    market_cap = info.get("mcap")
     price, price_change = await dextools.get_price(token_ca(chain), chain)
     price = f"${price}" if price else "N/A"
     volume = await codex.get_volume(pair, chain) or "N/A"
     liquidity_data = await dextools.get_liquidity(pair, chain)
-    liquidity = liquidity_data.get("total", "N/A")
+    liquidity = liquidity_data.get("total", "N/A") if liquidity_data else "N/A"
 
     if chain_info.trading:
         ath_data = await cg.get_ath(token_name)

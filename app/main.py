@@ -100,7 +100,7 @@ async def post_init(application: Application):
         print(await tools.set_reminders(application))
 
         init_alerts_bot()
-        init_price_bot()
+        # init_price_bot()
 
     else:
         print("✅ Main bot Running locally")
