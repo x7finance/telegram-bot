@@ -125,12 +125,9 @@ async def set(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data_parts[1] == "lock":
         date = f"{data_parts[2]}:{data_parts[3]}:{data_parts[4]}"
-        chain = data_parts[6]
-
-        if not data_parts[5]:
-            message = f"Global lock expired on {chain.upper()}"
-        else:
-            message = f"{data_parts[5]} lock expired on {chain.upper()}"
+        token_name = data_parts[4]
+        chain = data_parts[5]
+        message = f"{token_name} lock expired on {chain.upper()}"
 
     elif data_parts[1] == "manual":
         date = f"{data_parts[2]}:{data_parts[3]}:{data_parts[4]}"

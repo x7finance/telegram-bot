@@ -571,27 +571,20 @@ async def format_token_alert(log, chain):
 async def format_time_lock_alert(log, chain, is_global=False):
     chain_info, _ = await chains.get_info(chain)
 
+    title = "Liquidity Unlock Time Set"
+
     if is_global:
-        title = "Global Unlock Time Set"
         unlock_timestamp = log["args"]["unlockTimestamp"]
         unlock_date = datetime.fromtimestamp(unlock_timestamp).strftime(
             "%Y-%m-%d %H:%M"
         )
         when = tools.get_time_difference(unlock_timestamp)
+        token_name = "Global"
+        token_image = chain_info.logo
 
         message = f"Global Unlock Time Set\n\n{unlock_date}\n{when}"
 
-        image_buffer = await create_image(
-            chain_info.logo,
-            title,
-            message,
-            chain_info,
-        )
-
-        caption = f"*{title} ({chain_info.name.upper()})*\n\n{message}\n\n"
-
     else:
-        title = "Token Unlock Time Set"
         token_address = chain_info.w3.to_checksum_address(
             log["args"]["tokenAddress"]
         )
@@ -610,14 +603,14 @@ async def format_time_lock_alert(log, chain, is_global=False):
 
         message = f"{token_name}\n\n{unlock_date}\n{when}"
 
-        image_buffer = await create_image(
-            token_image,
-            title,
-            message,
-            chain_info,
-        )
+    image_buffer = await create_image(
+        token_image,
+        title,
+        message,
+        chain_info,
+    )
 
-        caption = f"*{title} ({chain_info.name.upper()})*\n\n{message}\n\n"
+    caption = f"*{title} ({chain_info.name.upper()})*\n\n{message}\n\n"
 
     buttons = InlineKeyboardMarkup(
         [
