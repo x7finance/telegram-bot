@@ -1,0 +1,17 @@
+app = "your-app-name"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PYTHON_VERSION = "3.12"
+
+[processes]
+  app = "python app/main.py"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
