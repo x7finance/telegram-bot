@@ -1,5 +1,5 @@
 app = "x7-telegram-bot"
-primary_region = "iad"
+primary_region = "lhr"
 
 [build]
   dockerfile = "Dockerfile"
