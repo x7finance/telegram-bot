@@ -1,4 +1,4 @@
-app = "your-app-name"
+app = "x7-telegram-bot"
 primary_region = "iad"
 
 [build]
