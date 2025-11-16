@@ -1,9 +1,6 @@
 app = "x7-telegram-bot"
 primary_region = "lhr"
 
-[build]
-  dockerfile = "Dockerfile"
-
 [env]
   PYTHON_VERSION = "3.12"
 
