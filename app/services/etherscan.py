@@ -81,12 +81,15 @@ class Etherscan:
                 return await response.json()
 
     async def get_native_balance(self, wallet, chain):
-        chain_info, _ = await chains.get_info(chain)
-        url = f"{self.url}?chainid={chain_info.id}&module=account&action=balancemulti&address={wallet}&tag=latest&apikey={self.key}"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                data = await response.json()
-                return float(data["result"][0]["balance"]) / 10**18
+        try:
+            chain_info, _ = await chains.get_info(chain)
+            url = f"{self.url}?chainid={chain_info.id}&module=account&action=balancemulti&address={wallet}&tag=latest&apikey={self.key}"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    data = await response.json()
+                    return float(data["result"][0]["balance"]) / 10**18
+        except Exception:
+            return 0
 
     async def get_native_price(self, chain):
         try:
