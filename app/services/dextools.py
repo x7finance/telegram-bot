@@ -2,9 +2,10 @@ import aiohttp
 import os
 
 from constants.protocol import chains
+from utils import cache
 
 
-class Dextools:
+class Dextools(cache.CachedService):
     def __init__(self):
         self.plan = "trial"
         self.headers = {
@@ -12,8 +13,9 @@ class Dextools:
             "x-api-key": os.getenv("DEXTOOLS_API_KEY"),
         }
         self.url = f"http://public-api.dextools.io/{self.plan}/v2/"
+        super().__init__()
 
-    async def ping(self):
+    async def ping(self, cache_ttl=None):
         try:
             endpoint = "token/ethereum/TOKEN_ADDRESS/price"
             async with aiohttp.ClientSession() as session:
@@ -26,7 +28,7 @@ class Dextools:
         except Exception as e:
             return f"🔴 Dextools: Connection failed: {str(e)}"
 
-    async def get_audit(self, address, chain):
+    async def get_audit(self, address, chain, cache_ttl=3600):
         chain_info, _ = await chains.get_info(chain)
         endpoint = f"token/{chain_info.dext}/{address}/audit"
         async with aiohttp.ClientSession() as session:
@@ -35,7 +37,7 @@ class Dextools:
             ) as response:
                 return await response.json()
 
-    async def get_dex(self, address, chain):
+    async def get_dex(self, address, chain, cache_ttl=None):
         chain_info, _ = await chains.get_info(chain)
         endpoint = f"pool/{chain_info.dext}/{address}"
 
@@ -56,7 +58,7 @@ class Dextools:
                 except Exception:
                     return ""
 
-    async def get_price(self, address, chain):
+    async def get_price(self, address, chain, cache_ttl=60):
         chain_info, _ = await chains.get_info(chain)
         endpoint = f"token/{chain_info.dext}/{address}/price"
 
@@ -110,7 +112,7 @@ class Dextools:
                     change = "📉 1HR Change: N/A\n📉 6HR Change: N/A\n📉 24HR Change: N/A"
                     return 0, change
 
-    async def get_token_info(self, address, chain):
+    async def get_token_info(self, address, chain, cache_ttl=300):
         chain_info, _ = await chains.get_info(chain)
         endpoint = f"token/{chain_info.dext}/{address}/info"
 
@@ -141,7 +143,7 @@ class Dextools:
                         }
                 return {"supply": "N/A", "mcap": "N/A", "holders": "N/A"}
 
-    async def get_token_name(self, address, chain):
+    async def get_token_name(self, address, chain, cache_ttl=3600):
         chain_info, _ = await chains.get_info(chain)
         endpoint = f"token/{chain_info.dext}/{address}"
 
@@ -157,7 +159,7 @@ class Dextools:
                         return {"name": name, "symbol": symbol}
                 return {"name": "Unknown Token", "symbol": "Unknown Token"}
 
-    async def get_liquidity(self, address, chain):
+    async def get_liquidity(self, address, chain, cache_ttl=60):
         chain_info, _ = await chains.get_info(chain)
         endpoint = f"pool/{chain_info.dext}/{address}/liquidity"
 
@@ -186,7 +188,7 @@ class Dextools:
 
                 return liquidity_data
 
-    async def get_pool_price(self, address, chain):
+    async def get_pool_price(self, address, chain, cache_ttl=60):
         chain_info, _ = await chains.get_info(chain)
         endpoint = f"pool/{chain_info.dext}/{address}/price"
 

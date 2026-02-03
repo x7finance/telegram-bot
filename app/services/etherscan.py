@@ -3,14 +3,16 @@ import os
 import time
 
 from constants.protocol import addresses, chains
+from utils import cache
 
 
-class Etherscan:
+class Etherscan(cache.CachedService):
     def __init__(self):
         self.url = "https://api.etherscan.io/v2/api"
         self.key = os.getenv("ETHERSCAN_API_KEY")
+        super().__init__()
 
-    async def ping(self):
+    async def ping(self, cache_ttl=None):
         try:
             params = {
                 "module": "proxy",
@@ -29,7 +31,7 @@ class Etherscan:
         except Exception as e:
             return f"🔴 Etherscan: Connection failed: {str(e)}"
 
-    async def get_block(self, chain, time):
+    async def get_block(self, chain, time, cache_ttl=300):
         chain_info, _ = await chains.get_info(chain)
         url = f"{self.url}?chainid={chain_info.id}&module=block&action=getblocknobytime&timestamp={time}&closest=before&apikey={self.key}"
         async with aiohttp.ClientSession() as session:
@@ -37,7 +39,7 @@ class Etherscan:
                 data = await response.json()
                 return data["result"]
 
-    async def get_daily_tx_count(self, contract, chain):
+    async def get_daily_tx_count(self, contract, chain, cache_ttl=60):
         chain_info, _ = await chains.get_info(chain)
         yesterday = int(time.time()) - 86400
         block_yesterday = await self.get_block(chain, yesterday)
@@ -65,7 +67,7 @@ class Etherscan:
 
         return tx_entry_count + internal_tx_entry_count
 
-    async def get_burnt_supply(self, token, chain):
+    async def get_burnt_supply(self, token, chain, cache_ttl=3600):
         chain_info, _ = await chains.get_info(chain)
         url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={token}&address={addresses.DEAD}&tag=latest&apikey={self.key}"
         async with aiohttp.ClientSession() as session:
@@ -73,14 +75,14 @@ class Etherscan:
                 data = await response.json()
                 return int(data["result"][:-18])
 
-    async def get_gas(self, chain):
+    async def get_gas(self, chain, cache_ttl=60):
         chain_info, _ = await chains.get_info(chain)
         url = f"{self.url}?chainid={chain_info.id}&module=gastracker&action=gasoracle&apikey={self.key}"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 return await response.json()
 
-    async def get_native_balance(self, wallet, chain):
+    async def get_native_balance(self, wallet, chain, cache_ttl=30):
         try:
             chain_info, _ = await chains.get_info(chain)
             url = f"{self.url}?chainid={chain_info.id}&module=account&action=balancemulti&address={wallet}&tag=latest&apikey={self.key}"
@@ -91,7 +93,7 @@ class Etherscan:
         except Exception:
             return 0
 
-    async def get_native_price(self, chain):
+    async def get_native_price(self, chain, cache_ttl=60):
         try:
             chain_info, _ = await chains.get_info(chain)
 
@@ -110,7 +112,9 @@ class Etherscan:
         except Exception:
             return 0
 
-    async def get_token_balance(self, wallet, token, decimals, chain):
+    async def get_token_balance(
+        self, wallet, token, decimals, chain, cache_ttl=30
+    ):
         try:
             chain_info, _ = await chains.get_info(chain)
             url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={self.key}"
@@ -121,14 +125,14 @@ class Etherscan:
         except Exception:
             return 0
 
-    async def get_tx(self, address, chain):
+    async def get_tx(self, address, chain, cache_ttl=60):
         chain_info, _ = await chains.get_info(chain)
         url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlist&sort=desc&address={address}&apikey={self.key}"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 return await response.json()
 
-    async def get_internal_tx(self, address, chain):
+    async def get_internal_tx(self, address, chain, cache_ttl=60):
         chain_info, _ = await chains.get_info(chain)
         url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlistinternal&sort=desc&address={address}&apikey={self.key}"
         async with aiohttp.ClientSession() as session:

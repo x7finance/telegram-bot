@@ -3,9 +3,10 @@ import asyncio
 import os
 from datetime import datetime
 from constants.protocol import chains
+from utils import cache
 
 
-class Dune:
+class Dune(cache.CachedService):
     def __init__(self):
         self.api_key = os.getenv("DUNE_API_KEY")
         self.header = {"x-dune-api-key": self.api_key}
@@ -28,7 +29,9 @@ class Dune:
         self.top_last_date = {}
         self.error = "Unable to get Dune data. Please use the link below"
 
-    async def ping(self):
+        super().__init__()
+
+    async def ping(self, cache_ttl=None):
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
@@ -46,7 +49,7 @@ class Dune:
     def make_api_url(self, module, action, identifier):
         return f"{self.base_url}{module}/{identifier}/{action}"
 
-    async def execute_query(self, query_id, engine="small"):
+    async def execute_query(self, query_id, engine="small", cache_ttl=600):
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 self.make_api_url("query", "execute", query_id),
@@ -59,7 +62,7 @@ class Dune:
                 else:
                     response.raise_for_status()
 
-    async def get_query_status(self, execution_id):
+    async def get_query_status(self, execution_id, cache_ttl=600):
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 self.make_api_url("execution", "status", execution_id),
@@ -70,7 +73,7 @@ class Dune:
                 else:
                     response.raise_for_status()
 
-    async def get_query_results(self, execution_id):
+    async def get_query_results(self, execution_id, cache_ttl=600):
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 self.make_api_url("execution", "results", execution_id),
@@ -81,7 +84,7 @@ class Dune:
                 else:
                     response.raise_for_status()
 
-    async def cancel_query_execution(self, execution_id):
+    async def cancel_query_execution(self, execution_id, cache_ttl=600):
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 self.make_api_url("execution", "cancel", execution_id),
@@ -92,7 +95,7 @@ class Dune:
                 else:
                     response.raise_for_status()
 
-    async def get_top_tokens(self, chain):
+    async def get_top_tokens(self, chain, cache_ttl=600):
         chain_info, error_message = (
             await chains.get_info(chain) if chain else (None, None)
         )
@@ -205,7 +208,7 @@ class Dune:
 
         return top_text
 
-    async def get_volume(self):
+    async def get_volume(self, cache_ttl=600):
         if (
             datetime.now().timestamp() - self.volume_timestamp
             < self.time_allowed

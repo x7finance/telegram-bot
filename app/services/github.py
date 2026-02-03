@@ -2,15 +2,16 @@ import aiohttp
 import os
 from datetime import datetime
 
-from utils import tools
+from utils import cache, tools
 
 
-class GitHub:
+class GitHub(cache.CachedService):
     def __init__(self):
         self.url = "https://api.github.com/repos/x7finance/"
         self.headers = {"Authorization": f"token {os.getenv('GITHUB_PAT')}"}
+        super().__init__()
 
-    async def ping(self):
+    async def ping(self, cache_ttl=None):
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
@@ -22,7 +23,7 @@ class GitHub:
         except Exception as e:
             return f"🔴 GitHub: Connection failed: {e}"
 
-    async def get_contributors(self, repo):
+    async def get_contributors(self, repo, cache_ttl=3600):
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 self.url + repo + "/contributors",
@@ -35,7 +36,7 @@ class GitHub:
                 contributors = await response.json()
                 return len(contributors)
 
-    async def get_issues(self, repo):
+    async def get_issues(self, repo, cache_ttl=600):
         endpoint = "/issues"
         issues = []
         page = 1
@@ -93,7 +94,7 @@ class GitHub:
             formatted_issues
         )
 
-    async def get_latest_commit(self, repo):
+    async def get_latest_commit(self, repo, cache_ttl=600):
         endpoint = "/commits"
 
         async with aiohttp.ClientSession() as session:
@@ -132,7 +133,7 @@ class GitHub:
 
                 return f"Latest Commit:\n{message}\nCreated By: {created_by}\nCreated At: {created_at}\nURL: {url}"
 
-    async def get_pull_requests(self, repo):
+    async def get_pull_requests(self, repo, cache_ttl=600):
         endpoint = "/pulls"
         pull_requests = []
         page = 1

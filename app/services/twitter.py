@@ -3,19 +3,22 @@ import tweepy
 import asyncio
 from functools import partial
 
+from utils import cache
 
-class Twitter:
+
+class Twitter(cache.CachedService):
     def __init__(self):
         self.client = tweepy.Client(
             bearer_token=os.getenv("TWITTER_BEARER_TOKEN")
         )
+        super().__init__()
 
     async def _run_sync(self, func, *args, **kwargs):
         return await asyncio.get_event_loop().run_in_executor(
             None, partial(func, *args, **kwargs)
         )
 
-    async def ping(self):
+    async def ping(self, cache_ttl=None):
         try:
             response = await self._run_sync(
                 self.client.get_user, username="x7_finance"
@@ -26,7 +29,7 @@ class Twitter:
         except tweepy.TweepyException as e:
             return f"🔴 Twitter: Connection failed: {e}"
 
-    async def get_user_data(self, username):
+    async def get_user_data(self, username, cache_ttl=600):
         try:
             user = await self._run_sync(
                 self.client.get_user,
@@ -42,7 +45,7 @@ class Twitter:
         except Exception:
             return {"followers": "N/A", "profile_image": None}
 
-    async def get_latest_tweet(self, username):
+    async def get_latest_tweet(self, username, cache_ttl=300):
         try:
             user = await self._run_sync(
                 self.client.get_user, username=username
@@ -90,7 +93,7 @@ class Twitter:
         except Exception:
             return None
 
-    async def get_next_space(self, username):
+    async def get_next_space(self, username, cache_ttl=600):
         try:
             user_id = await self._run_sync(self.get_user_id, username)
             if not user_id:

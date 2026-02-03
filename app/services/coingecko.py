@@ -1,12 +1,13 @@
 import aiohttp
-from utils import tools
+from utils import tools, cache
 
 
-class Coingecko:
+class Coingecko(cache.CachedService):
     def __init__(self):
         self.url = "https://api.coingecko.com/api/v3/"
+        super().__init__()
 
-    async def ping(self):
+    async def ping(self, cache_ttl=None):
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(
@@ -20,7 +21,7 @@ class Coingecko:
         except Exception as e:
             return f"🔴 CoinGecko: Connection failed: {str(e)}"
 
-    async def get_ath(self, token):
+    async def get_ath(self, token, cache_ttl=300):
         endpoint = (
             f"coins/{token.lower()}?localization=false&tickers=false&market_data="
             "true&community_data=false&developer_data=false&sparkline=false"
@@ -37,7 +38,7 @@ class Coingecko:
                     )
                 return None
 
-    async def get_price(self, token):
+    async def get_price(self, token, cache_ttl=60):
         endpoint = f"simple/price?ids={token}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true"
         async with aiohttp.ClientSession() as session:
             async with session.get(self.url + endpoint) as response:
@@ -71,13 +72,13 @@ class Coingecko:
                     "volume": volume,
                 }
 
-    async def search(self, token):
+    async def search(self, token, cache_ttl=None):
         endpoint = f"search?query={token}"
         async with aiohttp.ClientSession() as session:
             async with session.get(self.url + endpoint) as response:
                 return await response.json()
 
-    async def get_mcap(self, token):
+    async def get_mcap(self, token, cache_ttl=60):
         endpoint = f"simple/price?ids={token}&vs_currencies=usd&include_market_cap=true"
         async with aiohttp.ClientSession() as session:
             async with session.get(self.url + endpoint) as response:

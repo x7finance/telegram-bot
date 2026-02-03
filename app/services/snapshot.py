@@ -1,11 +1,14 @@
 import aiohttp
 
+from utils import cache
 
-class Snapshot:
+
+class Snapshot(cache.CachedService):
     def __init__(self):
         self.url = "https://hub.snapshot.org/graphql"
+        super().__init__()
 
-    async def ping(self):
+    async def ping(self, cache_ttl=None):
         try:
             query = {"query": "query { proposals(first: 1) { id } }"}
             async with aiohttp.ClientSession() as session:
@@ -18,7 +21,7 @@ class Snapshot:
         except Exception as e:
             return f"🔴 Snapshot: Connection failed: {e}"
 
-    async def get_latest(self):
+    async def get_latest(self, cache_ttl=300):
         query = {
             "query": 'query { proposals ( first: 1, skip: 0, where: { space_in: ["x7finance.eth"]}, '
             'orderBy: "created", orderDirection: desc ) { id title start end snapshot state choices '

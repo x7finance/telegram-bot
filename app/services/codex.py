@@ -4,9 +4,10 @@ import os
 import ssl
 
 from constants.protocol import chains
+from utils import cache
 
 
-class Codex:
+class Codex(cache.CachedService):
     def __init__(self):
         self.url = "https://graph.codex.io/graphql"
         self.headers = {
@@ -14,8 +15,9 @@ class Codex:
             "Authorization": os.getenv("CODEX_API_KEY"),
         }
         self.ssl_context = ssl.create_default_context(cafile=certifi.where())
+        super().__init__()
 
-    async def ping(self):
+    async def ping(self, cache_ttl=None):
         try:
             query = """query { getTokenPrices(inputs: []) { priceUsd } }"""
             async with aiohttp.ClientSession() as session:
@@ -32,7 +34,7 @@ class Codex:
         except Exception as e:
             return f"🔴 Codex: Connection failed: {str(e)}"
 
-    async def get_pair(self, address, chain):
+    async def get_pair(self, address, chain, cache_ttl=300):
         chain_info, _ = await chains.get_info(chain)
 
         pair_query = f"""query {{
@@ -64,7 +66,7 @@ class Codex:
                         return results[0].get("pair", {}).get("address")
                 return None
 
-    async def get_token_image(self, token, chain):
+    async def get_token_image(self, token, chain, cache_ttl=3600):
         chain_info, _ = await chains.get_info(chain)
 
         image = f"""
@@ -91,7 +93,7 @@ class Codex:
                         return image_url
                 return None
 
-    async def get_volume(self, pair, chain):
+    async def get_volume(self, pair, chain, cache_ttl=60):
         try:
             chain_info, _ = await chains.get_info(chain)
 
@@ -125,7 +127,7 @@ class Codex:
         except Exception:
             return None
 
-    async def search(self, address, chain=None):
+    async def search(self, address, chain=None, cache_ttl=300):
         if chain is not None:
             chain_info, _ = await chains.get_info(chain)
             search_query = f"""query {{
