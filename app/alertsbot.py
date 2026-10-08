@@ -149,85 +149,48 @@ async def initialize_alerts(chain):
     MAX_RETRIES = 6
 
     while True:
-        ws = None
         try:
             w3 = chains.MAINNETS[chain].w3_ws
-            (
-                factory,
-                ill_term,
-                time_lock,
-                xchange_create,
-                xchange_create_legacy,
-            ) = await initialize_contracts(w3, chain)
+            contracts = await initialize_contracts(w3, chain)
+            watch_addresses = [c.address for c in contracts if c is not None]
 
             ws_url = chains.MAINNETS[chain].ws_rpc_url
             async with websockets.connect(ws_url) as ws:
-                sub_payload = {
-                    "id": 1,
-                    "method": "eth_subscribe",
-                    "params": [
-                        "logs",
+                await ws.send(
+                    json.dumps(
                         {
-                            "address": [
-                                factory.address,
-                                ill_term.address,
-                                time_lock.address,
-                                xchange_create.address,
-                                xchange_create_legacy.address
-                                if xchange_create_legacy
-                                else None,
-                            ]
-                        },
-                    ],
-                }
+                            "jsonrpc": "2.0",
+                            "id": 1,
+                            "method": "eth_subscribe",
+                            "params": ["logs", {"address": watch_addresses}],
+                        }
+                    )
+                )
 
-                await ws.send(json.dumps(sub_payload))
-                response = await ws.recv()
-                sub_id = json.loads(response)["result"]
+                data = json.loads(await ws.recv())
+                if "result" not in data:
+                    raise ConnectionError(
+                        f"subscribe rejected: {data.get('error', data)}"
+                    )
+                sub_id = data["result"]
 
                 if first_connect:
                     print(f"✅ {chain.upper()} alerts initialized")
                     first_connect = False
-
                 retry_count = 0
 
-                while True:
-                    try:
-                        message = await ws.recv()
-                        data = json.loads(message)
-
-                        if (
-                            "method" in data
-                            and data["method"] == "eth_subscription"
-                        ):
-                            if data["params"]["subscription"] == sub_id:
-                                await handle_log(
-                                    data["params"]["result"],
-                                    chain,
-                                    (
-                                        factory,
-                                        ill_term,
-                                        time_lock,
-                                        xchange_create,
-                                        xchange_create_legacy,
-                                    ),
-                                )
-
-                    except websockets.exceptions.ConnectionClosed:
-                        break
+                async for message in ws:
+                    data = json.loads(message)
+                    if (
+                        data.get("method") == "eth_subscription"
+                        and data["params"]["subscription"] == sub_id
+                    ):
+                        await handle_log(
+                            data["params"]["result"], chain, contracts
+                        )
 
         except asyncio.CancelledError:
-            if ws and not ws.closed:
-                if sub_id:
-                    unsub_payload = {
-                        "id": 1,
-                        "method": "eth_unsubscribe",
-                        "params": [sub_id],
-                    }
-                    await ws.send(json.dumps(unsub_payload))
-                    await ws.recv()
-                await ws.close()
-            raise
+            raise  # async with has already closed the socket
 
         except Exception as e:
             retry_count += 1
@@ -242,20 +205,6 @@ async def initialize_alerts(chain):
                 f"{chain.upper()} connection error: {e} (attempt {retry_count}/{MAX_RETRIES})",
                 alerts=True,
             )
-            if ws and not ws.closed:
-                if sub_id:
-                    try:
-                        unsub_payload = {
-                            "id": 1,
-                            "method": "eth_unsubscribe",
-                            "params": [sub_id],
-                        }
-                        await ws.send(json.dumps(unsub_payload))
-                        await ws.recv()
-                    except Exception:
-                        pass
-                await ws.close()
-
             await asyncio.sleep(retry_delay)
 
 
@@ -667,7 +616,7 @@ async def main():
         for chain, chain_info in chains.MAINNETS.items()
         if chain_info.live
     ]
-    await asyncio.gather(*tasks)
+    await asyncio.gather(*tasks, return_exceptions=True)
 
 
 if __name__ == "__main__":
