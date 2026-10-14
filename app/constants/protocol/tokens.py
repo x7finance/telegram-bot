@@ -3,9 +3,7 @@ from media import token_logos
 
 
 class TokensInfo:
-    def __init__(
-        self, name: str, ca: str, pairs: str | list, hub: str, logo: str
-    ):
+    def __init__(self, name: str, ca: str, pairs: str | list, hub: str, logo: str):
         self.name = name
         self.ca = ca
         self.pairs = pairs

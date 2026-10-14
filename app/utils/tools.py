@@ -1,19 +1,18 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-
-import aiohttp
 import math
 import os
 import random
-import sentry_sdk
 import socket
-from datetime import datetime
 from calendar import monthcalendar
+from datetime import datetime
 
+import aiohttp
+import sentry_sdk
 from bot import callbacks, commands
 from constants.general import urls
 from constants.protocol import abis, addresses, chains, splitters, tokens
 from media import x7_images
 from services import get_dbmanager, get_dextools, get_etherscan
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 
 db = get_dbmanager()
 dextools = get_dextools()
@@ -33,13 +32,9 @@ def create_calendar_keyboard(year, month):
 
     keyboard.append(
         [
-            InlineKeyboardButton(
-                "<<", callback_data=f"cal_prev:{year}:{month}"
-            ),
+            InlineKeyboardButton("<<", callback_data=f"cal_prev:{year}:{month}"),
             InlineKeyboardButton(f"{month}/{year}", callback_data="ignore"),
-            InlineKeyboardButton(
-                ">>", callback_data=f"cal_next:{year}:{month}"
-            ),
+            InlineKeyboardButton(">>", callback_data=f"cal_next:{year}:{month}"),
         ]
     )
 
@@ -73,18 +68,14 @@ def create_time_keyboard():
         for minute in [0, 30]:
             time_str = f"{hour:02d}:{minute:02d}"
             row.append(
-                InlineKeyboardButton(
-                    time_str, callback_data=f"time:{hour}:{minute}"
-                )
+                InlineKeyboardButton(time_str, callback_data=f"time:{hour}:{minute}")
             )
         keyboard.append(row)
 
     return InlineKeyboardMarkup(keyboard)
 
 
-async def error_handler(
-    update_or_msg: Update | str, context=None, alerts=False
-):
+async def error_handler(update_or_msg: Update | str, context=None, alerts=False):
     if isinstance(update_or_msg, str) and "httpx.ReadError" in update_or_msg:
         return
 
@@ -145,18 +136,12 @@ def format_schedule(schedule1, schedule2, native_token, isComplete):
     schedule = []
 
     for date in all_dates:
-        value1 = next(
-            (v for d, v in zip(schedule1[0], schedule1[1]) if d == date), 0
-        )
-        value2 = next(
-            (v for d, v in zip(schedule2[0], schedule2[1]) if d == date), 0
-        )
+        value1 = next((v for d, v in zip(schedule1[0], schedule1[1]) if d == date), 0)
+        value2 = next((v for d, v in zip(schedule2[0], schedule2[1]) if d == date), 0)
 
         total_value = value1 + value2
 
-        formatted_date = datetime.fromtimestamp(date).strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        formatted_date = datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S")
         formatted_value = total_value / 10**18
         sch = f"{formatted_date} - {formatted_value:.3f} {native_token}"
         schedule.append(sch)
@@ -173,9 +158,7 @@ def format_schedule(schedule1, schedule2, native_token, isComplete):
         schedule.append("\nLoan Complete")
     elif next_payment_datetime:
         time_until_next_payment_timestamp = next_payment_datetime.timestamp()
-        time_remaining_str = get_time_difference(
-            time_until_next_payment_timestamp
-        )
+        time_remaining_str = get_time_difference(time_until_next_payment_timestamp)
 
         schedule.append(
             f"\nNext Payment Due:\n{next_payment_value} {native_token}\n{time_remaining_str}"
@@ -199,9 +182,7 @@ async def generate_loan_terms(chain, loan_amount):
 
     loan_in_wei = chain_info.w3.to_wei(loan_amount, "ether")
 
-    loan_contract_address = addresses.ill_addresses(chain).get(
-        addresses.LIVE_LOAN
-    )
+    loan_contract_address = addresses.ill_addresses(chain).get(addresses.LIVE_LOAN)
 
     contract = chain_info.w3.eth.contract(
         address=chain_info.w3.to_checksum_address(loan_contract_address),
@@ -212,15 +193,11 @@ async def generate_loan_terms(chain, loan_amount):
     origination_fee = quote[1]
 
     lending_pool = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(
-            addresses.lending_pool(chain)
-        ),
+        address=chain_info.w3.to_checksum_address(addresses.lending_pool(chain)),
         abi=abis.read("lendingpool"),
     )
 
-    liquidation_fee = (
-        await lending_pool.functions.liquidationReward().call() / 10**18
-    )
+    liquidation_fee = await lending_pool.functions.liquidationReward().call() / 10**18
 
     min_loan = await contract.functions.minimumLoanAmount().call() / 10**18
     max_loan = await contract.functions.maximumLoanAmount().call() / 10**18
@@ -276,15 +253,11 @@ async def get_last_action(address, chain):
     elif address in addresses.splitters(chain).values():
         word = "push"
         splitter = next(
-            key
-            for key, value in addresses.splitters(chain).items()
-            if value == address
+            key for key, value in addresses.splitters(chain).items() if value == address
         )
         settings = await splitters.get_push_settings(chain, splitter)
         recipient = settings["recipient"]
-        filter = [
-            d for d in tx["result"] if d["to"].lower() == recipient.lower()
-        ]
+        filter = [d for d in tx["result"] if d["to"].lower() == recipient.lower()]
     if not filter:
         return f"Last {word}: None found"
 
@@ -301,9 +274,7 @@ async def get_loan_token_id(loan_id, chain):
     chain_info, _ = await chains.get_info(chain)
 
     pool_contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(
-            addresses.lending_pool(chain)
-        ),
+        address=chain_info.w3.to_checksum_address(addresses.lending_pool(chain)),
         abi=abis.read("lendingpool"),
     )
 
@@ -343,9 +314,7 @@ async def set_reminders(app):
     total = len(reminders)
 
     for reminder in reminders:
-        job_name = (
-            f"reminder_{reminder['user_id']}_{reminder['reminder_time']}"
-        )
+        job_name = f"reminder_{reminder['user_id']}_{reminder['reminder_time']}"
         reminder_time = datetime.strptime(
             reminder["reminder_time"], "%Y-%m-%d %H:%M:%S"
         )
@@ -395,9 +364,7 @@ def get_time_difference(timestamp):
         return "Just now" if not is_future else "In a moment"
 
 
-async def get_token_liquidity_text(
-    token_name, pair_address, chain, chain_info
-):
+async def get_token_liquidity_text(token_name, pair_address, chain, chain_info):
     liquidity_data = await dextools.get_liquidity(pair_address, chain)
 
     text = f"*{token_name}*\n"
@@ -430,9 +397,7 @@ def is_admin(user_id):
 
 def is_local():
     ip = socket.gethostbyname(socket.gethostname())
-    return (
-        ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"
-    )
+    return ip.startswith("127.") or ip.startswith("192.168.") or ip == "localhost"
 
 
 async def update_bot_commands():

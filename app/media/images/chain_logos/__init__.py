@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 BSC_LOGO = Path(__file__).resolve().parent / "bsc.png"
 ARB_LOGO = Path(__file__).resolve().parent / "arbitrum.png"
 POLY_LOGO = Path(__file__).resolve().parent / "polygon.png"

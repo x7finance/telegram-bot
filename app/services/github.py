@@ -1,7 +1,7 @@
-import aiohttp
 import os
 from datetime import datetime
 
+import aiohttp
 from utils import cache, tools
 
 
@@ -56,11 +56,7 @@ class GitHub(cache.CachedService):
                         break
 
                     issues.extend(
-                        [
-                            issue
-                            for issue in data
-                            if "pull_request" not in issue
-                        ]
+                        [issue for issue in data if "pull_request" not in issue]
                     )
                     page += 1
 
@@ -90,9 +86,7 @@ class GitHub(cache.CachedService):
             )
 
         issue_count = len(issues)
-        return f"Total Open Issues: {issue_count}\n\n" + "\n".join(
-            formatted_issues
-        )
+        return f"Total Open Issues: {issue_count}\n\n" + "\n".join(formatted_issues)
 
     async def get_latest_commit(self, repo, cache_ttl=600):
         endpoint = "/commits"
@@ -110,9 +104,7 @@ class GitHub(cache.CachedService):
 
                 latest_commit = commits[0]
                 message = tools.escape_markdown(
-                    latest_commit.get("commit", {}).get(
-                        "message", "No message"
-                    )
+                    latest_commit.get("commit", {}).get("message", "No message")
                 )
                 created_by = tools.escape_markdown(
                     latest_commit.get("commit", {})
@@ -175,6 +167,4 @@ class GitHub(cache.CachedService):
             )
 
         count = len(pull_requests)
-        return f"Total Open Pull Requests: {count}\n\n" + "\n".join(
-            formatted_prs
-        )
+        return f"Total Open Pull Requests: {count}\n\n" + "\n".join(formatted_prs)

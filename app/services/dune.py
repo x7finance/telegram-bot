@@ -1,7 +1,8 @@
-import aiohttp
 import asyncio
 import os
 from datetime import datetime
+
+import aiohttp
 from constants.protocol import chains
 from utils import cache
 
@@ -19,9 +20,9 @@ class Dune(cache.CachedService):
         self.volume_text = ""
         self.volume_flag = False
         self.volume_timestamp = datetime.now().timestamp()
-        self.volume_last_date = datetime.fromtimestamp(
-            self.volume_timestamp
-        ).strftime("%Y-%m-%d %H:%M:%S")
+        self.volume_last_date = datetime.fromtimestamp(self.volume_timestamp).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
 
         self.top_text = {}
         self.top_flag = {}
@@ -106,9 +107,7 @@ class Dune(cache.CachedService):
             if chain == "eth"
             else (chain_info.name.lower() if chain_info else "all")
         )
-        chain_name_title = (
-            f"({chain_info.name})" if chain_info else "(All chains)"
-        )
+        chain_name_title = f"({chain_info.name})" if chain_info else "(All chains)"
 
         if chain_name.upper() not in self.top_flag:
             self.top_text[chain_name.upper()] = ""
@@ -126,9 +125,7 @@ class Dune(cache.CachedService):
             next_update_time = (
                 self.top_timestamp[chain_name.upper()] + self.time_allowed
             )
-            remaining_time = max(
-                0, int(next_update_time - datetime.now().timestamp())
-            )
+            remaining_time = max(0, int(next_update_time - datetime.now().timestamp()))
             hours, remainder = divmod(remaining_time, 3600)
             minutes, seconds = divmod(remainder, 60)
             time_remaining_text = (
@@ -147,9 +144,7 @@ class Dune(cache.CachedService):
             try:
                 response_data = await self.get_query_results(execution_id)
             except ValueError:
-                return (
-                    f"*Xchange Top Pairs {chain_name_title}*\n\n{self.error}"
-                )
+                return f"*Xchange Top Pairs {chain_name_title}*\n\n{self.error}"
 
             if response_data.get("is_execution_finished", False):
                 break
@@ -210,14 +205,11 @@ class Dune(cache.CachedService):
 
     async def get_volume(self, cache_ttl=600):
         if (
-            datetime.now().timestamp() - self.volume_timestamp
-            < self.time_allowed
+            datetime.now().timestamp() - self.volume_timestamp < self.time_allowed
             and self.volume_text
         ):
             next_update_time = self.volume_timestamp + self.time_allowed
-            remaining_time = max(
-                0, int(next_update_time - datetime.now().timestamp())
-            )
+            remaining_time = max(0, int(next_update_time - datetime.now().timestamp()))
             hours, remainder = divmod(remaining_time, 3600)
             minutes, seconds = divmod(remainder, 60)
             next_update_text = (
@@ -265,9 +257,9 @@ class Dune(cache.CachedService):
         )
 
         self.volume_timestamp = datetime.now().timestamp()
-        self.volume_last_date = datetime.fromtimestamp(
-            self.volume_timestamp
-        ).strftime("%Y-%m-%d %H:%M:%S")
+        self.volume_last_date = datetime.fromtimestamp(self.volume_timestamp).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
         self.volume_flag = True
         self.volume_text = volume_text
 

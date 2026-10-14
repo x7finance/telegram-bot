@@ -1,6 +1,3 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ContextTypes
-
 import os
 import random
 import time
@@ -10,8 +7,10 @@ from constants.general import settings, urls
 from constants.protocol import addresses
 from main import application
 from media import stickers
-from utils import onchain, tools
 from services import get_dbmanager
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
+from utils import onchain, tools
 
 db = get_dbmanager()
 
@@ -20,15 +19,10 @@ async def click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     button_click_timestamp = time.time()
 
     current_button_data = context.bot_data.get("current_button_data")
-    if (
-        not current_button_data
-        or update.callback_query.data != current_button_data
-    ):
+    if not current_button_data or update.callback_query.data != current_button_data:
         return
 
-    button_generation_timestamp = context.bot_data.get(
-        "button_generation_timestamp"
-    )
+    button_generation_timestamp = context.bot_data.get("button_generation_timestamp")
     if not button_generation_timestamp:
         await update.callback_query.answer("Too slow!", show_alert=True)
         return
@@ -39,9 +33,7 @@ async def click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
     user_info = (
-        user.username
-        or f"{user.first_name} {user.last_name}"
-        or user.first_name
+        user.username or f"{user.first_name} {user.last_name}" or user.first_name
     )
 
     time_taken = button_click_timestamp - button_generation_timestamp
@@ -148,9 +140,7 @@ async def send(context: ContextTypes.DEFAULT_TYPE):
             pass
 
     current_button_data = str(random.randint(1, 100000000))
-    context.bot_data["current_button_data"] = (
-        f"click_button:{current_button_data}"
-    )
+    context.bot_data["current_button_data"] = f"click_button:{current_button_data}"
 
     keyboard = InlineKeyboardMarkup(
         [
@@ -186,9 +176,7 @@ async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await query.answer()
         except Exception as e:
-            await query.answer(
-                text=f"An error occurred: {str(e)}", show_alert=True
-            )
+            await query.answer(text=f"An error occurred: {str(e)}", show_alert=True)
     else:
         await query.answer(text="Admin only.", show_alert=True)
         return

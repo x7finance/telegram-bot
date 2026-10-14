@@ -17,20 +17,14 @@ async def get_eco_split(chain):
     x7r_percentage = await contract.functions.outletShare(1).call() / 10
     x7dao_percentage = await contract.functions.outletShare(2).call() / 10
     x7100_percentage = await contract.functions.outletShare(3).call() / 10
-    lending_pool_percentage = (
-        await contract.functions.outletShare(4).call() / 10
-    )
+    lending_pool_percentage = await contract.functions.outletShare(4).call() / 10
     treasury_percentage = await contract.functions.outletShare(5).call() / 10
 
     x7r_balance = await contract.functions.outletBalance(1).call() / 10**18
     x7dao_balance = await contract.functions.outletBalance(2).call() / 10**18
     x7100_balance = await contract.functions.outletBalance(3).call() / 10**18
-    lending_pool_balance = (
-        await contract.functions.outletBalance(4).call() / 10**18
-    )
-    treasury_balance = (
-        await contract.functions.outletBalance(5).call() / 10**18
-    )
+    lending_pool_balance = await contract.functions.outletBalance(4).call() / 10**18
+    treasury_balance = await contract.functions.outletBalance(5).call() / 10**18
 
     slot_names = {
         "eth": ("Treasury Splitter"),
@@ -42,9 +36,7 @@ async def get_eco_split(chain):
     }
 
     treasury_name = (
-        slot_names.get(chain)
-        if slot_names.get(chain)
-        else ("Treasury Splitter")
+        slot_names.get(chain) if slot_names.get(chain) else ("Treasury Splitter")
     )
 
     return {
@@ -82,18 +74,12 @@ async def get_hub_split(chain, address, token):
         liquidity_ratio_target = (
             await contract.functions.liquidityRatioTarget().call() / 10
         )
-        balance_threshold = (
-            await contract.functions.balanceThreshold().call() / 10**18
-        )
-        liquidity_balance = (
-            await contract.functions.liquidityBalance().call() / 10**18
-        )
+        balance_threshold = await contract.functions.balanceThreshold().call() / 10**18
+        liquidity_balance = await contract.functions.liquidityBalance().call() / 10**18
         distribute_balance = (
             await contract.functions.distributeBalance().call() / 10**18
         )
-        treasury_balance = (
-            await contract.functions.treasuryBalance().call() / 10**18
-        )
+        treasury_balance = await contract.functions.treasuryBalance().call() / 10**18
     except Exception:
         pass
 
@@ -131,8 +117,7 @@ async def get_hub_split(chain, address, token):
     elif token == "x7dao":
         try:
             token_liquidity_balance = (
-                await contract.functions.x7daoLiquidityBalance().call()
-                / 10**18
+                await contract.functions.x7daoLiquidityBalance().call() / 10**18
             )
             auxiliary = await contract.functions.auxiliaryShare().call() / 10
             auxiliary_balance = (
@@ -149,20 +134,15 @@ async def get_hub_split(chain, address, token):
     elif token in addresses.X7100:
         try:
             token_liquidity_balance = (
-                await contract.functions.liquidityTokenBalance(
-                    token_info.ca
-                ).call()
+                await contract.functions.liquidityTokenBalance(token_info.ca).call()
                 / 10**18
             )
-            lending_pool = (
-                await contract.functions.lendingPoolShare().call() / 10
-            )
+            lending_pool = await contract.functions.lendingPoolShare().call() / 10
             lending_pool_balance = (
                 await contract.functions.lendingPoolBalance().call() / 10**18
             )
             liquidity_balance_threshold = (
-                await contract.functions.liquidityBalanceThreshold().call()
-                / 10**18
+                await contract.functions.liquidityBalanceThreshold().call() / 10**18
             )
             split.update(
                 {
@@ -200,16 +180,12 @@ async def get_treasury_split(chain):
     )
 
     profit_percentage = await contract.functions.outletShare(1).call() / 1000
-    reward_pool_percentage = (
-        await contract.functions.outletShare(2).call() / 1000
-    )
+    reward_pool_percentage = await contract.functions.outletShare(2).call() / 1000
     slot_1_percentage = await contract.functions.outletShare(3).call() / 1000
     slot_2_percentage = await contract.functions.outletShare(4).call() / 1000
 
     profit_balance = await contract.functions.outletBalance(1).call() / 10**18
-    reward_pool_balance = (
-        await contract.functions.outletBalance(2).call() / 10**18
-    )
+    reward_pool_balance = await contract.functions.outletBalance(2).call() / 10**18
     slot_1_balance = await contract.functions.outletBalance(3).call() / 10**18
     slot_2_balance = await contract.functions.outletBalance(4).call() / 10**18
 
@@ -286,9 +262,7 @@ async def get_push_settings(chain, token):
             )
         )
         contract_balance = (
-            await contract.functions.liquidityTokenBalance(
-                token_address
-            ).call()
+            await contract.functions.liquidityTokenBalance(token_address).call()
             / 10**18
         )
         return balance - contract_balance

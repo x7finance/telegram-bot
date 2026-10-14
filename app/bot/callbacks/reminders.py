@@ -1,11 +1,10 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ContextTypes
-
 from datetime import datetime
 
 from media import stickers
-from utils import tools
 from services import get_dbmanager
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
+from utils import tools
 
 db = get_dbmanager()
 
@@ -28,9 +27,7 @@ async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         reminder_to_remove = reminders["reminders"][reminder_num - 1]
-        when = datetime.strptime(
-            reminder_to_remove["time"], "%Y-%m-%d %H:%M:%S"
-        )
+        when = datetime.strptime(reminder_to_remove["time"], "%Y-%m-%d %H:%M:%S")
 
         await db.reminders.remove(user.id, when)
 
@@ -109,9 +106,7 @@ async def set(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "Use /register to use this service", show_alert=True
             )
         else:
-            await update.message.reply_text(
-                "Use /register to use this service"
-            )
+            await update.message.reply_text("Use /register to use this service")
         return
 
     data_parts = data.split(":")
@@ -139,10 +134,7 @@ async def set(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if reminders and reminders["reminders"]:
         reminder_time = when.strftime("%Y-%m-%d %H:%M:%S")
         for reminder in reminders["reminders"]:
-            if (
-                reminder["time"] == reminder_time
-                and reminder["message"] == message
-            ):
+            if reminder["time"] == reminder_time and reminder["message"] == message:
                 reply_text = "You already have a reminder set for this event!\n\nUse /reminders to view your reminders"
                 if is_callback:
                     await update.callback_query.answer(
@@ -180,10 +172,10 @@ async def set(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     current_count = len(reminders["reminders"]) + 1 if reminders else 1
-    reply_text = f"✅ Reminder set! ({current_count}/3)\n\nUse /reminders to view your reminders"
+    reply_text = (
+        f"✅ Reminder set! ({current_count}/3)\n\nUse /reminders to view your reminders"
+    )
     if is_callback:
         await update.callback_query.answer(reply_text, show_alert=True)
     else:
-        await update.message.reply_text(
-            reply_text, message_effect_id=stickers.CONFETTI
-        )
+        await update.message.reply_text(reply_text, message_effect_id=stickers.CONFETTI)

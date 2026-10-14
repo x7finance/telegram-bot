@@ -34,16 +34,12 @@ class ClicksManager(DBManager):
         query = """
             SELECT name, clicks FROM leaderboard ORDER BY clicks DESC LIMIT %s
         """
-        leaderboard_data = await self._execute_query(
-            query, (limit,), fetch_all=True
-        )
+        leaderboard_data = await self._execute_query(query, (limit,), fetch_all=True)
 
         return (
             "\n".join(
                 f"{rank} {name}: {clicks}"
-                for rank, (name, clicks) in enumerate(
-                    leaderboard_data, start=1
-                )
+                for rank, (name, clicks) in enumerate(leaderboard_data, start=1)
             )
             if leaderboard_data
             else "Error retrieving leaderboard data"

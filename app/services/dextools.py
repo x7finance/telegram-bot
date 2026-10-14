@@ -1,6 +1,6 @@
-import aiohttp
 import os
 
+import aiohttp
 from constants.protocol import chains
 from utils import cache
 
@@ -68,10 +68,7 @@ class Dextools(cache.CachedService):
             ) as response:
                 if response.status == 200:
                     data = await response.json()
-                    if (
-                        data.get("data") is not None
-                        and "price" in data["data"]
-                    ):
+                    if data.get("data") is not None and "price" in data["data"]:
                         price = data["data"]["price"]
                         if "e-" in str(price):
                             price = "{:.8f}".format(price)
@@ -109,7 +106,9 @@ class Dextools(cache.CachedService):
 
                     return price, change
                 else:
-                    change = "📉 1HR Change: N/A\n📉 6HR Change: N/A\n📉 24HR Change: N/A"
+                    change = (
+                        "📉 1HR Change: N/A\n📉 6HR Change: N/A\n📉 24HR Change: N/A"
+                    )
                     return 0, change
 
     async def get_token_info(self, address, chain, cache_ttl=300):
@@ -177,12 +176,8 @@ class Dextools(cache.CachedService):
                         eth = data["data"]["reserves"].get("sideToken", 0)
 
                         liquidity_data = {
-                            "total": f"${'{:,.0f}'.format(total)}"
-                            if total
-                            else None,
-                            "token": f"{'{:,.0f}'.format(token)}"
-                            if token
-                            else None,
+                            "total": f"${'{:,.0f}'.format(total)}" if total else None,
+                            "token": f"{'{:,.0f}'.format(token)}" if token else None,
                             "eth": f"{'{:,.2f}'.format(eth)}" if eth else None,
                         }
 

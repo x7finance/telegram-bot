@@ -1,10 +1,5 @@
-from . import fonts
-from . import videos
-from .images import blackhole
-from .images import chain_logos
-from .images import token_logos
-from .images import x7_images
-
+from . import fonts, videos
+from .images import blackhole, chain_logos, token_logos, x7_images
 
 __all__ = [
     "fonts",

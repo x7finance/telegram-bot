@@ -1,21 +1,20 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder
-
-import aiohttp
 import asyncio
 import io
 import json
 import os
 import random
-import websockets
 from datetime import datetime
-from PIL import Image, ImageDraw, ImageFont
 
+import aiohttp
+import websockets
 from constants.general import urls
-from constants.protocol import addresses, abis, chains, tokens
-from media import fonts, blackhole
-from utils import tools
+from constants.protocol import abis, addresses, chains, tokens
+from media import blackhole, fonts
+from PIL import Image, ImageDraw, ImageFont
 from services import get_codex, get_dextools
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder
+from utils import tools
 
 codex = get_codex()
 dextools = get_dextools()
@@ -81,8 +80,7 @@ async def handle_log(log_data, chain, contracts):
 
         if event_signature == xchange_create.events.TokenDeployed().topic or (
             xchange_create_legacy
-            and event_signature
-            == xchange_create_legacy.events.TokenDeployed().topic
+            and event_signature == xchange_create_legacy.events.TokenDeployed().topic
         ):
             contract = (
                 xchange_create_legacy
@@ -101,9 +99,7 @@ async def handle_log(log_data, chain, contracts):
             await format_loan_alert(log, chain, is_completed=False)
 
         elif event_signature == ill_term.events.LoanComplete().topic:
-            tx = await chain_info.w3.eth.get_transaction(
-                log_data["transactionHash"]
-            )
+            tx = await chain_info.w3.eth.get_transaction(log_data["transactionHash"])
 
             was_liquidated = tx["input"].startswith(b"\x41\x5f\x12\x40")
 
@@ -120,21 +116,12 @@ async def handle_log(log_data, chain, contracts):
                 log = factory.events.PairCreated().process_log(log_data)
                 await format_pair_alert(log, chain)
 
-        elif (
-            event_signature
-            == time_lock.events.GlobalUnlockTimestampSet().topic
-        ):
-            log = time_lock.events.GlobalUnlockTimestampSet().process_log(
-                log_data
-            )
+        elif event_signature == time_lock.events.GlobalUnlockTimestampSet().topic:
+            log = time_lock.events.GlobalUnlockTimestampSet().process_log(log_data)
             await format_time_lock_alert(log, chain, is_global=True)
 
-        elif (
-            event_signature == time_lock.events.TokenUnlockTimestampSet().topic
-        ):
-            log = time_lock.events.TokenUnlockTimestampSet().process_log(
-                log_data
-            )
+        elif event_signature == time_lock.events.TokenUnlockTimestampSet().topic:
+            log = time_lock.events.TokenUnlockTimestampSet().process_log(log_data)
             await format_time_lock_alert(log, chain)
 
     except Exception as e:
@@ -185,9 +172,7 @@ async def initialize_alerts(chain):
                         data.get("method") == "eth_subscription"
                         and data["params"]["subscription"] == sub_id
                     ):
-                        await handle_log(
-                            data["params"]["result"], chain, contracts
-                        )
+                        await handle_log(data["params"]["result"], chain, contracts)
 
         except asyncio.CancelledError:
             raise  # async with has already closed the socket
@@ -243,9 +228,7 @@ async def initialize_contracts(w3, chain):
     )
 
 
-async def format_loan_alert(
-    log, chain, is_completed=False, was_liquidated=False
-):
+async def format_loan_alert(log, chain, is_completed=False, was_liquidated=False):
     chain_info, _ = await chains.get_info(chain)
 
     loan_id = log["args"]["loanID"]
@@ -255,20 +238,14 @@ async def format_loan_alert(
         address=ill_address, abi=abis.read(f"ill{addresses.LIVE_LOAN}")
     )
 
-    loan_amount = (
-        await ill_contract.functions.loanAmount(int(loan_id)).call() / 10**18
-    )
+    loan_amount = await ill_contract.functions.loanAmount(int(loan_id)).call() / 10**18
 
     pool_contract = chain_info.w3.eth.contract(
-        address=chain_info.w3.to_checksum_address(
-            addresses.lending_pool(chain)
-        ),
+        address=chain_info.w3.to_checksum_address(addresses.lending_pool(chain)),
         abi=abis.read("lendingpool"),
     )
 
-    token_address = await pool_contract.functions.loanToken(
-        int(loan_id)
-    ).call()
+    token_address = await pool_contract.functions.loanToken(int(loan_id)).call()
     pair_address = await pool_contract.functions.loanPair(int(loan_id)).call()
 
     token_info = await dextools.get_token_name(token_address, chain)
@@ -429,9 +406,7 @@ async def format_pair_alert(log, chain):
             [
                 InlineKeyboardButton(
                     "Chart",
-                    url=urls.dex_tools_link(
-                        chain_info.dext, log["args"]["pair"]
-                    ),
+                    url=urls.dex_tools_link(chain_info.dext, log["args"]["pair"]),
                 )
             ],
         ]
@@ -489,27 +464,15 @@ async def format_token_alert(log, chain):
 
     if twitter_link:
         button_list.append(
-            [
-                InlineKeyboardButton(
-                    text=f"{token_name} Twitter", url=twitter_link
-                )
-            ]
+            [InlineKeyboardButton(text=f"{token_name} Twitter", url=twitter_link)]
         )
     if telegram_link:
         button_list.append(
-            [
-                InlineKeyboardButton(
-                    text=f"{token_name} Telegram", url=telegram_link
-                )
-            ]
+            [InlineKeyboardButton(text=f"{token_name} Telegram", url=telegram_link)]
         )
     if website_link:
         button_list.append(
-            [
-                InlineKeyboardButton(
-                    text=f"{token_name} Website", url=website_link
-                )
-            ]
+            [InlineKeyboardButton(text=f"{token_name} Website", url=website_link)]
         )
 
     buttons = InlineKeyboardMarkup(button_list)
@@ -534,9 +497,7 @@ async def format_time_lock_alert(log, chain, is_global=False):
         message = f"Global Unlock Time Set\n\n{unlock_date}\n{when}"
 
     else:
-        token_address = chain_info.w3.to_checksum_address(
-            log["args"]["tokenAddress"]
-        )
+        token_address = chain_info.w3.to_checksum_address(log["args"]["tokenAddress"])
         unlock_timestamp = log["args"]["unlockTimestamp"]
         unlock_date = datetime.fromtimestamp(unlock_timestamp).strftime(
             "%Y-%m-%d %H:%M"
@@ -566,8 +527,7 @@ async def format_time_lock_alert(log, chain, is_global=False):
             [
                 InlineKeyboardButton(
                     text="Time Lock Contract",
-                    url=chain_info.scan_address
-                    + addresses.token_time_lock(chain),
+                    url=chain_info.scan_address + addresses.token_time_lock(chain),
                 )
             ],
             [
@@ -621,9 +581,7 @@ async def main():
 
 if __name__ == "__main__":
     application = (
-        ApplicationBuilder()
-        .token(os.getenv("TELEGRAM_SCANNER_BOT_TOKEN"))
-        .build()
+        ApplicationBuilder().token(os.getenv("TELEGRAM_SCANNER_BOT_TOKEN")).build()
     )
     application.add_error_handler(
         lambda _, context: tools.error_handler(context, alerts=True)

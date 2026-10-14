@@ -1,5 +1,4 @@
 import aiohttp
-
 from utils import cache
 
 
@@ -12,9 +11,7 @@ class Snapshot(cache.CachedService):
         try:
             query = {"query": "query { proposals(first: 1) { id } }"}
             async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    self.url, json=query, timeout=5
-                ) as response:
+                async with session.post(self.url, json=query, timeout=5) as response:
                     if response.status == 200:
                         return True
                     return f"🔴 Snapshot: Connection failed: {response.status} {await response.text()}"

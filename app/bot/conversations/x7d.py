@@ -1,8 +1,7 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ContextTypes
-
 from constants.protocol import addresses, chains
 from services import get_dbmanager, get_etherscan
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
 
 db = get_dbmanager()
 etherscan = get_etherscan()
@@ -31,9 +30,7 @@ async def amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         amount = float(update.message.text)
     except ValueError:
-        await update.message.reply_text(
-            "Invalid amount. Please enter a valid number."
-        )
+        await update.message.reply_text("Invalid amount. Please enter a valid number.")
 
         return AMOUNT
 

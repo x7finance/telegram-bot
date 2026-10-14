@@ -1,7 +1,7 @@
-import aiohttp
 import os
 import time
 
+import aiohttp
 from constants.protocol import addresses, chains
 from utils import cache
 
@@ -20,14 +20,10 @@ class Etherscan(cache.CachedService):
                 "apikey": self.key,
             }
             async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    self.url, params=params, timeout=5
-                ) as response:
+                async with session.get(self.url, params=params, timeout=5) as response:
                     if response.status == 200:
                         return True
-                    return (
-                        f"🔴 Etherscan: Connection failed: {response.status}"
-                    )
+                    return f"🔴 Etherscan: Connection failed: {response.status}"
         except Exception as e:
             return f"🔴 Etherscan: Connection failed: {str(e)}"
 
@@ -50,9 +46,7 @@ class Etherscan(cache.CachedService):
             async with session.get(tx_url) as response:
                 tx_data = await response.json()
                 tx_entry_count = (
-                    len(tx_data["result"])
-                    if tx_data and "result" in tx_data
-                    else 0
+                    len(tx_data["result"]) if tx_data and "result" in tx_data else 0
                 )
 
         internal_tx_url = f"{self.url}?chainid={chain_info.id}&module=account&action=txlistinternal&address={contract}&startblock={block_yesterday}&endblock={block_now}&page=1&offset=1000&sort=asc&apikey={self.key}"
@@ -112,9 +106,7 @@ class Etherscan(cache.CachedService):
         except Exception:
             return 0
 
-    async def get_token_balance(
-        self, wallet, token, decimals, chain, cache_ttl=30
-    ):
+    async def get_token_balance(self, wallet, token, decimals, chain, cache_ttl=30):
         try:
             chain_info, _ = await chains.get_info(chain)
             url = f"{self.url}?chainid={chain_info.id}&module=account&action=tokenbalance&contractaddress={token}&address={wallet}&tag=latest&apikey={self.key}"

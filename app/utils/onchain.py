@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from constants.protocol import abis, addresses, chains, tax, tokens
-from services import get_etherscan, get_dbmanager
+from services import get_dbmanager, get_etherscan
 
 etherscan = get_etherscan()
 db = get_dbmanager()
@@ -11,7 +11,9 @@ async def estimate_gas(chain, function, loan_id=None):
     def calculate_cost(gas_estimate):
         eth_cost = gas_price * gas_estimate
         dollar_cost = (eth_cost / 10**9) * eth_price
-        return f"{eth_cost / 10**9:.6f} {chain_info.native.upper()} (${dollar_cost:.2f})"
+        return (
+            f"{eth_cost / 10**9:.6f} {chain_info.native.upper()} (${dollar_cost:.2f})"
+        )
 
     chain_info, _ = await chains.get_info(chain)
 
@@ -30,12 +32,8 @@ async def estimate_gas(chain, function, loan_id=None):
             )
             gas_estimate = await chain_info.w3.eth.estimate_gas(
                 {
-                    "from": chain_info.w3.to_checksum_address(
-                        addresses.DEPLOYER
-                    ),
-                    "to": chain_info.w3.to_checksum_address(
-                        addresses.factory(chain)
-                    ),
+                    "from": chain_info.w3.to_checksum_address(addresses.DEPLOYER),
+                    "to": chain_info.w3.to_checksum_address(addresses.factory(chain)),
                     "data": data,
                 }
             )
@@ -44,9 +42,7 @@ async def estimate_gas(chain, function, loan_id=None):
         elif function == "push":
             gas_estimate = await chain_info.w3.eth.estimate_gas(
                 {
-                    "from": chain_info.w3.to_checksum_address(
-                        addresses.DEPLOYER
-                    ),
+                    "from": chain_info.w3.to_checksum_address(addresses.DEPLOYER),
                     "to": chain_info.w3.to_checksum_address(
                         addresses.treasury_splitter(chain)
                     ),
@@ -59,9 +55,7 @@ async def estimate_gas(chain, function, loan_id=None):
             data = "0x61582eaa" + addresses.x7r(chain)[2:].rjust(64, "0")
             gas_estimate = await chain_info.w3.eth.estimate_gas(
                 {
-                    "from": chain_info.w3.to_checksum_address(
-                        addresses.DEPLOYER
-                    ),
+                    "from": chain_info.w3.to_checksum_address(addresses.DEPLOYER),
                     "to": chain_info.w3.to_checksum_address(
                         addresses.x7r_liquidity_hub(chain)
                     ),
@@ -73,9 +67,7 @@ async def estimate_gas(chain, function, loan_id=None):
         elif function == "mint":
             gas_estimate = await chain_info.w3.eth.estimate_gas(
                 {
-                    "from": chain_info.w3.to_checksum_address(
-                        addresses.DEPLOYER
-                    ),
+                    "from": chain_info.w3.to_checksum_address(addresses.DEPLOYER),
                     "to": chain_info.w3.to_checksum_address(
                         addresses.lending_pool_reserve(chain)
                     ),
@@ -88,9 +80,7 @@ async def estimate_gas(chain, function, loan_id=None):
             data = "0x415f1240" + hex(loan_id)[2:].rjust(64, "0")
             gas_estimate = await chain_info.w3.eth.estimate_gas(
                 {
-                    "from": chain_info.w3.to_checksum_address(
-                        addresses.DEPLOYER
-                    ),
+                    "from": chain_info.w3.to_checksum_address(addresses.DEPLOYER),
                     "to": chain_info.w3.to_checksum_address(
                         addresses.lending_pool(chain)
                     ),
@@ -122,13 +112,11 @@ async def liquidate_loan(loan_id, chain, user_id):
         nonce = await chain_info.w3.eth.get_transaction_count(sender_address)
 
         gas_price = await chain_info.w3.eth.gas_price
-        gas_estimate = await contract.functions.liquidate(
-            loan_id
-        ).estimate_gas({"from": sender_address})
+        gas_estimate = await contract.functions.liquidate(loan_id).estimate_gas(
+            {"from": sender_address}
+        )
 
-        transaction = await contract.functions.liquidate(
-            loan_id
-        ).build_transaction(
+        transaction = await contract.functions.liquidate(loan_id).build_transaction(
             {
                 "from": sender_address,
                 "gas": gas_estimate,
@@ -312,9 +300,7 @@ async def withdraw_native(amount, chain, user_id, recipient_address):
         return f"Error: {str(e)}"
 
 
-async def withdraw_tokens(
-    user_id, amount, token_address, decimals, recipient, chain
-):
+async def withdraw_tokens(user_id, amount, token_address, decimals, recipient, chain):
     try:
         chain_info, _ = await chains.get_info(chain)
 

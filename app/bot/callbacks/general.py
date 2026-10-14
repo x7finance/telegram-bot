@@ -1,12 +1,11 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ConversationHandler, ContextTypes
-
 import random
 
 from constants.general import text
 from media import stickers
-from utils import tools
 from services import get_dbmanager
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes, ConversationHandler
+from utils import tools
 
 db = get_dbmanager()
 
@@ -68,13 +67,9 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
 
     try:
-        await query.edit_message_text(
-            text="Action canceled. No changes were made."
-        )
+        await query.edit_message_text(text="Action canceled. No changes were made.")
     except Exception:
-        await update.message.reply_text(
-            text="Action canceled. No changes were made."
-        )
+        await update.message.reply_text(text="Action canceled. No changes were made.")
 
     context.user_data.clear()
     return ConversationHandler.END
@@ -176,6 +171,4 @@ async def wallet_remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         await query.answer()
     except Exception as e:
-        await query.answer(
-            text=f"An error occurred: {str(e)}", show_alert=True
-        )
+        await query.answer(text=f"An error occurred: {str(e)}", show_alert=True)

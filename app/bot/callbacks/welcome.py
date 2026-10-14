@@ -1,3 +1,6 @@
+from constants.general import text, urls
+from media import videos
+from services import get_dbmanager
 from telegram import (
     ChatMember,
     ChatMemberUpdated,
@@ -6,10 +9,6 @@ from telegram import (
     Update,
 )
 from telegram.ext import ContextTypes
-
-from constants.general import text, urls
-from media import videos
-from services import get_dbmanager
 
 db = get_dbmanager()
 
@@ -35,9 +34,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             permissions=user_restrictions,
         )
         try:
-            previous_welcome_message_id = context.bot_data.get(
-                "welcome_message_id"
-            )
+            previous_welcome_message_id = context.bot_data.get("welcome_message_id")
             await context.bot.delete_message(
                 chat_id=update.effective_chat.id,
                 message_id=previous_welcome_message_id,
@@ -105,9 +102,7 @@ async def message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not was_member and is_member:
             welcome_caption = await text.welcome(new_member_username)
 
-            previous_welcome_message_id = context.bot_data.get(
-                "welcome_message_id"
-            )
+            previous_welcome_message_id = context.bot_data.get("welcome_message_id")
             if previous_welcome_message_id:
                 try:
                     await context.bot.delete_message(

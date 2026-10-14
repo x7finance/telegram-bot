@@ -1,3 +1,3 @@
-from utils.cache import Cache, get_cache, CachedService
+from utils.cache import Cache, CachedService, get_cache
 
 __all__ = ["Cache", "get_cache", "CachedService"]

@@ -75,9 +75,7 @@ def map(chain):
             addresses.treasury_splitter(chain),
         ),
         "Factory": (
-            (
-                "setFeeTo\nsetDiscountAuthority\nsetTrusted\nsetFailsafeLiquidator"
-            ),
+            ("setFeeTo\nsetDiscountAuthority\nsetTrusted\nsetFailsafeLiquidator"),
             addresses.factory(chain),
         ),
         "Borrowing Maxi": (
@@ -140,9 +138,7 @@ def map(chain):
             addresses.token_burner(chain),
         ),
         "X7100 Discount Authority": (
-            (
-                "setEcosystemMaxiNFT\nsetLiquidityMaxiNFT\nsetMagisterNFT\nsetX7DAO\n"
-            ),
+            ("setEcosystemMaxiNFT\nsetLiquidityMaxiNFT\nsetMagisterNFT\nsetX7DAO\n"),
             addresses.x7100_discount(chain),
         ),
         "X7DAO Discount Authority": (

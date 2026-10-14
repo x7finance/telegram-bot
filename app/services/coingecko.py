@@ -1,5 +1,5 @@
 import aiohttp
-from utils import tools, cache
+from utils import cache, tools
 
 
 class Coingecko(cache.CachedService):
@@ -10,14 +10,10 @@ class Coingecko(cache.CachedService):
     async def ping(self, cache_ttl=None):
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{self.url}ping", timeout=5
-                ) as response:
+                async with session.get(f"{self.url}ping", timeout=5) as response:
                     if response.status == 200:
                         return True
-                    return (
-                        f"🔴 CoinGecko: Connection failed: {response.status}"
-                    )
+                    return f"🔴 CoinGecko: Connection failed: {response.status}"
         except Exception as e:
             return f"🔴 CoinGecko: Connection failed: {str(e)}"
 
@@ -56,9 +52,7 @@ class Coingecko(cache.CachedService):
                 else:
                     price = "{:,.2f}".format(price)
 
-                volume = tools.format_millions(
-                    float(data[token].get("usd_24h_vol", 0))
-                )
+                volume = tools.format_millions(float(data[token].get("usd_24h_vol", 0)))
                 market_cap = tools.format_millions(
                     float(data[token].get("usd_market_cap", 0))
                 )

@@ -1,16 +1,14 @@
-import os
-import tweepy
 import asyncio
+import os
 from functools import partial
 
+import tweepy
 from utils import cache
 
 
 class Twitter(cache.CachedService):
     def __init__(self):
-        self.client = tweepy.Client(
-            bearer_token=os.getenv("TWITTER_BEARER_TOKEN")
-        )
+        self.client = tweepy.Client(bearer_token=os.getenv("TWITTER_BEARER_TOKEN"))
         super().__init__()
 
     async def _run_sync(self, func, *args, **kwargs):
@@ -20,9 +18,7 @@ class Twitter(cache.CachedService):
 
     async def ping(self, cache_ttl=None):
         try:
-            response = await self._run_sync(
-                self.client.get_user, username="x7_finance"
-            )
+            response = await self._run_sync(self.client.get_user, username="x7_finance")
             if response and response.data:
                 return True
             return "🔴 Twitter: Connection failed (No data returned)"
@@ -47,9 +43,7 @@ class Twitter(cache.CachedService):
 
     async def get_latest_tweet(self, username, cache_ttl=300):
         try:
-            user = await self._run_sync(
-                self.client.get_user, username=username
-            )
+            user = await self._run_sync(self.client.get_user, username=username)
             user_id = user.data.id
             tweets = await self._run_sync(
                 self.client.get_users_tweets,
@@ -64,10 +58,7 @@ class Twitter(cache.CachedService):
             if tweets and tweets.data:
                 tweet = tweets.data[0]
 
-                if (
-                    hasattr(tweet, "referenced_tweets")
-                    and tweet.referenced_tweets
-                ):
+                if hasattr(tweet, "referenced_tweets") and tweet.referenced_tweets:
                     ref_type = tweet.referenced_tweets[0].type
                     if ref_type == "replied_to":
                         tweet_type = "Reply"
@@ -112,9 +103,7 @@ class Twitter(cache.CachedService):
                             "state": "Live Now"
                             if space.state == "live"
                             else "Scheduled",
-                            "scheduled_start": getattr(
-                                space, "scheduled_start", None
-                            ),
+                            "scheduled_start": getattr(space, "scheduled_start", None),
                             "space_id": space.id,
                         }
             return None

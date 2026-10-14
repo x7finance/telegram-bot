@@ -1,4 +1,4 @@
-from bot.commands import general, admin
+from bot.commands import admin, general
 
 GENERAL_HANDLERS = []
 GENERAL_ALIAS = {

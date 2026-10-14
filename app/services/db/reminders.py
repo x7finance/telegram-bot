@@ -1,4 +1,5 @@
 import json
+
 from . import DBManager
 
 
@@ -18,13 +19,11 @@ class RemindersManager(DBManager):
             reminders = [new_reminder]
 
         query = """
-            UPDATE wallets 
+            UPDATE wallets
             SET reminders = %s
             WHERE user_id = %s
         """
-        await self._execute_query(
-            query, (json.dumps(reminders), user_id), commit=True
-        )
+        await self._execute_query(query, (json.dumps(reminders), user_id), commit=True)
 
     async def get(self, user_id):
         query = "SELECT reminders FROM wallets WHERE user_id = %s"
@@ -47,7 +46,7 @@ class RemindersManager(DBManager):
                 ]
 
                 query = """
-                    UPDATE wallets 
+                    UPDATE wallets
                     SET reminders = %s
                     WHERE user_id = %s
                 """
@@ -56,7 +55,7 @@ class RemindersManager(DBManager):
                 )
         else:
             query = """
-                UPDATE wallets 
+                UPDATE wallets
                 SET reminders = NULL
                 WHERE user_id = %s
             """
@@ -64,8 +63,8 @@ class RemindersManager(DBManager):
 
     async def get_all(self):
         query = """
-            SELECT user_id, reminders 
-            FROM wallets 
+            SELECT user_id, reminders
+            FROM wallets
             WHERE reminders IS NOT NULL
         """
         results = await self._execute_query(query, fetch_all=True)

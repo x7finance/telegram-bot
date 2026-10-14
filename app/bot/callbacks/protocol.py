@@ -1,10 +1,9 @@
-from telegram import Update
-from telegram.ext import ContextTypes
-
 from constants.protocol import chains, splitters
 from media import stickers
-from utils import onchain
 from services import get_dbmanager
+from telegram import Update
+from telegram.ext import ContextTypes
+from utils import onchain
 
 db = get_dbmanager()
 
@@ -48,9 +47,7 @@ async def liquidate(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         await message.delete()
-        await query.answer(
-            f"Error during liquidation: {str(e)}", show_alert=True
-        )
+        await query.answer(f"Error during liquidation: {str(e)}", show_alert=True)
 
 
 async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -120,9 +117,7 @@ async def pushall(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         await message.delete()
-        await query.answer(
-            f"Error during {name} push: {str(e)}", show_alert=True
-        )
+        await query.answer(f"Error during {name} push: {str(e)}", show_alert=True)
 
 
 async def stuck_tx(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -142,6 +137,4 @@ async def stuck_tx(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         await query.answer()
     except Exception as e:
-        await query.answer(
-            text=f"An error occurred: {str(e)}", show_alert=True
-        )
+        await query.answer(text=f"An error occurred: {str(e)}", show_alert=True)

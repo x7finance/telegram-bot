@@ -3,8 +3,8 @@ import sys
 
 from .codex import Codex
 from .coingecko import Coingecko
-from .dextools import Dextools
 from .db import db
+from .dextools import Dextools
 from .dune import Dune
 from .etherscan import Etherscan
 from .github import GitHub

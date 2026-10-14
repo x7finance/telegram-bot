@@ -1,11 +1,10 @@
-from web3 import AsyncWeb3, WebSocketProvider
-from web3.middleware import ExtraDataToPOAMiddleware
-
 from constants.general import urls
 from constants.protocol import addresses
 from media import chain_logos
-from utils import tools
 from services import get_dbmanager
+from utils import tools
+from web3 import AsyncWeb3, WebSocketProvider
+from web3.middleware import ExtraDataToPOAMiddleware
 
 db = get_dbmanager()
 
@@ -61,19 +60,13 @@ class ChainInfo:
         if name.lower() in POA_CHAINS:
             self.w3.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
             if self.w3_ws:
-                self.w3_ws.middleware_onion.inject(
-                    ExtraDataToPOAMiddleware, layer=0
-                )
+                self.w3_ws.middleware_onion.inject(ExtraDataToPOAMiddleware, layer=0)
 
 
 async def get_active_chains():
     if tools.is_local():
         return {**MAINNETS, **TESTNETS}
-    return (
-        {**MAINNETS, **TESTNETS}
-        if await db.settings.get("testnets")
-        else MAINNETS
-    )
+    return {**MAINNETS, **TESTNETS} if await db.settings.get("testnets") else MAINNETS
 
 
 async def get_chain(chat_id):

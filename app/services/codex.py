@@ -1,8 +1,8 @@
-import aiohttp
-import certifi
 import os
 import ssl
 
+import aiohttp
+import certifi
 from constants.protocol import chains
 from utils import cache
 
@@ -120,9 +120,9 @@ class Codex(cache.CachedService):
                 ) as response:
                     data = await response.json()
 
-                    current_value = data["data"]["getDetailedPairStats"][
-                        "stats_day1"
-                    ]["statsUsd"]["volume"]["currentValue"]
+                    current_value = data["data"]["getDetailedPairStats"]["stats_day1"][
+                        "statsUsd"
+                    ]["volume"]["currentValue"]
                     return "${:,.0f}".format(float(current_value))
         except Exception:
             return None
@@ -165,9 +165,7 @@ class Codex(cache.CachedService):
                     data = await response.json()
 
                     results = (
-                        data.get("data", {})
-                        .get("filterTokens", {})
-                        .get("results", [])
+                        data.get("data", {}).get("filterTokens", {}).get("results", [])
                     )
 
                     if results:

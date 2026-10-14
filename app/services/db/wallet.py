@@ -1,14 +1,13 @@
 import json
 import os
+
 from . import DBManager
 
 
 class WalletManager(DBManager):
     async def add(self, user_id, wallet, private_key):
         query = "SELECT 1 FROM wallets WHERE user_id = %s"
-        user_exists = await self._execute_query(
-            query, (user_id,), fetch_one=True
-        )
+        user_exists = await self._execute_query(query, (user_id,), fetch_one=True)
 
         if user_exists:
             return "Error: You already have a wallet registered, use /me in private to view it"
@@ -46,9 +45,7 @@ class WalletManager(DBManager):
 
     async def remove(self, user_id):
         query = "DELETE FROM wallets WHERE user_id = %s"
-        affected_rows = await self._execute_query(
-            query, (user_id,), commit=True
-        )
+        affected_rows = await self._execute_query(query, (user_id,), commit=True)
 
         if affected_rows:
             return f"Wallet entry for user ID {user_id} removed."

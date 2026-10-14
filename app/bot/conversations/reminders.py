@@ -1,12 +1,10 @@
-from telegram import Update
-from telegram.ext import ConversationHandler, ContextTypes
-
 from datetime import datetime
 
 from bot import callbacks
-from utils import tools
 from services import get_dbmanager
-
+from telegram import Update
+from telegram.ext import ContextTypes, ConversationHandler
+from utils import tools
 
 db = get_dbmanager()
 

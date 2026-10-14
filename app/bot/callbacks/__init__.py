@@ -1,10 +1,9 @@
+from bot.callbacks import clickme, general, protocol, reminders, welcome
 from telegram.ext import (
     ChatMemberHandler,
     MessageHandler,
     filters,
 )
-
-from bot.callbacks import clickme, general, protocol, reminders, welcome
 
 HANDLERS = [
     (clickme.click, r"^click_button:\d+$"),
@@ -27,8 +26,7 @@ HANDLERS = [
 AUTO_HANDLERS = [
     ChatMemberHandler(welcome.message, ChatMemberHandler.CHAT_MEMBER),
     MessageHandler(
-        filters.StatusUpdate.NEW_CHAT_MEMBERS
-        | filters.StatusUpdate.LEFT_CHAT_MEMBER,
+        filters.StatusUpdate.NEW_CHAT_MEMBERS | filters.StatusUpdate.LEFT_CHAT_MEMBER,
         welcome.delete,
     ),
     MessageHandler(filters.TEXT & ~filters.COMMAND, general.auto_replies),

@@ -1,3 +1,12 @@
+import os
+import subprocess
+import sys
+from pathlib import Path
+from warnings import filterwarnings
+
+from bot import callbacks, commands, conversations
+from constants.general import settings, urls
+from services import get_dbmanager
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -5,18 +14,8 @@ from telegram.ext import (
     CommandHandler,
     ConversationHandler,
 )
-
-import os
-import sys
-import subprocess
-from pathlib import Path
 from telegram.warnings import PTBUserWarning
-from warnings import filterwarnings
-
-from bot import callbacks, commands, conversations
-from constants.general import settings, urls
 from utils import tools
-from services import get_dbmanager
 
 db = get_dbmanager()
 
@@ -24,9 +23,7 @@ filterwarnings(
     action="ignore", message=r".*CallbackQueryHandler", category=PTBUserWarning
 )
 
-application = (
-    Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
-)
+application = Application.builder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
 
 
 def init_alerts_bot():

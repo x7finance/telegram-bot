@@ -1,14 +1,9 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import ContextTypes
-
-import aiohttp
 import os
-
 from datetime import datetime, timedelta
 
+import aiohttp
 from bot.callbacks import clickme
 from constants.general import settings
-from utils import tools
 from services import (
     get_codex,
     get_coingecko,
@@ -20,6 +15,9 @@ from services import (
     get_snapshot,
     get_twitter,
 )
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes
+from utils import tools
 
 codex = get_codex()
 cg = get_coingecko()
@@ -78,16 +76,12 @@ async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(
-            "Bot Settings", reply_markup=reply_markup
-        )
+        await update.message.reply_text("Bot Settings", reply_markup=reply_markup)
 
 
 async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if tools.is_admin(update.effective_user.id):
-        message = await update.message.reply_text(
-            "Pinging services, Please wait..."
-        )
+        message = await update.message.reply_text("Pinging services, Please wait...")
         await context.bot.send_chat_action(update.effective_chat.id, "typing")
 
         status = []
@@ -125,9 +119,7 @@ async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    drpc_url, json=drpc_payload
-                ) as drpc_response:
+                async with session.post(drpc_url, json=drpc_payload) as drpc_response:
                     if drpc_response.status == 200:
                         status.append("🟢 DRPC: Connected Successfully")
                     else:
@@ -183,9 +175,7 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 else:
                     time = settings.FIRST_BUTTON_TIME
                 target_timestamp = settings.RESTART_TIME + time
-                time_difference_seconds = (
-                    target_timestamp - datetime.now().timestamp()
-                )
+                time_difference_seconds = target_timestamp - datetime.now().timestamp()
                 time_difference = timedelta(seconds=time_difference_seconds)
                 hours, remainder = divmod(time_difference.seconds, 3600)
                 minutes, seconds = divmod(remainder, 60)
@@ -194,6 +184,4 @@ async def wen(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"Next Click Me:\n\n{hours} hours, {minutes} minutes, {seconds} seconds\n\n"
                 )
             else:
-                await update.message.reply_text(
-                    "Next Click Me:\n\nDisabled\n\n"
-                )
+                await update.message.reply_text("Next Click Me:\n\nDisabled\n\n")

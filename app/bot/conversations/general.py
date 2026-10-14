@@ -1,10 +1,9 @@
-from telegram import Update
-from telegram.ext import ConversationHandler, ContextTypes
-
 from constants.protocol import addresses, chains
 from media import stickers
-from utils import onchain
 from services import get_dbmanager, get_etherscan
+from telegram import Update
+from telegram.ext import ContextTypes, ConversationHandler
+from utils import onchain
 
 db = get_dbmanager()
 etherscan = get_etherscan()
@@ -45,9 +44,7 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
             result = await onchain.x7d_redeem(amount, chain, user_id)
         elif operation == "withdraw":
             if token == "native":
-                result = await onchain.withdraw_native(
-                    amount, chain, user_id, address
-                )
+                result = await onchain.withdraw_native(amount, chain, user_id, address)
             else:
                 result = await onchain.withdraw_tokens(
                     user_id, amount, addresses.x7d(chain), 18, address, chain

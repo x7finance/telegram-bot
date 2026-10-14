@@ -1,20 +1,18 @@
+import os
+
+from constants.general import urls
+from constants.protocol import chains, tokens
+from eth_utils import is_address
+from services import get_codex, get_coingecko, get_dextools, get_etherscan
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
-    MessageHandler,
     ContextTypes,
+    MessageHandler,
     filters,
 )
-
-import os
-from eth_utils import is_address
-
-from constants.general import urls
-from constants.protocol import chains, tokens
 from utils import tools
-
-from services import get_codex, get_coingecko, get_dextools, get_etherscan
 
 cg = get_coingecko()
 codex = get_codex()
@@ -39,9 +37,7 @@ async def fetch_token_data(search, chain):
     return None, None
 
 
-async def handle_price_lookup(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
-):
+async def handle_price_lookup(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.args is not None:
         text = " ".join(context.args)
     else:
@@ -79,9 +75,7 @@ async def lookup_price(
         await send_coingecko_response(update, search, token_data)
         return
 
-    message, buttons = await send_dextools_response(
-        search, found_chain, token_data
-    )
+    message, buttons = await send_dextools_response(search, found_chain, token_data)
     await update.message.reply_text(
         message,
         disable_web_page_preview=True,
@@ -93,10 +87,7 @@ async def lookup_price(
 async def parse_search_and_chain(text):
     words = text.split()
 
-    if (
-        len(words) > 1
-        and words[-1].lower() in await chains.get_active_chains()
-    ):
+    if len(words) > 1 and words[-1].lower() in await chains.get_active_chains():
         search = " ".join(words[:-1])
         chain = words[-1].lower()
         return search, chain
@@ -187,13 +178,9 @@ async def send_dextools_response(search, chain, token_data):
     is_scam = data.get("isPotentiallyScam", "no")
 
     open_source = (
-        "✅ Contract Verified"
-        if is_open_source == "yes"
-        else "⚠️ Contract Not Verified"
+        "✅ Contract Verified" if is_open_source == "yes" else "⚠️ Contract Not Verified"
     )
-    honey_pot = (
-        "❌ Honey Pot" if is_honeypot == "yes" else "✅ Not a Honey Pot"
-    )
+    honey_pot = "❌ Honey Pot" if is_honeypot == "yes" else "✅ Not a Honey Pot"
     mint = "⚠️ Mintable" if is_mintable == "yes" else "✅ Not Mintable"
     blacklist = (
         "⚠️ Has Blacklist Functions"
@@ -201,15 +188,15 @@ async def send_dextools_response(search, chain, token_data):
         else "✅ No Blacklist Functions"
     )
     renounced = (
-        "✅ Contract Renounced"
-        if is_renounced == "yes"
-        else "⚠️ Contract Not Renounced"
+        "✅ Contract Renounced" if is_renounced == "yes" else "⚠️ Contract Not Renounced"
     )
     scam = "⚠️ Potential Scam" if is_scam == "yes" else "✅ Not a Scam"
 
     tax = f"{'⚠️' if buy_tax > 5 or sell_tax > 5 else '✅'} Tax: {int(buy_tax)}/{int(sell_tax)}"
 
-    status = f"{open_source}\n{renounced}\n{tax}\n{mint}\n{honey_pot}\n{blacklist}\n{scam}"
+    status = (
+        f"{open_source}\n{renounced}\n{tax}\n{mint}\n{honey_pot}\n{blacklist}\n{scam}"
+    )
 
     name_info = await dextools.get_token_name(search, chain)
     token_name = name_info.get("name", "Unknown")
@@ -245,15 +232,11 @@ async def send_dextools_response(search, chain, token_data):
         [
             InlineKeyboardButton(
                 text="Chart",
-                url=urls.dex_tools_link(chain_dext, pair)
-                if chain_dext
-                else "#",
+                url=urls.dex_tools_link(chain_dext, pair) if chain_dext else "#",
             ),
             InlineKeyboardButton(
                 text="Buy",
-                url=urls.xchange_buy_link(chain_id, search)
-                if chain_id
-                else "#",
+                url=urls.xchange_buy_link(chain_id, search) if chain_id else "#",
             ),
         ]
     ]
@@ -263,9 +246,7 @@ async def send_dextools_response(search, chain, token_data):
 
 if __name__ == "__main__":
     application = (
-        ApplicationBuilder()
-        .token(os.getenv("TELEGRAM_PRICE_BOT_TOKEN"))
-        .build()
+        ApplicationBuilder().token(os.getenv("TELEGRAM_PRICE_BOT_TOKEN")).build()
     )
     application.add_error_handler(tools.error_handler)
     application.add_handler(CommandHandler("x", handle_price_lookup))

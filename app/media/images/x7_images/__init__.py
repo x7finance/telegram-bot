@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 RAFFLE_LOGO = Path(__file__).resolve().parent / "raffle.jpg"
 PIONEER_LOGO = Path(__file__).resolve().parent / "pioneer.png"
 WEBSITE_LOGO = Path(__file__).resolve().parent / "website.png"
