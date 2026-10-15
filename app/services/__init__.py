@@ -1,77 +1,74 @@
-import inspect
-import sys
-
-from .codex import Codex
-from .coingecko import Coingecko
-from .db import db
-from .dextools import Dextools
-from .dune import Dune
-from .etherscan import Etherscan
-from .github import GitHub
-from .snapshot import Snapshot
-from .twitter import Twitter
+__all__ = [
+    "get_service",
+    "get_codex",
+    "get_coingecko",
+    "get_dbmanager",
+    "get_dextools",
+    "get_dune",
+    "get_etherscan",
+    "get_github",
+    "get_snapshot",
+    "get_twitter",
+]
 
 _cached_services = {}
 
 
 def get_service(service_class):
-    global _cached_services
     if service_class not in _cached_services:
         _cached_services[service_class] = service_class()
     return _cached_services[service_class]
 
 
-def get_codex() -> Codex:
+def get_codex():
+    from .codex import Codex
+
     return get_service(Codex)
 
 
-def get_coingecko() -> Coingecko:
+def get_coingecko():
+    from .coingecko import Coingecko
+
     return get_service(Coingecko)
 
 
-def get_dextools() -> Dextools:
+def get_dextools():
+    from .dextools import Dextools
+
     return get_service(Dextools)
 
 
 def get_dbmanager():
+    from .db import db
+
     return db
 
 
-def get_dune() -> Dune:
+def get_dune():
+    from .dune import Dune
+
     return get_service(Dune)
 
 
-def get_etherscan() -> Etherscan:
+def get_etherscan():
+    from .etherscan import Etherscan
+
     return get_service(Etherscan)
 
 
-def get_github() -> GitHub:
+def get_github():
+    from .github import GitHub
+
     return get_service(GitHub)
 
 
-def get_snapshot() -> Snapshot:
+def get_snapshot():
+    from .snapshot import Snapshot
+
     return get_service(Snapshot)
 
 
-def get_twitter() -> Twitter:
+def get_twitter():
+    from .twitter import Twitter
+
     return get_service(Twitter)
-
-
-def make_getter(cls):
-    def getter():
-        return get_service(cls)
-
-    return getter
-
-
-_current_module = sys.modules[__name__]
-
-for name, cls in inspect.getmembers(_current_module, inspect.isclass):
-    if cls.__module__ == __name__:
-        function_name = f"get_{name.lower()}"
-        globals()[function_name] = make_getter(cls)
-
-__all__ = [
-    f"get_{name.lower()}"
-    for name, cls in inspect.getmembers(_current_module, inspect.isclass)
-]
