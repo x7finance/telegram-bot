@@ -18,7 +18,7 @@ python-telegram-bot==22.8
 pytz==2026.5
 pyunormalize==18.0.0
 PyYAML==6.0.3
-regex==2025.9.18
+regex==2026.9.29
 requests==2.34.2
 rlp==5.0.0
 sentry-sdk==2.72.0
