@@ -23,4 +23,4 @@ requests==2.34.2
 rlp==5.0.0
 sentry-sdk==2.38.0
 web3==8.0.0
-websockets==15.0.1
+websockets==17.2
