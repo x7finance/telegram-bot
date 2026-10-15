@@ -1,41 +1,50 @@
-import asyncio
 import os
-from functools import partial
+from datetime import datetime
 
-import tweepy
+import httpx
 from utils import cache
 
 
 class Twitter(cache.CachedService):
     def __init__(self):
-        self.client = tweepy.Client(bearer_token=os.getenv("TWITTER_BEARER_TOKEN"))
+        token = os.getenv("TWITTER_BEARER_TOKEN")
+        self.headers = {"Authorization": f"Bearer {token}"}
         super().__init__()
 
-    async def _run_sync(self, func, *args, **kwargs):
-        return await asyncio.get_event_loop().run_in_executor(
-            None, partial(func, *args, **kwargs)
-        )
+    async def _get(self, path, params=None):
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"https://api.x.com/2{path}", headers=self.headers, params=params
+            )
+            resp.raise_for_status()
+            return resp.json()
+
+    async def _get_user_id(self, username):
+        data = await self._get(f"/users/by/username/{username}")
+        return data.get("data", {}).get("id")
 
     async def ping(self, cache_ttl=None):
         try:
-            response = await self._run_sync(self.client.get_user, username="x7_finance")
-            if response and response.data:
-                return True
-            return "🔴 Twitter: Connection failed (No data returned)"
-        except tweepy.TweepyException as e:
+            data = await self._get("/users/by/username/x7_finance")
+            return (
+                True
+                if data.get("data")
+                else "🔴 Twitter: Connection failed (No data returned)"
+            )
+        except Exception as e:
             return f"🔴 Twitter: Connection failed: {e}"
 
     async def get_user_data(self, username, cache_ttl=600):
         try:
-            user = await self._run_sync(
-                self.client.get_user,
-                username=username,
-                user_fields=["public_metrics", "profile_image_url"],
+            data = await self._get(
+                f"/users/by/username/{username}",
+                params={"user.fields": "public_metrics,profile_image_url"},
             )
-            if user and user.data:
+            user = data.get("data")
+            if user:
                 return {
-                    "followers": user.data.public_metrics["followers_count"],
-                    "profile_image": user.data.profile_image_url,
+                    "followers": user["public_metrics"]["followers_count"],
+                    "profile_image": user.get("profile_image_url"),
                 }
             return {"followers": "N/A", "profile_image": None}
         except Exception:
@@ -43,69 +52,68 @@ class Twitter(cache.CachedService):
 
     async def get_latest_tweet(self, username, cache_ttl=300):
         try:
-            user = await self._run_sync(self.client.get_user, username=username)
-            user_id = user.data.id
-            tweets = await self._run_sync(
-                self.client.get_users_tweets,
-                user_id,
-                max_results=5,
-                tweet_fields=[
-                    "created_at",
-                    "public_metrics",
-                    "referenced_tweets",
-                ],
+            user_id = await self._get_user_id(username)
+            if not user_id:
+                return None
+            data = await self._get(
+                f"/users/{user_id}/tweets",
+                params={
+                    "max_results": 5,
+                    "tweet.fields": "created_at,public_metrics,referenced_tweets",
+                },
             )
-            if tweets and tweets.data:
-                tweet = tweets.data[0]
+            tweets = data.get("data")
+            if not tweets:
+                return None
+            tweet = tweets[0]
 
-                if hasattr(tweet, "referenced_tweets") and tweet.referenced_tweets:
-                    ref_type = tweet.referenced_tweets[0].type
-                    if ref_type == "replied_to":
-                        tweet_type = "Reply"
-                    elif ref_type == "retweeted":
-                        tweet_type = "Retweet"
-                    elif ref_type == "quoted":
-                        tweet_type = "Quote"
-                    else:
-                        tweet_type = "Tweet"
-                else:
-                    tweet_type = "Tweet"
+            refs = tweet.get("referenced_tweets")
+            tweet_type = (
+                {"replied_to": "Reply", "retweeted": "Retweet", "quoted": "Quote"}.get(
+                    refs[0]["type"], "Tweet"
+                )
+                if refs
+                else "Tweet"
+            )
 
-                return {
-                    "text": tweet.text,
-                    "url": f"https://twitter.com/{username}/status/{tweet.id}",
-                    "likes": tweet.public_metrics["like_count"],
-                    "retweets": tweet.public_metrics["retweet_count"],
-                    "replies": tweet.public_metrics.get("reply_count", 0),
-                    "created_at": tweet.created_at,
-                    "type": tweet_type,
-                }
-            return None
+            metrics = tweet.get("public_metrics", {})
+            created = tweet.get("created_at")
+            return {
+                "text": tweet["text"],
+                "url": f"https://twitter.com/{username}/status/{tweet['id']}",
+                "likes": metrics.get("like_count", 0),
+                "retweets": metrics.get("retweet_count", 0),
+                "replies": metrics.get("reply_count", 0),
+                "created_at": datetime.fromisoformat(created.replace("Z", "+00:00"))
+                if created
+                else None,
+                "type": tweet_type,
+            }
         except Exception:
             return None
 
     async def get_next_space(self, username, cache_ttl=600):
         try:
-            user_id = await self._run_sync(self.get_user_id, username)
+            user_id = await self._get_user_id(username)
             if not user_id:
                 return None
-
-            spaces = await self._run_sync(
-                self.client.get_spaces,
-                user_ids=[user_id],
-                space_fields=["title", "state", "scheduled_start"],
+            data = await self._get(
+                "/spaces/by/creator-ids",
+                params={
+                    "user_ids": user_id,
+                    "space.fields": "title,state,scheduled_start",
+                },
             )
-            if spaces and spaces.data:
-                for space in spaces.data:
-                    if space.state in ["live", "scheduled"]:
-                        return {
-                            "title": space.title,
-                            "state": "Live Now"
-                            if space.state == "live"
-                            else "Scheduled",
-                            "scheduled_start": getattr(space, "scheduled_start", None),
-                            "space_id": space.id,
-                        }
+            for space in data.get("data") or []:
+                if space.get("state") in ("live", "scheduled"):
+                    return {
+                        "title": space.get("title"),
+                        "state": "Live Now"
+                        if space["state"] == "live"
+                        else "Scheduled",
+                        "scheduled_start": space.get("scheduled_start"),
+                        "space_id": space.get("id"),
+                    }
             return None
         except Exception:
             return None
