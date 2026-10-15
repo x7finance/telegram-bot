@@ -138,7 +138,7 @@ async def liquidate_loan(loan_id, chain, user_id):
         )
 
         if receipt.status == 1:
-            return f"Loan {loan_id} ({chain_info.name.upper()}) liquidated successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
+            return f"Loan {loan_id} ({chain_info.name.upper()}) liquidated successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed while liquidating loan {loan_id} ({chain_info.name.upper()})"
 
@@ -193,7 +193,7 @@ async def splitter_push(
             tx_hash, timeout=30
         )
         if receipt.status == 1:
-            return f"{function_name} ({chain_info.name.upper()}) called successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
+            return f"{function_name} ({chain_info.name.upper()}) called successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed on {function_name} ({chain_info.name.upper()})"
 
@@ -243,7 +243,7 @@ async def stuck_tx(chain, user_id, gas_multiplier=1.5):
             tx_hash, timeout=30
         )
         if receipt.status == 1:
-            return f"Stuck transaction (Nonce: {pending_nonce}) successfully replaced ({chain_info.name.upper()})\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
+            return f"Stuck transaction (Nonce: {pending_nonce}) successfully replaced ({chain_info.name.upper()})\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
             return f"Error: Transaction (Nonce: {pending_nonce}) failed to be replaced ({chain_info.name.upper()})"
 
@@ -292,7 +292,7 @@ async def withdraw_native(amount, chain, user_id, recipient_address):
             tx_hash, timeout=30
         )
         if receipt.status == 1:
-            return f"Successfully withdrew {amount} {chain_info.native.upper()} ({chain_info.name.upper()})\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
+            return f"Successfully withdrew {amount} {chain_info.native.upper()} ({chain_info.name.upper()})\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed during withdrawal ({chain_info.name.upper()})"
 
@@ -367,7 +367,7 @@ async def withdraw_tokens(user_id, amount, token_address, decimals, recipient, c
         )
 
         if receipt.status == 1:
-            return f"{amount} {token_name} ({chain_info.name.upper()}) {actioned}\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
+            return f"{amount} {token_name} ({chain_info.name.upper()}) {actioned}\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed while {action} {amount} {token_name} ({chain_info.name.upper()})"
 
@@ -421,7 +421,7 @@ async def x7d_mint(amount, chain, user_id):
             tx_hash, timeout=30
         )
         if receipt.status == 1:
-            return f"{amount} X7D ({chain_info.name.upper()}) minted successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
+            return f"{amount} X7D ({chain_info.name.upper()}) minted successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed while minting X7D ({chain_info.name.upper()})"
 
@@ -473,7 +473,7 @@ async def x7d_redeem(amount, chain, user_id):
             tx_hash, timeout=30
         )
         if receipt.status == 1:
-            return f"Redeemed {amount} X7D ({chain_info.name.upper()}) successfully\n\n{chain_info.scan_tx}0x{tx_hash.hex()}"
+            return f"Redeemed {amount} X7D ({chain_info.name.upper()}) successfully\n\n{chain_info.scan_tx}{tx_hash.hex()}"
         else:
             return f"Error: Transaction failed while redeeming X7D ({chain_info.name.upper()})"
 

@@ -2489,7 +2489,7 @@ async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     account = Account.create()
-    await db.wallet.add(user_id, account.address, account.key.hex())
+    await db.wallet.add(user_id, account.address, account.key.hex().removeprefix("0x"))
 
     message = (
         "*New EVM wallet created*\n\n"
