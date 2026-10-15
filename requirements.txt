@@ -1,4 +1,4 @@
-aiohttp==3.14.3
+aiohttp==3.14.5
 aiomysql==0.3.2
 anyio==4.15.1
 eth-account==0.14.0
