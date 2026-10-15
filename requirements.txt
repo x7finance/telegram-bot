@@ -2,7 +2,7 @@ aiohttp==3.14.5
 aiomysql==0.3.0
 anyio==4.15.1
 eth-account==0.14.0
-eth-hash==0.7.1
+eth-hash==0.8.0
 eth-keyfile==0.10.0
 eth-keys==0.8.0
 eth-rlp==3.0.0
