@@ -4,5 +4,5 @@ ruff==0.17.0
 identify==2.6.20
 cfgv==3.5.0
 nodeenv==1.11.0
-virtualenv==21.14.7
+virtualenv==21.14.8
 filelock==4.1.2
