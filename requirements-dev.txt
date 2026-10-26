@@ -1,6 +1,6 @@
 -r requirements.txt
 pre_commit==4.7.0
-ruff==0.17.1
+ruff==0.17.2
 identify==2.6.20
 cfgv==3.5.0
 nodeenv==1.11.0
