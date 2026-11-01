@@ -1,8 +1,8 @@
 -r requirements.txt
 pre_commit==4.7.0
-ruff==0.17.1
+ruff==0.17.2
 identify==2.6.20
 cfgv==3.5.0
 nodeenv==1.11.0
-virtualenv==21.14.9
+virtualenv==21.14.13
 filelock==4.2.4
