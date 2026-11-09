@@ -1,4 +1,4 @@
 -r requirements.txt
 pre_commit==4.7.0
-ruff==0.17.3
-virtualenv==21.15.2
+ruff==0.17.4
+virtualenv==21.15.5
