@@ -16,7 +16,7 @@ pydantic==2.14.3
 python-telegram-bot==22.8
 pytz==2026.6
 pyunormalize==18.0.0
-regex==2026.9.29
+regex==2026.11.9
 requests==2.34.2
 rlp==5.0.0
 sentry-sdk==2.74.0
